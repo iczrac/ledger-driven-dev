@@ -28,6 +28,7 @@
 5. **历史层** —— append-only 事件流，由状态指纹自动侦测真实变化；只有证据/等级/文档真的变了才记一笔，重跑不产生噪音，任意时点可回放。
 6. **经验层** —— 从历史自动识别可沉淀信号（降级/长期停滞/决策被推翻），人确认后写成经验，**下一轮任务卡自动携带**。
 7. **专家路由** —— 只读扫描项目状态与任务意图，确定性选出唯一负责人：历史项目走考古专家（草稿优先、绝不覆盖），新项目走架构师（最小骨架、来源可追溯），校验与编码各有边界。冲突时要求澄清，**不让多个 Agent 同时改同一份事实源**。
+8. **可追溯闭环** —— 事实源可重建规范文档，文档可抽目标架构，git 变更可回连模块决策与历史事件；规划图与实际图按编码逐项比对，由专家给出执行顺序，并用全链路编码索引对齐文档/测试/代码/账本。
 
 并且这套方法**自身可被验证**：`verify_ledger.py` 把 21 条不变量机器化（含历史链、经验引用与证据分层），`next_queue` 把 SELECT 变成机器可读任务队列——「可信」和「驱动」两个核心承诺都不再停留在文字上。
 
@@ -59,6 +60,7 @@ ledger-driven-dev/
 │   ├── 10-AI集成.md                  专家与技能的安装与消费
 │   ├── 11-证据分层.md                声明级 / 验证级，消除假绿灯
 │   ├── 12-专家路由.md                多专家协作、历史/新建双路径
+│   ├── 13-可追溯性.md                五项反问、文档/架构/git/图比对闭环
 │   └── STANDARD.md                   文档命名/章节/状态词规范
 ├── experts/
 │   ├── expert-router/EXPERT.md        路由决策与交接契约（只读调度）
@@ -75,7 +77,9 @@ ledger-driven-dev/
 │   ├── ledger-verify/                 21 条不变量 + 修复表
 │   ├── ledger-decide/                 任务卡 → proposed 决策
 │   ├── ledger-lesson/                 候选 → 已确认经验
-│   └── ledger-guard/                  统一质量门禁
+│   ├── ledger-guard/                  统一质量门禁
+│   ├── doc-rebuild/                   规范文档 + 编码索引
+│   └── graph-compare/                 目标/实际图比对与执行顺序
 ├── templates/                        可复用模板（复制到你的项目）
 │   ├── build_capability_model.py     核心生成器（含证据分层/历史/经验/任务队列）
 │   ├── verify_ledger.py              21 条不变量校验器（可信的基础设施）
@@ -88,6 +92,11 @@ ledger-driven-dev/
 │   ├── run_tests.py                  标准库跑测试 → 机器可读报告（verified 证据源）
 │   ├── ledger_decide.py              决策写入（纪律由代码保证）
 │   ├── ledger_lesson.py              经验确认 / 驳回
+│   ├── rebuild_docs.py               规范化文档重建
+│   ├── code_index.py                 编码 ↔ artifact 全链路索引
+│   ├── architect_from_docs.py        文档 → 目标架构
+│   ├── trace_git.py                  git → 模块 / 决策 / 事件
+│   ├── compare_graphs.py             规划图 vs 实际图 + 执行顺序
 │   └── check.sh                      本地 / CI 统一门禁
 ├── tests/                            标准库 unittest 测试套件
 ├── .github/workflows/                CI 与 release
@@ -152,6 +161,27 @@ open governance/index.html
 
 之后每次代码/测试/文档有变更，重跑一次生成器即可——完成度、组件树、文档索引、**历史演进**、**经验候选**与**下一轮任务队列**全部自动刷新。状态没变时重跑不会产生新历史事件（幂等）。存量接入的草稿、源码与既有治理文件不会被自动覆盖。
 
+### 五项反问 → 一条可追溯闭环
+
+```bash
+# 1) 规范化文档重建   2) 文档 → 目标架构
+python3 scripts/rebuild_docs.py --target /path/to/project
+python3 scripts/architect_from_docs.py --target /path/to/project
+
+# 3) git 更新 → 模块 / 决策 / 历史事件
+python3 scripts/trace_git.py --target /path/to/project --max-count 50
+
+# 4) 规划图 vs 实际图 → 开发顺序 + 专家
+python3 scripts/compare_graphs.py --target /path/to/project \
+  --git-trace /path/to/project/governance/GIT_TRACE.json
+
+# 5) 编码 ↔ 文档 / 测试 / 代码 / 账本 / git
+python3 scripts/code_index.py --target /path/to/project \
+  --git-trace /path/to/project/governance/GIT_TRACE.json
+```
+
+产物默认落在 `docs/generated/` 与 `governance/`，全部非破坏性（需 `--force` 才覆盖）。详见 [13-可追溯性](docs/13-可追溯性.md)。
+
 ### 验证账本可信
 
 ```bash
@@ -171,10 +201,10 @@ bash scripts/check.sh
 ### AI 接手：专家路由与技能
 
 - **六个专家**：`expert-router`（调度）、`greenfield-architect`（新建）、`project-archaeologist`（存量）、`ledger-steward`（账本治理）、`evidence-auditor`（只读审计）、`loop-executor`（一条任务卡的编码）。每个都有权限矩阵、停止条件与交接模板。
-- **八个技能**：新增 `expert-route` / `project-discover` / `project-bootstrap`，覆盖路由、盘点、初始化；原有五个技能覆盖扫描、校验、立项、经验与门禁。
+- **十个技能**：`expert-route` / `project-discover` / `project-bootstrap` 覆盖路由、盘点、初始化；`doc-rebuild` / `graph-compare` 覆盖规范文档、编码索引与目标/实际图比对；原有五个技能覆盖扫描、校验、立项、经验与门禁。
 - 纪律不只写在文档里：`route_expert.py` 对冲突 fail-closed，`discover_project.py` 默认不覆盖草稿，`init_project.py` 跳过既有治理文件，`ledger_decide.py` / `ledger_lesson.py` 在代码层拒绝重复立项与缺行动的经验。
 
-详见 [12-专家路由](docs/12-专家路由.md) 与 [10-AI集成](docs/10-AI集成.md)。
+详见 [12-专家路由](docs/12-专家路由.md)、[13-可追溯性](docs/13-可追溯性.md) 与 [10-AI集成](docs/10-AI集成.md)。
 
 ### SELECT 产出：下一轮任务队列
 
@@ -209,10 +239,11 @@ bash scripts/check.sh
 8. [可信性校验](docs/08-可信性校验.md) —— 21 条不变量，让「可信」可被验证
 9. [历史与经验](docs/09-历史与经验.md) —— 状态指纹驱动的演进历史，以及可被任务卡消费的经验层
 10. [文档规范](docs/STANDARD.md) —— 命名、章节、状态词与更新触发点
-11. [AI 集成](docs/10-AI集成.md) —— 专家、八个技能与平台无关的最小消费路径
+11. [AI 集成](docs/10-AI集成.md) —— 专家、十个技能与平台无关的最小消费路径
 12. [证据分层](docs/11-证据分层.md) —— 区分声明级与验证级证据，消除假绿灯
 13. [专家路由](docs/12-专家路由.md) —— 多专家协作、历史/新建双路径与交接协议
-14. [贡献指南](CONTRIBUTING.md) —— 开发循环、同步规则与发布流程
+14. [可追溯性](docs/13-可追溯性.md) —— 五项反问、文档/架构/git/图比对闭环
+15. [贡献指南](CONTRIBUTING.md) —— 开发循环、同步规则与发布流程
 
 ## License
 

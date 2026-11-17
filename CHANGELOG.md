@@ -2,6 +2,26 @@
 
 本项目版本遵循语义化版本（SemVer）。
 
+## [0.7.0] - 2026-11-17
+
+用五个反问检验方法本身，并把每个"能"落成可复现脚本：文档重建、目标架构、git 追踪、规划/实际图比对、编码全链路对应。全部产物默认非破坏性，沿用同一套编码与专家路由。
+
+### 新增
+
+- **`scripts/rebuild_docs.py`**：从 registry + 账本渲染 `docs/generated/{PROJECT_BRIEF,MODULE_MAP,CAPABILITY_INDEX}.md`；剥离账本仓库根前缀、路径相对化、逐字节可复现，默认跳过既有文件。
+- **`scripts/architect_from_docs.py`**：文档 → `TARGET_ARCHITECTURE.json`（`target-arch/1`），抽取目标、模块/入口、编码、`依赖: CODE`、`目标: L3`；置信度与警告明确降级，不与文件系统草稿混淆。
+- **`scripts/trace_git.py`**：只读 `git log --name-only`，把真实变更路径映射到模块、能力编码、账本 `entry_ids` 与历史 `event_seqs`，产出 `GIT_TRACE.json`；不信任 commit message 自述。
+- **`scripts/compare_graphs.py`**：规划图（目标架构，缺失时退回 registry）vs 实际图（账本）逐能力比对，五态 `aligned/in_progress/not_started/planned_only/actual_only`；输出 `GRAPH_DIFF.json` + `GRAPH_DIFF.md`，按 `next_queue` 给开发顺序、执行专家与前置条件。
+- **`scripts/code_index.py`** + **`scripts/trace_common.py`**：共享路径归一与能力展开；`CODE_INDEX.json` 把 `PROJ.MODULE.DOMAIN.NN` 映射到文档/测试/代码/账本事件/决策/git 提交。
+- **两个技能** `doc-rebuild` / `graph-compare`；专家路由技能表与建议命令同步更新。
+- **`docs/13-可追溯性.md`**：逐条回答五个反问，给出完整闭环命令、状态语义、边界与反模式。
+
+### 验证
+
+- 新增 19 个 unittest 用例（文档重建/编码索引 7、文档架构/git 追踪 6、规划实际比对 6），总计 **79 个**，全在临时目录运行。
+- `bash scripts/check.sh` 全绿：79 测试 / 证据分层 / 21 不变量 / 幂等 / 同步 / 脱敏 / 文档链接。
+- 负向覆盖：无 git 仓库退出码 2、空文档降级为 `low`、既有产物不被覆盖、planned_only/actual_only 分派到正确专家。
+
 ## [0.6.0] - 2026-11-17
 
 把「谁来动手」纳入同一套可信体系：新增确定性专家路由与两类项目入口。历史项目先盘点、草稿人工确认后才接入；新项目从最小骨架起步。写权限按角色拆分，冲突与损坏一律 fail-closed。

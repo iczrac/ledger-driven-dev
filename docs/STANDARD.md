@@ -53,7 +53,14 @@
 - 路径必须真实存在，`verify_ledger.py` 会逐条检查；不写空链占位。
 - **证据报告**：`governance/test_report.json` 用相对路径（相对运行 cwd），不写机器绝对路径；schema 固定 `ledger-test-report/1`。
 
-## 六、反模式
+## 六、生成文档目录
+
+`docs/generated/` 下的 `PROJECT_BRIEF.md` / `MODULE_MAP.md` / `CAPABILITY_INDEX.md` / `GRAPH_DIFF.md`
+由 `scripts/rebuild_docs.py` 与 `scripts/compare_graphs.py` 从 registry + 账本渲染，
+**不是人工文档**：不要长期手改，改事实源后重跑；需要保留人工补充时用不同文件名。
+生成文档必须无机器绝对路径、可逐字节复现，并默认跳过既有文件（`--force` 才覆盖）。
+
+## 七、反模式
 
 - **散落报告**：把决策写进新的 Markdown 而不是账本 —— 账本随即失去唯一性；
 - **手写完成度**：看起来美观，实际摧毁可复算性，校验器会抓；

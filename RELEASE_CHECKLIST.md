@@ -18,9 +18,9 @@
 - [x] 经验层：自动识别候选 + 人工确认 + 任务卡消费，看板两视图可见可点
 - [x] 一键初始化脚本可用（含校验器），支持 greenfield / adopt 双模式与 provenance 记录
 - [x] 六种专家角色（路由 / 新建 / 考古 / 账本治理 / 审计 / 执行），各含权限矩阵与停止条件
-- [x] 八个技能（route/discover/bootstrap/scan/verify/decide/lesson/guard），标准 SKILL.md frontmatter
+- [x] 十个技能（route/discover/bootstrap/scan/verify/decide/lesson/guard/doc-rebuild/graph-compare），标准 SKILL.md frontmatter
 - [x] 技能脚本：重复立项、缺行动经验、无理由驳回均由代码拒绝
-- [x] 60 个 unittest 用例（含 7 个证据分层专项、23 个多专家专项），零第三方依赖，临时目录隔离
+- [x] 79 个 unittest 用例（含 7 个证据分层、23 个多专家、19 个可追溯性专项），零第三方依赖，临时目录隔离
 - [x] CI（Python 3.10-3.13 矩阵）/ CD（tag 触发，先门禁后打包）
 - [x] 示例项目已跑通，产出真实账本与看板
 
@@ -39,7 +39,7 @@
 - [x] 示例：看板 EMBED 与账本完全一致；JS 通过 node --check
 - [x] 初始化脚本在临时目录跑通，4 个文件正确生成
 - [x] 生成器 dry-run 与正式模式均正常
-- [x] `bash scripts/check.sh` 全绿：30 测试 / 18 不变量 / 幂等 / 同步 / 脱敏 / 文档链接
+- [x] `bash scripts/check.sh` 全绿：79 测试 / 21 不变量 / 幂等 / 同步 / 脱敏 / 文档链接
 - [x] 看板 JS 通过 `node --check`；CI 用同一份门禁脚本，口径一致
 - [x] 负向纪律测试：重复立项、缺 action、无理由驳回均被拒绝
 
@@ -51,6 +51,14 @@
 - [x] 接入模式生成后可通过 21 条不变量校验
 - [x] docs/12-专家路由.md 与 README / AI 集成 / 落地指南互相引用一致
 
+## 可追溯性五项反问（0.7.0）
+
+- [x] registry + 账本可重建规范化文档三件套，默认不覆盖人工内容
+- [x] 文档可抽目标/模块/编码/依赖，置信度不足时明确警告
+- [x] git 真实路径可回连模块、能力编码、账本决策与历史事件
+- [x] 规划图 vs 实际图五态比对，附带开发顺序、专家与前置条件
+- [x] 四段式编码索引贯通文档 / 测试 / 代码 / 决策 / 事件 / 提交
+
 ## 脱敏
 
 - [x] 看板模板 EMBED 已替换为空账本骨架
@@ -61,7 +69,7 @@
 ## 文档
 
 - [x] README（价值主张、快速开始、目录结构、视图说明）
-- [x] 十二篇编号方法论文档 + STANDARD.md + 10-AI集成.md + CONTRIBUTING.md
+- [x] 十三篇编号方法论文档 + STANDARD.md + 10-AI集成.md + CONTRIBUTING.md
 - [x] LICENSE（MIT）
 - [x] CHANGELOG
 - [x] registry.example.json 含字段说明注释
@@ -72,7 +80,7 @@
 - [ ] 确认仓库名（建议 `ledger-driven-dev`）
 - [ ] `git init` / 添加 remote
 - [ ] 检查 `.gitignore`（排除 `__pycache__/`、`*.pyc`、`.venv/`）
-- [ ] 提交并打 tag `v0.6.0`
+- [ ] 提交并打 tag `v0.7.0`
 - [ ] GitHub 仓库描述、README 顶图（可选）、topics 标签
 
 ## 建议的 topics

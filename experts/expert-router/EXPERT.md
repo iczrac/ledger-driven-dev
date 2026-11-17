@@ -8,7 +8,7 @@ description: |
 license: MIT
 metadata:
   author: ledger-driven-dev
-  version: "0.6.0"
+  version: "0.7.0"
   role: router
   requires_mcp: false
 ---
