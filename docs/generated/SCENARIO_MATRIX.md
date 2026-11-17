@@ -3,12 +3,12 @@
 > 由 `scripts/scenario_matrix.py` 从场景定义渲染。**不要手改本文件**；
 > 修改场景请改 `SCENARIOS`，再重跑 `--emit-md`。
 
-共 50 个场景 · 有效覆盖率 82.0% （covered 计 1，partial 计 0.5，by-design 与 gap 计 0）。
+共 54 个场景 · 有效覆盖率 82.4% （covered 计 1，partial 计 0.5，by-design 与 gap 计 0）。
 
 | 状态 | 数量 | 语义 |
 |---|---:|---|
-| 已覆盖 | 38 | 已覆盖（有探针） |
-| 部分 | 6 | 部分覆盖（有降级与告警，残差见文档） |
+| 已覆盖 | 41 | 已覆盖（有探针） |
+| 部分 | 7 | 部分覆盖（有降级与告警，残差见文档） |
 | 边界 | 5 | 边界内刻意不做（附理由） |
 | 缺漏 | 1 | 已知缺漏（本期未实现） |
 
@@ -66,6 +66,10 @@
 | G2 | 接入 | 两个 Agent 并发写同一能力 | A4 | 已覆盖 | flock 锁内重读、指纹 CAS、编码租约与 revision 共同阻止静默覆盖 | `test_agent_gateway.GatewayTest.test_lease_blocks_concurrent_agent` |
 | G3 | 接入 | Agent 自我批准 / 自行提权 | A1 | 已覆盖 | register 的 approved_by 不得等于 agent；unfreeze/archive 必须人批准 | `test_agent_gateway.GatewayTest.test_self_approval_and_self_register_denied` |
 | G4 | 接入 | Agent 直接调用底层脚本绕过网关 | A5 | 边界 | 网关是策略执行点，不是 OS 沙箱；有 shell 仍可绕过 | `test_agent_gateway.GatewayTest.test_policy_point_boundary_is_declared` |
+| U3 | 时间 | 专家 / 技能 / 模板 / 文档资产漂移 | A2 | 已覆盖 | 整包资产摘要写进账本；任一资产变化即 plan 要求 M5 重新批准，verify 不再宣布完成 | `test_platform_contract.AssetsTest.test_upgrade_binds_assets_and_detects_drift` |
+| F8 | 失败 | 项目手改看板 CSS / DOM 形成差异化版面 | A3 | 已覆盖 | 去 EMBED 后的骨架 sha256 漂移；plan 列入 M6，归一化后数据段仍与账本等价 | `test_platform_contract.BoardTest.test_drift_is_part_of_the_upgrade_plan` |
+| S1 | 规模 | 大项目账本体积 / 历史事件 / DOM 超预算 | A6 | 已覆盖 | scale_budget.py 按单一阈值表报 ok/warn/exceed，模板按 PAGE_SIZE 分批渲染，治理层文件数保持固定 | `test_platform_contract.BudgetTest.test_thresholds_flag_oversized_project` |
+| S2 | 规模 | 生成器全量重算的成本 | A2 | 部分 | 可复现基准 + 阈值告警；超阈值由人决定拆项目或归档，不做静默降级 | `test_platform_contract.BudgetTest.test_probe_shows_file_count_stays_fixed` |
 
 ## 最短流程（playbook）
 
@@ -96,6 +100,8 @@
 - **F6 看板 EMBED 与账本不一致**（已覆盖）：`重跑生成器`
 - **F7 多人同时改 registry.json**（部分）：`agent_gateway.py status 取 registry_sha256` → `request ... --expect-registry-sha <sha>` → `git 人工合并冲突`
   - 残差：只检测漂移，不自动合并；无 workspace 层时跨项目联合门禁仍缺（E7）
+- **F8 项目手改看板 CSS / DOM 形成差异化版面**（已覆盖）：`board_contract.py --target P check --json` → `upgrade.py --target P apply --approved-by <人>` → `board_contract.py --target P check`
+  - 要换样式只能改方法论模板并发版，再由升级推到所有项目
 
 ### 并发
 
@@ -121,7 +127,7 @@
 ### 时间
 
 - **T1 首次运行（无账本）**（已覆盖）：`build_capability_model.py --root P`
-- **T2 跨版本升级 / 迁移**（已覆盖）：`upgrade.py --target P plan --json` → `upgrade.py --target P apply --approved-by <人>` → `upgrade.py --target P verify --json` → `执行 post_upgrade 8 步`
+- **T2 跨版本升级 / 迁移**（已覆盖）：`upgrade.py --target P plan --json` → `upgrade.py --target P apply --approved-by <人>` → `upgrade.py --target P verify --json` → `执行 post_upgrade 11 步`
   - 迁移只加字段，不改 history.events，因此不追加历史事件；真正的 ledger_version 数据迁移仍需人工写专用方案
 - **T3 历史回溯 / 外部取证**（已覆盖）：`verify_ledger.py --strict --json`
 - **T4 git 历史被 rebase / force push 重写**（部分）：`scenario_guard.py --json` → `trace_git.py`
@@ -131,6 +137,8 @@
   - check.sh 只同步本仓库模板/示例，管不到已交付项目的工具副本，这一层由 upgrade 补
 - **U2 升级后证据未重新绑定**（已覆盖）：`run_tests.py --out governance/test_report.json` → `build_capability_model.py --test-report ... --strict-evidence`
   - 工具源码变化会让 evidence_binding 失配，verified 回落 declared 是正确行为，危险的是没人重跑
+- **U3 专家 / 技能 / 模板 / 文档资产漂移**（已覆盖）：`method_assets.py --check` → `upgrade.py --target P plan --json` → `upgrade.py --target P apply --approved-by <人>`
+  - 资产随方法论仓库 tag 升级、不复制进目标项目；绑定的是摘要，不是第二份文件
 
 ### 环境
 
@@ -159,11 +167,18 @@
 - **L10 模块拆分 / 重命名**（部分）：`保留编码，仅改 registry.name` → `重跑生成器`
   - 残差：跨仓/跨项目引用无法自动重写，需人工 new → old 映射并写入决策
 
+### 规模
+
+- **S1 大项目账本体积 / 历史事件 / DOM 超预算**（已覆盖）：`scale_budget.py --target P --json --check` → `scale_probe.py --mods 50 --caps 20 --files 1500 --json` → `file_layout.py --diff --target P --strict`
+  - 基准：1000 能力 / 1500 文件 / 80 事件 → 生成器 4.4s，账本 9.6 MiB，治理文件仍为 4
+- **S2 生成器全量重算的成本**（部分）：`scale_probe.py --json` → `scale_budget.py --target P --check`
+  - 残差：生成器按能力逐个扫 docs / tests，接近 O(能力 × 文件)，没有增量索引；触发升级条件：超过 1 万能力或 2 万文件且门禁耗时不可接受时，再引入缓存/分片，同时必须保持同一份账本可复算
+
 ## 公理索引
 
 - **A1** 状态完备：在哪 / 去哪 / 谁在改 / 凭什么 / 谁批准（7 个场景）
-- **A2** 证据有效：结论来自可复算证据，且对当前源码有效（9 个场景）
-- **A3** 单点写入：同一事实只有一个写入点（6 个场景）
+- **A2** 证据有效：结论来自可复算证据，且对当前源码有效（11 个场景）
+- **A3** 单点写入：同一事实只有一个写入点（7 个场景）
 - **A4** 时间可逆：历史不可篡改，能检测并发覆盖与中断（8 个场景）
 - **A5** 未知即停止：版本 / 路径 / 完整性存疑时 fail-closed（13 个场景）
-- **A6** 边界闭合：进入 / 冻结 / 归档 / 退役 / 失效都有出口（7 个场景）
+- **A6** 边界闭合：进入 / 冻结 / 归档 / 退役 / 失效都有出口（8 个场景）

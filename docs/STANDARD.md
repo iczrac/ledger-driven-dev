@@ -38,6 +38,9 @@
 | 新增 / 改名产物路径 | `15-文件架构`、`scripts/file_layout.py`、重新 `--emit-md`、`CHANGELOG` |
 | 改账本字段结构 | `02-决策账本`、`15-文件架构` 的 LEDGER_FIELDS、`09-历史与经验` |
 | 改工具副本 / 版本契约 | `16-升级与迁移`、`upgrade.py` 的 TOOLING / MIGRATIONS、`CHANGELOG` |
+| 改专家 / 技能 / 路由卡 / 编号文档 | `method_assets.py --check`（摘要必变）、`10-AI集成`、`12-专家路由`、`16-升级与迁移`、`18-规模化与版面契约`；所有目标项目需重新批准升级（M5） |
+| 改看板模板 / CSS / DOM / `PAGE_SIZE` | 归一化示例看板、`board_contract.py` 骨架摘要、`scale_budget.py` 预算、`15-文件架构`、`18-规模化与版面契约`、`CHANGELOG` |
+| 改规模阈值 / 基准口径 | `scale_budget.py` 的 `BUDGETS`、`scale_probe.py`、`18-规模化与版面契约`、`14-场景矩阵` |
 | 改角色 / 动作 / 权限 | `10-AI集成`、`12-专家路由`、`17-多Agent接入控制`、`route_expert.py`、`agent_gateway.py` |
 | 改场景定义 | 重新 `--emit-md` 渲染 `SCENARIO_MATRIX.md`，同步 `14-场景矩阵` 与探针 |
 | 任何发布 | `CHANGELOG`、`RELEASE_CHECKLIST` |
@@ -77,4 +80,6 @@
 - **治理目录里另起报告**：在 `governance/` 新建自制状态文档 —— 第二事实源，布局 `--diff` 会报越界。
 - **把账本内字段当文件找**：`lifecycle.log` / `capability_model` / `governance_meta` / `access` 是 JSON 字段，补建同名文件会分裂状态。
 - **把权限写成文档就算完成**：`EXPERT.md` 只是角色说明，必须同时有 `agent_gateway.py` 的执行点；没有默认拒绝，散文不是权限。
+- **在项目里改 CSS 追平版面**：模板才是唯一版式事实源；项目内改样式只会制造第二套呈现规则，并被骨架摘要判为漂移。
+- **项目变大就拆账本 / 删历史事件**：治理文件数本来就固定，体积靠预算与分批渲染管理；拆账本会破坏单一事实源。
 - **升级只跑 apply 不跑 post_upgrade**：工具源码变了但证据过期，`verified` 会静默回落 `declared`。

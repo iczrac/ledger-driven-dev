@@ -82,7 +82,7 @@ stage_sync(){
   note '模板 / 示例同步 + 看板 EMBED 一致'
   cmp -s templates/build_capability_model.py "$DEMO/build_capability_model.py" || return 1
   cmp -s templates/verify_ledger.py "$DEMO/verify_ledger.py" || return 1
-  python3 - "$DEMO" <<'PY'
+  python3 - "$DEMO" <<'PY' || return 1
 import json, re, sys
 base = sys.argv[1]
 html = open(f'{base}/index.html').read()
@@ -91,6 +91,8 @@ ledger = json.load(open(f'{base}/DECISION_LEDGER.json'))
 assert embed == ledger, '看板 EMBED 与账本不一致'
 print('  看板 EMBED 与账本一致；模板脚本与示例副本一致')
 PY
+  python3 scripts/board_contract.py --target examples/demo-shop check --json >/dev/null \
+    || { echo '  示例看板骨架与权威模板漂移'; return 1; }
 }
 stage_scenarios(){
   note '场景矩阵 + 生命周期预检'
@@ -160,6 +162,14 @@ stage_upgrade_access(){
   rm -rf "$tmp"
   echo '  升级计划/备份/复验、注册批准、写入审计、默认拒绝、21 条不变量均通过'
 }
+stage_contracts(){
+  note '资产 / 看板骨架 / 规模预算契约'
+  python3 scripts/method_assets.py --check >/dev/null || return 1
+  python3 scripts/board_contract.py --target examples/demo-shop check --json >/dev/null || return 1
+  python3 scripts/scale_budget.py --target examples/demo-shop --json --check >/dev/null || return 1
+  python3 scripts/scale_probe.py --mods 3 --caps 5 --files 40 --events 2 >/dev/null || return 1
+  echo '  资产清单齐备、示例骨架与模板一致、规模预算 ok、基准可复现'
+}
 stage_hygiene(){
   note '脱敏 + 文档内链'
   if grep -rliE 'RacOS|APEX|Tushare|tdx-connector|ClickHouse|Minervini|Keychain' \
@@ -203,6 +213,7 @@ else
   run '场景矩阵' stage_scenarios
   run '文件布局' stage_layout
   run '升级与接入' stage_upgrade_access
+  run '资产与版面契约' stage_contracts
   run '幂等' stage_idempotence
   run '同步' stage_sync
   run '卫生' stage_hygiene
@@ -213,4 +224,4 @@ if [ "$FAILURES" -gt 0 ]; then
   printf '质量门禁失败：%d 个阶段未通过\n' "$FAILURES"
   exit 1
 fi
-printf '质量门禁全绿：测试 / 证据分层 / 21 条不变量 / 场景矩阵 / 文件布局 / 升级与接入 / 幂等 / 同步 / 脱敏 / 文档链接\n'
+printf '质量门禁全绿：测试 / 证据分层 / 21 条不变量 / 场景矩阵 / 文件布局 / 升级与接入 / 资产与版面契约 / 幂等 / 同步 / 脱敏 / 文档链接\n'

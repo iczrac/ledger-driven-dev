@@ -98,7 +98,7 @@ EXPERT.md     ──散文──>  Agent  （靠"记得遵守"）
 ```bash
 python3 scripts/upgrade.py --target P plan --json
 python3 scripts/upgrade.py --target P apply --approved-by 张三
-# 按 plan.post_upgrade 的 8 步重新取证、复验（见 16）
+# 按 plan.post_upgrade 的 11 步重新取证、核对资产/版面/预算并复验（见 16、18）
 python3 scripts/agent_gateway.py --target P status --json
 ```
 

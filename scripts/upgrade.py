@@ -16,11 +16,13 @@ v0.9.0 只做了 `ledger_version` 的 fail-closed，于是已有项目面临三�
 
     PLAN → SNAPSHOT → APPLY → VERIFY → RE-BASELINE → AUDIT
 
-版本三轴（缺一不可）
+版本五轴（缺一不可）
 --------------------
     method_version   方法论/工具链版本（本文件 METHOD_VERSION），写进账本
     ledger_version   账本数据契约版本（1.0）；不兼容时只 fail-closed，不猜迁移
     tool hashes      3 个工具副本的 sha256，与 templates/ scripts/ 逐一比对
+    method_assets    专家/技能/路由/模板/文档整包摘要；资产升级必须重新批准
+    board_skeleton   去 EMBED 后的看板骨架 sha256；统一 CSS/DOM/JS，禁止项目改版
 
 纪律
 ----
@@ -56,12 +58,16 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from ledger_io import (board_synced, load_ledger, sha256_bytes, sha256_file,
                        write_ledger)  # noqa: E402
 from scenario_guard import _binding_fresh  # noqa: E402
+from board_contract import check as board_check  # noqa: E402
+from board_contract import normalize_board, template_digest  # noqa: E402
+from method_assets import check as assets_check  # noqa: E402
+from method_assets import manifest as assets_manifest  # noqa: E402
 
 SOURCE_ROOT = Path(__file__).resolve().parents[1]
 SCHEMA_PLAN = "upgrade-plan/1"
 SCHEMA_APPLY = "upgrade-apply/1"
 SCHEMA_VERIFY = "upgrade-verify/1"
-METHOD_VERSION = "1.0.0"
+METHOD_VERSION = "1.1.0"
 LEDGER_SCHEMA_VERSION = "1.0"
 SUPPORTED_LEDGER_VERSIONS = {"1.0"}
 ACCESS_SCHEMA = "access/1"
@@ -88,6 +94,12 @@ MIGRATIONS: list[dict] = [
     dict(id="M4-method-version", field="", kind="meta-refresh",
          name="刷新 method_version 与工具摘要", approval=False,
          note="只在 M1 之后运行；记录本次升级后的 3 个 sha256"),
+    dict(id="M5-method-assets", field="governance_meta.method_assets", kind="meta-refresh",
+         name="绑定整包方法论资产摘要（专家/技能/模板/文档/路由）", approval=False,
+         note="资产随仓库 tag 升级、不复制进项目；digest 变化即要求重新批准升级"),
+    dict(id="M6-board-skeleton", field="governance_meta.board_skeleton", kind="board-normalize",
+         name="用权威模板重建看板骨架（CSS/DOM/JS）", approval=True,
+         note="只换骨架，数据段仍是当前账本；禁止项目自定义版面"),
 ]
 
 POST_UPGRADE: list[str] = [
@@ -96,6 +108,9 @@ POST_UPGRADE: list[str] = [
     "--test-report governance/test_report.json --strict-evidence",
     "cd P && python3 governance/verify_ledger.py --root . --strict",
     "python3 scripts/upgrade.py --target P verify --json",
+    "python3 scripts/board_contract.py --target P check --json",
+    "python3 scripts/scale_budget.py --target P --json --check",
+    "python3 scripts/method_assets.py --check",
     "python3 scripts/scenario_guard.py --target P --strict",
     "python3 scripts/file_layout.py --diff --target P --strict",
     "python3 scripts/agent_gateway.py --target P status --json",
@@ -172,6 +187,10 @@ def plan(target: Path, source_root: Path = SOURCE_ROOT) -> dict:
                            fix="升级方法论仓库本身，不要用旧工具降级写新账本"))
 
     rows = tool_rows(target, source_root)
+    assets = assets_manifest(source_root)
+    bcheck = board_check(target, source_root)
+    recorded_assets = (meta.get("method_assets")
+                       if isinstance(meta.get("method_assets"), dict) else {})
     needed: list[dict] = []
     if ledger:
         if "governance_meta" not in ledger:
@@ -182,11 +201,16 @@ def plan(target: Path, source_root: Path = SOURCE_ROOT) -> dict:
             needed.append(MIGRATIONS[2])
         if meta.get("method_version") != METHOD_VERSION:
             needed.append(MIGRATIONS[3])
+        if recorded_assets.get("digest") != assets["digest"]:
+            needed.append(MIGRATIONS[4])
+        if not bcheck["match"]:
+            needed.append(MIGRATIONS[5])
 
     noop = bool(ledger) and not needed and not blocks
     risk = ("blocked" if blocks else
             "none" if noop else
-            "medium" if any(m["kind"] == "tool-sync" for m in needed) else "low")
+            "medium" if any(m["kind"] in ("tool-sync", "board-normalize")
+                            for m in needed) else "low")
     writes = ["governance/DECISION_LEDGER.json", "governance/index.html"]
     if any(m["kind"] == "tool-sync" for m in needed):
         writes += [r["path"] for r in rows if r["state"] != "in-sync"]
@@ -201,6 +225,10 @@ def plan(target: Path, source_root: Path = SOURCE_ROOT) -> dict:
                         "requires_approval": m["approval"], "note": m["note"]}
                        for m in needed],
         "tools": rows,
+        "assets": {"digest": assets["digest"], "file_count": assets["file_count"],
+                   "counts": assets["counts"], "recorded_digest": recorded_assets.get("digest")},
+        "board": {"match": bcheck["match"], "template_digest": bcheck["template_digest"],
+                  "board_digest": bcheck["board_digest"], "reason": bcheck["reason"]},
         "blocks": blocks,
         "noop": noop,
         "risk": risk,
@@ -253,7 +281,7 @@ def apply(target: Path, approved_by: str, *,
         raise ValueError("升级被前置条件阻止：" + "；".join(b["id"] for b in p["blocks"]))
     if p["noop"]:
         return {"schema": SCHEMA_APPLY, "noop": True,
-                "message": "已是 v1.0.0 且工具副本一致，无需写入"}
+                "message": f"已是 v{METHOD_VERSION} 且工具/资产/骨架一致，无需写入"}
 
     gov = target / "governance"
     ledger = load_ledger(gov)
@@ -278,17 +306,36 @@ def apply(target: Path, approved_by: str, *,
         dst.parent.mkdir(parents=True, exist_ok=True)
         shutil.copyfile(src, dst)
 
+    # 骨架归一：统一快照已备份 index.html，这里不再重复备份；
+    # 只换 CSS/DOM/JS 骨架，数据段随后由 write_ledger 用最终账本同步。
+    if "M6-board-skeleton" in ids:
+        normalize_board(gov, ledger, source_root,
+                        approved_by=approved_by, apply=True, backup_root=None)
+
+    assets = assets_manifest(source_root)
     meta["method_version"] = METHOD_VERSION
     meta["ledger_version"] = str(ledger.get("ledger_version", LEDGER_SCHEMA_VERSION))
     meta["schema_version"] = LEDGER_SCHEMA_VERSION
     meta["tools"] = {r["path"]: r["expected_sha256"] for r in p["tools"]}
+    meta["method_assets"] = {
+        "algorithm": assets["algorithm"], "digest": assets["digest"],
+        "file_count": assets["file_count"], "counts": assets["counts"],
+        "source": "方法论仓库 tag（不复制进目标项目）",
+    }
+    meta["board_skeleton"] = {
+        "digest": template_digest(source_root),
+        "source": "templates/index.html.template",
+        "note": "去 EMBED 后的骨架 sha256；禁止在项目内自定义版面",
+    }
     applied = list(dict.fromkeys((meta.get("migrations_applied") or []) + ids))
     meta["migrations_applied"] = applied
     log = meta.setdefault("upgrade_log", [])
     log.append({"seq": len(log) + 1, "at": _now(), "action": "apply",
                 "from": p["from_method"], "to": METHOD_VERSION,
                 "approved_by": approved_by, "migrations": ids,
-                "backup": bid, "risk": p["risk"]})
+                "backup": bid, "risk": p["risk"],
+                "assets_digest": assets["digest"][:16],
+                "board_skeleton": meta["board_skeleton"]["digest"][:16]})
     write_ledger(gov, ledger)
     return {"schema": SCHEMA_APPLY, "noop": False, "backup": bid,
             "from": p["from_method"], "to": METHOD_VERSION,
@@ -339,6 +386,21 @@ def verify(target: Path, source_root: Path = SOURCE_ROOT) -> dict:
             f"接入登记 {acc.get('schema', '缺失')}",
             "" if acc.get("schema") == ACCESS_SCHEMA else "升级会建立默认拒绝的 access 登记")
 
+        want_assets = assets_manifest(source_root)["digest"]
+        rec = meta.get("method_assets") if isinstance(meta.get("method_assets"), dict) else {}
+        got_assets = rec.get("digest")
+        add("method_assets", "pass" if got_assets == want_assets else "warn",
+            "专家/技能/模板/文档资产摘要一致" if got_assets == want_assets else
+            f"资产漂移：项目记录 {str(got_assets)[:12] or '缺失'} / 仓库 {want_assets[:12]}",
+            "" if got_assets == want_assets else
+            "方法论资产已升级；重新 plan → 人批准 apply → 复验")
+
+        bcheck = board_check(target, source_root)
+        add("board_skeleton", "pass" if bcheck["match"] else "warn",
+            "看板骨架与权威模板一致" if bcheck["match"] else bcheck["reason"],
+            "" if bcheck["match"] else
+            "board_contract.py normalize 或 upgrade.py apply（禁止手改 CSS/DOM）")
+
         report_path = gov / "test_report.json"
         if report_path.is_file():
             try:
@@ -368,6 +430,7 @@ def verify(target: Path, source_root: Path = SOURCE_ROOT) -> dict:
             "upgrade_complete": not blocked and all(
                 c["status"] == "pass" for c in checks
                 if c["id"] in ("method_version", "tool_hashes", "access_schema",
+                               "method_assets", "board_skeleton",
                                "evidence_rebaseline")),
             "post_upgrade_required": list(POST_UPGRADE),
             "overall": "block" if blocked else "pass"}
@@ -433,6 +496,9 @@ def check_definitions(source_root: Path = SOURCE_ROOT) -> list[str]:
         m = re.search(r"scripts/([\w_]+\.py)", cmd)
         if m and not (source_root / "scripts" / m.group(1)).is_file():
             errs.append(f"升级后流程引用了不存在的脚本：{m.group(1)}")
+    if not (source_root / "templates" / "index.html.template").is_file():
+        errs.append("看板权威模板不存在：templates/index.html.template")
+    errs.extend(assets_check(source_root)["errors"])
     return errs
 
 
@@ -444,6 +510,11 @@ def _render(result: dict) -> str:
                  (", ".join(m["id"] for m in result["migrations"]) or "无（noop）")]
         for r in result["tools"]:
             lines.append(f"  工具 {r['path']}: {r['state']}")
+        lines.append(f"  资产 {result['assets']['file_count']} 个 · 摘要 "
+                     f"{result['assets']['digest'][:12]}（项目记录 "
+                     f"{str(result['assets']['recorded_digest'])[:12] or '缺失'}）")
+        lines.append("  看板骨架 " + ("一致" if result["board"]["match"] else
+                                    "漂移 → " + result["board"]["reason"]))
         for b in result["blocks"]:
             lines.append(f"  [BLOCK] {b['id']}：{b['reason']} → {b['fix']}")
         if result["post_upgrade"]:

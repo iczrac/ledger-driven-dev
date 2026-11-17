@@ -2,6 +2,59 @@
 
 本项目版本遵循语义化版本（SemVer）。
 
+## [1.1.0] - 2026-11-18
+
+三个反问：专家和 skill 是否一起升级、项目 HTML 是否已有统一样式避免差异化版面、
+项目大且需生成的文件数量多时是否有对应考量。核对后发现这三者都是**一致性约束**，
+v1.0.0 只有隐含约定、没有可校验契约：
+
+- 专家 / 技能 / 路由卡 / 模板 / 文档随仓库 tag 发版，但目标账本没记录这批资产；
+  用旧专家卡指挥新骨架，`verify` 仍全绿。
+- 看板同步器与 21 条不变量只校验 `EMBED` 数据段；项目手改 CSS、删 tab 或留着旧模板，
+  `board_embed_synced` 照样通过，呈现规则分裂。
+- 治理层文件数本来就固定，但账本 / 看板体积、历史事件全量快照与浏览器 DOM
+  没有任何预算、分页或可复现基准。
+
+### 新增
+
+- **`scripts/method_assets.py`**（`method-assets/1`）：只读扫描 6 组资产
+  （experts / skills / scripts / templates / 编号文档 / STANDARD），按相对路径聚合 sha256。
+  摘要写进账本内 `governance_meta.method_assets`；任一资产变化 → `plan` 列 M5、
+  `verify` 的 `method_assets` 变 warn、`upgrade_complete=false`。**资产不复制进目标项目**。
+- **`scripts/board_contract.py`**（`board-contract/1`）：把 EMBED 换成占位符后对剩余全部字节
+  取骨架 sha256；`check` 只读、`normalize` 默认 dry-run 且需人批准。
+  `upgrade.py` 新增 M6，用唯一模板重建 CSS/DOM/JS，数据段仍由账本同步。
+- **`templates/index.html.template`**：新增 `const PAGE_SIZE=200` 与通用 `moreHtml` / `bindMore`，
+  条目 / 时间线 / 架构 / 模块 / 能力 / 历史 / 经验七个视图统一分批渲染；CSS 不变。
+- **`scripts/scale_budget.py`**（`scale-budget/1`）：9 条阈值只读预算，报
+  `ok / warn / exceed`；渲染上限直接从模板解析，避免口径漂移；不落盘报告、不拆账本。
+- **`scripts/scale_probe.py`**（`scale-probe/1`）：临时目录合成大项目并真实跑生成器，
+  量化耗时与体积。实测 50 能力/100 文件 → 0.135s、账本 184 KiB；
+  400 能力/500 文件/30 事件 → 0.723s、2.1 MiB；
+  1000 能力/1500 文件/80 事件 → 4.406s、9.4 MiB；**治理文件数始终为 4**。
+- **三个技能**：`method-assets` / `board-layout` / `scale-budget`（共 17 个技能）；
+  `platform-steward` 与 `evidence-auditor` 挂上新技能，路由 `migrate` 意图与推荐命令同步。
+- **`docs/18-规模化与版面契约.md`**：三问的完整答案、阈值表、实测基准、超预算流程与反模式；
+  `docs/16` 升为版本五轴 / 六条迁移 / 11 步 `post_upgrade` / 9 项 `verify`。
+
+### 单一事实源同步
+
+- `scenario_matrix.py`：50 → **54 场景 / 8 轴**，新增 U3、F8、S1（covered）与 S2（partial）；
+  有效覆盖率 82.0% → **82.4%**（41 covered / 7 partial / 5 by-design / 1 gap）。
+- `file_layout.py`：仍 27 条路径，账本内字段 9 → **10**（`method_assets` / `board_skeleton`）；
+  `NOT_IN_TARGET` 对齐 `docs/01-18`，示例看板按新模板归一。
+- `upgrade.py`：版本三轴 → **五轴**，M1–M6 迁移，`post_upgrade` 8 → **11 步**，
+  `verify` 7 → **9 项**，`upgrade_complete` 需六项全 pass。
+- `check.sh` 新增「资产与版面契约」阶段（`method_assets --check` / `board_contract check` /
+  `scale_budget --check` / `scale_probe` 小档），`stage_sync` 增加示例骨架一致性检查。
+
+### 结果与边界
+
+**172 个 unittest 用例**（新增 16 个契约专项）、21 条不变量、`check.sh` 全绿。
+诚实保留：生成器全量重算无增量索引（S2 `partial`）；E7 monorepo 联合门禁仍是唯一 `gap`；
+F7 只检测 registry 漂移不自动合并；网关仍是策略执行点而非 OS 沙箱；
+`ledger_version` 数据契约迁移仍需人工专用方案。
+
 ## [1.0.0] - 2026-11-17
 
 从第一性原理回答四个问题：还应该补什么、怎么升级、升级后有没有流程、不同 Agent 如何接入控制开发。

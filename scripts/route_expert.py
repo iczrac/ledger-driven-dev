@@ -55,7 +55,8 @@ EXPERT_CARDS = {
     "evidence-auditor": {
         "title": "证据审计专家",
         "duty": "跑不变量与实测报告，识别假绿灯；失败时冻结后续写入。",
-        "skills": ["ledger-guard", "ledger-verify", "graph-compare", "layout-inspect", "agent-gate"],
+        "skills": ["ledger-guard", "ledger-verify", "graph-compare", "layout-inspect",
+                   "agent-gate", "board-layout", "scale-budget"],
         "writes": [],
     },
     "loop-executor": {
@@ -74,7 +75,8 @@ EXPERT_CARDS = {
     "platform-steward": {
         "title": "平台治理专家",
         "duty": "治理骨架升级与多 Agent 接入登记的规划与协调；只准备计划与交接卡，不替人批准。",
-        "skills": ["ledger-upgrade", "agent-gate", "scenario-guard", "layout-inspect"],
+        "skills": ["ledger-upgrade", "agent-gate", "scenario-guard", "layout-inspect",
+                   "board-layout", "scale-budget"],
         "writes": ["governance_meta", "access（均需人批准，由脚本执行）"],
     },
 }
@@ -96,7 +98,10 @@ INTENT_PATTERNS = {
                 "archive", "freeze", "unfreeze", "handover"),
     "migrate": ("跨版本", "版本升级", "schema", "账本升级", "升级治理骨架",
                 "方法论升级", "工具副本", "回滚升级", "升级后流程",
-                "migrate", "migration", "upgrade", "rollback", "ledger_version"),
+                "专家升级", "技能升级", "资产摘要", "看板骨架", "版面差异",
+                "规模预算", "项目太大",
+                "migrate", "migration", "upgrade", "rollback", "ledger_version",
+                "method-assets", "board-contract", "scale-budget"),
     "access": ("接入 agent", "注册 agent", "多 agent", "agent 权限", "越权",
                "谁能改账本", "接入控制", "审计", "租约",
                "agent registry", "access control", "register agent"),
@@ -298,7 +303,7 @@ def decide(facts: dict, scores: dict[str, int], explicit_mode: str) -> dict:
         }
     elif primary in ("migrate", "access"):
         # 元层意图优先于项目状态：规则本身变了、或要授予写入权限时，
-        # 不能由考古/执行专家顺手完成——批准门与版本三轴需要独立负责人。
+        # 不能由考古/执行专家顺手完成——批准门与版本五轴需要独立负责人。
         route = _card("platform-steward", "high",
                       "治理骨架升级 / 多 Agent 接入属于元层动作：先只读计划，"
                       "再由人批准应用与注册；完成后必须重新取证与复验。", facts,
@@ -443,6 +448,9 @@ def commands_for(expert: str, target_display: str) -> list[str]:
             f"python3 scripts/agent_gateway.py --target {t} status --json",
             f"python3 scripts/agent_gateway.py --target {t} register --agent ci-agent --role loop-executor --approved-by 审批人姓名 --apply",
             f"python3 scripts/file_layout.py --diff --target {t} --strict",
+            f"python3 scripts/method_assets.py --check",
+            f"python3 scripts/board_contract.py --target {t} check --json",
+            f"python3 scripts/scale_budget.py --target {t} --json --check",
         ],
     }.get(expert, ["python3 scripts/route_expert.py --help"])
 

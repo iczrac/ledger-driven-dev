@@ -175,7 +175,7 @@ SCENARIOS: list[dict] = [
                "+ test_scenarios.ScenarioProbeTest.test_unsupported_version_blocks",
          flow=["upgrade.py --target P plan --json",
                "upgrade.py --target P apply --approved-by <人>",
-               "upgrade.py --target P verify --json", "执行 post_upgrade 8 步"],
+               "upgrade.py --target P verify --json", "执行 post_upgrade 11 步"],
          note="迁移只加字段，不改 history.events，因此不追加历史事件；"
               "真正的 ledger_version 数据迁移仍需人工写专用方案"),
     dict(id="T3", axis="时间", name="历史回溯 / 外部取证", axiom="A4", status="covered",
@@ -285,6 +285,38 @@ SCENARIOS: list[dict] = [
          flow=["平台只把 agent_gateway.py 注册为写工具", "CI 只接受带 audit 的产物"],
          note="理由：强隔离需要容器 / 只读挂载 / 文件系统权限，超出纯文本方法范围；"
               "刻意不在脚本里伪装成安全边界"),
+    # U / F / S：资产、版面与规模（v1.1.0）
+    dict(id="U3", axis="时间", name="专家 / 技能 / 模板 / 文档资产漂移", axiom="A2",
+         status="covered",
+         expected="整包资产摘要写进账本；任一资产变化即 plan 要求 M5 重新批准，verify 不再宣布完成",
+         probe="test_platform_contract.AssetsTest.test_upgrade_binds_assets_and_detects_drift",
+         flow=["method_assets.py --check", "upgrade.py --target P plan --json",
+               "upgrade.py --target P apply --approved-by <人>"],
+         note="资产随方法论仓库 tag 升级、不复制进目标项目；绑定的是摘要，不是第二份文件"),
+    dict(id="F8", axis="失败", name="项目手改看板 CSS / DOM 形成差异化版面", axiom="A3",
+         status="covered",
+         expected="去 EMBED 后的骨架 sha256 漂移；plan 列入 M6，归一化后数据段仍与账本等价",
+         probe="test_platform_contract.BoardTest.test_drift_is_part_of_the_upgrade_plan",
+         flow=["board_contract.py --target P check --json",
+               "upgrade.py --target P apply --approved-by <人>",
+               "board_contract.py --target P check"],
+         note="要换样式只能改方法论模板并发版，再由升级推到所有项目"),
+    dict(id="S1", axis="规模", name="大项目账本体积 / 历史事件 / DOM 超预算", axiom="A6",
+         status="covered",
+         expected="scale_budget.py 按单一阈值表报 ok/warn/exceed，模板按 PAGE_SIZE 分批渲染，"
+                  "治理层文件数保持固定",
+         probe="test_platform_contract.BudgetTest.test_thresholds_flag_oversized_project",
+         flow=["scale_budget.py --target P --json --check",
+               "scale_probe.py --mods 50 --caps 20 --files 1500 --json",
+               "file_layout.py --diff --target P --strict"],
+         note="基准：1000 能力 / 1500 文件 / 80 事件 → 生成器 4.4s，账本 9.6 MiB，治理文件仍为 4"),
+    dict(id="S2", axis="规模", name="生成器全量重算的成本", axiom="A2", status="partial",
+         expected="可复现基准 + 阈值告警；超阈值由人决定拆项目或归档，不做静默降级",
+         probe="test_platform_contract.BudgetTest.test_probe_shows_file_count_stays_fixed",
+         flow=["scale_probe.py --json", "scale_budget.py --target P --check"],
+         note="残差：生成器按能力逐个扫 docs / tests，接近 O(能力 × 文件)，没有增量索引；"
+              "触发升级条件：超过 1 万能力或 2 万文件且门禁耗时不可接受时，"
+              "再引入缓存/分片，同时必须保持同一份账本可复算"),
 ]
 
 

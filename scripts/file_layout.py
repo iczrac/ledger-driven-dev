@@ -12,7 +12,7 @@
   - ``tests/test_layout.py`` 对以上行为做负向与幂等证明。
 
 关键边界：本清单描述的是**被治理项目（target）**，
-不是方法论仓库自身。experts/ / skills/ / scripts/ / docs/01-17 等
+不是方法论仓库自身。experts/ / skills/ / scripts/ / docs/01-18 等
 永远不会复制进目标项目；只有 3 个工具脚本副本以 governance/*.py 落地。
 账本内的 lifecycle.log / governance_meta / access 等是 **JSON 字段**，
 不是独立文件，见 LEDGER_FIELDS。升级备份与写入锁放在项目根的运行时层，
@@ -114,11 +114,12 @@ ENTRIES: list[dict] = [
 
     # ---------------- 派生层 ----------------
     dict(path="governance/index.html", kind="file", layer="派生层", origin="new",
-         presence="required", owner="build_capability_model.py / lifecycle.py",
+         presence="required",
+         owner="build_capability_model.py / lifecycle.py / upgrade.py / board_contract.py",
          producer="templates/build_capability_model.py", write="rewrite", commit="yes",
-         guard="board_embed_synced 不变量",
-         purpose="可视化看板；内嵌 EMBED 必须与账本逐字节等价，离线双击即可查看九个视图。",
-         note="lifecycle.py 改状态时会同步 EMBED，所以状态变更后仍满足 21 条不变量。",
+         guard="board_embed_synced 不变量 + 去 EMBED 后的骨架 sha256（board_contract.py）",
+         purpose="可视化看板；EMBED 与账本逐字节等价，CSS/DOM/JS 骨架与权威模板一致、按 PAGE_SIZE 分批渲染。",
+         note="lifecycle.py 改状态时同步 EMBED；禁止在项目里改样式，换版面要改模板并发版再由 upgrade 归一。",
          expect="index.html"),
     dict(path="governance/test_report.json", kind="file", layer="派生层", origin="new",
          presence="on-demand", owner="run_tests.py", producer="scripts/run_tests.py",
@@ -258,7 +259,10 @@ LEDGER_FIELDS: list[dict] = [
          purpose="接入来源（template / 草稿相对路径）、模式与意图，外部绝对路径自动脱敏。"),
     dict(path="governance_meta / upgrade_log", owner="upgrade.py",
          write="state-field / append-only",
-         purpose="版本三轴、已应用迁移、工具 sha256 与升级/回滚日志。**不是 UPGRADE_LOG.md 文件**。"),
+         purpose="版本五轴、已应用迁移、工具 sha256 与升级/回滚日志。**不是 UPGRADE_LOG.md 文件**。"),
+    dict(path="governance_meta.method_assets / board_skeleton", owner="upgrade.py",
+         write="state-field",
+         purpose="整包专家/技能/模板/文档摘要，以及看板骨架摘要；资产或版面漂移必须重新批准升级。"),
     dict(path="access / access.audit", owner="agent_gateway.py",
          write="state-field / append-only",
          purpose="Agent 名册、编码租约、revision 与写入审计。**不是 AGENTS.yaml 或独立审计日志**。"),
@@ -266,9 +270,10 @@ LEDGER_FIELDS: list[dict] = [
 
 # 方法论仓库自身：不会进入被治理项目。
 NOT_IN_TARGET: list[dict] = [
-    dict(path="experts/、skills/", reason="专家与技能资产，供 Agent 平台加载，不是项目源码。"),
+    dict(path="experts/、skills/", reason="专家与技能资产，随方法论仓库 tag 一起升级，不是项目源码；"
+                                   "只有聚合摘要写进项目账本 governance_meta.method_assets。"),
     dict(path="scripts/、templates/、tests/", reason="方法论自身的工具、模板与测试；只有 3 个脚本副本落到 governance/。"),
-    dict(path="docs/01-17、docs/STANDARD.md", reason="方法论文档，属于本仓库而非被治理项目。"),
+    dict(path="docs/01-18、docs/STANDARD.md", reason="方法论文档，属于本仓库而非被治理项目。"),
     dict(path="docs/generated/SCENARIO_MATRIX.md、FILE_LAYOUT.md",
          reason="本仓库的机器渲染矩阵；目标项目只会得到 docs/generated/ 下那 4 份项目级文档。"),
     dict(path="examples/、.github/workflows/、CHANGELOG.md、RELEASE_CHECKLIST.md",

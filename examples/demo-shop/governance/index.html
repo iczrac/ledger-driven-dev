@@ -149,15 +149,28 @@ const STATUS = {
   superseded:{label:'已被取代',cls:'p-superseded'}
 };
 let view='all', query='';
+// 规模契约：所有项目共用同一模板与同一分批上限；禁止在项目里改 CSS / DOM / 此常量。
+// scale_budget.py 会解析 PAGE_SIZE，保证预算口径与实际渲染一致。
+const PAGE_SIZE=200;
+let pageLimit=PAGE_SIZE;
+function moreHtml(total,shown,label){
+  if(total<=shown) return '';
+  return '<div class="empty"><button class="tab" id="btn-more" type="button">显示更多'+esc(label||'')+
+    '（已 '+shown+' / 共 '+total+' · 每批 '+PAGE_SIZE+'）</button></div>';
+}
+function bindMore(box){
+  const b=box.querySelector('#btn-more');
+  if(b) b.onclick=()=>{pageLimit+=PAGE_SIZE;render();};
+}
 
 function init(){
   // 优先从同目录 JSON 读取（更新后自动同步），失败回退内嵌
   fetch('DECISION_LEDGER.json').then(r=>r.ok?r.json():Promise.reject()).then(d=>{DATA=d;render();}).catch(()=>render());
   document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{
     document.querySelectorAll('.tab').forEach(x=>x.classList.remove('on'));
-    t.classList.add('on'); view=t.dataset.v; render();
+    t.classList.add('on'); view=t.dataset.v; pageLimit=PAGE_SIZE; render();
   });
-  document.getElementById('q').oninput=e=>{query=e.target.value.toLowerCase();render();};
+  document.getElementById('q').oninput=e=>{query=e.target.value.toLowerCase();pageLimit=PAGE_SIZE;render();};
 }
 
 function esc(s){return String(s==null?'':s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));}
@@ -211,6 +224,8 @@ function render(){
 
   let list=es.filter(match);
   if(view==='pending') list=list.filter(e=>e.status==='proposed'||e.status==='deferred');
+  const totalEntries=list.length;
+  list=list.slice(0,pageLimit);
 
   const box=document.getElementById('list');
   if(view==='capability'){ renderCapability(box); return; }
@@ -220,7 +235,11 @@ function render(){
     document.getElementById('legend').innerHTML='<span>点击项目展开 → 模块 → 嵌套组件树（目录/文件逐层展开）→ 文档索引 → 能力编码 → 决策控制。组件由源码目录真实提取。</span>';
     let ps=DATA.architecture.projects;
     if(query) ps=ps.filter(p=>[p.name,p.id,p.role,(p.modules||[]).map(m=>m.name+(m.components||[]).join()).join()].join(' ').toLowerCase().includes(query));
-    box.innerHTML=ps.length?ps.map(projectCard).join(''):'<div class="empty">无匹配项目</div>';
+    const totalProjects=ps.length;
+    ps=ps.slice(0,pageLimit);
+    box.innerHTML=(ps.length?ps.map(projectCard).join(''):'<div class="empty">无匹配项目</div>')+
+      moreHtml(totalProjects,ps.length,' 个项目');
+    bindMore(box);
     return;
   }
   if(view==='modules'){
@@ -228,10 +247,14 @@ function render(){
     document.getElementById('legend').innerHTML='<span>源码 → 文档 → 控制中心 section → 可视化页面 → 关联决策，一屏对应</span>';
     let mods=mm.modules;
     if(query) mods=mods.filter(m=>[m.name,m.id,(m.source||[]).join(),(m.docs||[]).join(),(m.cc_section||[]).join(),m.page].join(' ').toLowerCase().includes(query));
-    box.innerHTML=mods.length?mods.map(m=>modCard(m,mm)).join(''):'<div class="empty">无匹配模块</div>';
+    const totalModules=mods.length;
+    mods=mods.slice(0,pageLimit);
+    box.innerHTML=(mods.length?mods.map(m=>modCard(m,mm)).join(''):'<div class="empty">无匹配模块</div>')+
+      moreHtml(totalModules,mods.length,' 个模块');
+    bindMore(box);
     return;
   }
-  if(!list.length){box.innerHTML='<div class="empty">无匹配条目</div>';return;}
+  if(!totalEntries){box.innerHTML='<div class="empty">无匹配条目</div>';return;}
 
   if(view==='timeline'){
     const groups={};list.forEach(e=>{(groups[e.date]=groups[e.date]||[]).push(e)});
@@ -239,8 +262,10 @@ function render(){
   }else{
     box.innerHTML=list.map(card).join('');
   }
+  box.innerHTML+=moreHtml(totalEntries,list.length,' 条决策');
   box.querySelectorAll('.toggle').forEach(t=>t.onclick=()=>t.closest('.card').classList.toggle('open'));
   bindCapLinks(box);
+  bindMore(box);
 }
 function bindCapLinks(box){
   box.querySelectorAll('[data-cap]').forEach(a=>a.onclick=ev=>{
@@ -340,6 +365,8 @@ function renderHistory(box){
   document.getElementById('legend').innerHTML='<span>'+esc(spec.purpose||'')+' · '+esc(spec.invariant||'')+'</span>';
   let shown=evs;
   if(query) shown=evs.filter(e=>JSON.stringify(e).toLowerCase().includes(query));
+  const totalEvents=shown.length;
+  shown=shown.slice(Math.max(0,shown.length-pageLimit)); // 大项目优先展示最近一批事件
   let html='<div class="specbox"><b>事件</b> '+evs.length+' 条 · 当前指纹 <span class="fp">'+esc(h.current_fingerprint||'')+'</span><br>'+
     '<b>机制</b> '+esc(spec.fingerprint||'')+'</div>';
   html+=shown.length?shown.map(e=>{
@@ -365,20 +392,24 @@ function renderHistory(box){
       (evc?'<div style="margin:6px 0"><span class="k">证据变化</span> '+evc+'</div>':'')+
       (e.note?'<div class="cmeta">'+esc(e.note)+'</div>':'')+snap+'</div>';
   }).join(''):'<div class="empty">无匹配历史事件</div>';
-  box.innerHTML=html; bindCapLinks(box);
+  html+=moreHtml(totalEvents,shown.length,' 条事件');
+  box.innerHTML=html; bindCapLinks(box); bindMore(box);
 }
 
 function renderLessons(box){
   const ls=DATA.lessons||{}, items=ls.items||[], cands=ls.candidates||[], spec=ls.spec||{};
   document.getElementById('legend').innerHTML='<span>'+esc(spec.purpose||'')+'</span>';
   const filt=x=>!query||JSON.stringify(x).toLowerCase().includes(query);
-  const I=items.filter(filt), C=cands.filter(filt);
+  let I=items.filter(filt), C=cands.filter(filt);
+  const nI=I.length, nC=C.length, lessonTotal=nI+nC;
+  I=I.slice(0,pageLimit); C=C.slice(0,pageLimit);
   let html='<div class="specbox"><b>工作流</b> '+(spec.workflow||[]).map(x=>esc(x)).join(' → ')+'</div>';
-  html+='<div class="day">已确认经验（'+I.length+'）→ 自动附到任务卡</div>';
+  html+='<div class="day">已确认经验（'+nI+'）→ 自动附到任务卡</div>';
   html+=I.length?I.map(x=>lessonCard(x,true)).join(''):'<div class="empty">暂无已确认经验：将候选确认后补上洞察与行动，下一轮任务卡即可携带</div>';
-  html+='<div class="day">待确认候选（'+C.length+'）→ 机器识别的信号，需人/AI 下结论</div>';
+  html+='<div class="day">待确认候选（'+nC+'）→ 机器识别的信号，需人/AI 下结论</div>';
   html+=C.length?C.map(x=>lessonCard(x,false)).join(''):'<div class="empty">暂无候选：出现能力降级 / 长期停滞 / 决策被取代时自动生成</div>';
-  box.innerHTML=html; bindEventLinks(box);
+  html+=moreHtml(lessonTotal,I.length+C.length,' 条经验');
+  box.innerHTML=html; bindEventLinks(box); bindMore(box);
 }
 function lessonCard(x, confirmed){
   const sc=x.scope||{}, sug=x.suggested_scope||{};
@@ -438,8 +469,11 @@ function renderCapability(box){
     '<b>证据分层</b> '+esc(JSON.stringify(sm.evidence_tier_distribution||{}))+' · verified 覆盖 '+((sm.verified_coverage||0)*100).toFixed(0)+'%（verified=有通过的测试报告，declared=仅文件存在）</div>';
   let projects=cm.projects;
   if(query) projects=projects.filter(p=>[p.code,(p.modules||[]).map(m=>m.code+(m.caps||[]).map(c=>c.code+c.name).join()).join()].join(' ').toLowerCase().includes(query));
+  let totalMods=0, shownMods=0;
   const body=projects.map(p=>{
-    const mods=(p.modules||[]).map(m=>{
+    const allMods=(p.modules||[]), visMods=allMods.slice(0,pageLimit);
+    totalMods+=allMods.length; shownMods+=visMods.length;
+    const mods=visMods.map(m=>{
       const caps=(m.caps||[]).map(c=>{
         const cHex=['#888780','#185FA5','#534AB7','#854F0B','#0F6E56','#0F6E56'][c.level];
         const di=c.doc_index||{};
@@ -464,7 +498,9 @@ function renderCapability(box){
     }).join('');
     return '<div class="mod"><h3>'+esc(p.code)+' <span class="chip s">完成度 '+(p.completion*100).toFixed(0)+'%</span><span class="cid">'+esc(p.root)+'</span></h3>'+mods+'</div>';
   }).join('');
-  box.innerHTML=specHtml+(projects.length?body:'<div class="empty">无匹配能力节点</div>');
+  box.innerHTML=specHtml+(projects.length?body:'<div class="empty">无匹配能力节点</div>')+
+    moreHtml(totalMods,shownMods,' 个模块');
+  bindMore(box);
 }
 document.getElementById('foot').textContent='账本文件：governance/DECISION_LEDGER.json（唯一事实源） · 历史由状态指纹自动追加、经验由人确认后附到任务卡 · 校验：governance/verify_ledger.py --strict · 能力模型由生成器从证据重算';
 init();

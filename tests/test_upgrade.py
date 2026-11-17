@@ -49,7 +49,7 @@ class UpgradeTest(unittest.TestCase):
     def test_definitions_selfcheck(self):
         self.assertEqual(check_definitions(), [])
         self.assertEqual(plan.__name__, "plan")
-        self.assertEqual(len(POST_UPGRADE), 8)
+        self.assertEqual(len(POST_UPGRADE), 11)
         self.assertEqual(len(TOOLING), 3)
 
     def test_plan_is_read_only_deterministic_and_leak_free(self):

@@ -81,7 +81,7 @@ unexpected 非空  → 不要直接删；先确认是不是人工报告，裁决
 
 - 只判断「文件在不在、有没有越界」，**不判断内容真实性**：内容靠 21 条不变量与场景预检。
 - 不搬迁、不重命名、不删除任何项目文件；`--diff` 全程只读。
-- 方法论仓库的 `experts/` / `skills/` / `scripts/` / `docs/01-17` 不属于被治理项目，不要在目标项目里找它们。
+- 方法论仓库的 `experts/` / `skills/` / `scripts/` / `docs/01-18` 不属于被治理项目，不要在目标项目里找它们；只有 `governance_meta.method_assets` 摘要进账本。
 - `.ledger-upgrade/` 与 `.ledger-write.lock` 是运行时层（升级备份 / 写入互斥），不在 `governance/`，不是事实源。
 
 ## 关联
