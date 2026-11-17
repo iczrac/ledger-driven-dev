@@ -109,6 +109,20 @@ stage_scenarios(){
   [ "$rc" -eq 2 ] || return 1
   echo '  场景定义自检、矩阵同步、预检放行与冻结拦截均通过'
 }
+stage_layout(){
+  note '文件布局清单 + 只读 diff'
+  python3 scripts/file_layout.py --check || return 1
+  local tmp
+  tmp="$(mktemp -d)"
+  python3 scripts/file_layout.py --emit-md "$tmp/FILE_LAYOUT.md" >/dev/null \
+    || { rm -rf "$tmp"; return 1; }
+  cmp -s "$tmp/FILE_LAYOUT.md" docs/generated/FILE_LAYOUT.md \
+    || { rm -rf "$tmp"; return 1; }
+  rm -rf "$tmp"
+  python3 scripts/file_layout.py --diff --target examples/demo-shop --strict >/dev/null || return 1
+  cmp -s scripts/run_tests.py "$DEMO/run_tests.py" || return 1
+  echo '  布局定义、渲染同步、示例骨架与第 3 个工具副本均一致'
+}
 stage_hygiene(){
   note '脱敏 + 文档内链'
   if grep -rliE 'RacOS|APEX|Tushare|tdx-connector|ClickHouse|Minervini|Keychain' \
@@ -150,6 +164,7 @@ else
   run '证据分层' stage_evidence
   run '账本校验' stage_verify
   run '场景矩阵' stage_scenarios
+  run '文件布局' stage_layout
   run '幂等' stage_idempotence
   run '同步' stage_sync
   run '卫生' stage_hygiene
@@ -160,4 +175,4 @@ if [ "$FAILURES" -gt 0 ]; then
   printf '质量门禁失败：%d 个阶段未通过\n' "$FAILURES"
   exit 1
 fi
-printf '质量门禁全绿：测试 / 证据分层 / 21 条不变量 / 场景矩阵 / 幂等 / 同步 / 脱敏 / 文档链接\n'
+printf '质量门禁全绿：测试 / 证据分层 / 21 条不变量 / 场景矩阵 / 文件布局 / 幂等 / 同步 / 脱敏 / 文档链接\n'

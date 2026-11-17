@@ -18,9 +18,9 @@
 - [x] 经验层：自动识别候选 + 人工确认 + 任务卡消费，看板两视图可见可点
 - [x] 一键初始化脚本可用（含校验器），支持 greenfield / adopt 双模式与 provenance 记录
 - [x] 七种专家角色（路由 / 新建 / 考古 / 账本治理 / 审计 / 执行 / 生命周期），各含权限矩阵与停止条件
-- [x] 十一个技能（route/discover/bootstrap/scan/verify/decide/lesson/guard/doc-rebuild/graph-compare/scenario-guard），标准 SKILL.md frontmatter
+- [x] 十二个技能（route/discover/bootstrap/scan/verify/decide/lesson/guard/doc-rebuild/graph-compare/scenario-guard/layout-inspect），标准 SKILL.md frontmatter
 - [x] 技能脚本：重复立项、缺行动经验、无理由驳回均由代码拒绝
-- [x] 113 个 unittest 用例（含 7 个证据分层、23 个多专家、19 个可追溯性、33 个场景与生命周期专项），零第三方依赖，临时目录隔离
+- [x] 127 个 unittest 用例（含 7 个证据分层、23 个多专家、19 个可追溯性、33 个场景与生命周期、14 个文件布局专项），零第三方依赖，临时目录隔离
 - [x] CI（Python 3.10-3.13 矩阵）/ CD（tag 触发，先门禁后打包）
 - [x] 示例项目已跑通，产出真实账本与看板
 
@@ -37,9 +37,9 @@
 - [x] 示例：3 条决策，含 superseded → done 取代链，双向校验通过
 - [x] 示例：文档索引 0 缺失；3 模块全部有嵌套组件树
 - [x] 示例：看板 EMBED 与账本完全一致；JS 通过 node --check
-- [x] 初始化脚本在临时目录跑通，4 个文件正确生成
+- [x] 初始化脚本在临时目录跑通，6 个文件正确生成（含 3 个工具副本）
 - [x] 生成器 dry-run 与正式模式均正常
-- [x] `bash scripts/check.sh` 全绿：113 测试 / 21 不变量 / 场景矩阵 / 幂等 / 同步 / 脱敏 / 文档链接
+- [x] `bash scripts/check.sh` 全绿：127 测试 / 21 不变量 / 场景矩阵 / 文件布局 / 幂等 / 同步 / 脱敏 / 文档链接
 - [x] 看板 JS 通过 `node --check`；CI 用同一份门禁脚本，口径一致
 - [x] 负向纪律测试：重复立项、缺 action、无理由驳回均被拒绝
 
@@ -69,6 +69,15 @@
 - [x] 能力退役与任务领用状态不污染 history.events，看板 EMBED 保持同步
 - [x] 生命周期状态只写账本内字段，无第二事实源
 
+## 文件架构清单（0.9.0）
+
+- [x] `file_layout.py` 自检通过：24 条目 / 7 账本内字段，产出脚本源码字面量交叉验证
+- [x] 引入前后目录树、greenfield / adopt 差异、五层所有权与 git 策略写入 docs/15
+- [x] 渲染生成物 `docs/generated/FILE_LAYOUT.md` 与定义同步，check.sh 校验无漂移
+- [x] `--diff` 只读：跑前后项目文件树哈希一致；三态与越界报告均有负向测试
+- [x] 第 3 个工具副本补齐并纳入逐字节同步门禁
+- [x] `lifecycle.log` / `capability_model` 明确为账本内字段，不产生同名文件
+
 ## 脱敏
 
 - [x] 看板模板 EMBED 已替换为空账本骨架
@@ -79,7 +88,7 @@
 ## 文档
 
 - [x] README（价值主张、快速开始、目录结构、视图说明）
-- [x] 十四篇编号方法论文档 + STANDARD.md + 10-AI集成.md + CONTRIBUTING.md
+- [x] 十五篇编号方法论文档 + STANDARD.md + 10-AI集成.md + CONTRIBUTING.md
 - [x] LICENSE（MIT）
 - [x] CHANGELOG
 - [x] registry.example.json 含字段说明注释
@@ -90,7 +99,7 @@
 - [ ] 确认仓库名（建议 `ledger-driven-dev`）
 - [ ] `git init` / 添加 remote
 - [ ] 检查 `.gitignore`（排除 `__pycache__/`、`*.pyc`、`.venv/`）
-- [ ] 提交并打 tag `v0.8.1`
+- [ ] 提交并打 tag `v0.9.0`
 - [ ] GitHub 仓库描述、README 顶图（可选）、topics 标签
 
 ## 建议的 topics

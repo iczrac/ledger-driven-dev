@@ -27,6 +27,7 @@ bash scripts/check.sh
 | `scripts/` 下脚本 | 补 `tests/` 用例；技能脚本的纪律必须被测试证明 |
 | `docs/NN-*.md` | 遵守 [文档规范](docs/STANDARD.md)；更新 `README.md` 导航 |
 | `experts/` / `skills/` | 更新 [AI 集成](docs/10-AI集成.md) 的能力清单 |
+| 新增 / 改名产物路径 | 更新 [文件架构](docs/15-文件架构.md) 与 `scripts/file_layout.py`，重跑 `--emit-md` 提交生成物 |
 
 **只允许维护一份 `registry.json` 和一份账本**。不要新建平行报告来记录本该进账本的决策。
 

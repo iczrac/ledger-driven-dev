@@ -5,8 +5,8 @@
 --------
 1. 不新建第二事实源：所有状态写进 DECISION_LEDGER.json 的
    lifecycle / retired_caps / execution 字段，并同步看板 EMBED。
-2. 不碰 history.events：状态操作写独立 append-only 的 lifecycle.log，
-   避免污染由生成器维护的能力指纹链。
+2. 不碰 history.events：状态操作写**账本内** append-only 的 lifecycle.log 数组字段，
+   避免污染由生成器维护的能力指纹链；governance/ 下没有独立的 lifecycle.log 文件。
 3. 人工批准门：unfreeze / archive 必须给 --approved-by，AI 不得自行解冻。
 4. 归档是不可写终态：需要继续开发就复制出新项目，而不是复活旧账本。
 5. 编码不复用：retire 记录稳定的四段式编码与取代关系，restore 只撤销登记，

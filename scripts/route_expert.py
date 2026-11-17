@@ -36,25 +36,25 @@ EXPERT_CARDS = {
     "greenfield-architect": {
         "title": "新建项目架构师",
         "duty": "从最小意图生成项目治理骨架，只声明必要能力，不替人排业务优先级。",
-        "skills": ["project-bootstrap", "doc-rebuild", "ledger-scan", "ledger-verify"],
+        "skills": ["project-bootstrap", "layout-inspect", "doc-rebuild", "ledger-scan", "ledger-verify"],
         "writes": ["governance/registry.json", "governance/DECISION_LEDGER.json"],
     },
     "project-archaeologist": {
         "title": "存量项目考古专家",
         "duty": "只读盘点历史项目，产出 registry 草稿与接入报告，绝不覆盖既有治理文件。",
-        "skills": ["project-discover", "graph-compare", "ledger-scan", "ledger-verify"],
+        "skills": ["project-discover", "layout-inspect", "graph-compare", "ledger-scan", "ledger-verify"],
         "writes": ["governance/registry.draft.json", "governance/ADOPTION_REPORT.md"],
     },
     "ledger-steward": {
         "title": "账本治理专家",
         "duty": "维护决策取代链、确认经验、从 next_queue 产出可执行任务卡。",
-        "skills": ["ledger-scan", "ledger-verify", "ledger-decide", "ledger-lesson", "graph-compare"],
+        "skills": ["ledger-scan", "ledger-verify", "ledger-decide", "ledger-lesson", "graph-compare", "layout-inspect"],
         "writes": ["entries", "lessons.items"],
     },
     "evidence-auditor": {
         "title": "证据审计专家",
         "duty": "跑不变量与实测报告，识别假绿灯；失败时冻结后续写入。",
-        "skills": ["ledger-guard", "ledger-verify", "graph-compare"],
+        "skills": ["ledger-guard", "ledger-verify", "graph-compare", "layout-inspect"],
         "writes": [],
     },
     "loop-executor": {
@@ -66,7 +66,7 @@ EXPERT_CARDS = {
     "release-steward": {
         "title": "生命周期与发布治理专家",
         "duty": "冻结/归档/退役/移交期间只做只读取证；解冻与归档必须有人批准记录。",
-        "skills": ["ledger-verify", "ledger-guard", "graph-compare", "scenario-guard"],
+        "skills": ["ledger-verify", "ledger-guard", "graph-compare", "scenario-guard", "layout-inspect"],
         "writes": ["lifecycle", "retired_caps"],
     },
 }
@@ -385,6 +385,7 @@ def commands_for(expert: str, target_display: str) -> list[str]:
             f"python3 scripts/init_project.py --target {t} --code YOURCODE --name \"项目名\"",
             f"cd {t} && python3 governance/build_capability_model.py --root . --dry-run",
             f"python3 scripts/rebuild_docs.py --target {t}",
+            f"python3 scripts/file_layout.py --diff --target {t}",
         ],
         "project-archaeologist": [
             f"python3 scripts/discover_project.py --target {t} --dry-run",
@@ -392,6 +393,7 @@ def commands_for(expert: str, target_display: str) -> list[str]:
             f"python3 scripts/init_project.py --target {t} --mode adopt --from-draft {t}/governance/registry.draft.json --code YOURCODE",
             f"python3 scripts/architect_from_docs.py --target {t}",
             f"python3 scripts/compare_graphs.py --target {t}",
+            f"python3 scripts/file_layout.py --diff --target {t}",
         ],
         "ledger-steward": [
             f"cd {t} && python3 governance/build_capability_model.py --root . --dry-run",
@@ -402,6 +404,7 @@ def commands_for(expert: str, target_display: str) -> list[str]:
             "bash scripts/check.sh",
             f"cd {t} && python3 governance/verify_ledger.py --root . --strict --json",
             f"python3 scripts/trace_git.py --target {t} --max-count 50",
+            f"python3 scripts/file_layout.py --diff --target {t} --strict",
         ],
         "loop-executor": [
             f"cd {t} && python3 -c \"import json;d=json.load(open('governance/DECISION_LEDGER.json'));print(d['capability_model']['next_queue'][0])\"",
@@ -412,6 +415,7 @@ def commands_for(expert: str, target_display: str) -> list[str]:
             f"python3 scripts/scenario_guard.py --target {t} --json",
             f"python3 scripts/lifecycle.py --target {t} status",
             f"python3 scripts/lifecycle.py --target {t} unfreeze --approved-by 审批人姓名",
+            f"python3 scripts/file_layout.py --diff --target {t} --strict",
         ],
     }.get(expert, ["python3 scripts/route_expert.py --help"])
 

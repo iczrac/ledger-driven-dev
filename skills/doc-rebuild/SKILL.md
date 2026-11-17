@@ -8,7 +8,7 @@ description: |
 license: MIT
 metadata:
   author: ledger-driven-dev
-  version: "0.8.1"
+  version: "0.9.0"
   risk_level: write_draft_only
   related_skills: [project-bootstrap, ledger-scan, graph-compare]
 ---

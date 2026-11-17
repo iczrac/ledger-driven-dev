@@ -35,6 +35,7 @@
 | 改看板视图 | `04-嵌套组件与文档索引`、`README` 视图清单 |
 | 改技能 / 专家 | `10-AI集成`、`README` 目录结构 |
 | 新增不变量 | `08-可信性校验` 表格 + 负向测试 |
+| 新增 / 改名产物路径 | `15-文件架构`、`scripts/file_layout.py`、重新 `--emit-md`、`CHANGELOG` |
 | 任何发布 | `CHANGELOG`、`RELEASE_CHECKLIST` |
 
 代码变了文档没变，视为改动未完成。`scripts/check.sh` 的文档内链检查能保证链接有效，但**不能保证内容同步**——这仍需人判断。
@@ -55,8 +56,8 @@
 
 ## 六、生成文档目录
 
-`docs/generated/` 下的 `PROJECT_BRIEF.md` / `MODULE_MAP.md` / `CAPABILITY_INDEX.md` / `GRAPH_DIFF.md` / `SCENARIO_MATRIX.md`
-由 `scripts/rebuild_docs.py` / `compare_graphs.py` / `scenario_matrix.py` 从事实源渲染，
+`docs/generated/` 下的 `PROJECT_BRIEF.md` / `MODULE_MAP.md` / `CAPABILITY_INDEX.md` / `GRAPH_DIFF.md` / `SCENARIO_MATRIX.md` / `FILE_LAYOUT.md`
+由 `scripts/rebuild_docs.py` / `compare_graphs.py` / `scenario_matrix.py` / `file_layout.py` 从事实源渲染，
 **不是人工文档**：不要长期手改，改事实源后重跑；需要保留人工补充时用不同文件名。
 生成文档必须无机器绝对路径、可逐字节复现，并默认跳过既有文件（`--force` 才覆盖）。
 
@@ -69,3 +70,5 @@
 - **改写历史**：删掉降级事件 —— 历史链断裂，校验器会抓；
 - **无行动的经验**：只写"要重视" —— 无法进入任务卡，等于没写；
 - **口径分裂**：CI 用一套命令、本地用另一套 —— 必然出现"本地过了 CI 挂了"。
+- **治理目录里另起报告**：在 `governance/` 新建自制状态文档 —— 第二事实源，布局 `--diff` 会报越界。
+- **把账本内字段当文件找**：`lifecycle.log` / `capability_model` 是 JSON 字段，补建同名文件会分裂状态。

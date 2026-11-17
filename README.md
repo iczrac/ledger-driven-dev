@@ -30,6 +30,7 @@
 7. **专家路由** —— 只读扫描项目状态与任务意图，确定性选出唯一负责人：历史项目走考古专家（草稿优先、绝不覆盖），新项目走架构师（最小骨架、来源可追溯），校验与编码各有边界。冲突时要求澄清，**不让多个 Agent 同时改同一份事实源**。
 8. **可追溯闭环** —— 事实源可重建规范文档，文档可抽目标架构，git 变更可回连模块决策与历史事件；规划图与实际图按编码逐项比对，由专家给出执行顺序，并用全链路编码索引对齐文档/测试/代码/账本。
 9. **场景预检** —— 写入前先判定「现在能不能动」：证据是否过期、有没有并发覆盖、是否冻结/归档、版本是否兼容；44 个场景的覆盖状态由测试复算，而不是文档自称。
+10. **文件架构清单** —— 引入后多出哪些目录、每层归谁写、哪些能改、哪些是账本内字段，由 `file_layout.py` 定义并与产出脚本源码交叉验证；`--diff` 只读检查任意项目的现状。
 
 并且这套方法**自身可被验证**：`verify_ledger.py` 把 21 条不变量机器化（含历史链、经验引用与证据分层），`next_queue` 把 SELECT 变成机器可读任务队列——「可信」和「驱动」两个核心承诺都不再停留在文字上。
 
@@ -63,7 +64,9 @@ ledger-driven-dev/
 │   ├── 12-专家路由.md                多专家协作、历史/新建双路径
 │   ├── 13-可追溯性.md                五项反问、文档/架构/git/图比对闭环
 │   ├── 14-场景矩阵.md                第一性原理、44 场景覆盖、生命周期流程
+│   ├── 15-文件架构.md                引入前后目录变化、目录含义与所有权
 │   ├── generated/SCENARIO_MATRIX.md  机器渲染的覆盖矩阵（勿手改）
+│   ├── generated/FILE_LAYOUT.md      机器渲染的目录全量表（勿手改）
 │   └── STANDARD.md                   文档命名/章节/状态词规范
 ├── experts/
 │   ├── expert-router/EXPERT.md        路由决策与交接契约（只读调度）
@@ -84,7 +87,8 @@ ledger-driven-dev/
 │   ├── ledger-guard/                  统一质量门禁
 │   ├── doc-rebuild/                   规范文档 + 编码索引
 │   ├── graph-compare/                 目标/实际图比对与执行顺序
-│   └── scenario-guard/                写入前预检、生命周期状态门
+│   ├── scenario-guard/                写入前预检、生命周期状态门
+│   └── layout-inspect/                文件架构分层、引入前后差异与只读检查
 ├── templates/                        可复用模板（复制到你的项目）
 │   ├── build_capability_model.py     核心生成器（含证据分层/历史/经验/任务队列）
 │   ├── verify_ledger.py              21 条不变量校验器（可信的基础设施）
@@ -105,6 +109,7 @@ ledger-driven-dev/
 │   ├── scenario_guard.py             场景预检（证据/并发/生命周期/版本）
 │   ├── scenario_matrix.py            场景定义单一事实源 → 矩阵文档
 │   ├── lifecycle.py                  冻结/归档/退役/任务领用状态机
+│   ├── file_layout.py                引入后文件布局单一事实源（check/diff/emit-md）
 │   └── check.sh                      本地 / CI 统一门禁
 ├── tests/                            标准库 unittest 测试套件
 ├── .github/workflows/                CI 与 release
@@ -190,6 +195,19 @@ python3 scripts/code_index.py --target /path/to/project \
 
 产物默认落在 `docs/generated/` 与 `governance/`，全部非破坏性（需 `--force` 才覆盖）。详见 [13-可追溯性](docs/13-可追溯性.md)。
 
+### 引入后文件架构：先看目录再动手
+
+```bash
+python3 scripts/file_layout.py --check
+python3 scripts/file_layout.py --diff --target /path/to/project
+python3 scripts/file_layout.py --diff --target /path/to/project --strict
+```
+
+`--diff` 全程只读，返回 `bootstrap / skeleton / governed` 阶段、缺失必需骨架、
+`governance/` 下的越界文件（可能是第二事实源）与下一步提示。
+完整目录含义、五层所有权、git 策略与账本内字段澄清见
+[15-文件架构](docs/15-文件架构.md) 与 [目录全量表](docs/generated/FILE_LAYOUT.md)。
+
 ### 任意写入前的场景预检
 
 ```bash
@@ -219,15 +237,15 @@ python3 governance/verify_ledger.py --root . --strict
 bash scripts/check.sh
 ```
 
-一条命令跑完：标准库单元测试 → 证据分层（生成实测报告并确认 verified 判定）→ 21 条不变量 → 生成器幂等 → 模板/示例同步与看板 EMBED → 脱敏与文档内链。本地与 CI 用同一份脚本，口径一致。单个能力校验用 `verify_ledger.py`，完整交付用 `check.sh`。
+一条命令跑完：标准库单元测试 → 证据分层（生成实测报告并确认 verified 判定）→ 21 条不变量 → 场景矩阵 → 文件布局清单与只读 diff → 生成器幂等 → 模板/示例同步与看板 EMBED → 脱敏与文档内链。本地与 CI 用同一份脚本，口径一致。单个能力校验用 `verify_ledger.py`，完整交付用 `check.sh`。
 
 ### AI 接手：专家路由与技能
 
 - **七个专家**：`expert-router`（调度）、`greenfield-architect`（新建）、`project-archaeologist`（存量）、`ledger-steward`（账本治理）、`evidence-auditor`（只读审计）、`loop-executor`（一条任务卡的编码）、`release-steward`（冻结/归档/退役与批准门）。每个都有权限矩阵、停止条件与交接模板。
-- **十一个技能**：`expert-route` / `project-discover` / `project-bootstrap` 覆盖路由、盘点、初始化；`doc-rebuild` / `graph-compare` 覆盖规范文档、编码索引与图比对；`scenario-guard` 覆盖写入前预检与生命周期门；原有五个技能覆盖扫描、校验、立项、经验与门禁。
+- **十二个技能**：`expert-route` / `project-discover` / `project-bootstrap` 覆盖路由、盘点、初始化；`doc-rebuild` / `graph-compare` 覆盖规范文档、编码索引与图比对；`scenario-guard` 覆盖写入前预检；`layout-inspect` 覆盖引入后文件架构与目录越界检查；原有五个技能覆盖扫描、校验、立项、经验与门禁。
 - 纪律不只写在文档里：`route_expert.py` 对冲突 fail-closed，`discover_project.py` 默认不覆盖草稿，`init_project.py` 跳过既有治理文件，`ledger_decide.py` / `ledger_lesson.py` 在代码层拒绝重复立项与缺行动的经验。
 
-七种专家角色新增 `release-steward`（冻结/归档/退役/批准门）。详见 [12-专家路由](docs/12-专家路由.md)、[13-可追溯性](docs/13-可追溯性.md)、[14-场景矩阵](docs/14-场景矩阵.md) 与 [10-AI集成](docs/10-AI集成.md)。
+七种专家角色新增 `release-steward`（冻结/归档/退役/批准门）。详见 [12-专家路由](docs/12-专家路由.md)、[13-可追溯性](docs/13-可追溯性.md)、[14-场景矩阵](docs/14-场景矩阵.md)、[15-文件架构](docs/15-文件架构.md) 与 [10-AI集成](docs/10-AI集成.md)。
 
 ### SELECT 产出：下一轮任务队列
 
@@ -262,12 +280,13 @@ bash scripts/check.sh
 8. [可信性校验](docs/08-可信性校验.md) —— 21 条不变量，让「可信」可被验证
 9. [历史与经验](docs/09-历史与经验.md) —— 状态指纹驱动的演进历史，以及可被任务卡消费的经验层
 10. [文档规范](docs/STANDARD.md) —— 命名、章节、状态词与更新触发点
-11. [AI 集成](docs/10-AI集成.md) —— 专家、十一个技能与平台无关的最小消费路径
+11. [AI 集成](docs/10-AI集成.md) —— 专家、十二个技能与平台无关的最小消费路径
 12. [证据分层](docs/11-证据分层.md) —— 区分声明级与验证级证据，消除假绿灯
 13. [专家路由](docs/12-专家路由.md) —— 多专家协作、历史/新建双路径与交接协议
 14. [可追溯性](docs/13-可追溯性.md) —— 五项反问、文档/架构/git/图比对闭环
 15. [场景矩阵](docs/14-场景矩阵.md) —— 第一性原理、44 场景、生命周期流程与已知缺漏
-16. [贡献指南](CONTRIBUTING.md) —— 开发循环、同步规则与发布流程
+16. [文件架构](docs/15-文件架构.md) —— 引入前后目录变化、目录含义、所有权与 git 策略
+17. [贡献指南](CONTRIBUTING.md) —— 开发循环、同步规则与发布流程
 
 ## License
 
