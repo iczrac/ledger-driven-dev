@@ -46,6 +46,21 @@ LEVELS = {
 }
 LEVELS_CAVEAT = "L5 授予配置了 governance_gate=true 的项目；其他项目最高 L4。"
 
+# ---- 证据分层（evidence tier）----
+# 与成熟度正交：level 回答"做到哪一级"，tier 回答"这一级的证据是声明还是实测"。
+# declared = 证据文件存在（生成器扫描可见）；verified = 有通过的测试报告证明其真跑过。
+EVIDENCE_TIER_SPEC = {
+    "purpose": "区分『写了测试文件』与『测试真实通过』，消除只看存在性造成的假绿灯。",
+    "tiers": {
+        "declared": "仅证据文件存在，未找到可核对的通过测试报告（默认，向后兼容）。",
+        "verified": "存在 ledger-test-report 报告，且该能力的单测文件在报告中有 pass 记录。",
+    },
+    "source": "测试报告由 scripts/run_tests.py 生成（标准库 unittest），经 --test-report 传入。",
+    "matching": "报告 cases[].file 与能力 unit_test 证据路径的 basename 匹配，且 status=pass、overall=pass。",
+    "rule": "tier 只升不假：无报告或缺 pass 记录一律 declared；报告 fail/error 不得升级任何能力。",
+    "invariant": "verified 必须指向真实存在的通过用例；测试记录被删则回落 declared。",
+}
+
 # ---- 历史层 / 经验层规范（写入账本，供人、AI、校验器共同消费）----
 HISTORY_SPEC = {
     "purpose": "append-only 状态演进：只记录由证据/等级/文档真实变化驱动的事件，重跑不产生噪音。",
@@ -94,6 +109,55 @@ def norm_existing_path(repo_root: Path, value: str, proj_rel: str) -> str:
     if cand.exists():
         return rel_path(repo_root, cand)
     return value  # 保留原值，让缺失在校验阶段暴露
+
+
+# ------------------------------ 证据分层 ------------------------------
+
+def load_test_report(path: str | None, repo_root: Path) -> dict | None:
+    """加载测试报告；路径相对仓库根。报告无效/整体失败时返回 None（不升级任何证据）。"""
+    if not path:
+        return None
+    p = Path(path)
+    if not p.is_absolute():
+        p = repo_root / p
+    if not p.is_file():
+        return None
+    try:
+        report = json.loads(p.read_text())
+    except (OSError, json.JSONDecodeError):
+        return None
+    if report.get("schema") != "ledger-test-report/1":
+        return None
+    if report.get("overall") != "pass":
+        return None
+    if not isinstance(report.get("cases"), list):
+        return None
+    return report
+
+
+def judge_tier(unit_tests: list[str], report: dict | None) -> tuple[str, dict]:
+    """判定能力点的证据分层，返回 (tier, 明细)。
+
+    没有报告、或该能力的任一单测文件都没有 pass 记录 → declared。
+    只要有一个单测文件在报告里 status=pass 即 verified（保守但可解释）。
+    """
+    if report is None or not unit_tests:
+        return "declared", {"basis": "no_report" if report is None else "no_unit_test"}
+
+    passed_files = {
+        Path(c.get("file", "")).name
+        for c in report["cases"]
+        if c.get("status") == "pass" and c.get("file")
+    }
+    matched = [Path(u).name for u in unit_tests if Path(u).name in passed_files]
+    if matched:
+        return "verified", {
+            "basis": "test_report_pass",
+            "matched_tests": sorted(matched),
+            "report_at": report.get("generated_at", ""),
+            "report_label": report.get("label", ""),
+        }
+    return "declared", {"basis": "no_matching_pass", "passed_files": sorted(passed_files)[:10]}
 
 
 # ------------------------------ 证据扫描 ------------------------------
@@ -329,7 +393,7 @@ def build_doc_index(
 
 # ------------------------------ 模型构建 ------------------------------
 
-def build(repo_root: Path, cfg_all: dict, ledger: dict) -> dict:
+def build(repo_root: Path, cfg_all: dict, ledger: dict, test_report: dict | None = None) -> dict:
     """构建 capability_model 与 architecture.component_tree。"""
     project_cfg = cfg_all["project"]
     code = project_cfg["code"]
@@ -362,6 +426,7 @@ def build(repo_root: Path, cfg_all: dict, ledger: dict) -> dict:
             "recompute": "重跑本生成器；证据消失则等级自动回落，不依赖人工填报。",
             "caveat": LEVELS_CAVEAT,
         },
+        "evidence_tier_spec": EVIDENCE_TIER_SPEC,
         "doc_index_spec": {
             "purpose": "让每个能力点/规划都能索引到对应文档，且索引可见、可点开。",
             "path_base": "仓库根相对路径；看板点击时拼接 ../../ + path",
@@ -388,6 +453,7 @@ def build(repo_root: Path, cfg_all: dict, ledger: dict) -> dict:
 
     total_caps = 0
     level_dist: dict[str, int] = {}
+    tier_dist: dict[str, int] = {}
     pnode = {"code": code, "name": project_cfg.get("name", code), "root": proj_rel, "modules": []}
 
     for midx, mod in enumerate(cfg_all["modules"], 1):
@@ -418,6 +484,7 @@ def build(repo_root: Path, cfg_all: dict, ledger: dict) -> dict:
             impl_globs = cap.get("impl", [])
             hints = cap.get("hints", [])
             level, ev = judge_level(repo_root, proj_root, proj_rel, cfg_all, impl_globs, hints)
+            tier, tier_detail = judge_tier(ev.get("unit_test", []), test_report)
             cap_code = f"{code}.{mcode}.{domain}.{cidx:02d}"
             cnode = {
                 "code": cap_code,
@@ -427,6 +494,8 @@ def build(repo_root: Path, cfg_all: dict, ledger: dict) -> dict:
                 "level_code": LEVELS[level]["code"],
                 "completion": round(level / 5, 2),
                 "evidence": ev,
+                "evidence_tier": tier,
+                "tier_detail": tier_detail,
                 "next_level": min(level + 1, 5),
                 "next_action": (
                     LEVELS[min(level + 1, 5)]["rule"]
@@ -446,6 +515,7 @@ def build(repo_root: Path, cfg_all: dict, ledger: dict) -> dict:
             total_caps += 1
             lc = LEVELS[level]["code"]
             level_dist[lc] = level_dist.get(lc, 0) + 1
+            tier_dist[tier] = tier_dist.get(tier, 0) + 1
 
         mnode["completion"] = round(
             sum(c["completion"] for c in mnode["caps"]) / len(mnode["caps"]), 2
@@ -480,6 +550,8 @@ def build(repo_root: Path, cfg_all: dict, ledger: dict) -> dict:
         "capabilities": total_caps,
         "level_distribution": level_dist,
         "overall_completion": pnode["completion"],
+        "evidence_tier_distribution": tier_dist,
+        "verified_coverage": round(tier_dist.get("verified", 0) / total_caps, 2) if total_caps else 0.0,
     }
     # SELECT 步骤的机器可读产出：每次重跑自动刷新，供规划/编码代理直接消费
     model["next_queue"] = build_next_queue(model)
@@ -514,6 +586,7 @@ def snapshot_state(model: dict) -> dict[str, dict]:
                 snap[c["code"]] = {
                     "l": c.get("level", 0),
                     "c": c.get("completion", 0),
+                    "t": c.get("evidence_tier", "declared"),
                     "e": sorted({x for k in EVIDENCE_KEYS for x in _path_list(ev.get(k))}),
                     "d": sorted({x for k in DOC_PATH_KEYS for x in _path_list(di.get(k))}),
                     "dec": sorted({x.get("id") for x in di.get("decisions", [])
@@ -719,6 +792,11 @@ def build_next_queue(model: dict, limit: int = 10, lessons: dict | None = None) 
                     "completion": c["completion"],
                     "target_level": f"L{c['next_level']}",
                     "action": c["next_action"],
+                    "evidence_tier": c.get("evidence_tier", "declared"),
+                    "needs_runtime_verification": (
+                        c.get("level", 0) >= 3
+                        and c.get("evidence_tier", "declared") != "verified"
+                    ),
                     "missing_evidence": missing,
                     "docs": {
                         k: [d["path"] for d in di.get(k, [])]
@@ -774,6 +852,7 @@ def main() -> None:
     ap.add_argument("--ledger", help="账本路径（默认 <root>/governance/DECISION_LEDGER.json）")
     ap.add_argument("--board", help="看板 HTML 路径（默认 <root>/governance/index.html）")
     ap.add_argument("--no-board", action="store_true", help="不同步看板内嵌数据")
+    ap.add_argument("--test-report", help="测试报告 JSON（由 scripts/run_tests.py 生成）；提供则判定 verified 级证据")
     ap.add_argument("--dry-run", action="store_true", help="只打印摘要，不写文件")
     args = ap.parse_args()
 
@@ -806,7 +885,10 @@ def main() -> None:
         "architecture": {"projects": []},
     }
 
-    model = build(repo_root, cfg_all, ledger)
+    test_report = load_test_report(args.test_report, repo_root)
+    if args.test_report and test_report is None:
+        print(f"[WARN] 测试报告不可用或整体未通过（{args.test_report}）；所有证据保持 declared")
+    model = build(repo_root, cfg_all, ledger, test_report=test_report)
     ts = datetime.now().strftime("%Y-%m-%d %H:%M HKT")
     # 历史/经验只依赖派生状态与既有事件；dry-run 也计算，以便预览将产生的事件（不落盘）
     new_event = evolve(ledger, model, ts)
@@ -819,7 +901,9 @@ def main() -> None:
         for m in model["projects"][0]["modules"]:
             caps = " ".join(c["level_code"] for c in m["caps"])
             print(f"  {m['code']:<24} {m['completion']:.2f}  {caps}")
-        print(f"\n历史：{model['history']['event_count']} 事件 · 指纹 {model['history']['current_fingerprint']}"
+        print(f"\n证据分层：{model['summary']['evidence_tier_distribution']} "
+              f"· verified 覆盖 {model['summary']['verified_coverage']:.0%}")
+        print(f"历史：{model['history']['event_count']} 事件 · 指纹 {model['history']['current_fingerprint']}"
               + (f" · 将追加 #{new_event['seq']} {new_event['type']}" if new_event else " · 无变化（幂等）"))
         ls = ledger.get("lessons", {})
         print(f"经验：{len(ls.get('items', []))} 条已确认 · {len(ls.get('candidates', []))} 个候选")

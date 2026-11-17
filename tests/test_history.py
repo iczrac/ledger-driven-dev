@@ -58,6 +58,10 @@ class HistoryTest(unittest.TestCase):
 
     def test_repeated_generation_is_idempotent(self):
         with demo_copy() as (root, ledger, reg, board):
+            # 先跑一次建立基线：账本 schema 升级（如新增 tier 字段）时，
+            # 首次重跑会产生一次性迁移事件，这是预期行为，不是幂等失败。
+            first = run_generator(root, ledger, reg, board)
+            self.assertEqual(first.returncode, 0, first.stderr)
             before = state_signature(ledger)
             for _ in range(3):
                 result = run_generator(root, ledger, reg, board)
@@ -66,6 +70,9 @@ class HistoryTest(unittest.TestCase):
 
     def test_new_evidence_appends_one_event(self):
         with demo_copy() as (root, ledger, reg, board):
+            # 先跑一次消化可能的 schema 迁移事件，再测"新增证据恰好追加 1 条"
+            base = run_generator(root, ledger, reg, board)
+            self.assertEqual(base.returncode, 0, base.stderr)
             before = state_signature(ledger)
             (root / "examples/demo-shop/tests/unit/test_order_api.py").write_text(
                 "from src.api.order_api import get_order\n\ndef test_get():\n    assert get_order('o1')['order_id'] == 'o1'\n"

@@ -23,6 +23,9 @@
 14. 经验条目合法（id 唯一、状态合法、confirmed 必含洞察与行动、事件引用有效）
 15. 经验候选去重且与已确认条目不冲突
 16. 任务卡引用的经验均为已确认条目
+17. 证据分层取值合法（declared | verified）
+18. verified 可追溯（tier_detail 有 test_report_pass 依据，匹配单测真实存在）
+19. verified 不越级（低于 L3、无单测的能力不得标 verified）
 
 用法
 ----
@@ -73,6 +76,7 @@ def snapshot_state(cm: dict) -> dict[str, dict]:
                 snap[c.get("code", "")] = {
                     "l": c.get("level", 0),
                     "c": c.get("completion", 0),
+                    "t": c.get("evidence_tier", "declared"),
                     "e": sorted({x for k in EVIDENCE_KEYS for x in _path_list(ev.get(k))}),
                     "d": sorted({x for k in DOC_INDEX_PATH_KEYS for x in _path_list(di.get(k))}),
                     "dec": sorted({x.get("id") for x in di.get("decisions", [])
@@ -123,6 +127,32 @@ def verify(repo_root: Path, ledger: dict, registry: dict | None,
     # 4. 未达 L5 的能力都有下一步动作
     no_action = [c["code"] for c in caps if c.get("level", 5) < 5 and not c.get("next_action")]
     add("next_action_present", not no_action, f"缺失={no_action[:5]}")
+
+    # 4b. 证据分层：tier 取值合法
+    valid_tiers = {"declared", "verified"}
+    bad_tiers = [c["code"] for c in caps if c.get("evidence_tier", "declared") not in valid_tiers]
+    add("evidence_tier_valid", not bad_tiers, f"非法={bad_tiers[:5]}")
+
+    # 4c. verified 必须有可追溯依据：tier_detail 标记来自测试报告，且匹配的单测文件真实存在
+    bad_verified: list[str] = []
+    for c in caps:
+        if c.get("evidence_tier") != "verified":
+            continue
+        td = c.get("tier_detail") or {}
+        matched = td.get("matched_tests") or []
+        if td.get("basis") != "test_report_pass" or not matched:
+            bad_verified.append(f"{c['code']}:no_basis")
+            continue
+        # 匹配的单测文件必须在账本记录的 unit_test 证据中真实存在
+        unit_names = {Path(x).name for x in _path_list(c.get("evidence", {}).get("unit_test"))}
+        if not set(matched) & unit_names:
+            bad_verified.append(f"{c['code']}:orphan_match")
+    add("verified_tier_traceable", not bad_verified, f"不可追溯={bad_verified[:5]}")
+
+    # 4d. 低于 L3 的能力不得标 verified（没有单测却声称实测通过）
+    premature = [c["code"] for c in caps
+                 if c.get("evidence_tier") == "verified" and c.get("level", 0) < 3]
+    add("verified_tier_not_premature", not premature, f"越级={premature[:5]}")
 
     # 5. 文档索引路径存在
     missing_docs: list[str] = []

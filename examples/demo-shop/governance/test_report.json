@@ -1,0 +1,42 @@
+{
+  "schema": "ledger-test-report/1",
+  "generated_at": "2026-11-17 22:17 HKT",
+  "test_dir": "examples/demo-shop/tests",
+  "command": "unittest load from tests",
+  "load_errors": [],
+  "summary": {
+    "total": 3,
+    "passed": 3,
+    "failed": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "cases": [
+    {
+      "id": "_lld_test_data_ready_31043.DataReadyTest.test_required_fields",
+      "file": "examples/demo-shop/tests/unit/test_data_ready.py",
+      "status": "pass",
+      "seconds": 1.6e-05
+    },
+    {
+      "id": "_lld_test_order_37231.OrderTest.test_payable",
+      "file": "examples/demo-shop/tests/unit/test_order.py",
+      "status": "pass",
+      "seconds": 1.1e-05
+    },
+    {
+      "id": "_lld_test_pricing_4387.PricingTest.test_discount",
+      "file": "examples/demo-shop/tests/unit/test_pricing.py",
+      "status": "pass",
+      "seconds": 1e-05
+    }
+  ],
+  "overall": "pass",
+  "raw_tail": [
+    "----------------------------------------------------------------------",
+    "Ran 3 tests in 0.000s",
+    "",
+    "OK"
+  ],
+  "label": "demo-unit"
+}

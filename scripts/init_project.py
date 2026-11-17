@@ -93,13 +93,23 @@ def main() -> None:
             else:
                 shutil.copy(TEMPLATES / name, gen)
                 print(f"写入: {gen}")
+        # 证据分层：测试报告生成器（从模板项目的 scripts/ 复制到新项目的 governance/）
+        runner = gov / "run_tests.py"
+        if runner.exists() and not args.force:
+            print(f"跳过（已存在）: {runner}")
+        else:
+            shutil.copy(HERE / "run_tests.py", runner)
+            print(f"写入: {runner}")
 
     print(f"\n完成。下一步：")
     print(f"  1. 编辑 {gov / 'registry.json'} 的 modules 清单")
     print(f"  2. cd {target} && python3 governance/build_capability_model.py --root . --dry-run")
     print(f"  3. 确认无误后去掉 --dry-run 正式生成")
     print(f"  4. python3 governance/verify_ledger.py --root . --strict  # 校验账本自洽")
-    print(f"  5. 浏览器打开 {gov / 'index.html'} 查看看板")
+    print(f"  5.（可选）升级证据为 verified —— 从本项目根运行：")
+    print(f"     python3 governance/run_tests.py --dir tests --out governance/test_report.json")
+    print(f"     python3 governance/build_capability_model.py --root . --test-report governance/test_report.json")
+    print(f"  6. 浏览器打开 {gov / 'index.html'} 查看看板（徽章显示声明/实测）")
 
 
 if __name__ == "__main__":

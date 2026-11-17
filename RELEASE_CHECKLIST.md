@@ -10,7 +10,9 @@
 - [x] 文档索引分 8 类 + 关联决策，路径存在性校验
 - [x] 看板九视图可渲染，内嵌数据由生成器同步
 - [x] 循环协议写入 capability_model
-- [x] 可信性校验器：18 条不变量，支持 --json / --strict
+- [x] 可信性校验器：21 条不变量（含证据分层），支持 --json / --strict
+- [x] 证据分层：declared/verified，run_tests.py 产出实测报告，生成器 --test-report 判定升级
+- [x] 看板显示 tier 徽章与 verified 覆盖率；任务卡携带 tier 与 needs_runtime_verification
 - [x] SELECT 任务队列：生成器产出 next_queue，dry-run 可见，任务卡携带已确认经验
 - [x] 历史层：状态指纹驱动 append-only 事件，重跑幂等，支持状态快照回放
 - [x] 经验层：自动识别候选 + 人工确认 + 任务卡消费，看板两视图可见可点
@@ -18,13 +20,15 @@
 - [x] 账本治理专家（角色/权限/纪律/输出模板）
 - [x] 五个技能（scan/verify/decide/lesson/guard），标准 SKILL.md frontmatter
 - [x] 技能脚本：重复立项、缺行动经验、无理由驳回均由代码拒绝
-- [x] 30 个 unittest 用例，零第三方依赖，临时目录隔离
+- [x] 37 个 unittest 用例（含 7 个证据分层专项），零第三方依赖，临时目录隔离
 - [x] CI（Python 3.10-3.13 矩阵）/ CD（tag 触发，先门禁后打包）
 - [x] 示例项目已跑通，产出真实账本与看板
 
 ## 验证记录（2026-11-17）
 
-- [x] 示例：verify_ledger 18/18 通过，--strict 退出码 0
+- [x] 示例：verify_ledger 21/21 通过，--strict 退出码 0
+- [x] 证据分层：无报告全 declared；带通过报告 3 个 verified（覆盖 75%）；失败报告不升级
+- [x] 负向测试：verified 无依据/非法取值/越级 → 3 类 FAIL 均被校验器抓到
 - [x] 负向测试：注入重复编码/手改完成度/失效路径 → 3 FAIL；篡改历史指纹/清空经验行动 → 2 FAIL
 - [x] 幂等测试：连续重跑三次，事件数/指纹/候选 id/任务卡完全一致
 - [x] 示例：3 条历史（genesis + 等级跃迁 + 决策演进），2 个经验候选，1 条已确认经验
@@ -60,7 +64,7 @@
 - [ ] 确认仓库名（建议 `ledger-driven-dev`）
 - [ ] `git init` / 添加 remote
 - [ ] 检查 `.gitignore`（排除 `__pycache__/`、`*.pyc`、`.venv/`）
-- [ ] 首次提交并打 tag `v0.4.0`
+- [ ] 提交并打 tag `v0.5.0`
 - [ ] GitHub 仓库描述、README 顶图（可选）、topics 标签
 
 ## 建议的 topics

@@ -16,6 +16,25 @@ stage_tests(){
   note '单元测试（标准库 unittest）'
   python3 -m unittest discover -s tests -v
 }
+stage_evidence(){
+  note '证据分层：生成实测报告并确认 verified 判定'
+  local tmp report
+  tmp="$(mktemp -d)"
+  report="$tmp/report.json"
+  python3 scripts/run_tests.py --dir examples/demo-shop/tests \
+    --top examples/demo-shop --out "$report" --label gate || { rm -rf "$tmp"; return 1; }
+  python3 - "$report" <<'PY'
+import json, sys
+r = json.load(open(sys.argv[1]))
+assert r['schema'] == 'ledger-test-report/1', '报告 schema 错误'
+assert r['overall'] == 'pass', '测试未全过，不得升级 verified'
+assert r['summary']['passed'] >= 3, '通过用例数异常'
+print(f"  实测报告 {r['summary']['passed']}/{r['summary']['total']} passed，overall={r['overall']}")
+PY
+  local rc=$?
+  rm -rf "$tmp"
+  return $rc
+}
 stage_verify(){
   note '账本不变量（18 条）'
   python3 "$DEMO/verify_ledger.py" --root . \
@@ -43,11 +62,13 @@ stage_idempotence(){
   local ledger="$tmp/examples/demo-shop/governance/DECISION_LEDGER.json"
   local board="$tmp/examples/demo-shop/governance/index.html"
   local reg="$tmp/examples/demo-shop/governance/registry.json"
+  local report="$tmp/examples/demo-shop/governance/test_report.json"
   before="$(snapshot "$ledger")"
+  # 示例账本处于 verified 稳态，重跑必须带同一份报告才幂等（证据消失则回落是预期语义）
   python3 "$DEMO/build_capability_model.py" --root "$tmp" --registry "$reg" \
-    --ledger "$ledger" --board "$board" >/dev/null 2>&1 || { rm -rf "$tmp"; return 1; }
+    --ledger "$ledger" --board "$board" --test-report "$report" >/dev/null 2>&1 || { rm -rf "$tmp"; return 1; }
   python3 "$DEMO/build_capability_model.py" --root "$tmp" --registry "$reg" \
-    --ledger "$ledger" --board "$board" >/dev/null 2>&1 || { rm -rf "$tmp"; return 1; }
+    --ledger "$ledger" --board "$board" --test-report "$report" >/dev/null 2>&1 || { rm -rf "$tmp"; return 1; }
   after="$(snapshot "$ledger")"
   rm -rf "$tmp"
   if [ "$before" != "$after" ]; then
@@ -107,6 +128,7 @@ elif [ "$MODE" = "--help" ]; then
   echo "用法: bash scripts/check.sh [all|--only-idempotence|--help]"
 else
   run '测试' stage_tests
+  run '证据分层' stage_evidence
   run '账本校验' stage_verify
   run '幂等' stage_idempotence
   run '同步' stage_sync
@@ -118,4 +140,4 @@ if [ "$FAILURES" -gt 0 ]; then
   printf '质量门禁失败：%d 个阶段未通过\n' "$FAILURES"
   exit 1
 fi
-printf '质量门禁全绿：测试 / 18 条不变量 / 幂等 / 同步 / 脱敏 / 文档链接\n'
+printf '质量门禁全绿：测试 / 证据分层 / 21 条不变量 / 幂等 / 同步 / 脱敏 / 文档链接\n'

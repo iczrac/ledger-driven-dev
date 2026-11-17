@@ -75,6 +75,9 @@ input.search:focus{border-color:var(--purple)}
 .lvl{display:inline-block;font-size:10px;font-weight:600;padding:2px 6px;border-radius:5px;margin-left:5px}
 .l0{background:#F1EFE8;color:#5F5E5A}.l1{background:#E6F1FB;color:#185FA5}.l2{background:#EEEDFE;color:#534AB7}
 .l3{background:#FAEEDA;color:#854F0B}.l4{background:#E1F5EE;color:#0F6E56}.l5{background:#0F6E56;color:#fff}
+.tier{display:inline-block;font-size:10px;font-weight:600;padding:2px 6px;border-radius:5px;margin-left:5px}
+.tier-verified{background:#0F6E56;color:#fff}
+.tier-declared{background:var(--soft);color:var(--mut)}
 .caprow{display:flex;gap:10px;align-items:flex-start;padding:8px 0;border-bottom:1px solid var(--line)}
 .caprow:last-child{border-bottom:none}
 .capmeta{flex:1;min-width:0}.capmeta .cn{font-size:13px;font-weight:600}
@@ -431,7 +434,8 @@ function renderCapability(box){
   document.getElementById('legend').innerHTML='<span>完成度由证据自动判定（'+esc(cm.scoring.method)+'）· 重跑生成器即刷新 · 项目→模块→嵌套组件→能力点→文档索引/规划/关联决策，逐层展开可见</span>';
   let specHtml='<div class="specbox"><b>编码体系</b> '+esc(spec.format)+' · 例 <span class="capcode">'+esc(spec.example)+'</span><br>'+
     '<b>成熟度</b> '+Object.keys(cm.levels).map(k=>cm.levels[k].code+' '+cm.levels[k].name).join(' → ')+'<br>'+
-    '<b>规模</b> '+sm.projects+' 项目 / '+sm.modules+' 模块 / '+sm.capabilities+' 能力点 · 整体完成度 '+(sm.overall_completion*100).toFixed(0)+'% · 生成于 '+esc(cm.generated_at)+'</div>';
+    '<b>规模</b> '+sm.projects+' 项目 / '+sm.modules+' 模块 / '+sm.capabilities+' 能力点 · 整体完成度 '+(sm.overall_completion*100).toFixed(0)+'% · 生成于 '+esc(cm.generated_at)+'<br>'+
+    '<b>证据分层</b> '+esc(JSON.stringify(sm.evidence_tier_distribution||{}))+' · verified 覆盖 '+((sm.verified_coverage||0)*100).toFixed(0)+'%（verified=有通过的测试报告，declared=仅文件存在）</div>';
   let projects=cm.projects;
   if(query) projects=projects.filter(p=>[p.code,(p.modules||[]).map(m=>m.code+(m.caps||[]).map(c=>c.code+c.name).join()).join()].join(' ').toLowerCase().includes(query));
   const body=projects.map(p=>{
@@ -443,7 +447,8 @@ function renderCapability(box){
         const peek=docLinks((di.contracts||[]).concat(di.impl||[],di.test_records||[],di.plans||[],di.module_docs||[]),'doc',4);
         return '<div class="caprow" style="display:block"><div style="display:flex;gap:10px;align-items:flex-start">'+
           '<div class="capmeta"><div class="cn"><span class="capcode">'+esc(c.code)+'</span> '+esc(c.name)+
-          '<span class="lvl l'+c.level+'">'+esc(c.level_code)+' '+esc(lvName[c.level_code]||'')+'</span></div>'+
+          '<span class="lvl l'+c.level+'">'+esc(c.level_code)+' '+esc(lvName[c.level_code]||'')+'</span>'+
+          (c.evidence_tier?'<span class="tier tier-'+esc(c.evidence_tier)+'" title="'+esc((c.tier_detail||{}).basis||'')+'">'+(c.evidence_tier==='verified'?'✓ 实测':'声明')+'</span>':'')+'</div>'+
           '<div class="nx">规划 → L'+esc(c.next_level)+'：'+esc(c.next_action)+'</div>'+
           (peek?'<div class="evlink">文档: '+peek+'</div>':'')+'</div>'+
           '<div class="capright"><div class="pc" style="color:'+cHex+'">'+(c.completion*100).toFixed(0)+'%</div>'+
