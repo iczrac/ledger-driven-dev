@@ -1,0 +1,87 @@
+{
+  "_comment": "Demo Shop 示例项目的能力注册表。所有路径相对项目根。",
+  "project": {
+    "code": "DEMO",
+    "name": "Demo Shop 示例电商",
+    "root": "examples/demo-shop",
+    "governance_gate": true,
+    "contracts_dir": "src/contracts",
+    "unit_test_dir": "tests/unit",
+    "test_record_dir": "docs/test_records",
+    "docs_dir": "docs",
+    "governance_dir": "governance"
+  },
+  "modules": [
+    {
+      "code": "DATA",
+      "name": "数据准备",
+      "src": [
+        "src/contracts/"
+      ],
+      "caps": [
+        {
+          "name": "数据就绪契约",
+          "domain": "READY",
+          "impl": [
+            "src/contracts/data_ready.py"
+          ],
+          "hints": [
+            "data_ready",
+            "ready"
+          ]
+        }
+      ]
+    },
+    {
+      "code": "CORE",
+      "name": "核心领域",
+      "src": [
+        "src/domain/"
+      ],
+      "caps": [
+        {
+          "name": "订单领域模型",
+          "domain": "ORDER",
+          "impl": [
+            "src/domain/order.py",
+            "src/contracts/order_schema.py"
+          ],
+          "hints": [
+            "order"
+          ]
+        },
+        {
+          "name": "定价服务",
+          "domain": "PRICE",
+          "impl": [
+            "src/domain/pricing.py"
+          ],
+          "hints": [
+            "pricing",
+            "price"
+          ]
+        }
+      ]
+    },
+    {
+      "code": "API",
+      "name": "接口层",
+      "src": [
+        "src/api/"
+      ],
+      "caps": [
+        {
+          "name": "订单查询接口",
+          "domain": "QUERY",
+          "impl": [
+            "src/api/order_api.py"
+          ],
+          "hints": [
+            "order_api",
+            "query"
+          ]
+        }
+      ]
+    }
+  ]
+}

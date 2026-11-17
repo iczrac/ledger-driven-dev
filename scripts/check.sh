@@ -1,0 +1,121 @@
+#!/usr/bin/env bash
+# 统一质量门禁：本地 / CI / 发布前跑同一份脚本，口径一致。
+set -uo pipefail
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "$ROOT"
+MODE="${1:-all}"
+DEMO="examples/demo-shop/governance"
+FAILURES=0
+
+note(){ printf '\n== %s ==\n' "$1"; }
+pass(){ printf '[PASS] %s\n' "$1"; }
+fail(){ printf '[FAIL] %s — %s\n' "$1" "$2"; FAILURES=$((FAILURES+1)); }
+
+stage_tests(){
+  note '单元测试（标准库 unittest）'
+  python3 -m unittest discover -s tests -v
+}
+stage_verify(){
+  note '账本不变量（18 条）'
+  python3 "$DEMO/verify_ledger.py" --root . \
+    --registry "$DEMO/registry.json" \
+    --ledger "$DEMO/DECISION_LEDGER.json" \
+    --board "$DEMO/index.html" --strict
+}
+snapshot(){
+  python3 - "$1" <<'PY'
+import json, sys
+d = json.load(open(sys.argv[1]))
+print(len(d['history']['events']),
+      d['history']['events'][-1]['fingerprint_after'],
+      sorted(c['id'] for c in d['lessons']['candidates']),
+      [t['code'] for t in d['capability_model']['next_queue']])
+PY
+}
+stage_idempotence(){
+  note '生成器幂等（连续重跑，状态不变则不追加事件）'
+  local tmp before after
+  tmp="$(mktemp -d)"
+  mkdir -p "$tmp/examples/demo-shop/governance"
+  cp -r examples/demo-shop/src examples/demo-shop/tests examples/demo-shop/docs "$tmp/examples/demo-shop/"
+  cp "$DEMO"/* "$tmp/examples/demo-shop/governance/"
+  local ledger="$tmp/examples/demo-shop/governance/DECISION_LEDGER.json"
+  local board="$tmp/examples/demo-shop/governance/index.html"
+  local reg="$tmp/examples/demo-shop/governance/registry.json"
+  before="$(snapshot "$ledger")"
+  python3 "$DEMO/build_capability_model.py" --root "$tmp" --registry "$reg" \
+    --ledger "$ledger" --board "$board" >/dev/null 2>&1 || { rm -rf "$tmp"; return 1; }
+  python3 "$DEMO/build_capability_model.py" --root "$tmp" --registry "$reg" \
+    --ledger "$ledger" --board "$board" >/dev/null 2>&1 || { rm -rf "$tmp"; return 1; }
+  after="$(snapshot "$ledger")"
+  rm -rf "$tmp"
+  if [ "$before" != "$after" ]; then
+    printf '  before: %s\n  after : %s\n' "$before" "$after"
+    return 1
+  fi
+}
+stage_sync(){
+  note '模板 / 示例同步 + 看板 EMBED 一致'
+  cmp -s templates/build_capability_model.py "$DEMO/build_capability_model.py" || return 1
+  cmp -s templates/verify_ledger.py "$DEMO/verify_ledger.py" || return 1
+  python3 - "$DEMO" <<'PY'
+import json, re, sys
+base = sys.argv[1]
+html = open(f'{base}/index.html').read()
+embed = json.loads(re.search(r'const EMBED = (\{.*?\});\nlet DATA', html, re.S).group(1))
+ledger = json.load(open(f'{base}/DECISION_LEDGER.json'))
+assert embed == ledger, '看板 EMBED 与账本不一致'
+print('  看板 EMBED 与账本一致；模板脚本与示例副本一致')
+PY
+}
+stage_hygiene(){
+  note '脱敏 + 文档内链'
+  if grep -rliE 'RacOS|APEX|Tushare|tdx-connector|ClickHouse|Minervini|Keychain' \
+      --include='*.py' --include='*.json' --include='*.html' --include='*.md' \
+      --exclude='check.sh' --exclude='RELEASE_CHECKLIST.md' . >/dev/null 2>&1; then
+    echo '  发现来源项目内部名词残留'
+    return 1
+  fi
+  python3 - <<'PY'
+import os, re
+bad = []
+for root, dirs, files in os.walk('.'):
+    if '.git' in root:
+        continue
+    for f in files:
+        if not f.endswith('.md'):
+            continue
+        p = os.path.join(root, f)
+        for link in re.findall(r'\]\(([^)]+)\)', open(p).read()):
+            if link.startswith(('http://', 'https://', '#')):
+                continue
+            target = os.path.normpath(os.path.join(root, link.split('#')[0]))
+            if not os.path.exists(target):
+                bad.append(f'{p} -> {link}')
+if bad:
+    raise SystemExit('  失效文档链接: ' + '; '.join(bad[:5]))
+print('  脱敏无残留；文档内链全部有效')
+PY
+}
+
+run(){ name="$1"; shift; if "$@"; then pass "$name"; else fail "$name" '见上方输出'; fi; }
+
+if [ "$MODE" = "--only-idempotence" ]; then
+  run '幂等' stage_idempotence
+elif [ "$MODE" = "--help" ]; then
+  echo "用法: bash scripts/check.sh [all|--only-idempotence|--help]"
+else
+  run '测试' stage_tests
+  run '账本校验' stage_verify
+  run '幂等' stage_idempotence
+  run '同步' stage_sync
+  run '卫生' stage_hygiene
+fi
+
+printf '\n'
+if [ "$FAILURES" -gt 0 ]; then
+  printf '质量门禁失败：%d 个阶段未通过\n' "$FAILURES"
+  exit 1
+fi
+printf '质量门禁全绿：测试 / 18 条不变量 / 幂等 / 同步 / 脱敏 / 文档链接\n'

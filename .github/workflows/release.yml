@@ -1,0 +1,37 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: 发布归档
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: 发布前门禁（与 CI 同款）
+        run: bash scripts/check.sh
+
+      - name: 打包可分发归档
+        run: |
+          mkdir -p dist
+          zip -rq "dist/ledger-driven-dev-${GITHUB_REF_NAME}.zip" . \
+            -x '.git/*' -x 'dist/*' -x '**/__pycache__/*' -x '*.pyc'
+
+      - name: 创建 GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*.zip
+          generate_release_notes: true
+          body: |
+            账本驱动开发：方法论 + 可复用模板 + 专家与技能 + 脱敏示例。
+            发布前已通过统一门禁：标准库测试、18 条账本不变量、幂等、同步与脱敏检查。

@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>决策与能力账本 · 单一事实源</title>
+<style>
+:root{--ink:#1a1a1a;--mut:#666;--line:#e3e3e3;--bg:#fff;--soft:#f7f7f5;--purple:#534AB7;--pp:#EEEDFE;--green:#0F6E56;--gp:#E1F5EE;--amber:#854F0B;--ap:#FAEEDA;--red:#A32D2D;--rp:#FCEBEB;--blue:#185FA5;--bp:#E6F1FB;--gray:#5F5E5A;--gp2:#F1EFE8}
+*{box-sizing:border-box}body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;color:var(--ink);line-height:1.6;max-width:1180px;margin:0 auto;padding:32px 26px;background:var(--bg)}
+h1{font-size:22px;font-weight:600;margin:0 0 4px}.sub{font-size:12px;color:var(--mut);margin-bottom:22px}
+.bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:18px;border-bottom:1px solid var(--line);padding-bottom:14px}
+.tab{font-size:13px;padding:7px 14px;border:1px solid var(--line);background:var(--bg);border-radius:8px;cursor:pointer;color:var(--mut)}
+.tab:hover{border-color:var(--purple);color:var(--purple)}.tab.on{background:var(--purple);color:#fff;border-color:var(--purple)}
+input.search{font-size:13px;padding:7px 12px;border:1px solid var(--line);border-radius:8px;flex:1;min-width:180px;outline:none}
+input.search:focus{border-color:var(--purple)}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:24px}
+.stat{border:1px solid var(--line);border-radius:12px;padding:14px 16px;background:var(--soft)}
+.stat .n{font-size:26px;font-weight:600;line-height:1.2}.stat .l{font-size:12px;color:var(--mut);margin-top:4px}
+.pill{display:inline-block;font-size:11px;padding:2px 9px;border-radius:10px;font-weight:600;white-space:nowrap}
+.p-decided{background:var(--gp);color:var(--green)}.p-done{background:var(--bp);color:var(--blue)}
+.p-proposed{background:var(--ap);color:var(--amber)}.p-deferred{background:var(--gp2);color:var(--gray)}
+.p-superseded{background:var(--rp);color:var(--red)}
+.card{border:1px solid var(--line);border-radius:12px;padding:16px 18px;margin-bottom:12px;background:var(--bg)}
+.card.attention{border-left:3px solid var(--amber)}
+.card.old{opacity:.72;border-left:3px solid var(--red)}
+.chead{display:flex;gap:10px;align-items:baseline;flex-wrap:wrap}
+.cid{font-size:12px;font-family:monospace;color:var(--mut)}
+.ctitle{font-size:15px;font-weight:600;flex:1;min-width:200px}
+.cmeta{font-size:12px;color:var(--mut);margin-top:6px}
+.cbody{font-size:13px;margin-top:10px;display:none}
+.card.open .cbody{display:block}
+.cbody .row{margin:7px 0}.cbody .k{color:var(--mut);font-size:12px;display:inline-block;width:56px;vertical-align:top}
+.cbody .v{display:inline-block;width:calc(100% - 62px);vertical-align:top}
+.ev{font-size:11px;color:var(--blue);word-break:break-all}
+.chain{font-size:12px;background:var(--pp);color:var(--purple);padding:5px 10px;border-radius:6px;display:inline-block;margin:3px 0}
+.toggle{font-size:12px;color:var(--purple);cursor:pointer;user-select:none;white-space:nowrap}
+.day{font-size:13px;font-weight:600;color:var(--purple);margin:20px 0 10px;border-bottom:1px dashed var(--line);padding-bottom:6px}
+.empty{text-align:center;color:var(--mut);padding:50px 0;font-size:14px}
+.mod{border:1px solid var(--line);border-radius:12px;padding:16px 18px;margin-bottom:12px;background:var(--bg)}
+.mod h3{font-size:15px;font-weight:600;margin:0 0 4px}
+.mrow{margin:9px 0;font-size:13px}.mrow .k{color:var(--mut);font-size:12px;display:inline-block;width:74px;vertical-align:top}
+.mrow .v{display:inline-block;width:calc(100% - 80px);vertical-align:top;word-break:break-all}
+.link{color:var(--blue);font-size:12px;display:inline-block;margin:2px 12px 2px 0;text-decoration:none}.link:hover{text-decoration:underline}
+.chip{display:inline-block;font-size:11px;padding:2px 8px;border-radius:10px;background:var(--pp);color:var(--purple);margin:2px 5px 2px 0}
+.chip.s{background:var(--gp);color:var(--green)}
+.foot{margin-top:36px;padding-top:16px;border-top:1px solid var(--line);font-size:12px;color:var(--mut)}
+.legend{font-size:11px;color:var(--mut);margin-bottom:18px;display:flex;gap:14px;flex-wrap:wrap}
+.proj{border:1px solid var(--line);border-radius:14px;margin-bottom:16px;overflow:hidden;background:var(--bg)}
+.proj>summary{cursor:pointer;padding:14px 18px;list-style:none;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.proj>summary::-webkit-details-marker{display:none}
+.proj>summary:hover{background:var(--soft)}
+.pname{font-size:15px;font-weight:600;flex:1;min-width:160px}
+.prole{font-size:12px;color:var(--mut);width:100%;line-height:1.5}
+.caret{color:var(--mut);font-size:12px;transition:transform .15s}
+.proj[open]>.caret{transform:rotate(90deg)}
+.pbody{padding:0 18px 18px;border-top:1px solid var(--line)}
+.subhead{font-size:12px;font-weight:600;color:var(--mut);margin:16px 0 8px;letter-spacing:.03em}
+.mgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px}
+.mtile{border:1px solid var(--line);border-radius:10px;padding:12px 14px;background:var(--soft)}
+.mtile h4{margin:0 0 6px;font-size:13px;font-weight:600}
+.comps{display:flex;flex-wrap:wrap;gap:4px;margin-top:8px}
+.comp{font-size:11px;font-family:monospace;color:var(--blue);background:var(--bp);padding:2px 7px;border-radius:5px}
+.flow{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.fstep{font-size:12px;padding:6px 10px;border-radius:8px;background:var(--gp);color:var(--green);border:1px solid var(--line)}
+.fstep b{font-weight:600;margin-right:4px}
+.farrow{color:var(--mut);font-size:12px}
+.ctrl{border-left:3px solid var(--amber);padding:7px 12px;margin:6px 0;background:var(--ap);border-radius:0 8px 8px 0;font-size:12px}
+.ctrl b{font-weight:600;color:var(--amber)}
+.ctrl .cd{color:var(--mut);font-size:11px;display:block;margin-top:2px}
+.cs{font-size:10px;padding:1px 6px;border-radius:8px;background:var(--rp);color:var(--red);margin-left:6px}
+.empty-ctrl{font-size:12px;color:var(--mut)}
+.capbar{height:6px;border-radius:4px;background:var(--line);overflow:hidden;margin:5px 0}
+.capbar>i{display:block;height:100%;border-radius:4px}
+.capcode{font-size:11px;font-family:monospace;color:var(--purple);background:var(--pp);padding:2px 7px;border-radius:5px}
+.lvl{display:inline-block;font-size:10px;font-weight:600;padding:2px 6px;border-radius:5px;margin-left:5px}
+.l0{background:#F1EFE8;color:#5F5E5A}.l1{background:#E6F1FB;color:#185FA5}.l2{background:#EEEDFE;color:#534AB7}
+.l3{background:#FAEEDA;color:#854F0B}.l4{background:#E1F5EE;color:#0F6E56}.l5{background:#0F6E56;color:#fff}
+.caprow{display:flex;gap:10px;align-items:flex-start;padding:8px 0;border-bottom:1px solid var(--line)}
+.caprow:last-child{border-bottom:none}
+.capmeta{flex:1;min-width:0}.capmeta .cn{font-size:13px;font-weight:600}
+.capmeta .nx{font-size:11px;color:var(--mut);margin-top:3px}
+.capright{width:110px;text-align:right;flex-shrink:0}
+.capright .pc{font-size:12px;font-weight:600}
+.evlink{font-size:10px;color:var(--blue);margin-top:3px;word-break:break-all;line-height:1.4}
+.specbox{background:var(--soft);border:1px solid var(--line);border-radius:10px;padding:12px 16px;margin-bottom:16px;font-size:12px;line-height:1.7}
+.specbox b{color:var(--purple)}
+.tree{margin-top:4px}.tkids{margin-left:14px;border-left:1px dashed var(--line);padding-left:10px}
+.tnode{font-size:12px;margin:2px 0}.tnode>summary{cursor:pointer;list-style:none;padding:2px 4px;border-radius:6px;color:var(--purple)}
+.tnode>summary::-webkit-details-marker{display:none}.tnode>summary:hover{background:var(--soft)}
+.tfile{font-size:11px;font-family:monospace;color:var(--mut);padding:1px 4px;word-break:break-all}
+.tfile a{color:var(--blue);text-decoration:none}.tfile a:hover{text-decoration:underline}
+.idx{background:var(--soft);border:1px solid var(--line);border-radius:8px;padding:8px 10px;margin-top:8px}
+.idxtitle{font-size:11px;font-weight:600;color:var(--purple);margin-bottom:5px}
+.idxgrp{display:flex;gap:6px;margin:3px 0;font-size:12px;line-height:1.5}
+.idxgrp .k{color:var(--mut);font-size:11px;min-width:54px;flex-shrink:0}
+.doclink{color:var(--blue);font-size:11px;display:inline-block;margin:1px 8px 1px 0;text-decoration:none}
+.doclink:hover{text-decoration:underline}
+.caplinks{margin-top:5px}
+/* 历史层 / 经验层 */
+.evt{border:1px solid var(--line);border-left:3px solid var(--purple);border-radius:10px;padding:12px 14px;margin-bottom:10px;background:var(--bg)}
+.evt .eh{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.evt .eseq{font-family:monospace;font-size:13px;color:var(--purple);font-weight:700}
+.evt .ets{font-size:11px;color:var(--mut);margin-left:auto}
+.fp{font-family:monospace;font-size:10px;color:var(--mut);word-break:break-all;margin-top:6px}
+.trchip{font-size:11px;font-family:monospace;padding:3px 8px;border-radius:6px;text-decoration:none}
+.tr-up{background:var(--gp);color:var(--green)}.tr-down{background:var(--rp);color:var(--red)}
+.snap{display:flex;gap:5px;flex-wrap:wrap;margin-top:6px}
+.lesson{border:1px solid var(--line);border-radius:10px;padding:13px 15px;margin-bottom:10px;background:var(--bg)}
+.lesson.confirmed{border-left:3px solid var(--green)}.lesson.candidate{border-left:3px solid var(--amber)}
+.lesson .row{margin:6px 0;font-size:13px}.lesson .k{color:var(--mut);font-size:12px;display:inline-block;width:42px;vertical-align:top}
+.lesson .v{display:inline-block;width:calc(100% - 48px);vertical-align:top}
+.hrow{font-size:11px;color:var(--mut);padding:3px 0;font-family:monospace}
+</style>
+</head>
+<body>
+<h1>决策与能力账本</h1>
+<div class="sub" id="sub">单一事实源 · 加载中…</div>
+
+<div class="stats" id="stats"></div>
+
+<div class="bar">
+<div class="tab on" data-v="all">全部条目</div>
+<div class="tab" data-v="pending">待裁决</div>
+<div class="tab" data-v="timeline">时间线</div>
+<div class="tab" data-v="modules">模块地图</div>
+<div class="tab" data-v="arch">架构钻取</div>
+<div class="tab" data-v="capability">能力地图</div>
+<div class="tab" data-v="history">演进历史</div>
+<div class="tab" data-v="lessons">经验库</div>
+<input class="search" id="q" placeholder="搜索标题 / 决策 / 分类 / id / 模块 / 能力…">
+</div>
+<div class="legend" id="legend"></div>
+<div id="list"></div>
+
+<div class="foot" id="foot"></div>
+
+<script>
+const EMBED = {"ledger_version":"1.0","title":"项目决策与能力账本","purpose":"单一事实源：决策、裁决、待办及能力索引的唯一写入点。","last_updated":"","owner":"待定","workflow":["所有重大决策/裁决/待办只写入本文件 entries，不再新建独立报告。","新增条目分配稳定 id，状态初始 proposed/decided，填齐字段。","旧决策被取代时设 superseded/supersedes，用取代链表达演进。","能力等级与完成度由 build_capability_model.py 从证据重算，禁止手填。"],"fields":{"id":"稳定标识，永不复用","status":"proposed | decided | done | superseded | deferred","evidence":"证据/文档路径","confidence":"high | medium | low"},"entries":[],"history":{"spec":{},"events":[]},"lessons":{"spec":{},"items":[],"candidates":[]},"module_map":{"modules":[],"pages_path":"artifacts/control_center/pages/"},"architecture":{"projects":[]},"capability_model":{"version":"1.0","generated_at":"","summary":{"projects":0,"modules":0,"capabilities":0,"overall_completion":0},"levels":{},"scoring":{},"coding_spec":{},"doc_index_spec":{},"projects":[],"loop_protocol":{}}};
+let DATA = EMBED;
+
+const STATUS = {
+  decided:{label:'已裁决',cls:'p-decided'},
+  done:{label:'已完成',cls:'p-done'},
+  proposed:{label:'待裁决',cls:'p-proposed'},
+  deferred:{label:'暂缓/另案',cls:'p-deferred'},
+  superseded:{label:'已被取代',cls:'p-superseded'}
+};
+let view='all', query='';
+
+function init(){
+  // 优先从同目录 JSON 读取（更新后自动同步），失败回退内嵌
+  fetch('DECISION_LEDGER.json').then(r=>r.ok?r.json():Promise.reject()).then(d=>{DATA=d;render();}).catch(()=>render());
+  document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{
+    document.querySelectorAll('.tab').forEach(x=>x.classList.remove('on'));
+    t.classList.add('on'); view=t.dataset.v; render();
+  });
+  document.getElementById('q').oninput=e=>{query=e.target.value.toLowerCase();render();};
+}
+
+function esc(s){return String(s==null?'':s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));}
+const ROOT='../../';
+function docLink(x,kind){
+  if(!x||!x.path) return '';
+  const href=ROOT+x.path.replace(/#.*$/,'');
+  const label=x.title||x.path.split('/').pop();
+  return '<a class="doclink" href="'+href+'" title="'+esc(kind||x.kind||'文档')+' · '+esc(x.path)+'">📄 '+esc(label)+'</a>';
+}
+function docLinks(arr,kind,limit){return (arr||[]).slice(0,limit||8).map(x=>docLink(x,kind)).join('');}
+function treeHtml(nodes,depth){
+  if(!nodes||!nodes.length) return '<span style="color:var(--mut);font-size:11px">（无组件）</span>';
+  return nodes.map(n=>{
+    if(n.type==='dir'){
+      return '<details class="tnode"'+(depth===0?' open':'')+'><summary>📁 '+esc(n.name)+' <span class="cid">'+(n.count||'')+'</span></summary>'+
+        '<div class="tkids">'+treeHtml(n.children||[],depth+1)+'</div></details>';
+    }
+    if(n.type==='file') return '<div class="tfile"><a href="'+ROOT+esc(n.path)+'" title="'+esc(n.path)+'">'+esc(n.name)+'</a></div>';
+    return '<div class="tfile">'+esc(n.name)+'</div>';
+  }).join('');
+}
+function docIndexHtml(di){
+  if(!di) return '';
+  const g=[
+    ['规划',di.plans,'plan'],['相关文档',di.related_docs,'doc'],['模块文档',di.module_docs,'module_doc'],
+    ['契约',di.contracts,'contract'],['实现',di.impl,'impl'],['单测',di.unit_tests,'unit_test'],['测试记录',di.test_records,'test_record']
+  ];
+  let s='<div class="idx"><div class="idxtitle">文档索引（点击打开）</div>';
+  g.forEach(([label,arr,kind])=>{const h=docLinks(arr,kind,6);if(h)s+='<div class="idxgrp"><span class="k">'+label+'</span><span>'+h+'</span></div>';});
+  const decs=(di.decisions||[]).map(d=>{const e=DATA.entries.find(x=>x.id===d.id);return '<span class="chip" title="'+esc(e?e.decision||e.title:d.title)+'">'+esc(d.id)+' '+esc(d.status||'')+'</span>';}).join('');
+  if(decs)s+='<div class="idxgrp"><span class="k">关联决策</span><span>'+decs+'</span></div>';
+  const cc=di.control_center||{};
+  if(cc.page||(cc.sections||[]).length)s+='<div class="idxgrp"><span class="k">控制入口</span><span>'+(cc.page?'<a class="doclink" href="'+ROOT+DATA.module_map.pages_path+esc(cc.page)+'.html">🖥 '+esc(cc.page)+' 页面</a>':'')+(cc.sections||[]).map(x=>'<span class="chip s">'+esc(x)+'</span>').join('')+'</span></div>';
+  return s+'</div>';
+}
+
+function render(){
+  const es=DATA.entries;
+  document.getElementById('sub').textContent='单一事实源 · 最后更新 '+DATA.last_updated+' · 共 '+es.length+' 条决策/裁决（一份账本取代散落报告与日志）';
+  const cnt={};es.forEach(e=>cnt[e.status]=(cnt[e.status]||0)+1);
+  document.getElementById('stats').innerHTML=
+    stat(es.length,'决策条目总数','')+
+    stat(cnt.decided||0,'已裁决','var(--green)')+
+    stat(cnt.done||0,'已完成','var(--blue)')+
+    stat((cnt.proposed||0)+(cnt.deferred||0),'待裁决 / 暂缓','var(--amber)')+
+    stat(cnt.superseded||0,'已被取代（取代链）','var(--red)')+
+    stat(((DATA.history||{}).events||[]).length,'历史事件（append-only）','var(--purple)')+
+    stat(((DATA.lessons||{}).items||[]).length,'已确认经验','var(--green)');
+  document.getElementById('legend').innerHTML=Object.keys(STATUS).map(k=>'<span class="pill '+STATUS[k].cls+'">'+STATUS[k].label+'</span>').join('')+'<span>点击卡片展开详情 · 红色/橙色为需关注项</span>';
+
+  let list=es.filter(match);
+  if(view==='pending') list=list.filter(e=>e.status==='proposed'||e.status==='deferred');
+
+  const box=document.getElementById('list');
+  if(view==='capability'){ renderCapability(box); return; }
+  if(view==='history'){ renderHistory(box); return; }
+  if(view==='lessons'){ renderLessons(box); return; }
+  if(view==='arch'){
+    document.getElementById('legend').innerHTML='<span>点击项目展开 → 模块 → 嵌套组件树（目录/文件逐层展开）→ 文档索引 → 能力编码 → 决策控制。组件由源码目录真实提取。</span>';
+    let ps=DATA.architecture.projects;
+    if(query) ps=ps.filter(p=>[p.name,p.id,p.role,(p.modules||[]).map(m=>m.name+(m.components||[]).join()).join()].join(' ').toLowerCase().includes(query));
+    box.innerHTML=ps.length?ps.map(projectCard).join(''):'<div class="empty">无匹配项目</div>';
+    return;
+  }
+  if(view==='modules'){
+    const mm=DATA.module_map;
+    document.getElementById('legend').innerHTML='<span>源码 → 文档 → 控制中心 section → 可视化页面 → 关联决策，一屏对应</span>';
+    let mods=mm.modules;
+    if(query) mods=mods.filter(m=>[m.name,m.id,(m.source||[]).join(),(m.docs||[]).join(),(m.cc_section||[]).join(),m.page].join(' ').toLowerCase().includes(query));
+    box.innerHTML=mods.length?mods.map(m=>modCard(m,mm)).join(''):'<div class="empty">无匹配模块</div>';
+    return;
+  }
+  if(!list.length){box.innerHTML='<div class="empty">无匹配条目</div>';return;}
+
+  if(view==='timeline'){
+    const groups={};list.forEach(e=>{(groups[e.date]=groups[e.date]||[]).push(e)});
+    box.innerHTML=Object.keys(groups).sort().reverse().map(d=>'<div class="day">'+d+'</div>'+groups[d].map(card).join('')).join('');
+  }else{
+    box.innerHTML=list.map(card).join('');
+  }
+  box.querySelectorAll('.toggle').forEach(t=>t.onclick=()=>t.closest('.card').classList.toggle('open'));
+  bindCapLinks(box);
+}
+function bindCapLinks(box){
+  box.querySelectorAll('[data-cap]').forEach(a=>a.onclick=ev=>{
+    ev.preventDefault();
+    const code=a.dataset.cap;
+    document.querySelector('.tab[data-v="capability"]').click();
+    document.getElementById('q').value=code;
+    query=code.toLowerCase(); render();
+  });
+}
+function bindEventLinks(box){
+  box.querySelectorAll('[data-evt]').forEach(a=>a.onclick=ev=>{
+    ev.preventDefault();
+    document.querySelector('.tab[data-v="history"]').click();
+    const el=document.getElementById('evt-'+a.dataset.evt);
+    if(el) el.scrollIntoView({behavior:'smooth',block:'center'});
+  });
+  bindCapLinks(box);
+}
+
+function modCard(m,mm){
+  const root='../../';
+  const src=(m.source||[]).map(x=>'<a class="link" href="'+root+x+'" title="'+esc(x)+'">📁 '+esc(x.split('/').filter(Boolean).pop())+'</a>').join('');
+  const docs=(m.docs||[]).map(x=>'<a class="link" href="'+root+x+'" title="'+esc(x)+'">📄 '+esc(x.split('/').pop())+'</a>').join('');
+  const secs=(m.cc_section||[]).map(s=>'<span class="chip s">'+esc(s)+'</span>').join('');
+  const page=m.page?'<a class="link" href="'+root+mm.pages_path+m.page+'.html">🖥 '+esc(m.page)+' 页面</a>':'';
+  const decs=(m.decisions||[]).map(id=>{const e=DATA.entries.find(x=>x.id===id);return '<span class="chip" title="'+esc(e?e.title:id)+'">'+esc(id)+'</span>'}).join('')||'<span style="color:var(--mut);font-size:12px">无直接关联</span>';
+  const cards=(m.cards_module||[]).map(c=>'<span class="link" style="color:var(--mut)">'+esc(c)+'</span>').join('');
+  // 关联能力模型中的同 id 模块，展示嵌套组件树 + 能力点索引入口
+  const cmMod=(DATA.capability_model&&DATA.capability_model.projects||[]).flatMap(p=>p.modules||[])
+    .find(x=>x.name===m.name)||{};
+  const tree=treeHtml(cmMod.component_tree||[],0);
+  const capCodes=(cmMod.caps||[]).map(c=>'<a class="capcode" href="#" data-cap="'+esc(c.code)+'" title="'+esc(c.name)+'">'+esc(c.code)+'</a>').join('');
+  return '<div class="mod"><h3>'+esc(m.name)+' <span style="font-size:12px;color:var(--mut);font-family:monospace">'+esc(m.id)+'</span></h3>'+
+    '<div class="mrow"><span class="k">源码</span><span class="v">'+src+'</span></div>'+
+    '<div class="mrow"><span class="k">文档</span><span class="v">'+docs+'</span></div>'+
+    '<div class="mrow"><span class="k">控制中心</span><span class="v">'+secs+' '+page+'</span></div>'+
+    '<div class="mrow"><span class="k">卡片模块</span><span class="v">'+cards+'</span></div>'+
+    '<div class="mrow"><span class="k">能力点</span><span class="v">'+(capCodes||'<span style="color:var(--mut);font-size:12px">见能力地图</span>')+'</span></div>'+
+    '<div class="mrow"><span class="k">关联决策</span><span class="v">'+decs+'</span></div>'+
+    '<details class="tnode"><summary>展开嵌套组件树（'+esc((cmMod.component_tree||[]).length)+' 组）</summary><div class="tree">'+tree+'</div></details></div>';
+}
+
+function projectCard(p){
+  const root='../../';
+  const modules=(p.modules||[]).map(m=>{
+    const tree=treeHtml(m.component_tree||[],0);
+    const di=m.doc_index||{};
+    const docs=docLinks((di.docs||[]).concat(di.plans||[]),'module_doc',6);
+    const caps=(m.capability_codes||[]).map(c=>'<span class="capcode">'+esc(c)+'</span>').join('');
+    const decs=(m.decisions||[]).map(id=>{const e=DATA.entries.find(x=>x.id===id);return '<span class="chip" title="'+esc(e?e.title:id)+'">'+esc(id)+'</span>'}).join('');
+    return '<div class="mtile"><h4>'+esc(m.name)+' <span class="cid">'+esc(m.id)+'</span></h4>'+
+      '<div style="font-size:11px;color:var(--mut)">'+esc((m.src||[]).join(' · '))+'</div>'+
+      '<div class="subhead" style="margin:10px 0 4px">嵌套组件树（点击目录展开）</div><div class="tree">'+tree+'</div>'+
+      (docs?'<div style="margin-top:8px"><span class="k" style="color:var(--mut);font-size:11px">文档索引</span><div>'+docs+'</div></div>':'')+
+      (caps?'<div class="caplinks">'+caps+'</div>':'')+
+      (decs?'<div style="margin-top:8px">'+decs+'</div>':'')+'</div>';
+  }).join('');
+  const flow=(p.data_flow||[]).map((s,i)=>'<span class="fstep"><b>'+s.n+'</b>'+esc(s.label)+'</span>'+(i<(p.data_flow.length-1)?'<span class="farrow">→</span>':'')).join('');
+  const flowDetail=(p.data_flow||[]).map(s=>'<div style="font-size:11px;color:var(--mut);margin:3px 0"><span class="cid">'+s.n+' · '+esc(s.key)+'</span> → <span style="font-family:monospace">'+esc(s.src)+'</span></div>').join('');
+  const ctrl=(p.controls||[]).map(c=>'<div class="ctrl"><b>'+esc(c.name)+'</b><span class="cs">'+esc(c.type)+'</span><span class="cd">'+esc(c.detail)+' · '+esc(c.src)+'</span></div>').join('')||'<div class="empty-ctrl">未定义显式决策控制点（原型阶段）</div>';
+  return '<details class="proj" open><summary><span class="caret">▶</span><span class="pname">'+esc(p.name)+'</span><span class="cid">'+esc(p.path)+'</span><span class="chip s">'+p.py_files+' py</span><span class="chip">'+p.modules.length+' 模块</span></summary>'+
+    '<div class="pbody"><div class="prole" style="width:auto;margin-bottom:4px">'+esc(p.role)+'</div>'+
+    '<div class="subhead">模块 → 内部组件</div><div class="mgrid">'+modules+'</div>'+
+    '<div class="subhead">数据流（'+p.data_flow.length+' 步）</div><div class="flow">'+flow+'</div><div style="margin-top:10px">'+flowDetail+'</div>'+
+    '<div class="subhead">决策控制（'+p.controls.length+' 点）</div>'+ctrl+
+    '</div></details>';
+}
+
+function stat(n,l,c){return '<div class="stat"><div class="n"'+(c?' style="color:'+c+'"':'')+'>'+n+'</div><div class="l">'+l+'</div></div>';}
+function match(e){
+  if(!query)return true;
+  return [e.title,e.decision,e.rationale,e.category,e.id,e.scope].join(' ').toLowerCase().includes(query);
+}
+function card(e){
+  const s=STATUS[e.status]||STATUS.decided;
+  let cls='card';
+  if(e.status==='proposed'||e.status==='deferred')cls+=' attention';
+  if(e.status==='superseded')cls+=' old';
+  let chain='';
+  if(e.superseded_by) chain+='<div class="chain">→ 被 '+esc(e.superseded_by)+' 取代</div>';
+  if(e.supersedes) chain+='<div class="chain">取代了 '+esc(e.supersedes)+'</div>';
+  const ev=(e.evidence||[]).map(x=>'<div class="ev">'+esc(x)+'</div>').join('');
+  return '<div class="'+cls+'">'+
+    '<div class="chead"><span class="cid">'+esc(e.id)+'</span><span class="pill '+s.cls+'">'+s.label+'</span>'+
+    '<span class="ctitle">'+esc(e.title)+'</span><span class="toggle">展开 ▾</span></div>'+
+    '<div class="cmeta">'+esc(e.category)+' · '+esc(e.scope)+' · '+esc(e.date)+' · 置信度 '+esc(e.confidence)+'</div>'+
+    '<div class="cbody">'+
+      '<div class="row"><span class="k">决策</span><span class="v">'+esc(e.decision)+'</span></div>'+
+      (e.rationale?'<div class="row"><span class="k">理由</span><span class="v">'+esc(e.rationale)+'</span></div>':'')+
+      (chain?'<div class="row"><span class="k">演进</span><span class="v">'+chain+'</span></div>':'')+
+      (ev?'<div class="row"><span class="k">证据</span><span class="v">'+ev+'</span></div>':'')+
+    '</div></div>';
+}
+function renderHistory(box){
+  const h=DATA.history||{}, evs=h.events||[], spec=h.spec||{};
+  document.getElementById('legend').innerHTML='<span>'+esc(spec.purpose||'')+' · '+esc(spec.invariant||'')+'</span>';
+  let shown=evs;
+  if(query) shown=evs.filter(e=>JSON.stringify(e).toLowerCase().includes(query));
+  let html='<div class="specbox"><b>事件</b> '+evs.length+' 条 · 当前指纹 <span class="fp">'+esc(h.current_fingerprint||'')+'</span><br>'+
+    '<b>机制</b> '+esc(spec.fingerprint||'')+'</div>';
+  html+=shown.length?shown.map(e=>{
+    const ch=e.changes||{};
+    const tr=(ch.level_transitions||[]).map(t=>{
+      const down=parseInt(String(t.to||'L0').slice(1))<parseInt(String(t.from||'L0').slice(1));
+      return '<a class="trchip '+(down?'tr-down':'tr-up')+'" href="#" data-cap="'+esc(t.code)+'">'+esc(t.code)+' '+esc(t.from)+'→'+esc(t.to)+'</a>';
+    }).join('');
+    const dl=(ch.completion_delta||[]).map(d=>'<span class="chip">'+esc(d.code)+' '+(d.from*100).toFixed(0)+'%→'+(d.to*100).toFixed(0)+'%</span>').join('');
+    const add=(ch.added||[]).map(c=>'<span class="chip s">+ '+esc(c)+'</span>').join('');
+    const rem=(ch.removed||[]).map(c=>'<span class="chip s">− '+esc(c)+'</span>').join('');
+    const evc=(ch.evidence_changes||[]).map(x=>'<span class="chip s">'+esc(x.code)+' +'+(x.added||[]).length+' / −'+(x.removed||[]).length+'</span>').join('');
+    const sd=e.state_digest||{}, codes=Object.keys(sd);
+    const snap=codes.length?'<details class="tnode"><summary>当时状态快照（'+codes.length+' 能力，可回放）</summary><div class="snap">'+
+      codes.map(c=>'<span class="chip">'+esc(c)+' L'+esc(sd[c].l||0)+'</span>').join('')+'</div></details>':'';
+    return '<div class="evt" id="evt-'+esc(e.seq)+'"><div class="eh"><span class="eseq">#'+esc(e.seq)+'</span>'+
+      '<span class="pill '+(e.type==='genesis'?'p-done':'p-proposed')+'">'+esc(e.type)+'</span>'+
+      '<span class="ets">'+esc(e.ts)+' · '+esc(e.trigger||'')+'</span></div>'+
+      '<div class="fp">'+esc(e.fingerprint_before||'∅')+' → '+esc(e.fingerprint_after||'')+'</div>'+
+      (tr?'<div style="margin:8px 0">'+tr+'</div>':'')+
+      (dl?'<div style="margin:6px 0"><span class="k">完成度</span> '+dl+'</div>':'')+
+      (add||rem?'<div style="margin:6px 0"><span class="k">能力增减</span> '+add+rem+'</div>':'')+
+      (evc?'<div style="margin:6px 0"><span class="k">证据变化</span> '+evc+'</div>':'')+
+      (e.note?'<div class="cmeta">'+esc(e.note)+'</div>':'')+snap+'</div>';
+  }).join(''):'<div class="empty">无匹配历史事件</div>';
+  box.innerHTML=html; bindCapLinks(box);
+}
+
+function renderLessons(box){
+  const ls=DATA.lessons||{}, items=ls.items||[], cands=ls.candidates||[], spec=ls.spec||{};
+  document.getElementById('legend').innerHTML='<span>'+esc(spec.purpose||'')+'</span>';
+  const filt=x=>!query||JSON.stringify(x).toLowerCase().includes(query);
+  const I=items.filter(filt), C=cands.filter(filt);
+  let html='<div class="specbox"><b>工作流</b> '+(spec.workflow||[]).map(x=>esc(x)).join(' → ')+'</div>';
+  html+='<div class="day">已确认经验（'+I.length+'）→ 自动附到任务卡</div>';
+  html+=I.length?I.map(x=>lessonCard(x,true)).join(''):'<div class="empty">暂无已确认经验：将候选确认后补上洞察与行动，下一轮任务卡即可携带</div>';
+  html+='<div class="day">待确认候选（'+C.length+'）→ 机器识别的信号，需人/AI 下结论</div>';
+  html+=C.length?C.map(x=>lessonCard(x,false)).join(''):'<div class="empty">暂无候选：出现能力降级 / 长期停滞 / 决策被取代时自动生成</div>';
+  box.innerHTML=html; bindEventLinks(box);
+}
+function lessonCard(x, confirmed){
+  const sc=x.scope||{}, sug=x.suggested_scope||{};
+  const chips=[].concat(sc.capabilities||[],sc.projects||[],sc.domains||[],sc.levels||[],
+    sug.capabilities||[],sug.decisions||[],sug.projects||[]).map(s=>'<span class="chip s">'+esc(s)+'</span>').join('');
+  const ev=(x.source_events||[]).map(n=>'<a class="link" href="#" data-evt="'+esc(n)+'">#'+esc(n)+'</a>').join('')||
+    '<span style="color:var(--mut);font-size:11px">无绑定事件</span>';
+  return '<div class="lesson '+(confirmed?'confirmed':'candidate')+'"><div class="chead"><span class="cid">'+esc(x.id)+'</span>'+
+    '<span class="pill '+(confirmed?'p-decided':'p-proposed')+'">'+(confirmed?'已确认 · '+esc(x.status):'候选 · '+esc(x.kind||''))+'</span>'+
+    '<span class="ctitle">'+esc(x.title||x.reason||'')+'</span></div>'+
+    (confirmed?'<div class="row"><span class="k">洞察</span><span class="v">'+esc(x.insight)+'</span></div>'+
+      '<div class="row"><span class="k">行动</span><span class="v">'+esc(x.action)+'</span></div>'
+      :'<div class="cmeta">'+esc(x.reason||'')+'</div>')+
+    '<div class="cmeta">适用范围 '+(chips||'<span style="color:var(--mut)">全局</span>')+' · 来源事件 '+ev+'</div></div>';
+}
+function capHistoryHtml(code){
+  const evs=(DATA.history||{}).events||[];
+  const hits=evs.filter(e=>{
+    const ch=e.changes||{};
+    return (ch.level_transitions||[]).some(t=>t.code===code)
+      || (ch.evidence_changes||[]).some(x=>x.code===code)
+      || (ch.completion_delta||[]).some(x=>x.code===code)
+      || (ch.added||[]).includes(code) || (ch.removed||[]).includes(code);
+  });
+  if(!hits.length) return '';
+  return hits.map(e=>{
+    const ch=e.changes||{};
+    const t=(ch.level_transitions||[]).find(x=>x.code===code);
+    const ec=(ch.evidence_changes||[]).find(x=>x.code===code);
+    const sd=(e.state_digest||{})[code]||{};
+    return '<div class="hrow">#'+esc(e.seq)+' '+esc(e.ts)+' · '+(t?esc(t.from)+'→'+esc(t.to):'基线 L'+esc(sd.l||0))+
+      (ec?' · 证据 +'+(ec.added||[]).length+' / −'+(ec.removed||[]).length:'')+'</div>';
+  }).join('');
+}
+function capLessonsHtml(c){
+  const parts=c.code.split('.');
+  const items=((DATA.lessons||{}).items||[]).filter(x=>{
+    if(x.status!=='confirmed') return false;
+    const sc=x.scope||{};
+    const caps=sc.capabilities||[], projs=sc.projects||[], doms=sc.domains||[], lvls=sc.levels||[];
+    if(!(caps.length||projs.length||doms.length||lvls.length)) return true;
+    return caps.includes(c.code)||projs.includes(parts[0])||doms.includes(parts[2])||lvls.includes(c.level_code);
+  });
+  if(!items.length) return '';
+  return items.map(x=>'<div class="hrow"><span class="chip s">'+esc(x.id)+'</span> '+esc(x.action||x.insight)+'</div>').join('');
+}
+
+function renderCapability(box){
+  const cm=DATA.capability_model;
+  if(!cm){box.innerHTML='<div class="empty">能力模型未生成，请运行 governance/build_capability_model.py</div>';return;}
+  const spec=cm.coding_spec, sm=cm.summary;
+  const lvName={};Object.keys(cm.levels).forEach(k=>lvName[cm.levels[k].code]=cm.levels[k].name);
+  document.getElementById('legend').innerHTML='<span>完成度由证据自动判定（'+esc(cm.scoring.method)+'）· 重跑生成器即刷新 · 项目→模块→嵌套组件→能力点→文档索引/规划/关联决策，逐层展开可见</span>';
+  let specHtml='<div class="specbox"><b>编码体系</b> '+esc(spec.format)+' · 例 <span class="capcode">'+esc(spec.example)+'</span><br>'+
+    '<b>成熟度</b> '+Object.keys(cm.levels).map(k=>cm.levels[k].code+' '+cm.levels[k].name).join(' → ')+'<br>'+
+    '<b>规模</b> '+sm.projects+' 项目 / '+sm.modules+' 模块 / '+sm.capabilities+' 能力点 · 整体完成度 '+(sm.overall_completion*100).toFixed(0)+'% · 生成于 '+esc(cm.generated_at)+'</div>';
+  let projects=cm.projects;
+  if(query) projects=projects.filter(p=>[p.code,(p.modules||[]).map(m=>m.code+(m.caps||[]).map(c=>c.code+c.name).join()).join()].join(' ').toLowerCase().includes(query));
+  const body=projects.map(p=>{
+    const mods=(p.modules||[]).map(m=>{
+      const caps=(m.caps||[]).map(c=>{
+        const cHex=['#888780','#185FA5','#534AB7','#854F0B','#0F6E56','#0F6E56'][c.level];
+        const di=c.doc_index||{};
+        const lh=capLessonsHtml(c), hh=capHistoryHtml(c.code);
+        const peek=docLinks((di.contracts||[]).concat(di.impl||[],di.test_records||[],di.plans||[],di.module_docs||[]),'doc',4);
+        return '<div class="caprow" style="display:block"><div style="display:flex;gap:10px;align-items:flex-start">'+
+          '<div class="capmeta"><div class="cn"><span class="capcode">'+esc(c.code)+'</span> '+esc(c.name)+
+          '<span class="lvl l'+c.level+'">'+esc(c.level_code)+' '+esc(lvName[c.level_code]||'')+'</span></div>'+
+          '<div class="nx">规划 → L'+esc(c.next_level)+'：'+esc(c.next_action)+'</div>'+
+          (peek?'<div class="evlink">文档: '+peek+'</div>':'')+'</div>'+
+          '<div class="capright"><div class="pc" style="color:'+cHex+'">'+(c.completion*100).toFixed(0)+'%</div>'+
+          '<div class="capbar"><i style="width:'+(c.completion*100)+'%;background:'+cHex+'"></i></div></div></div>'+
+          '<details class="tnode" style="margin-top:4px"><summary>展开完整文档索引 / 相关经验 / 变更历史</summary>'+docIndexHtml(di)+
+          (lh?'<div class="subhead">相关经验（自动附到任务卡）</div>'+lh:'')+
+          (hh?'<div class="subhead">变更历史</div>'+hh:'')+'</details></div>';
+      }).join('');
+      return '<details class="proj"><summary><span class="caret">▶</span><span class="pname">'+esc(m.code)+'</span>'+esc(m.name)+'<span class="chip">'+(m.caps||[]).length+' 能力</span><span class="chip s">'+(m.completion*100).toFixed(0)+'%</span></summary>'+
+        '<div class="pbody"><div class="subhead">嵌套组件（模块内组件树）</div><div class="tree">'+treeHtml(m.component_tree||[],0)+'</div>'+
+        '<div class="subhead">模块文档索引</div>'+docIndexHtml(m.doc_index)+
+        '<div class="subhead">能力点（点击展开索引与规划）</div>'+caps+'</div></details>';
+    }).join('');
+    return '<div class="mod"><h3>'+esc(p.code)+' <span class="chip s">完成度 '+(p.completion*100).toFixed(0)+'%</span><span class="cid">'+esc(p.root)+'</span></h3>'+mods+'</div>';
+  }).join('');
+  box.innerHTML=specHtml+(projects.length?body:'<div class="empty">无匹配能力节点</div>');
+}
+document.getElementById('foot').textContent='账本文件：governance/DECISION_LEDGER.json（唯一事实源） · 历史由状态指纹自动追加、经验由人确认后附到任务卡 · 校验：governance/verify_ledger.py --strict · 能力模型由生成器从证据重算';
+init();
+</script>
+</body>
+</html>

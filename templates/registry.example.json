@@ -1,0 +1,73 @@
+{
+  "_comment": "能力注册表 —— 每个项目唯一需要手工维护的清单。生成器据此扫描真实文件系统证据，自动判定完成度并生成组件树/文档索引。复制本文件到 <项目根>/governance/registry.json 后按实际情况修改。",
+
+  "project": {
+    "code": "DEMO",
+    "name": "Demo Shop 示例电商",
+    "root": "examples/demo-shop",
+    "governance_gate": true,
+    "contracts_dir": "src/contracts",
+    "unit_test_dir": "tests/unit",
+    "test_record_dir": "docs/test_records",
+    "docs_dir": "docs",
+    "governance_dir": "governance"
+  },
+
+  "_field_guide": {
+    "project.code": "项目短代码，用于能力编码前缀（如 DEMO.DATA.READY.01）。一经分配不复用。",
+    "project.name": "项目展示名。",
+    "project.root": "相对仓库根的项目路径。所有 impl/hints 以此为基准。",
+    "governance_gate": "是否授予 L5。需有 governance/ 目录且此项为 true。",
+    "contracts_dir": "L1 契约所在目录，相对项目根。",
+    "unit_test_dir": "L3 单测目录，相对项目根。",
+    "test_record_dir": "L4 测试记录目录，相对项目根。",
+    "docs_dir": "文档根目录，用于文档索引匹配，相对项目根。",
+    "modules[].code": "模块代码，用于编码第二段（DATA/CORE/...）。",
+    "modules[].src": "组件树的扫描入口目录，相对项目根；可多个。",
+    "modules[].caps[].domain": "能力域代码，用于编码第三段（READY/CORE/...）。",
+    "modules[].caps[].impl": "实现证据 glob，相对项目根；命中即算有代码/契约。",
+    "modules[].caps[].hints": "关键字，用于匹配单测文件名、测试记录名、文档名。建议小写英文。"
+  },
+
+  "modules": [
+    {
+      "code": "DATA",
+      "name": "数据准备",
+      "src": ["src/domain/"],
+      "caps": [
+        {
+          "name": "数据就绪契约",
+          "domain": "READY",
+          "impl": ["src/contracts/data_ready.py"],
+          "hints": ["data_ready", "ready"]
+        }
+      ]
+    },
+    {
+      "code": "CORE",
+      "name": "核心领域",
+      "src": ["src/domain/"],
+      "caps": [
+        {
+          "name": "订单领域模型",
+          "domain": "ORDER",
+          "impl": ["src/domain/order.py"],
+          "hints": ["order"]
+        }
+      ]
+    },
+    {
+      "code": "API",
+      "name": "接口层",
+      "src": ["src/api/"],
+      "caps": [
+        {
+          "name": "订单查询接口",
+          "domain": "QUERY",
+          "impl": ["src/api/order_api.py"],
+          "hints": ["order_api", "query"]
+        }
+      ]
+    }
+  ]
+}

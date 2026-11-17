@@ -1,0 +1,33 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  guard:
+    name: 质量门禁 (Python ${{ matrix.python-version }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.11", "3.12", "3.13"]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: 统一门禁（本地同款）
+        run: bash scripts/check.sh
+
+      - name: 看板 JS 语法
+        run: |
+          python3 - <<'PY'
+          html = open('examples/demo-shop/governance/index.html').read()
+          js = html.split('<script>')[1].split('</script>')[0]
+          open('/tmp/ledger_board.js', 'w').write(js)
+          PY
+          node --check /tmp/ledger_board.js
