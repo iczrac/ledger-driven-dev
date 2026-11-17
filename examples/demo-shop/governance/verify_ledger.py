@@ -7,25 +7,27 @@
 
 检查项
 ------
-1. 决策 id 唯一且不为空
-2. 能力编码格式正确且唯一
-3. 完成度与等级一致（completion == level/5）
-4. 每个能力点都有下一步动作（未达 L5 时）
-5. 文档索引路径指向真实文件
-6. 组件树路径指向真实文件
-7. 能力引用的决策 id 在账本中存在
-8. 决策取代链双向一致
-9. registry 中声明的实现路径真实存在（来源真实性）
-10. 看板内嵌数据与账本一致
-11. 历史链连贯（seq 连续、fingerprint 前后衔接、首事件 before 为空）
-12. 历史事件指纹自证（state_digest 重算 == fingerprint_after，防篡改）
-13. 历史末事件指纹 == 当前能力模型指纹（账本状态与历史一致）
-14. 经验条目合法（id 唯一、状态合法、confirmed 必含洞察与行动、事件引用有效）
-15. 经验候选去重且与已确认条目不冲突
-16. 任务卡引用的经验均为已确认条目
-17. 证据分层取值合法（declared | verified）
-18. verified 可追溯（tier_detail 有 test_report_pass 依据，匹配单测真实存在）
-19. verified 不越级（低于 L3、无单测的能力不得标 verified）
+1. entry_ids_unique：决策 id 唯一且不为空
+2. encoding_format：能力编码格式正确
+3. encoding_unique：能力编码唯一
+4. completion_matches_level：完成度与等级一致（completion == level/5）
+5. next_action_present：未达 L5 的能力都有下一步动作
+6. evidence_tier_valid：证据分层取值合法（declared | verified）
+7. verified_tier_traceable：verified 有 test_report_pass 依据且匹配真实单测
+8. verified_tier_not_premature：低于 L3 或无单测的能力不得标 verified
+9. doc_paths_exist：文档索引路径指向真实文件
+10. component_paths_exist：组件树路径指向真实文件
+11. decision_refs_valid：能力引用的决策 id 在账本中存在
+12. supersede_chain_consistent：决策取代链双向一致
+13. registry_impls_exist：registry 声明的实现路径真实存在
+14. board_embed_synced：看板内嵌数据与账本一致
+15. history_chain_consistent：历史链连贯（seq 连续、指纹前后衔接）
+16. history_event_fingerprints：事件指纹自证（防篡改）
+17. history_state_encoding：状态快照编码合法
+18. history_current_matches：末事件指纹 == 当前能力模型指纹
+19. lessons_valid：经验条目合法（confirmed 必含洞察与行动）
+20. lesson_candidates_dedup：候选去重且不与已确认条目冲突
+21. queue_lessons_confirmed：任务卡只引用已确认经验
 
 用法
 ----

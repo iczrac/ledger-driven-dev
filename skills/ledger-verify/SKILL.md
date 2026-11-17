@@ -1,21 +1,21 @@
 ---
 name: ledger-verify
 description: |
-  运行 18 条账本不变量校验：编码/完成度/路径/决策链、看板同步、历史链与指纹自证、
+  运行 21 条账本不变量校验：编码/完成度/路径/决策链、看板同步、历史链与指纹自证、
   经验合法性与任务卡经验状态。产出人类可读或机器可读结果，并给出每项失败的修复动作。
   Triggers: "校验账本", "verify", "账本有没有坏", "CI 检查", "历史链断了",
   "完成度对不上", "看板和账本不一致", "validate ledger"
 license: MIT
 metadata:
   author: ledger-driven-dev
-  version: "0.3.0"
+  version: "0.6.0"
   risk_level: read_only
   related_skills: [ledger-scan, ledger-guard]
 ---
 
 # Ledger Verify
 
-账本的"体检"。只读，不改任何文件。18 条检查一次跑完。
+账本的"体检"。只读，不改任何文件。21 条检查一次跑完。
 
 ## When to Use
 
@@ -26,7 +26,7 @@ metadata:
 | 项 | 值 |
 |---|---|
 | 输入 | `--root`、`--ledger`、`--registry`、`--board` |
-| 输出 | 18 条 `[PASS]/[FAIL]` 结果；`--json` 给机器；`--strict` 失败返回退出码 1 |
+| 输出 | 21 条 `[PASS]/[FAIL]` 结果；`--json` 给机器；`--strict` 失败返回退出码 1 |
 | 副作用 | 无（read_only） |
 
 ## 步骤

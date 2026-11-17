@@ -16,11 +16,11 @@
 - [x] SELECT 任务队列：生成器产出 next_queue，dry-run 可见，任务卡携带已确认经验
 - [x] 历史层：状态指纹驱动 append-only 事件，重跑幂等，支持状态快照回放
 - [x] 经验层：自动识别候选 + 人工确认 + 任务卡消费，看板两视图可见可点
-- [x] 一键初始化脚本可用（含校验器）
-- [x] 账本治理专家（角色/权限/纪律/输出模板）
-- [x] 五个技能（scan/verify/decide/lesson/guard），标准 SKILL.md frontmatter
+- [x] 一键初始化脚本可用（含校验器），支持 greenfield / adopt 双模式与 provenance 记录
+- [x] 六种专家角色（路由 / 新建 / 考古 / 账本治理 / 审计 / 执行），各含权限矩阵与停止条件
+- [x] 八个技能（route/discover/bootstrap/scan/verify/decide/lesson/guard），标准 SKILL.md frontmatter
 - [x] 技能脚本：重复立项、缺行动经验、无理由驳回均由代码拒绝
-- [x] 37 个 unittest 用例（含 7 个证据分层专项），零第三方依赖，临时目录隔离
+- [x] 60 个 unittest 用例（含 7 个证据分层专项、23 个多专家专项），零第三方依赖，临时目录隔离
 - [x] CI（Python 3.10-3.13 矩阵）/ CD（tag 触发，先门禁后打包）
 - [x] 示例项目已跑通，产出真实账本与看板
 
@@ -43,6 +43,14 @@
 - [x] 看板 JS 通过 `node --check`；CI 用同一份门禁脚本，口径一致
 - [x] 负向纪律测试：重复立项、缺 action、无理由驳回均被拒绝
 
+## 多专家接入（0.6.0）
+
+- [x] 路由脚本只读、确定性，账本损坏/意图冲突时 fail-closed
+- [x] 存量项目盘点只写草稿与报告，不覆盖既有治理文件与源码
+- [x] 新建/接入均写入 provenance，外部路径不泄露绝对路径
+- [x] 接入模式生成后可通过 21 条不变量校验
+- [x] docs/12-专家路由.md 与 README / AI 集成 / 落地指南互相引用一致
+
 ## 脱敏
 
 - [x] 看板模板 EMBED 已替换为空账本骨架
@@ -53,7 +61,7 @@
 ## 文档
 
 - [x] README（价值主张、快速开始、目录结构、视图说明）
-- [x] 九篇编号方法论文档 + STANDARD.md + 10-AI集成.md + CONTRIBUTING.md
+- [x] 十二篇编号方法论文档 + STANDARD.md + 10-AI集成.md + CONTRIBUTING.md
 - [x] LICENSE（MIT）
 - [x] CHANGELOG
 - [x] registry.example.json 含字段说明注释
@@ -64,7 +72,7 @@
 - [ ] 确认仓库名（建议 `ledger-driven-dev`）
 - [ ] `git init` / 添加 remote
 - [ ] 检查 `.gitignore`（排除 `__pycache__/`、`*.pyc`、`.venv/`）
-- [ ] 提交并打 tag `v0.5.0`
+- [ ] 提交并打 tag `v0.6.0`
 - [ ] GitHub 仓库描述、README 顶图（可选）、topics 标签
 
 ## 建议的 topics

@@ -4,6 +4,8 @@
 
 这是一套从真实项目迭代中沉淀出来的**开发与方法论 + 可复用模板**。它不绑定任何具体技术栈，只用标准库，复制模板即可接入你自己的项目。
 
+同一套账本要服务两类场景：**历史项目无损接入**与**新项目从零起步**。为此方法内置了专家路由：先只读判定项目状态与任务意图，再把写权限交给唯一合适的专家。
+
 ---
 
 ## 它解决什么问题
@@ -25,6 +27,7 @@
 4. **循环协议** —— SCAN→SELECT→PLAN→EXECUTE→VERIFY→VISUALIZE，把账本变成驱动 AI 迭代的输入。
 5. **历史层** —— append-only 事件流，由状态指纹自动侦测真实变化；只有证据/等级/文档真的变了才记一笔，重跑不产生噪音，任意时点可回放。
 6. **经验层** —— 从历史自动识别可沉淀信号（降级/长期停滞/决策被推翻），人确认后写成经验，**下一轮任务卡自动携带**。
+7. **专家路由** —— 只读扫描项目状态与任务意图，确定性选出唯一负责人：历史项目走考古专家（草稿优先、绝不覆盖），新项目走架构师（最小骨架、来源可追溯），校验与编码各有边界。冲突时要求澄清，**不让多个 Agent 同时改同一份事实源**。
 
 并且这套方法**自身可被验证**：`verify_ledger.py` 把 21 条不变量机器化（含历史链、经验引用与证据分层），`next_queue` 把 SELECT 变成机器可读任务队列——「可信」和「驱动」两个核心承诺都不再停留在文字上。
 
@@ -55,22 +58,33 @@ ledger-driven-dev/
 │   ├── 09-历史与经验.md
 │   ├── 10-AI集成.md                  专家与技能的安装与消费
 │   ├── 11-证据分层.md                声明级 / 验证级，消除假绿灯
+│   ├── 12-专家路由.md                多专家协作、历史/新建双路径
 │   └── STANDARD.md                   文档命名/章节/状态词规范
 ├── experts/
-│   └── ledger-steward/EXPERT.md      账本治理专家（角色/权限/纪律）
+│   ├── expert-router/EXPERT.md        路由决策与交接契约（只读调度）
+│   ├── greenfield-architect/EXPERT.md 新建项目架构师
+│   ├── project-archaeologist/EXPERT.md 存量项目考古专家
+│   ├── ledger-steward/EXPERT.md       账本治理专家（默认循环负责人）
+│   ├── evidence-auditor/EXPERT.md     证据审计专家（只读门禁）
+│   └── loop-executor/EXPERT.md        循环执行专家（一条任务卡）
 ├── skills/
-│   ├── ledger-scan/                  重跑生成器
-│   ├── ledger-verify/                21 条不变量 + 修复表
-│   ├── ledger-decide/                任务卡 → proposed 决策
-│   ├── ledger-lesson/                候选 → 已确认经验
-│   └── ledger-guard/                 统一质量门禁
+│   ├── expert-route/                  专家路由
+│   ├── project-discover/              存量项目只读发现
+│   ├── project-bootstrap/             新建 / 接入初始化
+│   ├── ledger-scan/                   重跑生成器
+│   ├── ledger-verify/                 21 条不变量 + 修复表
+│   ├── ledger-decide/                 任务卡 → proposed 决策
+│   ├── ledger-lesson/                 候选 → 已确认经验
+│   └── ledger-guard/                  统一质量门禁
 ├── templates/                        可复用模板（复制到你的项目）
 │   ├── build_capability_model.py     核心生成器（含证据分层/历史/经验/任务队列）
 │   ├── verify_ledger.py              21 条不变量校验器（可信的基础设施）
 │   ├── index.html.template           可视化看板
 │   └── registry.example.json         能力注册表样板
 ├── scripts/
-│   ├── init_project.py               一键初始化
+│   ├── route_expert.py               确定性专家路由（只读）
+│   ├── discover_project.py           存量项目只读发现（草稿）
+│   ├── init_project.py               新建 / 存量接入初始化
 │   ├── run_tests.py                  标准库跑测试 → 机器可读报告（verified 证据源）
 │   ├── ledger_decide.py              决策写入（纪律由代码保证）
 │   ├── ledger_lesson.py              经验确认 / 驳回
@@ -96,29 +110,47 @@ ledger-driven-dev/
 
 ### 方式二：接入自己的项目（5 分钟）
 
+先让路由看一眼，不要凭描述猜模式：
+
 ```bash
-# 1. 从模板初始化治理骨架
-python3 scripts/init_project.py --target /path/to/your-project --code MYPROJ --name "我的项目"
+python3 scripts/route_expert.py --target /path/to/your-project --intent "接手现有项目"
+# 空目录 → greenfield-architect；有历史代码但无账本 → project-archaeologist
+# 加 --json 可拿到机器可读的状态、理由与建议命令
+```
 
-# 2. 编辑生成的 governance/registry.json，列出你的模块和能力点
-#    （只有这一份清单需要手工维护，其余全部自动生成）
+**新建项目（空目录）**：
 
-# 3. 先试跑，确认能力等级符合预期
+```bash
+python3 scripts/init_project.py --target /path/to/new --code MYPROJ --name "我的项目" \
+  --intent "新建项目"
+```
+
+**历史项目（有代码/测试/文档，无账本）**：
+
+```bash
+python3 scripts/discover_project.py --target /path/to/legacy --dry-run   # 先看报告
+python3 scripts/discover_project.py --target /path/to/legacy             # 生成草稿
+# 人工精简 governance/registry.draft.json（删非能力文件、合并重复域、校准 hints）
+python3 scripts/init_project.py --target /path/to/legacy --mode adopt \
+  --from-draft /path/to/legacy/governance/registry.draft.json --code LEG
+```
+
+两条路径之后相同：编辑 `governance/registry.json`（唯一需要手工维护的清单）→ 试跑 → 生成 → 校验：
+
+```bash
 cd /path/to/your-project
 python3 governance/build_capability_model.py --root . --dry-run
-
-# 4. 正式生成账本与看板
 python3 governance/build_capability_model.py --root .
 
-# 5.（可选）跑测试并升级证据为 verified：让看板区分"写了测试"与"测试真过了"
-python3 scripts/run_tests.py --dir tests --out governance/test_report.json
+# 可选：跑测试并升级证据为 verified，区分"写了测试"与"测试真过了"
+python3 governance/run_tests.py --dir tests --out governance/test_report.json
 python3 governance/build_capability_model.py --root . --test-report governance/test_report.json
 
-# 6. 打开看板
+python3 governance/verify_ledger.py --root . --strict
 open governance/index.html
 ```
 
-之后每次代码/测试/文档有变更，重跑一次生成器即可——完成度、组件树、文档索引、**历史演进**、**经验候选**与**下一轮任务队列**全部自动刷新。状态没变时重跑不会产生新历史事件（幂等）。
+之后每次代码/测试/文档有变更，重跑一次生成器即可——完成度、组件树、文档索引、**历史演进**、**经验候选**与**下一轮任务队列**全部自动刷新。状态没变时重跑不会产生新历史事件（幂等）。存量接入的草稿、源码与既有治理文件不会被自动覆盖。
 
 ### 验证账本可信
 
@@ -136,13 +168,13 @@ bash scripts/check.sh
 
 一条命令跑完：标准库单元测试 → 证据分层（生成实测报告并确认 verified 判定）→ 21 条不变量 → 生成器幂等 → 模板/示例同步与看板 EMBED → 脱敏与文档内链。本地与 CI 用同一份脚本，口径一致。单个能力校验用 `verify_ledger.py`，完整交付用 `check.sh`。
 
-### AI 接手：专家与技能
+### AI 接手：专家路由与技能
 
-- **专家** `experts/ledger-steward/EXPERT.md` 定义角色、权限矩阵与写入纪律；
-- **五个技能**覆盖扫描、校验、立项、沉淀经验、质量门禁，每个都有输入/输出契约与失败处理；
-- 纪律不只写在文档里：`ledger_decide.py` / `ledger_lesson.py` 在代码层拒绝重复立项、缺行动的经验等违规行为。
+- **六个专家**：`expert-router`（调度）、`greenfield-architect`（新建）、`project-archaeologist`（存量）、`ledger-steward`（账本治理）、`evidence-auditor`（只读审计）、`loop-executor`（一条任务卡的编码）。每个都有权限矩阵、停止条件与交接模板。
+- **八个技能**：新增 `expert-route` / `project-discover` / `project-bootstrap`，覆盖路由、盘点、初始化；原有五个技能覆盖扫描、校验、立项、经验与门禁。
+- 纪律不只写在文档里：`route_expert.py` 对冲突 fail-closed，`discover_project.py` 默认不覆盖草稿，`init_project.py` 跳过既有治理文件，`ledger_decide.py` / `ledger_lesson.py` 在代码层拒绝重复立项与缺行动的经验。
 
-详见 [10-AI集成](docs/10-AI集成.md)。
+详见 [12-专家路由](docs/12-专家路由.md) 与 [10-AI集成](docs/10-AI集成.md)。
 
 ### SELECT 产出：下一轮任务队列
 
@@ -174,12 +206,13 @@ bash scripts/check.sh
 5. [循环协议](docs/05-循环协议.md) —— 如何驱动 AI 迭代与自动编程
 6. [落地指南](docs/06-落地指南.md) —— 从零接入的分步清单
 7. [反模式与边界](docs/07-反模式与边界.md) —— 常见误区与不适用情形
-8. [可信性校验](docs/08-可信性校验.md) —— 18 条不变量，让「可信」可被验证
+8. [可信性校验](docs/08-可信性校验.md) —— 21 条不变量，让「可信」可被验证
 9. [历史与经验](docs/09-历史与经验.md) —— 状态指纹驱动的演进历史，以及可被任务卡消费的经验层
 10. [文档规范](docs/STANDARD.md) —— 命名、章节、状态词与更新触发点
-11. [AI 集成](docs/10-AI集成.md) —— 专家、五个技能与平台无关的最小消费路径
+11. [AI 集成](docs/10-AI集成.md) —— 专家、八个技能与平台无关的最小消费路径
 12. [证据分层](docs/11-证据分层.md) —— 区分声明级与验证级证据，消除假绿灯
-12. [贡献指南](CONTRIBUTING.md) —— 开发循环、同步规则与发布流程
+13. [专家路由](docs/12-专家路由.md) —— 多专家协作、历史/新建双路径与交接协议
+14. [贡献指南](CONTRIBUTING.md) —— 开发循环、同步规则与发布流程
 
 ## License
 

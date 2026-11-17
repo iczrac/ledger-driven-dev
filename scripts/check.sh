@@ -36,7 +36,7 @@ PY
   return $rc
 }
 stage_verify(){
-  note '账本不变量（18 条）'
+  note '账本不变量（21 条）'
   python3 "$DEMO/verify_ledger.py" --root . \
     --registry "$DEMO/registry.json" \
     --ledger "$DEMO/DECISION_LEDGER.json" \
