@@ -217,6 +217,14 @@ class ScenarioProbeTest(unittest.TestCase):
         self.assertEqual(check(r, "path_hygiene")["status"], "block")
         self.assertIn("generate", r["blocked_actions"])
 
+    def test_uri_schemes_are_not_false_absolute_paths(self):
+        from scenario_guard import ABS_PATH_RE
+        self.assertEqual(ABS_PATH_RE.findall(
+            "file:// 离线打开；https://example.com/x；C:/Users/name/a.py"),
+            ["C:/"])
+        self.assertEqual(collect(Path(__file__).resolve().parents[1])["hygiene"]
+                         ["absolute_paths"], [])
+
     def test_truncated_scan_warns(self):
         r = evaluate(base_facts(scan={"files": 2000, "truncated": True}))
         self.assertEqual(check(r, "scan_complete")["status"], "warn")

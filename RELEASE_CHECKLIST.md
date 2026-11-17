@@ -20,7 +20,7 @@
 - [x] 七种专家角色（路由 / 新建 / 考古 / 账本治理 / 审计 / 执行 / 生命周期），各含权限矩阵与停止条件
 - [x] 十一个技能（route/discover/bootstrap/scan/verify/decide/lesson/guard/doc-rebuild/graph-compare/scenario-guard），标准 SKILL.md frontmatter
 - [x] 技能脚本：重复立项、缺行动经验、无理由驳回均由代码拒绝
-- [x] 112 个 unittest 用例（含 7 个证据分层、23 个多专家、19 个可追溯性、33 个场景与生命周期专项），零第三方依赖，临时目录隔离
+- [x] 113 个 unittest 用例（含 7 个证据分层、23 个多专家、19 个可追溯性、33 个场景与生命周期专项），零第三方依赖，临时目录隔离
 - [x] CI（Python 3.10-3.13 矩阵）/ CD（tag 触发，先门禁后打包）
 - [x] 示例项目已跑通，产出真实账本与看板
 
@@ -39,7 +39,7 @@
 - [x] 示例：看板 EMBED 与账本完全一致；JS 通过 node --check
 - [x] 初始化脚本在临时目录跑通，4 个文件正确生成
 - [x] 生成器 dry-run 与正式模式均正常
-- [x] `bash scripts/check.sh` 全绿：112 测试 / 21 不变量 / 场景矩阵 / 幂等 / 同步 / 脱敏 / 文档链接
+- [x] `bash scripts/check.sh` 全绿：113 测试 / 21 不变量 / 场景矩阵 / 幂等 / 同步 / 脱敏 / 文档链接
 - [x] 看板 JS 通过 `node --check`；CI 用同一份门禁脚本，口径一致
 - [x] 负向纪律测试：重复立项、缺 action、无理由驳回均被拒绝
 
@@ -90,7 +90,7 @@
 - [ ] 确认仓库名（建议 `ledger-driven-dev`）
 - [ ] `git init` / 添加 remote
 - [ ] 检查 `.gitignore`（排除 `__pycache__/`、`*.pyc`、`.venv/`）
-- [ ] 提交并打 tag `v0.8.0`
+- [ ] 提交并打 tag `v0.8.1`
 - [ ] GitHub 仓库描述、README 顶图（可选）、topics 标签
 
 ## 建议的 topics

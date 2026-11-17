@@ -10,7 +10,7 @@ description: |
 license: MIT
 metadata:
   author: ledger-driven-dev
-  version: "0.8.0"
+  version: "0.8.1"
   role: governance
   requires_mcp: false
 ---

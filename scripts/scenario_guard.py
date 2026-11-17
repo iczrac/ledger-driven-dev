@@ -48,7 +48,11 @@ WRITE_ACTIONS = ["bootstrap", "generate", "decide", "code", "lesson",
 READ_ACTIONS = ["status", "discover", "verify"]
 ALL_ACTIONS = READ_ACTIONS + WRITE_ACTIONS
 
-ABS_PATH_RE = re.compile(r"(?:/Users/|/home/|[A-Za-z]:[\\/]|/private/var/)")
+# Windows 盘符前不能紧邻字母/数字/URI scheme 字符，且后面不能再跟斜杠：
+# 否则 file:// 的 "e:/"、https:// 的 "s:/" 会被误判成绝对路径（假冻结）。
+ABS_PATH_RE = re.compile(
+    r"(?:/Users/|/home/|/private/var/|(?<![A-Za-z0-9+.\-])[A-Za-z]:[\\/](?![/]))"
+)
 EMBED_RE = re.compile(r"const EMBED = (\{.*?\});\nlet DATA", re.S)
 
 
