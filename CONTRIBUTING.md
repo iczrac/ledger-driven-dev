@@ -14,7 +14,7 @@
 bash scripts/check.sh
 ```
 
-它依次跑：单元测试（标准库 unittest）→ 21 条账本不变量 → 生成器幂等 → 模板/示例同步与看板 EMBED → 脱敏与文档内链。**任何阶段失败都不得提交**。本地与 CI 跑的是同一份脚本，不允许出现"本地过了 CI 挂了"。
+它依次跑：单元测试（标准库 unittest）→ 证据分层 → 21 条账本不变量 → 场景矩阵 → 文件布局 → 升级与多 Agent 接入端到端 → 生成器幂等 → 模板/示例同步与看板 EMBED → 脱敏与文档内链。**任何阶段失败都不得提交**。本地与 CI 跑的是同一份脚本，不允许出现"本地过了 CI 挂了"。
 
 ## 改动的规则
 
@@ -28,8 +28,12 @@ bash scripts/check.sh
 | `docs/NN-*.md` | 遵守 [文档规范](docs/STANDARD.md)；更新 `README.md` 导航 |
 | `experts/` / `skills/` | 更新 [AI 集成](docs/10-AI集成.md) 的能力清单 |
 | 新增 / 改名产物路径 | 更新 [文件架构](docs/15-文件架构.md) 与 `scripts/file_layout.py`，重跑 `--emit-md` 提交生成物 |
+| `scripts/upgrade.py` 的 TOOLING / MIGRATIONS / METHOD_VERSION | 更新 [升级与迁移](docs/16-升级与迁移.md) 与 CHANGELOG；确认 `post_upgrade` 引用的脚本存在 |
+| `scripts/agent_gateway.py` 的 ACTIONS / ROLE_POLICIES | 更新 [多 Agent 接入控制](docs/17-多Agent接入控制.md)、[AI 集成](docs/10-AI集成.md) 与 `route_expert.py` 专家卡；`check` 会校验白名单 |
+| `scripts/scenario_matrix.py` | 重跑 `--emit-md` 提交 `SCENARIO_MATRIX.md`，`covered` 必须有真实探针 |
 
-**只允许维护一份 `registry.json` 和一份账本**。不要新建平行报告来记录本该进账本的决策。
+**只允许维护一份 `registry.json` 和一份账本**。不要新建平行报告来记录本该进账本的决策；
+`governance_meta` / `access` / `upgrade_log` / `audit` 都是账本内字段，不要另建同名文件。
 
 ## 新增能力 / 决策 / 经验
 

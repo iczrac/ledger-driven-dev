@@ -12,9 +12,11 @@
   - ``tests/test_layout.py`` 对以上行为做负向与幂等证明。
 
 关键边界：本清单描述的是**被治理项目（target）**，
-不是方法论仓库自身。experts/ / skills/ / scripts/ / docs/01-15 等
+不是方法论仓库自身。experts/ / skills/ / scripts/ / docs/01-17 等
 永远不会复制进目标项目；只有 3 个工具脚本副本以 governance/*.py 落地。
-账本内的 lifecycle.log 等是 **JSON 字段**，不是独立文件，见 LEDGER_FIELDS。
+账本内的 lifecycle.log / governance_meta / access 等是 **JSON 字段**，
+不是独立文件，见 LEDGER_FIELDS。升级备份与写入锁放在项目根的运行时层，
+不进 governance/，避免被 --diff 判成第二事实源。
 
 用法
 ----
@@ -43,6 +45,7 @@ LAYERS = {
     "派生层": "由脚本从事实源重算，禁止手改；改事实源后重跑即可",
     "工具层": "模板复制进目标项目的可执行副本，只读运行，升级靠同步模板",
     "草稿层": "存量接入时的临时候选，人工确认前不得成为事实源",
+    "运行时层": "升级备份与写入互斥锁；不属于事实源、不参与结论复算、不进 governance/",
 }
 
 ORIGINS = {"preexisting": "引入前可能已有", "new": "引入方案后新增"}
@@ -209,6 +212,27 @@ ENTRIES: list[dict] = [
          purpose="测试报告生成器副本，产出 governance/test_report.json。",
          note="这是特意复制进目标项目的第 3 个工具，让项目脱离本仓库也能独立复算证据。",
          expect="run_tests.py"),
+
+    # ---------------- 运行时层：升级与多 Agent 接入的副产物 ----------------
+    dict(path=".ledger-upgrade/", kind="dir", layer="运行时层", origin="new",
+         presence="on-demand", owner="upgrade.py", producer="scripts/upgrade.py",
+         write="write-if-absent", commit="no",
+         guard="manifest 只存相对路径 / 路径不含 ..",
+         purpose="升级备份根目录；跑过 upgrade.py apply 后才出现。",
+         note="备份是时间戳快照，不是活跃状态；放在项目根而不在 governance/，避免分裂事实源。",
+         expect=".ledger-upgrade"),
+    dict(path=".ledger-upgrade/backups/", kind="dir", layer="运行时层", origin="new",
+         presence="on-demand", owner="upgrade.py", producer="scripts/upgrade.py",
+         write="write-if-absent", commit="no", guard="rollback 需 --approved-by",
+         purpose="每次升级一个目录：<UTC>-<账本摘要前 8 位>/manifest.json + 被改文件的副本。",
+         note="manifest.json 列相对路径与 sha256；rollback 按清单逐文件恢复并记录到 upgrade_log。",
+         expect="backups"),
+    dict(path=".ledger-write.lock", kind="file", layer="运行时层", origin="new",
+         presence="on-demand", owner="agent_gateway.py", producer="scripts/agent_gateway.py",
+         write="write-if-absent", commit="no", guard="fcntl.flock 锁内重读账本并重新判定",
+         purpose="多 Agent 写入网关的 OS 级互斥锁文件，保证读-判-写原子。",
+         note="瞬态协调文件，不是事实源；无 fcntl 的平台降级为告警（见 E6 边界）。",
+         expect=".ledger-write.lock"),
 ]
 
 # 统一补齐可选字段，避免新增条目时漏写导致 KeyError。
@@ -232,13 +256,19 @@ LEDGER_FIELDS: list[dict] = [
          purpose="退役编码登记与任务领用锁，保证编码不复用、同码不被两个执行者同时领用。"),
     dict(path="provenance", owner="init_project.py", write="bootstrap",
          purpose="接入来源（template / 草稿相对路径）、模式与意图，外部绝对路径自动脱敏。"),
+    dict(path="governance_meta / upgrade_log", owner="upgrade.py",
+         write="state-field / append-only",
+         purpose="版本三轴、已应用迁移、工具 sha256 与升级/回滚日志。**不是 UPGRADE_LOG.md 文件**。"),
+    dict(path="access / access.audit", owner="agent_gateway.py",
+         write="state-field / append-only",
+         purpose="Agent 名册、编码租约、revision 与写入审计。**不是 AGENTS.yaml 或独立审计日志**。"),
 ]
 
 # 方法论仓库自身：不会进入被治理项目。
 NOT_IN_TARGET: list[dict] = [
     dict(path="experts/、skills/", reason="专家与技能资产，供 Agent 平台加载，不是项目源码。"),
     dict(path="scripts/、templates/、tests/", reason="方法论自身的工具、模板与测试；只有 3 个脚本副本落到 governance/。"),
-    dict(path="docs/01-15、docs/STANDARD.md", reason="方法论文档，属于本仓库而非被治理项目。"),
+    dict(path="docs/01-17、docs/STANDARD.md", reason="方法论文档，属于本仓库而非被治理项目。"),
     dict(path="docs/generated/SCENARIO_MATRIX.md、FILE_LAYOUT.md",
          reason="本仓库的机器渲染矩阵；目标项目只会得到 docs/generated/ 下那 4 份项目级文档。"),
     dict(path="examples/、.github/workflows/、CHANGELOG.md、RELEASE_CHECKLIST.md",

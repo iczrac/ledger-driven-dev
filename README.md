@@ -29,7 +29,8 @@
 6. **经验层** —— 从历史自动识别可沉淀信号（降级/长期停滞/决策被推翻），人确认后写成经验，**下一轮任务卡自动携带**。
 7. **专家路由** —— 只读扫描项目状态与任务意图，确定性选出唯一负责人：历史项目走考古专家（草稿优先、绝不覆盖），新项目走架构师（最小骨架、来源可追溯），校验与编码各有边界。冲突时要求澄清，**不让多个 Agent 同时改同一份事实源**。
 8. **可追溯闭环** —— 事实源可重建规范文档，文档可抽目标架构，git 变更可回连模块决策与历史事件；规划图与实际图按编码逐项比对，由专家给出执行顺序，并用全链路编码索引对齐文档/测试/代码/账本。
-9. **场景预检** —— 写入前先判定「现在能不能动」：证据是否过期、有没有并发覆盖、是否冻结/归档、版本是否兼容；44 个场景的覆盖状态由测试复算，而不是文档自称。
+9. **场景预检** —— 写入前先判定「现在能不能动」：证据是否过期、有没有并发覆盖、是否冻结/归档、版本是否兼容；50 个场景（7 个轴）的覆盖状态由测试复算，而不是文档自称。
+10. **可升级 + 可授权** —— 治理骨架升级有人批准的 plan/备份/回滚与升级后重新取证 SOP；多 Agent 经唯一写入网关接入，默认拒绝、最小权限、CAS、租约与 append-only 审计。
 10. **文件架构清单** —— 引入后多出哪些目录、每层归谁写、哪些能改、哪些是账本内字段，由 `file_layout.py` 定义并与产出脚本源码交叉验证；`--diff` 只读检查任意项目的现状。
 
 并且这套方法**自身可被验证**：`verify_ledger.py` 把 21 条不变量机器化（含历史链、经验引用与证据分层），`next_queue` 把 SELECT 变成机器可读任务队列——「可信」和「驱动」两个核心承诺都不再停留在文字上。
@@ -63,8 +64,10 @@ ledger-driven-dev/
 │   ├── 11-证据分层.md                声明级 / 验证级，消除假绿灯
 │   ├── 12-专家路由.md                多专家协作、历史/新建双路径
 │   ├── 13-可追溯性.md                五项反问、文档/架构/git/图比对闭环
-│   ├── 14-场景矩阵.md                第一性原理、44 场景覆盖、生命周期流程
+│   ├── 14-场景矩阵.md                第一性原理、50 场景覆盖、生命周期流程
 │   ├── 15-文件架构.md                引入前后目录变化、目录含义与所有权
+│   ├── 16-升级与迁移.md              版本三轴、六阶段升级、升级后重新取证 SOP
+│   ├── 17-多Agent接入控制.md         默认拒绝的网关、租约、审计与接入流程
 │   ├── generated/SCENARIO_MATRIX.md  机器渲染的覆盖矩阵（勿手改）
 │   ├── generated/FILE_LAYOUT.md      机器渲染的目录全量表（勿手改）
 │   └── STANDARD.md                   文档命名/章节/状态词规范
@@ -75,7 +78,8 @@ ledger-driven-dev/
 │   ├── ledger-steward/EXPERT.md       账本治理专家（默认循环负责人）
 │   ├── evidence-auditor/EXPERT.md     证据审计专家（只读门禁）
 │   ├── loop-executor/EXPERT.md        循环执行专家（一条任务卡）
-│   └── release-steward/EXPERT.md      生命周期与发布治理专家
+│   ├── release-steward/EXPERT.md      生命周期与发布治理专家
+│   └── platform-steward/EXPERT.md     升级与多 Agent 接入的规划协调（不替人批准）
 ├── skills/
 │   ├── expert-route/                  专家路由
 │   ├── project-discover/              存量项目只读发现
@@ -88,7 +92,9 @@ ledger-driven-dev/
 │   ├── doc-rebuild/                   规范文档 + 编码索引
 │   ├── graph-compare/                 目标/实际图比对与执行顺序
 │   ├── scenario-guard/                写入前预检、生命周期状态门
-│   └── layout-inspect/                文件架构分层、引入前后差异与只读检查
+│   ├── layout-inspect/                文件架构分层、引入前后差异与只读检查
+│   ├── ledger-upgrade/                升级计划、备份、复验、回滚与重新取证
+│   └── agent-gate/                    多 Agent 唯一写入口与默认拒绝门禁
 ├── templates/                        可复用模板（复制到你的项目）
 │   ├── build_capability_model.py     核心生成器（含证据分层/历史/经验/任务队列）
 │   ├── verify_ledger.py              21 条不变量校验器（可信的基础设施）
@@ -110,6 +116,9 @@ ledger-driven-dev/
 │   ├── scenario_matrix.py            场景定义单一事实源 → 矩阵文档
 │   ├── lifecycle.py                  冻结/归档/退役/任务领用状态机
 │   ├── file_layout.py                引入后文件布局单一事实源（check/diff/emit-md）
+│   ├── ledger_io.py                  账本 + 看板 EMBED 的唯一落盘原语
+│   ├── upgrade.py                    治理骨架升级（plan/apply/verify/rollback/check）
+│   ├── agent_gateway.py              多 Agent 唯一写入口（status/register/request/check）
 │   └── check.sh                      本地 / CI 统一门禁
 ├── tests/                            标准库 unittest 测试套件
 ├── .github/workflows/                CI 与 release
@@ -205,7 +214,7 @@ python3 scripts/file_layout.py --diff --target /path/to/project --strict
 
 `--diff` 全程只读，返回 `bootstrap / skeleton / governed` 阶段、缺失必需骨架、
 `governance/` 下的越界文件（可能是第二事实源）与下一步提示。
-完整目录含义、五层所有权、git 策略与账本内字段澄清见
+完整目录含义、六层所有权、git 策略与账本内字段澄清见
 [15-文件架构](docs/15-文件架构.md) 与 [目录全量表](docs/generated/FILE_LAYOUT.md)。
 
 ### 任意写入前的场景预检
@@ -223,6 +232,34 @@ python3 governance/build_capability_model.py --root . \
 `verified` 现在绑定到**当前源码的内容摘要**：跑过测试后再改代码，徽章会自动回落 `declared`。
 冻结/归档期间生成器直接拒绝写入；解冻与归档必须有人批准。详见 [14-场景矩阵](docs/14-场景矩阵.md)。
 
+### 升级治理骨架 + 让多个 Agent 接入控制开发
+
+规则本身会过期，已交付项目的 3 个工具副本也会落后于模板。升级是一次**有人批准的写入**，不是覆盖文件：
+
+```bash
+python3 scripts/route_expert.py --target P --intent "升级治理骨架" --json  # → platform-steward
+python3 scripts/upgrade.py --target P plan --json                          # 只读计划 + 8 步 post_upgrade
+python3 scripts/upgrade.py --target P apply --approved-by "审批人姓名"     # 先备份再加字段
+# 按 post_upgrade 重跑测试报告 → 生成器 --strict-evidence → verify/guard/layout
+python3 scripts/upgrade.py --target P verify --json
+```
+
+升级会建立账本内的 `access` 登记（默认拒绝），这是多 Agent 接入的**前置条件**：
+
+```bash
+python3 scripts/agent_gateway.py --target P register \
+  --agent ci-agent --role loop-executor --approved-by "审批人姓名" --apply
+python3 scripts/agent_gateway.py --target P status --json   # 取 fingerprint / registry_sha256
+python3 scripts/agent_gateway.py --target P request --agent ci-agent \
+  --action claim --code MYPROJ.CORE.X.01 --expect-fingerprint "$FP" --json       # dry-run
+python3 scripts/agent_gateway.py --target P request --agent ci-agent \
+  --action claim --code MYPROJ.CORE.X.01 --expect-fingerprint "$FP" --apply      # 才写
+```
+
+平台注入时**只把 `agent_gateway.py` 注册为写工具**；`ledger_decide.py` / `ledger_lesson.py` /
+`lifecycle.py` 保留为人工逃生舱。网关是策略执行点而非 OS 沙箱，需要强隔离请用容器或只读挂载。
+详见 [16-升级与迁移](docs/16-升级与迁移.md) 与 [17-多Agent接入控制](docs/17-多Agent接入控制.md)。
+
 ### 验证账本可信
 
 ```bash
@@ -237,15 +274,15 @@ python3 governance/verify_ledger.py --root . --strict
 bash scripts/check.sh
 ```
 
-一条命令跑完：标准库单元测试 → 证据分层（生成实测报告并确认 verified 判定）→ 21 条不变量 → 场景矩阵 → 文件布局清单与只读 diff → 生成器幂等 → 模板/示例同步与看板 EMBED → 脱敏与文档内链。本地与 CI 用同一份脚本，口径一致。单个能力校验用 `verify_ledger.py`，完整交付用 `check.sh`。
+一条命令跑完：标准库单元测试 → 证据分层（生成实测报告并确认 verified 判定）→ 21 条不变量 → 场景矩阵 → 文件布局清单与只读 diff → 升级与多 Agent 接入端到端 → 生成器幂等 → 模板/示例同步与看板 EMBED → 脱敏与文档内链。本地与 CI 用同一份脚本，口径一致。单个能力校验用 `verify_ledger.py`，完整交付用 `check.sh`。
 
 ### AI 接手：专家路由与技能
 
-- **七个专家**：`expert-router`（调度）、`greenfield-architect`（新建）、`project-archaeologist`（存量）、`ledger-steward`（账本治理）、`evidence-auditor`（只读审计）、`loop-executor`（一条任务卡的编码）、`release-steward`（冻结/归档/退役与批准门）。每个都有权限矩阵、停止条件与交接模板。
-- **十二个技能**：`expert-route` / `project-discover` / `project-bootstrap` 覆盖路由、盘点、初始化；`doc-rebuild` / `graph-compare` 覆盖规范文档、编码索引与图比对；`scenario-guard` 覆盖写入前预检；`layout-inspect` 覆盖引入后文件架构与目录越界检查；原有五个技能覆盖扫描、校验、立项、经验与门禁。
-- 纪律不只写在文档里：`route_expert.py` 对冲突 fail-closed，`discover_project.py` 默认不覆盖草稿，`init_project.py` 跳过既有治理文件，`ledger_decide.py` / `ledger_lesson.py` 在代码层拒绝重复立项与缺行动的经验。
+- **八个专家**：`expert-router`（调度）、`greenfield-architect`（新建）、`project-archaeologist`（存量）、`ledger-steward`（账本治理）、`evidence-auditor`（只读审计）、`loop-executor`（一条任务卡的编码）、`release-steward`（冻结/归档/退役与批准门）、`platform-steward`（升级与接入的规划协调）。每个都有权限矩阵、停止条件与交接模板。
+- **十四个技能**：`expert-route` / `project-discover` / `project-bootstrap` 覆盖路由、盘点、初始化；`doc-rebuild` / `graph-compare` 覆盖规范文档、编码索引与图比对；`scenario-guard` 覆盖写入前预检；`layout-inspect` 覆盖引入后文件架构；`ledger-upgrade` / `agent-gate` 覆盖升级与多 Agent 接入；原有五个技能覆盖扫描、校验、立项、经验与门禁。
+- 纪律不只写在文档里：`route_expert.py` 对冲突 fail-closed，`discover_project.py` 默认不覆盖草稿，`init_project.py` 跳过既有治理文件，`ledger_decide.py` / `ledger_lesson.py` 在代码层拒绝重复立项与缺行动的经验，`agent_gateway.py` 把权限变成默认拒绝的写入执行点。
 
-七种专家角色新增 `release-steward`（冻结/归档/退役/批准门）。详见 [12-专家路由](docs/12-专家路由.md)、[13-可追溯性](docs/13-可追溯性.md)、[14-场景矩阵](docs/14-场景矩阵.md)、[15-文件架构](docs/15-文件架构.md) 与 [10-AI集成](docs/10-AI集成.md)。
+详见 [12-专家路由](docs/12-专家路由.md)、[13-可追溯性](docs/13-可追溯性.md)、[14-场景矩阵](docs/14-场景矩阵.md)、[15-文件架构](docs/15-文件架构.md)、[16-升级与迁移](docs/16-升级与迁移.md)、[17-多Agent接入控制](docs/17-多Agent接入控制.md) 与 [10-AI集成](docs/10-AI集成.md)。
 
 ### SELECT 产出：下一轮任务队列
 
@@ -280,13 +317,15 @@ bash scripts/check.sh
 8. [可信性校验](docs/08-可信性校验.md) —— 21 条不变量，让「可信」可被验证
 9. [历史与经验](docs/09-历史与经验.md) —— 状态指纹驱动的演进历史，以及可被任务卡消费的经验层
 10. [文档规范](docs/STANDARD.md) —— 命名、章节、状态词与更新触发点
-11. [AI 集成](docs/10-AI集成.md) —— 专家、十二个技能与平台无关的最小消费路径
+11. [AI 集成](docs/10-AI集成.md) —— 专家、十四个技能与平台无关的最小消费路径
 12. [证据分层](docs/11-证据分层.md) —— 区分声明级与验证级证据，消除假绿灯
 13. [专家路由](docs/12-专家路由.md) —— 多专家协作、历史/新建双路径与交接协议
 14. [可追溯性](docs/13-可追溯性.md) —— 五项反问、文档/架构/git/图比对闭环
-15. [场景矩阵](docs/14-场景矩阵.md) —— 第一性原理、44 场景、生命周期流程与已知缺漏
-16. [文件架构](docs/15-文件架构.md) —— 引入前后目录变化、目录含义、所有权与 git 策略
-17. [贡献指南](CONTRIBUTING.md) —— 开发循环、同步规则与发布流程
+15. [场景矩阵](docs/14-场景矩阵.md) —— 第一性原理、50 场景、七轴与已知缺漏
+16. [文件架构](docs/15-文件架构.md) —— 引入前后目录变化、六层所有权与 git 策略
+17. [升级与迁移](docs/16-升级与迁移.md) —— 版本三轴、六阶段升级、升级后重新取证与回滚
+18. [多 Agent 接入控制](docs/17-多Agent接入控制.md) —— 默认拒绝的网关、租约、审计与接入流程
+19. [贡献指南](CONTRIBUTING.md) —— 开发循环、同步规则与发布流程
 
 ## License
 

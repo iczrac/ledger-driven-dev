@@ -123,6 +123,43 @@ stage_layout(){
   cmp -s scripts/run_tests.py "$DEMO/run_tests.py" || return 1
   echo '  布局定义、渲染同步、示例骨架与第 3 个工具副本均一致'
 }
+stage_upgrade_access(){
+  note '升级与多 Agent 接入（端到端，临时副本）'
+  python3 scripts/upgrade.py check || return 1
+  python3 scripts/agent_gateway.py check || return 1
+  local tmp proj gov fp
+  tmp="$(mktemp -d)"
+  mkdir -p "$tmp/examples" || { rm -rf "$tmp"; return 1; }
+  cp -r examples/demo-shop "$tmp/examples/demo-shop" || { rm -rf "$tmp"; return 1; }
+  proj="$tmp/examples/demo-shop"
+  gov="$proj/governance"
+  python3 scripts/upgrade.py --target "$proj" plan --json >/dev/null \
+    || { rm -rf "$tmp"; return 1; }
+  python3 scripts/upgrade.py --target "$proj" apply --approved-by gate-bot >/dev/null \
+    || { rm -rf "$tmp"; return 1; }
+  python3 scripts/upgrade.py --target "$proj" verify --json >/dev/null \
+    || { rm -rf "$tmp"; return 1; }
+  python3 scripts/agent_gateway.py --target "$proj" register \
+    --agent gate-agent --role loop-executor --approved-by gate-bot --apply >/dev/null \
+    || { rm -rf "$tmp"; return 1; }
+  fp="$(python3 -c "import json;print(json.load(open('$gov/DECISION_LEDGER.json'))['capability_model']['history']['current_fingerprint'])")"
+  python3 scripts/agent_gateway.py --target "$proj" request \
+    --agent gate-agent --action claim --code DEMO.API.QUERY.01 \
+    --expect-fingerprint "$fp" --apply --json >/dev/null \
+    || { rm -rf "$tmp"; return 1; }
+  # 未注册 Agent 必须被拒绝（退出码 1），能成功反而是失败
+  if python3 scripts/agent_gateway.py --target "$proj" request \
+      --agent rogue --action claim --code DEMO.API.QUERY.01 \
+      --expect-fingerprint "$fp" --json >/dev/null 2>&1; then
+    rm -rf "$tmp"; return 1
+  fi
+  python3 "$gov/verify_ledger.py" --root "$tmp" \
+    --registry "$gov/registry.json" --ledger "$gov/DECISION_LEDGER.json" \
+    --board "$gov/index.html" --strict >/dev/null \
+    || { rm -rf "$tmp"; return 1; }
+  rm -rf "$tmp"
+  echo '  升级计划/备份/复验、注册批准、写入审计、默认拒绝、21 条不变量均通过'
+}
 stage_hygiene(){
   note '脱敏 + 文档内链'
   if grep -rliE 'RacOS|APEX|Tushare|tdx-connector|ClickHouse|Minervini|Keychain' \
@@ -165,6 +202,7 @@ else
   run '账本校验' stage_verify
   run '场景矩阵' stage_scenarios
   run '文件布局' stage_layout
+  run '升级与接入' stage_upgrade_access
   run '幂等' stage_idempotence
   run '同步' stage_sync
   run '卫生' stage_hygiene
@@ -175,4 +213,4 @@ if [ "$FAILURES" -gt 0 ]; then
   printf '质量门禁失败：%d 个阶段未通过\n' "$FAILURES"
   exit 1
 fi
-printf '质量门禁全绿：测试 / 证据分层 / 21 条不变量 / 场景矩阵 / 文件布局 / 幂等 / 同步 / 脱敏 / 文档链接\n'
+printf '质量门禁全绿：测试 / 证据分层 / 21 条不变量 / 场景矩阵 / 文件布局 / 升级与接入 / 幂等 / 同步 / 脱敏 / 文档链接\n'

@@ -55,17 +55,18 @@ phase=governed   → 写入前先跑 scenario-guard，再按 next_queue 执行
 unexpected 非空  → 不要直接删；先确认是不是人工报告，裁决后并入账本 entries 或移出 governance/
 ```
 
-## 五层所有权（不得混淆）
+## 六层所有权（不得混淆）
 
 | 层 | 路径 | 能否手改 |
 |---|---|---|
 | 业务层 | `src/`、`tests/`、`docs/plans/`、`docs/test_records/` | 可，位置不变 |
 | 事实源层 | `governance/registry.json`、账本 `entries` | 可，但按纪律（唯一清单 / 脚本写入） |
 | 派生层 | 账本 `capability_model` / `history` / `lessons`、`index.html` 的 EMBED、`governance/*.json`、`docs/generated/*` | **禁**，改事实源后重跑 |
-| 工具层 | `governance/*.py` 三个模板副本 | **禁**在目标项目里改，升级靠同步 |
+| 工具层 | `governance/*.py` 三个模板副本 | **禁**在目标项目里改，升级靠 `upgrade.py` 同步 |
 | 草稿层 | `registry.draft.json`、`ADOPTION_REPORT.md` | 人工精简后才可成为事实源 |
+| 运行时层 | `.ledger-upgrade/`、`.ledger-write.lock` | 不是事实源；备份/锁由脚本管理 |
 
-`lifecycle.log`、`capability_model`、`retired_caps` 等是**账本内 JSON 字段**，不是 `governance/` 里的独立文件；找不到它们是正常的，不要补建。
+`lifecycle.log`、`capability_model`、`retired_caps`、`governance_meta`、`access` 等是**账本内 JSON 字段**，不是 `governance/` 里的独立文件；找不到它们是正常的，不要补建。
 
 ## 失败处理
 
@@ -80,7 +81,8 @@ unexpected 非空  → 不要直接删；先确认是不是人工报告，裁决
 
 - 只判断「文件在不在、有没有越界」，**不判断内容真实性**：内容靠 21 条不变量与场景预检。
 - 不搬迁、不重命名、不删除任何项目文件；`--diff` 全程只读。
-- 方法论仓库的 `experts/` / `skills/` / `scripts/` / `docs/01-15` 不属于被治理项目，不要在目标项目里找它们。
+- 方法论仓库的 `experts/` / `skills/` / `scripts/` / `docs/01-17` 不属于被治理项目，不要在目标项目里找它们。
+- `.ledger-upgrade/` 与 `.ledger-write.lock` 是运行时层（升级备份 / 写入互斥），不在 `governance/`，不是事实源。
 
 ## 关联
 

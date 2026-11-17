@@ -2,6 +2,62 @@
 
 本项目版本遵循语义化版本（SemVer）。
 
+## [1.0.0] - 2026-11-17
+
+从第一性原理回答四个问题：还应该补什么、怎么升级、升级后有没有流程、不同 Agent 如何接入控制开发。
+结论是 v0.9.0 缺的不是功能，而是**两个层级**：
+
+- **元层**：判定规则本身会变。已交付项目的 3 个工具副本会悄悄落后于模板，账本却仍自称可信；
+  升级没有计划/备份/回滚/批准人；工具源码一变，`evidence_binding` 失配会让 `verified` 静默回落 `declared`。
+- **接入控制层**：权限写在七份 `EXPERT.md` 的散文里，路由输出的是建议，guard 只读；
+  Agent 只要有 shell 就能直接跑 `ledger_decide.py` / `lifecycle.py` 绕过全部纪律。
+  **声明的权限不是权限，在写入口强制执行的最小权限才是权限。**
+
+### 新增
+
+- **`scripts/ledger_io.py`**：账本 + 看板 EMBED 的唯一落盘原语、sha256 内容摘要、registry 摘要、指纹取值。
+  此前每个写入脚本各写一份，新写入口漏掉同步就会破 `board_embed_synced`。
+- **`scripts/upgrade.py`**（`upgrade-plan/1` / `upgrade-apply/1` / `upgrade-verify/1`）：
+  版本三轴（`method_version` / `ledger_version` / 3 个工具 sha256）写进账本内 `governance_meta`；
+  `plan` 只读且确定性、`apply` 需人批准并先写带清单的备份、`verify` 7 项只读复验、
+  `rollback` 按清单恢复并写回执。4 条迁移全部**只加字段**，因此不追加 `history.events`。
+  `post_upgrade` 固定 8 步，把「重新绑定证据」变成升级流程的一部分。
+- **`scripts/agent_gateway.py`**（`agent-gate/1`）：默认拒绝的九道门（身份 / 角色 / scopes / CAS /
+  registry 摘要 / 人批准 / 生命周期 / 租约 / 场景预检），`status` / `register` / `request` / `check`；
+  `ledger-write` 动作由网关亲自调用既有纯函数，`permit-only` 只签带指纹的许可。
+  账本内 `access` 存名册、租约、`revision` 与 append-only `audit`，不新建第二事实源。
+  并发三锁：`fcntl.flock` + 指纹 CAS + 编码租约；权限授予者 ≠ 被授权者。
+- **硬耦合**：升级的 M2 建立默认拒绝的 `access` 登记；没有它，网关拒绝一切 Agent 请求。
+  想让多个 Agent 接手开发，必然先经过一次有人批准的升级。
+- **第八个专家 `platform-steward`** 与两个技能 `ledger-upgrade` / `agent-gate`；
+  `route_expert.py` 新增 `access` 意图、`migrate`/`access` 元层分支（优先于项目状态）与升级/接入推荐命令。
+- **`docs/16-升级与迁移.md`、`docs/17-多Agent接入控制.md`**：六阶段升级流程、升级后状态机、
+  平台注入约定、角色权限矩阵，以及「策略执行点 ≠ OS 沙箱」的诚实边界。
+
+### 单一事实源同步
+
+- `scenario_matrix.py`：44 → **50 场景 / 7 轴**（新增 U 升级、G 接入两组）；
+  T2 `partial→covered`、F7 `gap→partial`（检测漂移但不自动合并）、新增 G4 `by-design`；
+  有效覆盖率 79.5% → **82.0%**，每项的探针都落在真实测试里。
+- `file_layout.py`：24 → **27 条目**，新增运行时层 `.ledger-upgrade/` / `.ledger-write.lock`；
+  账本内字段 7 → **9**（`governance_meta` / `access`），`NOT_IN_TARGET` 对齐 `docs/01-17`。
+- `check.sh` 新增「升级与接入」端到端阶段：在临时副本上跑 plan→apply→verify→register→
+  dry-run→apply→未注册拒绝，最后验证 21 条不变量仍全绿。
+- `README` / `STANDARD` / `10-AI集成` / `12-专家路由` / `14-场景矩阵` / `15-文件架构` /
+  `RELEASE_CHECKLIST` 与 `layout-inspect` 技能全面对齐。
+
+### 验证
+
+- 测试 127 → **156**（新增 12 个升级专项、15 个网关专项，另补 2 个元层路由用例）。
+- `check.sh` 全绿：156 测试 / 证据分层 / 21 不变量 / 50 场景 / 27 条目布局 /
+  升级与接入端到端 / 幂等 / 同步 / 脱敏 / 文档链接。
+
+### 仍诚实保留的边界
+
+E7 monorepo 多项目与跨仓联合门禁（唯一 `gap`）；F7 只检测 `registry.json` 漂移不自动合并；
+G4 有 shell 的 Agent 仍可绕过网关，强隔离需容器 / 只读挂载 / CI 白名单；
+`fcntl` 在 Windows 降级为告警；`ledger_version` 数据契约迁移仍需人工写专用方案。
+
 ## [0.9.0] - 2026-11-17
 
 补齐「引入这套方案后，项目文件架构到底发生什么变化」。此前答案散落在 README 目录树、

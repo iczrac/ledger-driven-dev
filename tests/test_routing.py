@@ -84,6 +84,28 @@ class RoutingTest(unittest.TestCase):
                 self.assertEqual(result["route"]["expert"], expected)
                 self.assertIsNone(result["needs_clarification"])
 
+    def test_meta_intents_route_to_platform_steward(self):
+        for intent in ("升级治理骨架", "接入 agent 并注册权限", "回滚升级"):
+            with self.subTest(intent=intent):
+                root = governed_tree()
+                result = build(root, intent, "auto", "proj")
+                self.assertEqual(result["route"]["expert"], "platform-steward")
+                self.assertIn("upgrade.py",
+                              " ".join(result["route"]["suggested_commands"]))
+                self.assertTrue(any("approved-by" in c
+                                    for c in result["route"]["handoff"]["stop_if"]))
+
+    def test_frozen_state_still_beats_meta_intent(self):
+        root = make_tree({
+            "governance/DECISION_LEDGER.json": json.dumps({
+                "entries": [{"id": "D-001"}], "capability_model": {"next_queue": []},
+                "lifecycle": {"state": "frozen", "approved_by": "张三"}}),
+            "governance/registry.json": json.dumps({"modules": [{"code": "CORE"}]}),
+        })
+        result = build(root, "升级治理骨架", "auto", "proj")
+        self.assertEqual(result["route"]["expert"], "release-steward")
+        self.assertTrue(result["route"]["blocked"])
+
     def test_corrupt_ledger_is_fail_closed(self):
         root = make_tree({"governance/DECISION_LEDGER.json": "{not json"})
         result = build(root, "实现功能并写决策", "auto", "proj")

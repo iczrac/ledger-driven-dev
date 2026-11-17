@@ -262,7 +262,13 @@ class ScenarioProbeTest(unittest.TestCase):
         gaps = [s["id"] for s in SCENARIOS if s["status"] == "gap"]
         self.assertTrue(gaps, "场景矩阵必须诚实列出未覆盖项")
         self.assertIn("E7", gaps)
-        self.assertIn("F7", gaps)
+        # v1.0.0 起 F7 由「缺漏」升为「部分」：网关检测 registry 漂移，但仍不自动合并
+        self.assertNotIn("F7", gaps)
+        partials = [s["id"] for s in SCENARIOS if s["status"] == "partial"]
+        self.assertIn("F7", partials)
+        self.assertIn("T2", [s["id"] for s in SCENARIOS if s["status"] == "covered"])
+        self.assertTrue({"U1", "U2", "G1", "G2", "G3", "G4"}
+                        <= {s["id"] for s in SCENARIOS})
 
 
 if __name__ == "__main__":

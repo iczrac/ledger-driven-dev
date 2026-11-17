@@ -48,26 +48,34 @@ EXPERT_CARDS = {
     "ledger-steward": {
         "title": "账本治理专家",
         "duty": "维护决策取代链、确认经验、从 next_queue 产出可执行任务卡。",
-        "skills": ["ledger-scan", "ledger-verify", "ledger-decide", "ledger-lesson", "graph-compare", "layout-inspect"],
+        "skills": ["ledger-scan", "ledger-verify", "ledger-decide", "ledger-lesson",
+                   "graph-compare", "layout-inspect", "agent-gate"],
         "writes": ["entries", "lessons.items"],
     },
     "evidence-auditor": {
         "title": "证据审计专家",
         "duty": "跑不变量与实测报告，识别假绿灯；失败时冻结后续写入。",
-        "skills": ["ledger-guard", "ledger-verify", "graph-compare", "layout-inspect"],
+        "skills": ["ledger-guard", "ledger-verify", "graph-compare", "layout-inspect", "agent-gate"],
         "writes": [],
     },
     "loop-executor": {
         "title": "循环执行专家",
         "duty": "从一条任务卡补齐契约/实现/单测/测试记录；不得改等级、历史或看板。",
-        "skills": ["ledger-scan", "ledger-verify", "doc-rebuild", "graph-compare"],
+        "skills": ["ledger-scan", "ledger-verify", "doc-rebuild", "graph-compare", "agent-gate"],
         "writes": ["src/**", "tests/**", "docs/test_records/**"],
     },
     "release-steward": {
         "title": "生命周期与发布治理专家",
         "duty": "冻结/归档/退役/移交期间只做只读取证；解冻与归档必须有人批准记录。",
-        "skills": ["ledger-verify", "ledger-guard", "graph-compare", "scenario-guard", "layout-inspect"],
+        "skills": ["ledger-verify", "ledger-guard", "graph-compare", "scenario-guard",
+                   "layout-inspect", "agent-gate"],
         "writes": ["lifecycle", "retired_caps"],
+    },
+    "platform-steward": {
+        "title": "平台治理专家",
+        "duty": "治理骨架升级与多 Agent 接入登记的规划与协调；只准备计划与交接卡，不替人批准。",
+        "skills": ["ledger-upgrade", "agent-gate", "scenario-guard", "layout-inspect"],
+        "writes": ["governance_meta", "access（均需人批准，由脚本执行）"],
     },
 }
 
@@ -86,8 +94,12 @@ INTENT_PATTERNS = {
     "route": ("路由", "该找谁", "哪个专家", "专家路由", "expert route", "route"),
     "archive": ("归档", "冻结", "解冻", "发布窗口", "移交", "交付完成",
                 "archive", "freeze", "unfreeze", "handover"),
-    "migrate": ("跨版本", "版本升级", "schema", "账本升级",
-                "migrate", "migration", "upgrade", "ledger_version"),
+    "migrate": ("跨版本", "版本升级", "schema", "账本升级", "升级治理骨架",
+                "方法论升级", "工具副本", "回滚升级", "升级后流程",
+                "migrate", "migration", "upgrade", "rollback", "ledger_version"),
+    "access": ("接入 agent", "注册 agent", "多 agent", "agent 权限", "越权",
+               "谁能改账本", "接入控制", "审计", "租约",
+               "agent registry", "access control", "register agent"),
     "retire": ("退役", "下线能力", "废弃能力", "移除能力", "编码不复用",
                "retire", "deprecate"),
     "resume": ("中断", "续跑", "接着做", "断点", "恢复执行", "任务锁",
@@ -102,7 +114,8 @@ FOLLOW_UP = {
     "adopt": "project-archaeologist",
     "new": "greenfield-architect",
     "archive": "release-steward",
-    "migrate": "project-archaeologist",
+    "migrate": "platform-steward",
+    "access": "platform-steward",
     "retire": "release-steward",
     "resume": "loop-executor",
 }
@@ -283,6 +296,17 @@ def decide(facts: dict, scores: dict[str, int], explicit_mode: str) -> dict:
             "question": "项目处于冻结/归档态，是否需要经批准解冻？",
             "options": ["保持只读", "经批准解冻", "复制出新项目"],
         }
+    elif primary in ("migrate", "access"):
+        # 元层意图优先于项目状态：规则本身变了、或要授予写入权限时，
+        # 不能由考古/执行专家顺手完成——批准门与版本三轴需要独立负责人。
+        route = _card("platform-steward", "high",
+                      "治理骨架升级 / 多 Agent 接入属于元层动作：先只读计划，"
+                      "再由人批准应用与注册；完成后必须重新取证与复验。", facts,
+                      preconditions=["upgrade.py plan --json 无 block",
+                                     "准备人工批准人姓名（AI 不得代填）"],
+                      stop_if=["无 --approved-by 不得 apply / rollback / register",
+                               "post_upgrade 未跑完不得宣布升级完成"],
+                      next_expert="evidence-auditor")
     elif explicit_mode == "greenfield" and mode != "greenfield":
         route = _card("greenfield-architect", "medium",
                       "显式指定新建模式，但目标目录已存在治理或历史资产；需确认是否另起子项目。",
@@ -312,11 +336,6 @@ def decide(facts: dict, scores: dict[str, int], explicit_mode: str) -> dict:
                           preconditions=["先跑 scenario_guard.py 确认无阻塞"],
                           stop_if=["unfreeze / archive 缺少 --approved-by"],
                           next_expert="evidence-auditor")
-        elif primary == "migrate":
-            route = _card("project-archaeologist", "medium",
-                          "跨版本升级先取证与快照，不做静默迁移。", facts,
-                          preconditions=["导出账本快照", "scenario_guard 版本契约检查"],
-                          stop_if=["版本不兼容时禁止直写"])
         elif primary == "resume":
             route = _card("loop-executor", "high",
                           "断点续跑先检查任务锁，避免两个执行者写同一份事实源。", facts,
@@ -415,6 +434,14 @@ def commands_for(expert: str, target_display: str) -> list[str]:
             f"python3 scripts/scenario_guard.py --target {t} --json",
             f"python3 scripts/lifecycle.py --target {t} status",
             f"python3 scripts/lifecycle.py --target {t} unfreeze --approved-by 审批人姓名",
+            f"python3 scripts/file_layout.py --diff --target {t} --strict",
+        ],
+        "platform-steward": [
+            f"python3 scripts/upgrade.py --target {t} plan --json",
+            f"python3 scripts/upgrade.py --target {t} apply --approved-by 审批人姓名",
+            f"python3 scripts/upgrade.py --target {t} verify --json",
+            f"python3 scripts/agent_gateway.py --target {t} status --json",
+            f"python3 scripts/agent_gateway.py --target {t} register --agent ci-agent --role loop-executor --approved-by 审批人姓名 --apply",
             f"python3 scripts/file_layout.py --diff --target {t} --strict",
         ],
     }.get(expert, ["python3 scripts/route_expert.py --help"])

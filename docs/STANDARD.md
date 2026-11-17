@@ -36,6 +36,10 @@
 | 改技能 / 专家 | `10-AI集成`、`README` 目录结构 |
 | 新增不变量 | `08-可信性校验` 表格 + 负向测试 |
 | 新增 / 改名产物路径 | `15-文件架构`、`scripts/file_layout.py`、重新 `--emit-md`、`CHANGELOG` |
+| 改账本字段结构 | `02-决策账本`、`15-文件架构` 的 LEDGER_FIELDS、`09-历史与经验` |
+| 改工具副本 / 版本契约 | `16-升级与迁移`、`upgrade.py` 的 TOOLING / MIGRATIONS、`CHANGELOG` |
+| 改角色 / 动作 / 权限 | `10-AI集成`、`12-专家路由`、`17-多Agent接入控制`、`route_expert.py`、`agent_gateway.py` |
+| 改场景定义 | 重新 `--emit-md` 渲染 `SCENARIO_MATRIX.md`，同步 `14-场景矩阵` 与探针 |
 | 任何发布 | `CHANGELOG`、`RELEASE_CHECKLIST` |
 
 代码变了文档没变，视为改动未完成。`scripts/check.sh` 的文档内链检查能保证链接有效，但**不能保证内容同步**——这仍需人判断。
@@ -71,4 +75,6 @@
 - **无行动的经验**：只写"要重视" —— 无法进入任务卡，等于没写；
 - **口径分裂**：CI 用一套命令、本地用另一套 —— 必然出现"本地过了 CI 挂了"。
 - **治理目录里另起报告**：在 `governance/` 新建自制状态文档 —— 第二事实源，布局 `--diff` 会报越界。
-- **把账本内字段当文件找**：`lifecycle.log` / `capability_model` 是 JSON 字段，补建同名文件会分裂状态。
+- **把账本内字段当文件找**：`lifecycle.log` / `capability_model` / `governance_meta` / `access` 是 JSON 字段，补建同名文件会分裂状态。
+- **把权限写成文档就算完成**：`EXPERT.md` 只是角色说明，必须同时有 `agent_gateway.py` 的执行点；没有默认拒绝，散文不是权限。
+- **升级只跑 apply 不跑 post_upgrade**：工具源码变了但证据过期，`verified` 会静默回落 `declared`。
