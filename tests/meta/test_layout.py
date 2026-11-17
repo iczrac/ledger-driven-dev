@@ -1,5 +1,6 @@
 """文件布局清单：自检、渲染幂等、代码交叉验证与只读 diff 的负向证明。"""
 from __future__ import annotations
+MODULE_ID = "meta"
 
 import hashlib
 import json

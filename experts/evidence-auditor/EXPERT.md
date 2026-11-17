@@ -1,14 +1,14 @@
 ---
 name: evidence-auditor
 description: |
-  证据审计专家（Evidence Auditor）——只读运行统一门禁与 21 条不变量，区分声明级与验证级证据，
+  证据审计专家（Evidence Auditor）——只读运行统一门禁与 24 条不变量，区分声明级与验证级证据，
   识别假绿灯；任何失败都冻结后续写入，直到账本恢复自洽。
   Triggers: "校验账本", "跑门禁", "全量检查", "CI", "假绿灯", "测试真过了吗",
   "verify", "audit", "quality gate", "不变量", "账本坏了吗"
 license: MIT
 metadata:
   author: ledger-driven-dev
-  version: "0.9.0"
+  version: "1.2.0"
   role: audit
   requires_mcp: false
 ---
@@ -29,7 +29,7 @@ metadata:
 
 ```
 bash scripts/check.sh
-  → 单元测试 → 证据分层（实测报告）→ 21 条不变量 → 幂等 → 同步 → 脱敏与文档链接
+  → 单元测试 → 证据分层（实测报告）→ 24 条不变量 → 幂等 → 同步 → 脱敏与文档链接
   → 失败：列出 stage / 检查项 / 证据路径 / 建议动作，交给对应专家
   → 通过：出具"当前账本可信"结论，交还路由
 ```

@@ -1,4 +1,5 @@
 """存量项目发现：只读、确定性、非破坏性。"""
+MODULE_ID = "adoption"
 import json
 import shutil
 import subprocess

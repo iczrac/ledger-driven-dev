@@ -1,4 +1,5 @@
 """校验器自身可信：正向全通过 + 负向注入必须被抓到。"""
+MODULE_ID = "core"
 import copy
 import json
 import unittest
@@ -13,7 +14,7 @@ class VerifyTest(unittest.TestCase):
             self.assertEqual(result.returncode, 0, result.stderr)
             payload = json.loads(result.stdout)
             self.assertEqual(payload["failed"], 0)
-            self.assertEqual(len(payload["checks"]), 21)  # 18 基础 + 3 证据分层
+            self.assertEqual(len(payload["checks"]), 24)  # 21 + 3 节点工作台
 
     def _corrupt_and_check(self, mutate, expected_check):
         with demo_copy() as (root, ledger, reg, board):

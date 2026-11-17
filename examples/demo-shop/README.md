@@ -48,7 +48,9 @@ dry-run 还会打印**下一轮任务队列**（`next_queue`）——按完成�
 python3 governance/verify_ledger.py --root . --strict
 ```
 
-检查 21 条不变量，全部通过返回 0。想看它真的能抓错：把账本里某个 `completion` 改成 0.99 → `completion_matches_level` 报 FAIL；把历史事件的 `fingerprint_before` 改掉 → `history_chain_consistent` 报 FAIL；把已确认经验的 `action` 清空 → `lessons_valid` 报 FAIL。
+账本里还带 4 条示例 `work_items`（2 个 TODO、2 个 issue）与 `test_results` 投影，打开 `index.html` 的「工作台 / 工作项」标签，可在模块与能力点上看到待办、缺陷、逐用例结果与健康度。
+
+检查 24 条不变量，全部通过返回 0。想看它真的能抓错：把账本里某个 `completion` 改成 0.99 → `completion_matches_level` 报 FAIL；把历史事件的 `fingerprint_before` 改掉 → `history_chain_consistent` 报 FAIL；把已确认经验的 `action` 清空 → `lessons_valid` 报 FAIL。
 
 ## 目录
 

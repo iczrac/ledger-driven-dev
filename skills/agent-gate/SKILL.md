@@ -8,7 +8,7 @@ description: |
 license: MIT
 metadata:
   author: ledger-driven-dev
-  version: "1.0.0"
+  version: "1.2.0"
   risk_level: policy_enforcement
   related_skills: [ledger-upgrade, expert-route, scenario-guard, ledger-verify]
 ---
@@ -43,7 +43,7 @@ access_registry → known_action → agent_identity → role_policy → scope_po
 # 0) 前置：项目必须已升级（access 登记由 M2 建立）
 python3 scripts/upgrade.py --target P plan --json
 python3 scripts/upgrade.py --target P apply --approved-by <人>
-# 按 post_upgrade 的 11 步重新取证、核对资产/版面/预算并复验
+# 按 post_upgrade 的 18 步重新取证、核对资产/版面/预算并复验
 
 # 1) 取票据
 python3 scripts/agent_gateway.py --target P status --json
@@ -102,7 +102,7 @@ NOT    : ledger_decide.py / ledger_lesson.py / lifecycle.py（人工逃生舱，
 
 - `deny` 后**不得**换 agent id / 换动作 / 直接调底层脚本绕过；回路由重新分派。
 - 许可与拒绝都写 `access.audit`（append-only）；`revision` 每次写入 +1。
-- 账本 + 看板 EMBED 由 `ledger_io.write_ledger()` 一起写，21 条不变量不破。
+- 账本 + 看板 EMBED 由 `ledger_io.write_ledger()` 一起写，24 条不变量不破。
 - 网关是**策略执行点，不是 OS 沙箱**：有 shell 的 Agent 仍可绕过，强隔离靠容器 / 只读挂载 / CI 白名单。
 - 不新建 `AGENTS.yaml` / 独立审计日志；不手改 `audit` 或 `revision`。
 

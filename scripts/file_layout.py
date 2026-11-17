@@ -11,9 +11,11 @@
   - ``--diff``     只读对比任意目标项目现状，报告新增 / 缺失 / 越界文件；
   - ``tests/test_layout.py`` 对以上行为做负向与幂等证明。
 
-关键边界：本清单描述的是**被治理项目（target）**，
-不是方法论仓库自身。experts/ / skills/ / scripts/ / docs/01-18 等
-永远不会复制进目标项目；只有 3 个工具脚本副本以 governance/*.py 落地。
+关键边界：本清单描述的是**被治理项目（target）**，不是方法论仓库自身。
+scripts/ / templates/ / tests/ / docs/01-21 等不会复制进目标项目；
+只有 3 个工具脚本副本以 governance/*.py 落地。
+v1.2.0 起例外是专家与技能：由 asset_bundle.py 装成 .workbuddy/ 下的
+**只读部署副本**（权威源仍在方法论仓库，逐文件 sha256 + 账本绑定）。
 账本内的 lifecycle.log / governance_meta / access 等是 **JSON 字段**，
 不是独立文件，见 LEDGER_FIELDS。升级备份与写入锁放在项目根的运行时层，
 不进 governance/，避免被 --diff 判成第二事实源。
@@ -44,6 +46,7 @@ LAYERS = {
     "事实源层": "唯一需要人维护或裁决的输入；所有结论都从这里复算",
     "派生层": "由脚本从事实源重算，禁止手改；改事实源后重跑即可",
     "工具层": "模板复制进目标项目的可执行副本，只读运行，升级靠同步模板",
+    "资产层": "专家/技能的只读部署副本，唯一权威源仍是方法论仓库 tag",
     "草稿层": "存量接入时的临时候选，人工确认前不得成为事实源",
     "运行时层": "升级备份与写入互斥锁；不属于事实源、不参与结论复算、不进 governance/",
 }
@@ -107,7 +110,7 @@ ENTRIES: list[dict] = [
     dict(path="governance/DECISION_LEDGER.json", kind="file", layer="事实源层", origin="new",
          presence="required", owner="生成器 / 决策脚本 / 生命周期脚本",
          producer="scripts/init_project.py", write="rewrite", commit="yes",
-         guard="21 条不变量 / --expect-fingerprint CAS / frozen 冻结 / 看板 EMBED 同步",
+         guard="24 条不变量 / --expect-fingerprint CAS / frozen 冻结 / 看板 EMBED 同步",
          purpose="单一事实源：entries 决策、capability_model 派生结果、history、lessons、lifecycle 全在这里。",
          note="可以写 entries（经 ledger_decide.py），但 level / completion / history / EMBED 一律自动派生，禁止手改。",
          expect="DECISION_LEDGER.json"),
@@ -202,7 +205,7 @@ ENTRIES: list[dict] = [
     dict(path="governance/verify_ledger.py", kind="file", layer="工具层", origin="new",
          presence="required", owner="init_project.py（复制模板）",
          producer="scripts/init_project.py", write="bootstrap", commit="yes",
-         guard="21 条不变量 / 模板同步",
+         guard="24 条不变量 / 模板同步",
          purpose="校验器副本：回答「账本内部坏没坏」。",
          note="与 scenario_guard.py 分工：后者回答「现在能不能动它」，未复制进目标项目。",
          expect="verify_ledger.py"),
@@ -213,6 +216,36 @@ ENTRIES: list[dict] = [
          purpose="测试报告生成器副本，产出 governance/test_report.json。",
          note="这是特意复制进目标项目的第 3 个工具，让项目脱离本仓库也能独立复算证据。",
          expect="run_tests.py"),
+
+    # ---------------- 资产层：专家 / 技能的项目级只读副本 ----------------
+    dict(path=".workbuddy/", kind="dir", layer="资产层", origin="new",
+         presence="on-demand", owner="asset_bundle.py", producer="scripts/asset_bundle.py",
+         write="write-if-absent", commit="optional",
+         guard="asset_bundle.py verify 逐文件 sha256 / manifest 整包摘要",
+         purpose="平台项目级 Agent 资产目录；升级 M7 后才有内容，权威源仍是方法论仓库。",
+         note="这里只放由治理升级安装的副本；用户自己放的技能不属于治理清单，不会被删除。",
+         expect=".workbuddy"),
+    dict(path=".workbuddy/skills/", kind="dir", layer="资产层", origin="new",
+         presence="on-demand", owner="asset_bundle.py", producer="scripts/asset_bundle.py",
+         write="rewrite", commit="optional",
+         guard="frontmatter name 与目录名一致 / 逐字节副本校验",
+         purpose="可被 Agent 平台直接加载的技能副本，每个技能一个 <name>/SKILL.md。",
+         note="禁止在项目内编辑；改技能要改方法论仓库并发版，再由 M7 重新安装。",
+         expect="skills"),
+    dict(path=".workbuddy/experts/", kind="dir", layer="资产层", origin="new",
+         presence="on-demand", owner="asset_bundle.py", producer="scripts/asset_bundle.py",
+         write="rewrite", commit="optional",
+         guard="frontmatter name 与目录名一致 / 逐字节副本校验",
+         purpose="专家包副本，每个专家一个 <name>/EXPERT.md；路由优先消费这份已安装资产。",
+         note="路由卡若引用的专家缺文件，--check-assets 会 fail-closed 报 incomplete。",
+         expect="experts"),
+    dict(path="governance/ASSET_MANIFEST.json", kind="file", layer="派生层", origin="new",
+         presence="on-demand", owner="asset_bundle.py", producer="scripts/asset_bundle.py",
+         write="rewrite", commit="yes",
+         guard="逐文件 sha256 + 整包 digest + 账本 installed_assets 绑定",
+         purpose="已安装资产的只读清单；证明副本与权威源逐字节一致、没有多余旧版本。",
+         note="不是第二事实源：它只记录 sha256，不含规则正文；权威源是方法论仓库 tag。",
+         expect="ASSET_MANIFEST.json"),
 
     # ---------------- 运行时层：升级与多 Agent 接入的副产物 ----------------
     dict(path=".ledger-upgrade/", kind="dir", layer="运行时层", origin="new",
@@ -259,10 +292,14 @@ LEDGER_FIELDS: list[dict] = [
          purpose="接入来源（template / 草稿相对路径）、模式与意图，外部绝对路径自动脱敏。"),
     dict(path="governance_meta / upgrade_log", owner="upgrade.py",
          write="state-field / append-only",
-         purpose="版本五轴、已应用迁移、工具 sha256 与升级/回滚日志。**不是 UPGRADE_LOG.md 文件**。"),
-    dict(path="governance_meta.method_assets / board_skeleton", owner="upgrade.py",
-         write="state-field",
-         purpose="整包专家/技能/模板/文档摘要，以及看板骨架摘要；资产或版面漂移必须重新批准升级。"),
+         purpose="版本六轴、已应用迁移、工具 sha256 与升级/回滚日志。**不是 UPGRADE_LOG.md 文件**。"),
+    dict(path="governance_meta.method_assets / board_skeleton / installed_assets",
+         owner="upgrade.py", write="state-field",
+         purpose="整包资产摘要、看板骨架摘要，以及项目级已安装副本的逐文件绑定；三者任一漂移都要重新批准升级。"),
+    dict(path="work_items", owner="work_panel.py", write="state-field",
+         purpose="节点级 TODO / issue 的唯一写入点；scope 可指向项目、模块或四段式能力编码。"),
+    dict(path="test_results", owner="work_panel.py sync-tests", write="state-field",
+         purpose="测试报告的可验证投影（source_sha256 绑定原报告）；供工作台显示模块/组件级逐用例结果。"),
     dict(path="access / access.audit", owner="agent_gateway.py",
          write="state-field / append-only",
          purpose="Agent 名册、编码租约、revision 与写入审计。**不是 AGENTS.yaml 或独立审计日志**。"),
@@ -270,11 +307,12 @@ LEDGER_FIELDS: list[dict] = [
 
 # 方法论仓库自身：不会进入被治理项目。
 NOT_IN_TARGET: list[dict] = [
-    dict(path="experts/、skills/", reason="专家与技能资产，随方法论仓库 tag 一起升级，不是项目源码；"
-                                   "只有聚合摘要写进项目账本 governance_meta.method_assets。"),
+    dict(path="experts/、skills/（权威源）", reason="方法论仓库里的专家与技能**原文**不进项目源码；"
+                                   "v1.2.0 起由 asset_bundle.py 把逐字节只读副本装到 .workbuddy/，"
+                                   "整包摘要写进 governance_meta.method_assets、副本清单写进 installed_assets。"),
     dict(path="scripts/、templates/、tests/", reason="方法论自身的工具、模板与测试；只有 3 个脚本副本落到 governance/。"),
-    dict(path="docs/01-18、docs/STANDARD.md", reason="方法论文档，属于本仓库而非被治理项目。"),
-    dict(path="docs/generated/SCENARIO_MATRIX.md、FILE_LAYOUT.md",
+    dict(path="docs/01-21、docs/STANDARD.md", reason="方法论文档，属于本仓库而非被治理项目。"),
+    dict(path="docs/generated/SCENARIO_MATRIX.md、FILE_LAYOUT.md、TEST_MODULES.md",
          reason="本仓库的机器渲染矩阵；目标项目只会得到 docs/generated/ 下那 4 份项目级文档。"),
     dict(path="examples/、.github/workflows/、CHANGELOG.md、RELEASE_CHECKLIST.md",
          reason="示例、CI 与发布资产，属于方法论仓库。"),

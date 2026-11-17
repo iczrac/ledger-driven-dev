@@ -2,6 +2,79 @@
 
 本项目版本遵循语义化版本（SemVer）。
 
+## [1.2.0] - 2026-11-18
+
+三个深化要求：专家和 skill 要**升级到可用**、测试文件要**按开发模块重新组织**、
+看板要**深化成能显示 TODO / issue / 测试结果的工作台**。核对后发现 v1.1.0 的三处
+都停在「可证明」而非「可使用」：
+
+- `route_expert.py` 用硬编码 `EXPERT_CARDS` 路由，不读 `EXPERT.md` / `SKILL.md`；
+  升级链路不往目标项目装资产，`method_assets.py` 只算摘要，目标项目里没有一份可加载的技能。
+- `tests/` 17 个 `test_*.py` 扁平排列、按脚本横切命名；`check.sh` 里甚至并存
+  `unittest discover` 与 `run_tests.py` 两套发现口径，却没有模块归属映射。
+- 看板 8 个 tab / 4 个 `render*` 函数，`next_queue` 不渲染、`test_report.json` 只有汇总徽章；
+  一个项目负责人看完看板，仍要回到聊天记录、issue 列表与 CI 日志里找答案。
+
+### 新增：资产可用层
+
+- **`scripts/asset_bundle.py`**（`asset-bundle/1`）：把 8 份 `EXPERT.md`、20 份 `SKILL.md`
+  装成目标项目 `.workbuddy/{experts,skills}/` 下的**只读部署副本**，写
+  `governance/ASSET_MANIFEST.json` 并在 `governance_meta.installed_assets` 绑定逐文件摘要。
+  权威源仍是方法论仓库 tag；副本逐字节一致、禁止项目内编辑，手改即 `drift`，
+  唯一修复是重新人批准安装。安装默认 dry-run、幂等；被人改过的旧副本列 `stale_protected` 保留。
+- **`route_expert.py` 的 `load_assets()` / `asset_root()` / `--check-assets`**：路由真正读取
+  `EXPERT.md` / `SKILL.md` frontmatter（`name` / `description` / `Triggers:`），
+  优先消费目标项目已安装副本，缺文件即报 `incomplete`；不再用旧硬编码卡片指挥新骨架。
+- **技能 `asset-install`**：`.workbuddy/` 只读副本、清单与账本绑定、M7、verify、禁止事项与失败处理。
+
+### 新增：测试架构层
+
+- **`tests/MODULES.json`**：6 个开发模块（`core` / `adoption` / `routing` / `meta` /
+  `traceability` / `views`）、21 个测试文件的唯一清单。
+- 每个测试文件带 `MODULE_ID` 自证归属；`scripts/run_tests.py` 的 `rglob("test_*.py")`、
+  `unittest discover -s tests` 与清单三方交叉验证，模块名避开 Python 标准库冲突。
+- **`scripts/test_modules.py`**：`--check` 校验清单 / `MODULE_ID` / 发现口径 / 语法；
+  `--target P` 汇总目标项目每个能力模块的 `doc_index.unit_tests`，输出 `modules_without_tests[]`；
+  `--emit-md` 渲染 `docs/generated/TEST_MODULES.md`。
+- **技能 `test-map`**：测试模块映射与目标项目单测缺口。
+
+### 新增：节点工作台
+
+- 账本内新增 `work_items`（`PROJECT` / 模块 / 四段式能力编码三种作用域，上级向下覆盖）
+  与 `test_results`（`node-test-results/1`，用 `source_sha256` 绑定 `test_report.json` 原始字节）。
+- **`scripts/work_panel.py`**：`check` / `nodes` / `sync-tests` / `add` / `close`；
+  写动作默认 dry-run 且必须 `--approved-by`；派生聚合由 `nodes` 与看板 JS 按同一规则复算、
+  **不落盘**，因此不产生第三份事实源。
+- **`templates/index.html.template`**：tab 8 → **10**（新增 `workbench` / `work`），
+  `nodeWork()` / `workStripHtml()` 在模块、组件、能力点节点上显示 TODO / issue /
+  逐用例结果与健康度；空账本不崩；骨架摘要由 `17f3dfba…` 归一到 `735bcd09…`。
+- **技能 `work-panel`**：工作项数据契约、健康度公式与写入纪律。
+
+### 单一事实源同步
+
+- `upgrade.py`：版本五轴 → **六轴**（新增 `installed_assets`）；迁移 M1–M6 → **M1–M8**
+  （M7 资产安装、M8 工作台字段）；`post_upgrade` 11 → **18 步**；`verify` 9 → **11 项**；
+  `upgrade_complete` 需八项关键检查全 pass；回滚按白名单移除升级前不存在的副本。
+- 校验器 21 → **24 条不变量**：`work_items_valid` / `work_item_refs_valid` /
+  `test_results_binding_valid`；示例副本逐字节同步。
+- `scenario_matrix.py`：54 → **60 场景 / 10 轴**，新增 U4 / U5 / V1 / V2 / V3 / T6；
+  有效覆盖率 82.4% → **84.2%**（47 covered / 7 partial / 5 by-design / 1 gap）。
+- `file_layout.py`：27 → **31 路径条目 / 12 账本内字段**，新增资产层 `.workbuddy/`、
+  `.workbuddy/skills/`、`.workbuddy/experts/`、`governance/ASSET_MANIFEST.json`。
+- `scale_budget.py`：9 → **10 项预算**，新增 `work_items`（warn 500 / hard 2000）。
+- `check.sh`：测试阶段改为 `unittest discover` + `run_tests.py` 双口径并断言绑定 21 个
+  模块内测试文件；新增「测试架构」阶段；升级端到端与契约阶段纳入
+  `asset_bundle verify` / `work_panel check` / `route_expert --check-assets`。
+- 新增 `docs/19-专家与技能可用.md`、`docs/20-测试架构与模块映射.md`、
+  `docs/21-节点工作台与看板视图.md`（共 21 篇编号文档）；全仓数量 / 版本口径同步到 1.2.0。
+
+### 结果与边界
+
+**193 个 unittest 用例**（新增 21 个）、24 条不变量、`check.sh` 全绿。
+诚实保留：生成器全量重算无增量索引（S2 `partial`）；E7 monorepo 联合门禁仍是唯一 `gap`；
+网关仍是策略执行点而非 OS 沙箱；只读副本依赖 `verify` 主动检查，不是文件系统级只读保护；
+`ledger_version` 数据契约迁移仍需人工专用方案。**没有引入第二事实源**。
+
 ## [1.1.0] - 2026-11-18
 
 三个反问：专家和 skill 是否一起升级、项目 HTML 是否已有统一样式避免差异化版面、

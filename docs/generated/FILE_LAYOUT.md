@@ -1,7 +1,7 @@
 # FILE_LAYOUT · 引入方案后的文件布局
 
 > 本文件由 `scripts/file_layout.py` 从布局定义渲染；请勿手改。
-> schema `file-layout/1` · 条目 27 · 引入后新增 22 项 · 账本内字段 10 项。
+> schema `file-layout/1` · 条目 31 · 引入后新增 26 项 · 账本内字段 12 项。
 
 ## 分层含义
 
@@ -11,6 +11,7 @@
 | 事实源层 | 唯一需要人维护或裁决的输入；所有结论都从这里复算 |
 | 派生层 | 由脚本从事实源重算，禁止手改；改事实源后重跑即可 |
 | 工具层 | 模板复制进目标项目的可执行副本，只读运行，升级靠同步模板 |
+| 资产层 | 专家/技能的只读部署副本，唯一权威源仍是方法论仓库 tag |
 | 草稿层 | 存量接入时的临时候选，人工确认前不得成为事实源 |
 | 运行时层 | 升级备份与写入互斥锁；不属于事实源、不参与结论复算、不进 governance/ |
 
@@ -27,7 +28,7 @@
 | `docs/test_records/` | 业务层 | 引入前可能已有 | 原有资产，不强制 | 开发者 | `manual` | 可 | 建议提交 git | 测试记录 <HINT>_TEST_RECORD.md，是 L4 运行验证证据之一。　保护：HINT 文件名匹配。　注：与 docs/generated/ 区分：这里是人写的实测记录，那里是机器渲染。 |
 | `governance/` | 事实源层 | 引入方案后新增 | 治理骨架必需 | init_project.py | `bootstrap` | 禁 | 建议提交 git | 治理目录：事实源、派生报告与工具副本都收敛在此，不另建管理项目。　保护：scenario_guard 越界文件检查。　注：此目录出现清单外的自制报告 / 第二份账本会被 --diff 报为越界。 |
 | `governance/registry.json` | 事实源层 | 引入方案后新增 | 治理骨架必需 | 人（唯一手写清单） | `manual` | 可 | 建议提交 git | 能力注册表：项目信息、模块清单、impls / hints / unit_test 声明。全项目唯一需手填的清单。　保护：registry_impls_exist / component_paths_exist。　注：新建为空清单；存量接入来自人工确认后的 registry.draft.json。多人同改仍需 git 合并。 |
-| `governance/DECISION_LEDGER.json` | 事实源层 | 引入方案后新增 | 治理骨架必需 | 生成器 / 决策脚本 / 生命周期脚本 | `rewrite` | 禁 | 建议提交 git | 单一事实源：entries 决策、capability_model 派生结果、history、lessons、lifecycle 全在这里。　保护：21 条不变量 / --expect-fingerprint CAS / frozen 冻结 / 看板 EMBED 同步。　注：可以写 entries（经 ledger_decide.py），但 level / completion / history / EMBED 一律自动派生，禁止手改。 |
+| `governance/DECISION_LEDGER.json` | 事实源层 | 引入方案后新增 | 治理骨架必需 | 生成器 / 决策脚本 / 生命周期脚本 | `rewrite` | 禁 | 建议提交 git | 单一事实源：entries 决策、capability_model 派生结果、history、lessons、lifecycle 全在这里。　保护：24 条不变量 / --expect-fingerprint CAS / frozen 冻结 / 看板 EMBED 同步。　注：可以写 entries（经 ledger_decide.py），但 level / completion / history / EMBED 一律自动派生，禁止手改。 |
 | `governance/index.html` | 派生层 | 引入方案后新增 | 治理骨架必需 | build_capability_model.py / lifecycle.py / upgrade.py / board_contract.py | `rewrite` | 禁 | 建议提交 git | 可视化看板；EMBED 与账本逐字节等价，CSS/DOM/JS 骨架与权威模板一致、按 PAGE_SIZE 分批渲染。　保护：board_embed_synced 不变量 + 去 EMBED 后的骨架 sha256（board_contract.py）。　注：lifecycle.py 改状态时同步 EMBED；禁止在项目里改样式，换版面要改模板并发版再由 upgrade 归一。 |
 | `governance/test_report.json` | 派生层 | 引入方案后新增 | 跑对应命令后才出现（不出现属正常） | run_tests.py | `rewrite` | 禁 | 可提交（便于离线审计）或 CI 重跑 | 机器可读测试报告，schema ledger-test-report/1；是 verified 证据的唯一来源。　保护：evidence_binding 逐文件 sha256 / --strict-evidence。　注：报告绑定测试源码内容摘要；源码一改就判 stale，verified 回落 declared。 |
 | `governance/TARGET_ARCHITECTURE.json` | 派生层 | 引入方案后新增 | 跑对应命令后才出现（不出现属正常） | architect_from_docs.py | `write-if-absent` | 禁 | 可提交（便于离线审计）或 CI 重跑 | 从规范文档抽取的目标架构：目标 / 模块 / 能力编码 / 依赖 / target_level。　保护：置信度 warnings。　注：结构化抽取而非自然语言理解；差异只报告，不自动回写 registry。 |
@@ -42,8 +43,12 @@
 | `governance/registry.draft.json` | 草稿层 | 引入方案后新增 | 仅存量接入路径出现 | discover_project.py / 人 | `write-if-absent` | 禁 | 可提交（便于离线审计）或 CI 重跑 | 存量项目盘点草稿，schema registry-draft/1。人工确认后才被 adopt 消费。　保护：只读发现 / 默认不覆盖 / 需人工精简。　注：草稿不是事实源；重复跑 discover 不会覆盖它。 |
 | `governance/ADOPTION_REPORT.md` | 草稿层 | 引入方案后新增 | 仅存量接入路径出现 | discover_project.py | `write-if-absent` | 禁 | 可提交（便于离线审计）或 CI 重跑 | 人类可读的接入盘点报告：候选模块、能力点、置信度、风险与下一步。　保护：只读发现 / 截断与无测试告警。 |
 | `governance/build_capability_model.py` | 工具层 | 引入方案后新增 | 治理骨架必需 | init_project.py（复制模板） | `bootstrap` | 禁 | 建议提交 git | 生成器副本：从 registry + 证据重算账本与看板。　保护：check.sh 模板/示例逐字节同步 / --no-generator 可跳过。　注：不要在目标项目里改这份副本；升级方法论后同步 templates/ 版本。 |
-| `governance/verify_ledger.py` | 工具层 | 引入方案后新增 | 治理骨架必需 | init_project.py（复制模板） | `bootstrap` | 禁 | 建议提交 git | 校验器副本：回答「账本内部坏没坏」。　保护：21 条不变量 / 模板同步。　注：与 scenario_guard.py 分工：后者回答「现在能不能动它」，未复制进目标项目。 |
+| `governance/verify_ledger.py` | 工具层 | 引入方案后新增 | 治理骨架必需 | init_project.py（复制模板） | `bootstrap` | 禁 | 建议提交 git | 校验器副本：回答「账本内部坏没坏」。　保护：24 条不变量 / 模板同步。　注：与 scenario_guard.py 分工：后者回答「现在能不能动它」，未复制进目标项目。 |
 | `governance/run_tests.py` | 工具层 | 引入方案后新增 | 治理骨架必需 | init_project.py（复制 scripts/） | `bootstrap` | 禁 | 建议提交 git | 测试报告生成器副本，产出 governance/test_report.json。　保护：报告含源码绑定摘要。　注：这是特意复制进目标项目的第 3 个工具，让项目脱离本仓库也能独立复算证据。 |
+| `.workbuddy/` | 资产层 | 引入方案后新增 | 跑对应命令后才出现（不出现属正常） | asset_bundle.py | `write-if-absent` | 禁 | 可提交（便于离线审计）或 CI 重跑 | 平台项目级 Agent 资产目录；升级 M7 后才有内容，权威源仍是方法论仓库。　保护：asset_bundle.py verify 逐文件 sha256 / manifest 整包摘要。　注：这里只放由治理升级安装的副本；用户自己放的技能不属于治理清单，不会被删除。 |
+| `.workbuddy/skills/` | 资产层 | 引入方案后新增 | 跑对应命令后才出现（不出现属正常） | asset_bundle.py | `rewrite` | 禁 | 可提交（便于离线审计）或 CI 重跑 | 可被 Agent 平台直接加载的技能副本，每个技能一个 <name>/SKILL.md。　保护：frontmatter name 与目录名一致 / 逐字节副本校验。　注：禁止在项目内编辑；改技能要改方法论仓库并发版，再由 M7 重新安装。 |
+| `.workbuddy/experts/` | 资产层 | 引入方案后新增 | 跑对应命令后才出现（不出现属正常） | asset_bundle.py | `rewrite` | 禁 | 可提交（便于离线审计）或 CI 重跑 | 专家包副本，每个专家一个 <name>/EXPERT.md；路由优先消费这份已安装资产。　保护：frontmatter name 与目录名一致 / 逐字节副本校验。　注：路由卡若引用的专家缺文件，--check-assets 会 fail-closed 报 incomplete。 |
+| `governance/ASSET_MANIFEST.json` | 派生层 | 引入方案后新增 | 跑对应命令后才出现（不出现属正常） | asset_bundle.py | `rewrite` | 禁 | 建议提交 git | 已安装资产的只读清单；证明副本与权威源逐字节一致、没有多余旧版本。　保护：逐文件 sha256 + 整包 digest + 账本 installed_assets 绑定。　注：不是第二事实源：它只记录 sha256，不含规则正文；权威源是方法论仓库 tag。 |
 | `.ledger-upgrade/` | 运行时层 | 引入方案后新增 | 跑对应命令后才出现（不出现属正常） | upgrade.py | `write-if-absent` | 禁 | 不建议提交（本地临时产物） | 升级备份根目录；跑过 upgrade.py apply 后才出现。　保护：manifest 只存相对路径 / 路径不含 ..。　注：备份是时间戳快照，不是活跃状态；放在项目根而不在 governance/，避免分裂事实源。 |
 | `.ledger-upgrade/backups/` | 运行时层 | 引入方案后新增 | 跑对应命令后才出现（不出现属正常） | upgrade.py | `write-if-absent` | 禁 | 不建议提交（本地临时产物） | 每次升级一个目录：<UTC>-<账本摘要前 8 位>/manifest.json + 被改文件的副本。　保护：rollback 需 --approved-by。　注：manifest.json 列相对路径与 sha256；rollback 按清单逐文件恢复并记录到 upgrade_log。 |
 | `.ledger-write.lock` | 运行时层 | 引入方案后新增 | 跑对应命令后才出现（不出现属正常） | agent_gateway.py | `write-if-absent` | 禁 | 不建议提交（本地临时产物） | 多 Agent 写入网关的 OS 级互斥锁文件，保证读-判-写原子。　保护：fcntl.flock 锁内重读账本并重新判定。　注：瞬态协调文件，不是事实源；无 fcntl 的平台降级为告警（见 E6 边界）。 |
@@ -59,18 +64,20 @@
 | `lifecycle / lifecycle.log` | lifecycle.py | state-field / append-only | 冻结、归档、批准人、状态变更日志。**不是 governance/lifecycle.log 文件**。 |
 | `retired_caps / execution.claims` | lifecycle.py | state-field | 退役编码登记与任务领用锁，保证编码不复用、同码不被两个执行者同时领用。 |
 | `provenance` | init_project.py | bootstrap | 接入来源（template / 草稿相对路径）、模式与意图，外部绝对路径自动脱敏。 |
-| `governance_meta / upgrade_log` | upgrade.py | state-field / append-only | 版本五轴、已应用迁移、工具 sha256 与升级/回滚日志。**不是 UPGRADE_LOG.md 文件**。 |
-| `governance_meta.method_assets / board_skeleton` | upgrade.py | state-field | 整包专家/技能/模板/文档摘要，以及看板骨架摘要；资产或版面漂移必须重新批准升级。 |
+| `governance_meta / upgrade_log` | upgrade.py | state-field / append-only | 版本六轴、已应用迁移、工具 sha256 与升级/回滚日志。**不是 UPGRADE_LOG.md 文件**。 |
+| `governance_meta.method_assets / board_skeleton / installed_assets` | upgrade.py | state-field | 整包资产摘要、看板骨架摘要，以及项目级已安装副本的逐文件绑定；三者任一漂移都要重新批准升级。 |
+| `work_items` | work_panel.py | state-field | 节点级 TODO / issue 的唯一写入点；scope 可指向项目、模块或四段式能力编码。 |
+| `test_results` | work_panel.py sync-tests | state-field | 测试报告的可验证投影（source_sha256 绑定原报告）；供工作台显示模块/组件级逐用例结果。 |
 | `access / access.audit` | agent_gateway.py | state-field / append-only | Agent 名册、编码租约、revision 与写入审计。**不是 AGENTS.yaml 或独立审计日志**。 |
 
 ## 不会进入被治理项目的内容
 
 | 方法论仓库路径 | 原因 |
 |---|---|
-| `experts/、skills/` | 专家与技能资产，随方法论仓库 tag 一起升级，不是项目源码；只有聚合摘要写进项目账本 governance_meta.method_assets。 |
+| `experts/、skills/（权威源）` | 方法论仓库里的专家与技能**原文**不进项目源码；v1.2.0 起由 asset_bundle.py 把逐字节只读副本装到 .workbuddy/，整包摘要写进 governance_meta.method_assets、副本清单写进 installed_assets。 |
 | `scripts/、templates/、tests/` | 方法论自身的工具、模板与测试；只有 3 个脚本副本落到 governance/。 |
-| `docs/01-18、docs/STANDARD.md` | 方法论文档，属于本仓库而非被治理项目。 |
-| `docs/generated/SCENARIO_MATRIX.md、FILE_LAYOUT.md` | 本仓库的机器渲染矩阵；目标项目只会得到 docs/generated/ 下那 4 份项目级文档。 |
+| `docs/01-21、docs/STANDARD.md` | 方法论文档，属于本仓库而非被治理项目。 |
+| `docs/generated/SCENARIO_MATRIX.md、FILE_LAYOUT.md、TEST_MODULES.md` | 本仓库的机器渲染矩阵；目标项目只会得到 docs/generated/ 下那 4 份项目级文档。 |
 | `examples/、.github/workflows/、CHANGELOG.md、RELEASE_CHECKLIST.md` | 示例、CI 与发布资产，属于方法论仓库。 |
 | `全仓 .git/` | git 元数据；trace_git.py 只读取证，不写入、不重写历史。 |
 

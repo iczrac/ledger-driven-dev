@@ -1,5 +1,6 @@
 """多 Agent 接入网关：默认拒绝、最小权限、CAS、租约、批准门与审计的负向证明。"""
 from __future__ import annotations
+MODULE_ID = "meta"
 
 import argparse
 import hashlib

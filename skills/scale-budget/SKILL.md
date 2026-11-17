@@ -9,7 +9,7 @@ description: |
 license: MIT
 metadata:
   author: ledger-driven-dev
-  version: "1.1.0"
+  version: "1.2.0"
   risk_level: read_only
   related_skills: [board-layout, layout-inspect, ledger-upgrade, scenario-guard]
 ---
@@ -20,7 +20,7 @@ metadata:
 
 | 命令 | 输入 | 输出 | 副作用 |
 |---|---|---|---|
-| `scale_budget.py` | `--target P [--json] [--check] [--strict]` | `scale-budget/1`：metrics、9 条预算、status、advice | **无**（只读，不落盘报告） |
+| `scale_budget.py` | `--target P [--json] [--check] [--strict]` | `scale-budget/1`：metrics、10 条预算、status、advice | **无**（只读，不落盘报告） |
 | `scale_probe.py` | `--mods M --caps C --files F --entries E --events V [--json]` | `scale-probe/1`：真实生成器耗时、产物体积、事件快照规模 | 仅在临时目录构造并清理 |
 
 退出码：`--check` 超硬阈值 → 2；`--strict` 时 warn 也算失败；其余 0。
@@ -34,13 +34,14 @@ metadata:
 `scale_probe.py` 的两次基准（同样 15 个能力、40 与 160 个业务文件）证明
 `governance_files` 完全相同。
 
-真正增长的是五个维度：
+真正增长的是六个维度：
 
 1. 账本体积：`capability_model` + `history.events` 的**全量状态快照**；
 2. 看板体积：EMBED 把同一份账本再内联一次（离线可看的代价）；
 3. 结构数量：`entries` / `history_events` / `capabilities` / `test_inputs`；
 4. 浏览器 DOM：已由统一模板按 `PAGE_SIZE=200` 分批渲染；
-5. CPU：生成器按能力逐个扫 docs / tests，接近 `O(能力 × 项目文件)`。
+5. CPU：生成器按能力逐个扫 docs / tests，接近 `O(能力 × 项目文件)`；
+6. 工作态数据（v1.2.0）：`work_items` 与 `test_results.cases`；由 `work_items` 预算项约束。
 
 ## 实测基准（本机，标准库，仅供参考）
 

@@ -1598,5 +1598,113 @@
         "origin": "derive"
       }
     ]
-  }
+  },
+  "test_results": {
+    "schema": "node-test-results/1",
+    "source": "governance/test_report.json",
+    "source_sha256": "ec40da2df1788e84f96e7d252e531f68e8a7c0b0b612f56874d296eb20cf0e81",
+    "overall": "pass",
+    "summary": {
+      "total": 3,
+      "passed": 3,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "cases": [
+      {
+        "id": "_lld_test_data_ready_35777.DataReadyTest.test_required_fields",
+        "file": "examples/demo-shop/tests/unit/test_data_ready.py",
+        "status": "pass",
+        "seconds": 2.2e-05
+      },
+      {
+        "id": "_lld_test_order_10275.OrderTest.test_payable",
+        "file": "examples/demo-shop/tests/unit/test_order.py",
+        "status": "pass",
+        "seconds": 1.5e-05
+      },
+      {
+        "id": "_lld_test_pricing_32654.PricingTest.test_discount",
+        "file": "examples/demo-shop/tests/unit/test_pricing.py",
+        "status": "pass",
+        "seconds": 1.3e-05
+      }
+    ],
+    "note": "test_report.json 的只读投影；账本内不复制生成时间与日志尾部"
+  },
+  "work_items": [
+    {
+      "id": "W-TODO-001",
+      "kind": "todo",
+      "scope": "DEMO.CORE.ORDER.01",
+      "status": "open",
+      "severity": "high",
+      "title": "补充订单金额边界单测",
+      "detail": "当前 L3 用例只覆盖正常支付路径，需补零额、超额与退款边界。",
+      "owner": "loop-executor",
+      "refs": [
+        {
+          "kind": "decision",
+          "value": "D-001"
+        },
+        {
+          "kind": "capability",
+          "value": "DEMO.CORE.ORDER.01"
+        },
+        {
+          "kind": "path",
+          "value": "examples/demo-shop/tests/unit/test_order.py"
+        }
+      ]
+    },
+    {
+      "id": "W-TODO-002",
+      "kind": "todo",
+      "scope": "DEMO.CORE",
+      "status": "open",
+      "severity": "med",
+      "title": "补齐模块级契约与测试记录",
+      "detail": "CORE 模块尚未形成 L4 运行验证记录，按证据等级补齐。",
+      "owner": "loop-executor",
+      "refs": [
+        {
+          "kind": "decision",
+          "value": "D-002"
+        }
+      ]
+    },
+    {
+      "id": "W-ISSUE-001",
+      "kind": "issue",
+      "scope": "DEMO.API.QUERY.01",
+      "status": "open",
+      "severity": "high",
+      "title": "查询接口缺少超时与降级保护",
+      "detail": "实测报告暂无该能力的用例；上线前必须补契约与超时策略。",
+      "owner": "evidence-auditor",
+      "refs": [
+        {
+          "kind": "capability",
+          "value": "DEMO.API.QUERY.01"
+        }
+      ]
+    },
+    {
+      "id": "W-ISSUE-002",
+      "kind": "issue",
+      "scope": "PROJECT",
+      "status": "open",
+      "severity": "low",
+      "title": "离线看板时间线过长时首屏偏慢",
+      "detail": "已由 PAGE_SIZE 分批渲染缓解，仍需大项目实测复核。",
+      "owner": "platform-steward",
+      "refs": [
+        {
+          "kind": "decision",
+          "value": "D-003"
+        }
+      ]
+    }
+  ]
 }

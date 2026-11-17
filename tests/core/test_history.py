@@ -1,4 +1,5 @@
 """历史契约：指纹稳定、diff 正确、幂等、链自证、候选识别。"""
+MODULE_ID = "core"
 import copy
 import unittest
 

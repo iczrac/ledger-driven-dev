@@ -1,5 +1,6 @@
 """证据分层（declared/verified）专项测试：零依赖、临时目录隔离。"""
 from __future__ import annotations
+MODULE_ID = "core"
 
 import json
 import unittest

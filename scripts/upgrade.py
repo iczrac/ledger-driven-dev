@@ -16,13 +16,20 @@ v0.9.0 只做了 `ledger_version` 的 fail-closed，于是已有项目面临三�
 
     PLAN → SNAPSHOT → APPLY → VERIFY → RE-BASELINE → AUDIT
 
-版本五轴（缺一不可）
+版本六轴（缺一不可）
 --------------------
     method_version   方法论/工具链版本（本文件 METHOD_VERSION），写进账本
     ledger_version   账本数据契约版本（1.0）；不兼容时只 fail-closed，不猜迁移
     tool hashes      3 个工具副本的 sha256，与 templates/ scripts/ 逐一比对
     method_assets    专家/技能/路由/模板/文档整包摘要；资产升级必须重新批准
     board_skeleton   去 EMBED 后的看板骨架 sha256；统一 CSS/DOM/JS，禁止项目改版
+    installed_assets 项目级 .workbuddy/ 内已安装副本的逐文件摘要；缺失/手改即判不可用
+
+v1.2.0 的边界变化
+------------------
+v1.1.0 刻意「不把资产复制进项目」，只绑摘要；结果 Agent 在项目里没有可用技能。
+v1.2.0 改为**只读部署副本**：权威源仍是方法论仓库 tag，安装产物逐字节一致、
+由 manifest + 账本字段双重校验、禁止在项目内编辑，因此不产生第二事实源。
 
 纪律
 ----
@@ -62,12 +69,21 @@ from board_contract import check as board_check  # noqa: E402
 from board_contract import normalize_board, template_digest  # noqa: E402
 from method_assets import check as assets_check  # noqa: E402
 from method_assets import manifest as assets_manifest  # noqa: E402
+from asset_bundle import (bundle as installed_bundle,  # noqa: E402
+                          check_definitions as installed_check,
+                          install as install_assets,
+                          install_plan as installed_plan,
+                          ledger_binding as installed_binding,
+                          verify as installed_verify)
+from work_panel import check as work_panel_check  # noqa: E402
+from work_panel import test_results_from_report  # noqa: E402
+from test_modules import validate as test_modules_validate  # noqa: E402
 
 SOURCE_ROOT = Path(__file__).resolve().parents[1]
 SCHEMA_PLAN = "upgrade-plan/1"
 SCHEMA_APPLY = "upgrade-apply/1"
 SCHEMA_VERIFY = "upgrade-verify/1"
-METHOD_VERSION = "1.1.0"
+METHOD_VERSION = "1.2.0"
 LEDGER_SCHEMA_VERSION = "1.0"
 SUPPORTED_LEDGER_VERSIONS = {"1.0"}
 ACCESS_SCHEMA = "access/1"
@@ -96,10 +112,16 @@ MIGRATIONS: list[dict] = [
          note="只在 M1 之后运行；记录本次升级后的 3 个 sha256"),
     dict(id="M5-method-assets", field="governance_meta.method_assets", kind="meta-refresh",
          name="绑定整包方法论资产摘要（专家/技能/模板/文档/路由）", approval=False,
-         note="资产随仓库 tag 升级、不复制进项目；digest 变化即要求重新批准升级"),
+         note="整包摘要随仓库 tag 升级、权威源不复制；专家/技能可用副本由 M7 安装"),
     dict(id="M6-board-skeleton", field="governance_meta.board_skeleton", kind="board-normalize",
          name="用权威模板重建看板骨架（CSS/DOM/JS）", approval=True,
          note="只换骨架，数据段仍是当前账本；禁止项目自定义版面"),
+    dict(id="M7-asset-install", field="governance_meta.installed_assets", kind="asset-install",
+         name="安装专家/技能到项目级 .workbuddy/ 并绑定逐文件摘要", approval=True,
+         note="只读部署副本，权威源仍是方法论仓库；项目内手改副本会被 verify 判漂移"),
+    dict(id="M8-work-panel", field="work_items / test_results", kind="ledger-field",
+         name="初始化节点工作台字段（TODO / issue / 测试结果投影）", approval=False,
+         note="只新增空数组与可验证投影，不改写 entries / history / capability_model"),
 ]
 
 POST_UPGRADE: list[str] = [
@@ -115,6 +137,13 @@ POST_UPGRADE: list[str] = [
     "python3 scripts/file_layout.py --diff --target P --strict",
     "python3 scripts/agent_gateway.py --target P status --json",
     "python3 scripts/route_expert.py --target P --intent 校验账本 --json",
+    "python3 scripts/asset_bundle.py --check",
+    "python3 scripts/asset_bundle.py verify --target P --json",
+    "python3 scripts/work_panel.py --target P check --json",
+    "python3 scripts/work_panel.py --target P sync-tests --apply --approved-by <人>",
+    "python3 scripts/work_panel.py --target P nodes --json",
+    "python3 scripts/test_modules.py --check",
+    "python3 scripts/route_expert.py --target P --check-assets --json",
 ]
 
 
@@ -189,6 +218,7 @@ def plan(target: Path, source_root: Path = SOURCE_ROOT) -> dict:
     rows = tool_rows(target, source_root)
     assets = assets_manifest(source_root)
     bcheck = board_check(target, source_root)
+    inst = installed_plan(target, source_root)
     recorded_assets = (meta.get("method_assets")
                        if isinstance(meta.get("method_assets"), dict) else {})
     needed: list[dict] = []
@@ -205,15 +235,21 @@ def plan(target: Path, source_root: Path = SOURCE_ROOT) -> dict:
             needed.append(MIGRATIONS[4])
         if not bcheck["match"]:
             needed.append(MIGRATIONS[5])
+        if not inst["noop"]:
+            needed.append(MIGRATIONS[6])
+        if "work_items" not in ledger or "test_results" not in ledger:
+            needed.append(MIGRATIONS[7])
 
     noop = bool(ledger) and not needed and not blocks
     risk = ("blocked" if blocks else
             "none" if noop else
-            "medium" if any(m["kind"] in ("tool-sync", "board-normalize")
+            "medium" if any(m["kind"] in ("tool-sync", "board-normalize", "asset-install")
                             for m in needed) else "low")
     writes = ["governance/DECISION_LEDGER.json", "governance/index.html"]
     if any(m["kind"] == "tool-sync" for m in needed):
         writes += [r["path"] for r in rows if r["state"] != "in-sync"]
+    if any(m["kind"] == "asset-install" for m in needed):
+        writes += inst["changes"] + ["governance/ASSET_MANIFEST.json"]
     return {
         "schema": SCHEMA_PLAN,
         "target": ".",
@@ -229,12 +265,18 @@ def plan(target: Path, source_root: Path = SOURCE_ROOT) -> dict:
                    "counts": assets["counts"], "recorded_digest": recorded_assets.get("digest")},
         "board": {"match": bcheck["match"], "template_digest": bcheck["template_digest"],
                   "board_digest": bcheck["board_digest"], "reason": bcheck["reason"]},
+        "installed": {"noop": inst["noop"], "digest": inst["digest"],
+                      "file_count": inst["file_count"], "counts": inst["counts"],
+                      "missing": inst["missing"], "drifted": inst["drifted"],
+                      "stale_protected": inst["stale_protected"]},
         "blocks": blocks,
         "noop": noop,
         "risk": risk,
         "backup": {"root": BACKUP_ROOT,
                    "files": ["governance/DECISION_LEDGER.json", "governance/index.html",
-                             "governance/registry.json", *TOOLING],
+                             "governance/registry.json", *TOOLING,
+                             "governance/ASSET_MANIFEST.json",
+                             *[r["path"] for r in installed_bundle(source_root)["files"]]],
                    "manifest": "manifest.json"},
         "writes": writes,
         "post_upgrade": [] if noop else list(POST_UPGRADE),
@@ -256,10 +298,11 @@ def _snapshot(target: Path, ledger_bytes: bytes, p: dict) -> str:
     dest.mkdir(parents=True, exist_ok=False)
     manifest: dict = {"schema": "upgrade-backup/1", "backup_id": bid,
                       "from_method": p["from_method"], "to_method": p["to_method"],
-                      "created_at": _now(), "files": []}
+                      "created_at": _now(), "files": [], "created": []}
     for rel in p["backup"]["files"]:
         src = _safe_rel(rel, target)
         if not src.is_file():
+            manifest["created"].append(rel)  # 升级前不存在；回滚时按白名单移除
             continue
         out = _safe_rel(rel, dest)
         out.parent.mkdir(parents=True, exist_ok=True)
@@ -312,6 +355,18 @@ def apply(target: Path, approved_by: str, *,
         normalize_board(gov, ledger, source_root,
                         approved_by=approved_by, apply=True, backup_root=None)
 
+    # M7：把专家/技能安装成项目内可直接加载的只读副本，再绑定摘要。
+    # 统一快照已包含安装清单与副本路径，这里不重复备份、也不单独改账本。
+    if "M7-asset-install" in ids:
+        install_assets(target, approved_by=approved_by, apply=True,
+                       source_root=source_root, bind_ledger=False)
+    if "M8-work-panel" in ids:
+        ledger.setdefault("work_items", [])
+        if "test_results" not in ledger:
+            projection = test_results_from_report(gov)
+            if projection is not None:
+                ledger["test_results"] = projection
+
     assets = assets_manifest(source_root)
     meta["method_version"] = METHOD_VERSION
     meta["ledger_version"] = str(ledger.get("ledger_version", LEDGER_SCHEMA_VERSION))
@@ -320,13 +375,14 @@ def apply(target: Path, approved_by: str, *,
     meta["method_assets"] = {
         "algorithm": assets["algorithm"], "digest": assets["digest"],
         "file_count": assets["file_count"], "counts": assets["counts"],
-        "source": "方法论仓库 tag（不复制进目标项目）",
+        "source": "方法论仓库 tag（权威源，不复制；只读副本由 M7 安装）",
     }
     meta["board_skeleton"] = {
         "digest": template_digest(source_root),
         "source": "templates/index.html.template",
         "note": "去 EMBED 后的骨架 sha256；禁止在项目内自定义版面",
     }
+    meta["installed_assets"] = installed_binding(source_root)
     applied = list(dict.fromkeys((meta.get("migrations_applied") or []) + ids))
     meta["migrations_applied"] = applied
     log = meta.setdefault("upgrade_log", [])
@@ -401,6 +457,20 @@ def verify(target: Path, source_root: Path = SOURCE_ROOT) -> dict:
             "" if bcheck["match"] else
             "board_contract.py normalize 或 upgrade.py apply（禁止手改 CSS/DOM）")
 
+        iv = installed_verify(target, source_root)
+        add("installed_assets", "pass" if iv["ok"] else "warn",
+            f"项目级专家/技能副本 {iv['file_count']} 个，摘要 {iv['digest'][:12]}"
+            if iv["ok"] else
+            "资产不可用：" + "；".join(e["reason"] for e in iv["errors"][:3]),
+            "" if iv["ok"] else iv["hint"])
+
+        wp = work_panel_check(target)
+        add("work_panel", "pass" if wp["ok"] else "warn",
+            f"节点工作态自洽（{wp.get('work_items', 0)} 工作项 / "
+            f"{wp.get('test_cases', 0)} 用例）" if wp["ok"] else
+            "工作台字段不自洽：" + "；".join(wp["errors"][:3]),
+            "" if wp["ok"] else "python3 scripts/work_panel.py --target P check --json")
+
         report_path = gov / "test_report.json"
         if report_path.is_file():
             try:
@@ -431,6 +501,7 @@ def verify(target: Path, source_root: Path = SOURCE_ROOT) -> dict:
                 c["status"] == "pass" for c in checks
                 if c["id"] in ("method_version", "tool_hashes", "access_schema",
                                "method_assets", "board_skeleton",
+                               "installed_assets", "work_panel",
                                "evidence_rebaseline")),
             "post_upgrade_required": list(POST_UPGRADE),
             "overall": "block" if blocked else "pass"}
@@ -454,6 +525,14 @@ def rollback(target: Path, backup_id: str, approved_by: str) -> dict:
             raise ValueError(f"备份缺文件：{item['path']}")
         dst.parent.mkdir(parents=True, exist_ok=True)
         shutil.copyfile(src, dst)
+    # 升级前不存在的安装产物，回滚时按白名单移除；不碰用户自己的 .workbuddy 文件
+    for rel in manifest.get("created", []):
+        if not (str(rel).startswith(".workbuddy/") or
+                str(rel) == "governance/ASSET_MANIFEST.json"):
+            continue
+        p = _safe_rel(str(rel), target)
+        if p.is_file():
+            p.unlink()
     gov = target / "governance"
     # 回滚回执写在备份目录（运行时层），不进 governance/；
     # 它记录「谁批准了这次恢复」，但不含项目状态，因此不是第二事实源。
@@ -499,6 +578,8 @@ def check_definitions(source_root: Path = SOURCE_ROOT) -> list[str]:
     if not (source_root / "templates" / "index.html.template").is_file():
         errs.append("看板权威模板不存在：templates/index.html.template")
     errs.extend(assets_check(source_root)["errors"])
+    errs.extend(installed_check(source_root))
+    errs.extend(test_modules_validate(source_root))
     return errs
 
 
@@ -515,6 +596,10 @@ def _render(result: dict) -> str:
                      f"{str(result['assets']['recorded_digest'])[:12] or '缺失'}）")
         lines.append("  看板骨架 " + ("一致" if result["board"]["match"] else
                                     "漂移 → " + result["board"]["reason"]))
+        inst = result["installed"]
+        lines.append(f"  可用资产 {inst['file_count']} 个 · 摘要 {inst['digest'][:12]} · "
+                     + ("齐备" if inst["noop"] else
+                        f"缺 {len(inst['missing'])} / 漂移 {len(inst['drifted'])} → M7"))
         for b in result["blocks"]:
             lines.append(f"  [BLOCK] {b['id']}：{b['reason']} → {b['fix']}")
         if result["post_upgrade"]:

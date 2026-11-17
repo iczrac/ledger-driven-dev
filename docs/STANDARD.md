@@ -32,13 +32,15 @@
 |---|---|
 | 改生成器规则 | `03-编码与成熟度`、`08-可信性校验`、`CHANGELOG` |
 | 改账本字段结构 | `02-决策账本`、`09-历史与经验` |
-| 改看板视图 | `04-嵌套组件与文档索引`、`README` 视图清单 |
+| 改看板视图 | `04-嵌套组件与文档索引`、`README` 视图清单、`board_contract.py` 骨架摘要（必变） |
+| 改节点工作台 / `work_items` / `test_results` | `21-节点工作台与看板视图`、`work_panel.py`、`verify_ledger.py` 三条不变量、`scale_budget.py` 的 `work_items` 阈值 |
 | 改技能 / 专家 | `10-AI集成`、`README` 目录结构 |
 | 新增不变量 | `08-可信性校验` 表格 + 负向测试 |
 | 新增 / 改名产物路径 | `15-文件架构`、`scripts/file_layout.py`、重新 `--emit-md`、`CHANGELOG` |
 | 改账本字段结构 | `02-决策账本`、`15-文件架构` 的 LEDGER_FIELDS、`09-历史与经验` |
 | 改工具副本 / 版本契约 | `16-升级与迁移`、`upgrade.py` 的 TOOLING / MIGRATIONS、`CHANGELOG` |
-| 改专家 / 技能 / 路由卡 / 编号文档 | `method_assets.py --check`（摘要必变）、`10-AI集成`、`12-专家路由`、`16-升级与迁移`、`18-规模化与版面契约`；所有目标项目需重新批准升级（M5） |
+| 改专家 / 技能 / 路由卡 / 编号文档 | `method_assets.py --check` 与 `asset_bundle.py --check`（两个摘要必变）、`10-AI集成`、`12-专家路由`、`16-升级与迁移`、`18-规模化与版面契约`、`19-专家与技能可用`；所有目标项目需重新批准升级（M5 + M7） |
+| 改测试模块归属 | `tests/MODULES.json`、`MODULE_ID`、`test_modules.py --check`、`20-测试架构与模块映射`、重跑 `--emit-md` 提交 `TEST_MODULES.md` |
 | 改看板模板 / CSS / DOM / `PAGE_SIZE` | 归一化示例看板、`board_contract.py` 骨架摘要、`scale_budget.py` 预算、`15-文件架构`、`18-规模化与版面契约`、`CHANGELOG` |
 | 改规模阈值 / 基准口径 | `scale_budget.py` 的 `BUDGETS`、`scale_probe.py`、`18-规模化与版面契约`、`14-场景矩阵` |
 | 改角色 / 动作 / 权限 | `10-AI集成`、`12-专家路由`、`17-多Agent接入控制`、`route_expert.py`、`agent_gateway.py` |

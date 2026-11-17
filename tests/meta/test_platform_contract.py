@@ -6,6 +6,7 @@
   - 项目变大时，固定的是治理文件数，报警的是体积与 DOM。
 """
 from __future__ import annotations
+MODULE_ID = "meta"
 
 import hashlib
 import json
@@ -89,7 +90,7 @@ class AssetsTest(unittest.TestCase):
         joined = " ".join(POST_UPGRADE)
         for name in ("board_contract.py", "scale_budget.py", "method_assets.py"):
             self.assertIn(name, joined)
-        self.assertEqual(len(POST_UPGRADE), 11)
+        self.assertEqual(len(POST_UPGRADE), 18)
 
 
 class BoardTest(unittest.TestCase):

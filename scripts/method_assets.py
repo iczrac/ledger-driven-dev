@@ -9,9 +9,13 @@
 「判定规则」。若目标项目仍由 v1.0 的专家卡指挥，却拿着 v1.1 的工具副本，
 `verify` 会全部通过——因为没有任何字段记录过这批资产。
 
-这些资产**不复制进目标项目**（见 file_layout.py 的 NOT_IN_TARGET）：它们属于
-方法论仓库，随 git tag 升级。本脚本只做一件事：把整包资产压成一个确定性
-sha256，由 `upgrade.py` 写进账本内 `governance_meta.method_assets`。之后
+这些资产属于方法论仓库，随 git tag 升级。v1.2.0 起分两层：
+  - 本脚本做**整包摘要绑定**：把全部资产压成确定性 sha256，由 `upgrade.py`
+    写进账本内 `governance_meta.method_assets`；
+  - `asset_bundle.py` 做**只读部署副本**：把专家/技能装到项目级
+    `.workbuddy/`，逐字节一致、带逐文件清单、禁止在项目内编辑。
+两者共用同一个权威源，副本只是可加载的部署产物，不是第二份规则。
+之后
   - 任何专家 / 技能 / 模板 / 文档变动 → digest 变 → plan 要求重新批准升级；
   - 用旧资产指挥新骨架 → verify 的 method_assets 项 warn，upgrade_complete=false。
 
@@ -47,8 +51,8 @@ ASSET_GROUPS: dict[str, str] = {
 }
 
 # 资产齐备性下限：少一个专家/技能都应被 check 拦下，而不是静默算出新摘要。
-MIN_COUNTS = {"experts": 8, "skills": 14, "scripts": 10,
-              "templates": 3, "method_docs": 17, "standard": 1}
+MIN_COUNTS = {"experts": 8, "skills": 20, "scripts": 26,
+              "templates": 4, "method_docs": 21, "standard": 1}
 EXCLUDED_PARTS = {"__pycache__", ".git"}
 
 
@@ -81,7 +85,8 @@ def manifest(root: Path = ROOT) -> dict:
         "groups": sorted(ASSET_GROUPS),
         # 不输出逐文件 sha256 到 CLI 默认视图，但 --json 提供完整清单供取证
         "files": rows,
-        "note": "专家/技能/模板/文档不复制进目标项目；本摘要写进账本内 governance_meta",
+        "note": "摘要绑定进 governance_meta.method_assets；可安装资产另有只读副本清单 "
+                "（asset_bundle.py），权威源仍是方法论仓库 tag",
     }
 
 

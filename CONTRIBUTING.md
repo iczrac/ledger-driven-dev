@@ -14,7 +14,7 @@
 bash scripts/check.sh
 ```
 
-它依次跑：单元测试（标准库 unittest）→ 证据分层 → 21 条账本不变量 → 场景矩阵 → 文件布局 → 升级与多 Agent 接入端到端 → 资产/骨架/规模契约 → 生成器幂等 → 模板/示例同步与看板 EMBED → 脱敏与文档内链。**任何阶段失败都不得提交**。本地与 CI 跑的是同一份脚本，不允许出现"本地过了 CI 挂了"。
+它依次跑：单元测试（`unittest discover` 与 `run_tests.py` 双口径）→ 测试架构映射 → 证据分层 → 24 条账本不变量 → 场景矩阵 → 文件布局 → 升级与多 Agent 接入端到端 → 资产/骨架/规模/节点工作台契约 → 生成器幂等 → 模板/示例同步与看板 EMBED → 脱敏与文档内链。**任何阶段失败都不得提交**。本地与 CI 跑的是同一份脚本，不允许出现"本地过了 CI 挂了"。
 
 ## 改动的规则
 
@@ -26,6 +26,9 @@ bash scripts/check.sh
 | `scripts/scale_budget.py` 的 `BUDGETS` / 模板 `PAGE_SIZE` | 同步 `18-规模化与版面契约` 的阈值表与基准，重跑 `scale_probe.py` 取证 |
 | `templates/registry.example.json` | 确认 `init_project.py` 产出的骨架仍可被生成器消费 |
 | `scripts/` 下脚本 | 补 `tests/` 用例；技能脚本的纪律必须被测试证明 |
+| 新增 / 移动 `tests/test_*.py` | 同步 `tests/MODULES.json` 的模块清单与每个文件的 `MODULE_ID`；跑 `test_modules.py --check` 与双发现口径 |
+| 改 `experts/` / `skills/` 正文 | 重跑 `method_assets.py --check` 与 `asset_bundle.py --check`；两个摘要都必变，目标项目需重新批准升级（M5 + M7） |
+| 改 `work_items` / `test_results` 契约 | 同步 `work_panel.py`、`verify_ledger.py` 三条不变量、`templates/index.html.template` 的 `nodeWork()` / `workStripHtml()` 与 docs/21 |
 | `docs/NN-*.md` | 遵守 [文档规范](docs/STANDARD.md)；更新 `README.md` 导航 |
 | `experts/` / `skills/` / `docs/NN-*.md` | 更新 [AI 集成](docs/10-AI集成.md) 的能力清单；`method_assets.py --check` 会通过但摘要必变，须在 CHANGELOG 说明「目标项目需要重新批准升级（M5）」 |
 | 新增 / 改名产物路径 | 更新 [文件架构](docs/15-文件架构.md) 与 `scripts/file_layout.py`，重跑 `--emit-md` 提交生成物 |
@@ -34,7 +37,9 @@ bash scripts/check.sh
 | `scripts/scenario_matrix.py` | 重跑 `--emit-md` 提交 `SCENARIO_MATRIX.md`，`covered` 必须有真实探针 |
 
 **只允许维护一份 `registry.json` 和一份账本**。不要新建平行报告来记录本该进账本的决策；
-`governance_meta` / `access` / `upgrade_log` / `audit` 都是账本内字段，不要另建同名文件。
+`governance_meta` / `access` / `upgrade_log` / `audit` / `work_items` / `test_results`
+都是账本内字段，不要另建同名文件。`.workbuddy/` 里的专家/技能是**只读部署副本**，
+不是第二事实源：权威源仍是本仓库，改资产要在这里改、发版、再由 M7 重新安装。
 
 ## 新增能力 / 决策 / 经验
 

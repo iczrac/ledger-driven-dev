@@ -8,7 +8,7 @@ description: |
 license: MIT
 metadata:
   author: ledger-driven-dev
-  version: "0.9.0"
+  version: "1.2.0"
   risk_level: read_only
   related_skills: [ledger-verify, ledger-guard, expert-route, graph-compare]
 ---
@@ -26,7 +26,7 @@ metadata:
 
 ## 与 verify 的分工
 
-- `verify_ledger.py` → 账本**内部**自洽（21 条不变量），打包一个账本文件就能验。
+- `verify_ledger.py` → 账本**内部**自洽（24 条不变量），打包一个账本文件就能验。
 - `scenario_guard.py` → **外部 / 时间 / 并发 / 生命周期**前置条件，需要当前源码与当前状态。
 - 顺序：**先 guard 再 verify 再写入**。只跑 verify 就写入，会漏掉冻结、并发漂移、过期证据。
 

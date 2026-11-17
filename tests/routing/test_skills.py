@@ -1,4 +1,5 @@
 """技能纪律：写决策与写经验的硬约束必须由代码保证，而非靠 Agent 记得。"""
+MODULE_ID = "routing"
 import json
 import unittest
 

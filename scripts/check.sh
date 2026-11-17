@@ -13,8 +13,39 @@ pass(){ printf '[PASS] %s\n' "$1"; }
 fail(){ printf '[FAIL] %s — %s\n' "$1" "$2"; FAILURES=$((FAILURES+1)); }
 
 stage_tests(){
-  note '单元测试（标准库 unittest）'
-  python3 -m unittest discover -s tests -v
+  note '单元测试（unittest discover 与 run_tests.py 双口径，必须同数）'
+  python3 -m unittest discover -s tests -v >/dev/null || return 1
+  local tmp report
+  tmp="$(mktemp -d)"
+  report="$tmp/repo-tests.json"
+  python3 scripts/run_tests.py --dir tests --top . --out "$report" --label repo >/dev/null \
+    || { rm -rf "$tmp"; return 1; }
+  python3 - "$report" <<'PY'
+import json, sys
+r = json.load(open(sys.argv[1]))
+assert r['schema'] == 'ledger-test-report/1', '报告 schema 错误'
+assert r['overall'] == 'pass', '仓库自身测试未全过'
+assert r['summary']['total'] >= 170, '用例数异常'
+assert len(r['evidence_binding']['inputs']) == 21, '测试架构清单与发现口径不一致'
+print(f"  仓库测试 {r['summary']['passed']}/{r['summary']['total']} passed · "
+      f"绑定 {len(r['evidence_binding']['inputs'])} 个模块内测试文件")
+PY
+  local rc=$?
+  rm -rf "$tmp"
+  return $rc
+}
+stage_test_modules(){
+  note '测试架构：模块清单 / MODULE_ID / 发现口径 / 目标项目缺口'
+  python3 scripts/test_modules.py --check || return 1
+  local tmp
+  tmp="$(mktemp -d)"
+  python3 scripts/test_modules.py --emit-md "$tmp/TEST_MODULES.md" >/dev/null \
+    || { rm -rf "$tmp"; return 1; }
+  cmp -s "$tmp/TEST_MODULES.md" docs/generated/TEST_MODULES.md \
+    || { rm -rf "$tmp"; return 1; }
+  rm -rf "$tmp"
+  python3 scripts/test_modules.py --target examples/demo-shop --json >/dev/null || return 1
+  echo '  6 个开发模块、21 个测试文件、映射渲染与目标缺口检查均一致'
 }
 stage_evidence(){
   note '证据分层：生成实测报告并确认 verified 判定'
@@ -38,7 +69,7 @@ PY
   return $rc
 }
 stage_verify(){
-  note '账本不变量（21 条）'
+  note '账本不变量（24 条）'
   python3 "$DEMO/verify_ledger.py" --root . \
     --registry "$DEMO/registry.json" \
     --ledger "$DEMO/DECISION_LEDGER.json" \
@@ -141,6 +172,12 @@ stage_upgrade_access(){
     || { rm -rf "$tmp"; return 1; }
   python3 scripts/upgrade.py --target "$proj" verify --json >/dev/null \
     || { rm -rf "$tmp"; return 1; }
+  python3 scripts/asset_bundle.py verify --target "$proj" --json >/dev/null \
+    || { rm -rf "$tmp"; echo '  升级后专家/技能副本不可用'; return 1; }
+  python3 scripts/work_panel.py --target "$proj" check --json >/dev/null \
+    || { rm -rf "$tmp"; echo '  升级后节点工作台字段不自洽'; return 1; }
+  python3 scripts/route_expert.py --target "$proj" --check-assets --json >/dev/null \
+    || { rm -rf "$tmp"; echo '  升级后路由读不到已安装资产'; return 1; }
   python3 scripts/agent_gateway.py --target "$proj" register \
     --agent gate-agent --role loop-executor --approved-by gate-bot --apply >/dev/null \
     || { rm -rf "$tmp"; return 1; }
@@ -160,15 +197,19 @@ stage_upgrade_access(){
     --board "$gov/index.html" --strict >/dev/null \
     || { rm -rf "$tmp"; return 1; }
   rm -rf "$tmp"
-  echo '  升级计划/备份/复验、注册批准、写入审计、默认拒绝、21 条不变量均通过'
+  echo '  升级计划/备份/复验、可用资产、节点工作台、注册批准、写入审计、默认拒绝、24 条不变量均通过'
 }
 stage_contracts(){
-  note '资产 / 看板骨架 / 规模预算契约'
+  note '资产 / 看板骨架 / 规模预算 / 节点工作台契约'
   python3 scripts/method_assets.py --check >/dev/null || return 1
+  python3 scripts/asset_bundle.py --check >/dev/null || return 1
+  python3 scripts/route_expert.py --check-assets --json >/dev/null || return 1
   python3 scripts/board_contract.py --target examples/demo-shop check --json >/dev/null || return 1
   python3 scripts/scale_budget.py --target examples/demo-shop --json --check >/dev/null || return 1
+  python3 scripts/work_panel.py --target examples/demo-shop check --json >/dev/null || return 1
+  python3 scripts/work_panel.py --target examples/demo-shop nodes --json >/dev/null || return 1
   python3 scripts/scale_probe.py --mods 3 --caps 5 --files 40 --events 2 >/dev/null || return 1
-  echo '  资产清单齐备、示例骨架与模板一致、规模预算 ok、基准可复现'
+  echo '  资产清单齐备、示例骨架与模板一致、工作台自洽、规模预算 ok、基准可复现'
 }
 stage_hygiene(){
   note '脱敏 + 文档内链'
@@ -208,6 +249,7 @@ elif [ "$MODE" = "--help" ]; then
   echo "用法: bash scripts/check.sh [all|--only-idempotence|--help]"
 else
   run '测试' stage_tests
+  run '测试架构' stage_test_modules
   run '证据分层' stage_evidence
   run '账本校验' stage_verify
   run '场景矩阵' stage_scenarios
@@ -224,4 +266,4 @@ if [ "$FAILURES" -gt 0 ]; then
   printf '质量门禁失败：%d 个阶段未通过\n' "$FAILURES"
   exit 1
 fi
-printf '质量门禁全绿：测试 / 证据分层 / 21 条不变量 / 场景矩阵 / 文件布局 / 升级与接入 / 资产与版面契约 / 幂等 / 同步 / 脱敏 / 文档链接\n'
+printf '质量门禁全绿：测试 / 测试架构 / 证据分层 / 24 条不变量 / 场景矩阵 / 文件布局 / 升级与接入 / 资产与工作台契约 / 幂等 / 同步 / 脱敏 / 文档链接\n'

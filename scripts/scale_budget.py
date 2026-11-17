@@ -53,6 +53,8 @@ BUDGETS: list[dict] = [
          advice="全量重算的成本随文件数上升；超过阈值请分仓或分项目"),
     dict(id="render_cards", label="单视图最大卡片数", warn=200, hard=2000, unit="个",
          advice="模板按 PAGE_SIZE 分批；超过硬阈值应拆项目而不是继续加页"),
+    dict(id="work_items", label="节点工作项（TODO / issue）", warn=500, hard=2000, unit="条",
+         advice="工作台与工作项视图按 PAGE_SIZE 分批；关闭已完成的，不要删历史工作项"),
 ]
 
 
@@ -117,6 +119,7 @@ def report(target: Path, source_root: Path = ROOT) -> dict:
         "governance_files": len([p for p in gov.rglob("*") if p.is_file()]),
         "project_files": _count_files(target),
         "render_cards": max(len(entries), len(events), caps),
+        "work_items": len(ledger.get("work_items") or []),
         "state_digest_codes": len(last_state) if isinstance(last_state, dict) else 0,
         "derived_files": len(derived),
         "largest_derived_bytes": max((_size(p) for p in derived), default=0),

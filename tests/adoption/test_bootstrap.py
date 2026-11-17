@@ -1,4 +1,5 @@
 """新建与存量接入：非破坏性初始化、来源可追溯、生成后可校验。"""
+MODULE_ID = "adoption"
 import json
 import shutil
 import subprocess

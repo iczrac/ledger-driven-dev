@@ -113,6 +113,33 @@ input.search:focus{border-color:var(--purple)}
 .lesson .row{margin:6px 0;font-size:13px}.lesson .k{color:var(--mut);font-size:12px;display:inline-block;width:42px;vertical-align:top}
 .lesson .v{display:inline-block;width:calc(100% - 48px);vertical-align:top}
 .hrow{font-size:11px;color:var(--mut);padding:3px 0;font-family:monospace}
+/* 节点工作台：TODO / issue / 测试结果 / 健康度 */
+.wstrip{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:8px 0;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--soft);font-size:11px}
+.wstrip .wl{color:var(--mut);margin-right:2px}
+.wchip{display:inline-block;font-size:11px;padding:2px 8px;border-radius:10px;background:var(--bp);color:var(--blue);white-space:nowrap}
+.wchip.w-issue{background:var(--rp);color:var(--red)}
+.wchip.w-todo{background:var(--ap);color:var(--amber)}
+.wchip.w-test{background:var(--gp);color:var(--green)}
+.wchip.w-fail{background:var(--rp);color:var(--red)}
+.wchip.w-health{background:var(--gp);color:var(--green)}
+.wchip.w-health.mid{background:var(--ap);color:var(--amber)}
+.wchip.w-health.bad{background:var(--rp);color:var(--red)}
+.wlink{font-size:11px;color:var(--purple);cursor:pointer;text-decoration:none;border:0;background:none;padding:2px 4px}
+.wlink:hover{text-decoration:underline}
+.wstrip.empty-w{opacity:.72}
+.witem{border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin-bottom:10px;background:var(--bg)}
+.witem.blocked{border-left:3px solid var(--red)}
+.witem.issue{border-left:3px solid var(--amber)}
+.witem.done{opacity:.68}
+.witem .wmeta{font-size:11px;color:var(--mut);margin-top:5px}
+.witem .wdetail{font-size:12px;margin-top:7px;line-height:1.6}
+.tcase{font-size:11px;font-family:monospace;padding:5px 8px;border-bottom:1px solid var(--line);word-break:break-all}
+.tcase:last-child{border-bottom:none}
+.tcase.fail{background:var(--rp);color:var(--red)}
+.tcase.pass{color:var(--mut)}
+.wgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;margin-bottom:14px}
+.wpanel{border:1px solid var(--line);border-radius:10px;padding:12px 14px;background:var(--soft);font-size:12px;line-height:1.7}
+.wpanel b{color:var(--purple)}
 </style>
 </head>
 <body>
@@ -124,13 +151,15 @@ input.search:focus{border-color:var(--purple)}
 <div class="bar">
 <div class="tab on" data-v="all">全部条目</div>
 <div class="tab" data-v="pending">待裁决</div>
+<div class="tab" data-v="workbench">工作台</div>
+<div class="tab" data-v="work">工作项</div>
 <div class="tab" data-v="timeline">时间线</div>
 <div class="tab" data-v="modules">模块地图</div>
 <div class="tab" data-v="arch">架构钻取</div>
 <div class="tab" data-v="capability">能力地图</div>
 <div class="tab" data-v="history">演进历史</div>
 <div class="tab" data-v="lessons">经验库</div>
-<input class="search" id="q" placeholder="搜索标题 / 决策 / 分类 / id / 模块 / 能力…">
+<input class="search" id="q" placeholder="搜索标题 / 决策 / 分类 / id / 模块 / 能力 / TODO / issue / 测试…">
 </div>
 <div class="legend" id="legend"></div>
 <div id="list"></div>
@@ -162,13 +191,182 @@ function bindMore(box){
   const b=box.querySelector('#btn-more');
   if(b) b.onclick=()=>{pageLimit+=PAGE_SIZE;render();};
 }
+let workScope='';
+const W_KIND={todo:'待办',issue:'缺陷'};
+const W_STATUS={open:'待处理',doing:'进行中',done:'已完成',blocked:'阻塞'};
+
+function allCaps(){
+  const out=[];
+  ((DATA.capability_model||{}).projects||[]).forEach(p=>(p.modules||[]).forEach(m=>(m.caps||[]).forEach(c=>out.push(c))));
+  return out;
+}
+function scopeApplies(scope,code){
+  return scope==='PROJECT'||scope===code||code.indexOf(scope+'.')===0;
+}
+function workScopeCodes(scope){
+  return allCaps().map(c=>c.code).filter(c=>scope==='PROJECT'||c===scope||c.indexOf(scope+'.')===0);
+}
+function unitTestPaths(codes){
+  const want={};codes.forEach(c=>want[c]=1);const out=[];
+  allCaps().forEach(c=>{if(!want[c.code])return;((c.doc_index||{}).unit_tests||[]).forEach(x=>out.push(typeof x==='string'?x:(x.path||'')));});
+  return out.filter(Boolean);
+}
+function nodeItems(scope){
+  const codes=workScopeCodes(scope);
+  return (DATA.work_items||[]).filter(x=>x.scope===scope||codes.some(c=>scopeApplies(x.scope||'',c)));
+}
+function nodeTests(scope){
+  const norm=s=>String(s||'').replace(/\\/g,'/').replace(/^\.\//,'');
+  const ps=unitTestPaths(workScopeCodes(scope)).map(norm);
+  return ((DATA.test_results||{}).cases||[]).filter(c=>{
+    const f=norm(c.file);
+    return ps.some(p=>f===p||f.slice(-p.length-1)==='/'+p||p.slice(-f.length-1)==='/'+f);
+  });
+}
+function nodeWork(scope){
+  const codes=workScopeCodes(scope), items=nodeItems(scope), tc=nodeTests(scope);
+  const todo=items.filter(x=>x.kind==='todo'&&x.status!=='done');
+  const issues=items.filter(x=>x.kind==='issue'&&x.status!=='done');
+  const blocked=issues.filter(x=>x.status==='blocked');
+  const failed=tc.filter(c=>c.status==='fail'||c.status==='error');
+  const fresh=((DATA.capability_model||{}).summary||{}).evidence_freshness;
+  const declared=codes.some(c=>{const cap=allCaps().find(x=>x.code===c);return cap&&cap.evidence_tier!=='verified';});
+  const penalty=20*blocked.length+8*(issues.length-blocked.length)+15*failed.length+(fresh!=='fresh'?15:0)+(declared?10:0);
+  return {scope:scope,items:items,todo:todo,issues:issues,blocked:blocked,tests:tc,
+          failed:failed,declared:declared,fresh:fresh||'unbound',health:Math.max(0,100-penalty)};
+}
+function healthChip(h){
+  const cls=h>=80?'':h>=50?'mid':'bad';
+  return '<span class="wchip w-health '+cls+'" title="按阻塞缺陷 / 失败测试 / 证据新鲜度 / declared 能力复算">健康度 '+h+'</span>';
+}
+function workStripHtml(scope){
+  const w=nodeWork(scope);
+  if(!w.items.length&&!w.tests.length)
+    return '<div class="wstrip empty-w"><span class="wl">节点工作态</span><span class="wchip">暂无 TODO / issue / 绑定测试</span>'+healthChip(w.health)+'</div>';
+  const chips='<span class="wchip w-todo">TODO '+w.todo.length+'</span>'+
+    '<span class="wchip w-issue">Issue '+w.issues.length+(w.blocked.length?'（阻塞 '+w.blocked.length+'）':'')+'</span>'+
+    '<span class="wchip '+(w.failed.length?'w-fail':'w-test')+'">测试 '+(w.tests.length-w.failed.length)+'/'+w.tests.length+(w.failed.length?' · 失败 '+w.failed.length:'')+'</span>'+
+    healthChip(w.health);
+  const rows=w.items.map(x=>'<div class="tcase '+(x.status==='blocked'?'fail':'')+'">'+esc(x.id)+' · '+
+    esc(W_KIND[x.kind]||x.kind)+' / '+esc(W_STATUS[x.status]||x.status)+' · '+esc(x.title)+'</div>').join('');
+  const cases=w.tests.map(c=>'<div class="tcase '+(c.status==='fail'||c.status==='error'?'fail':'pass')+'">'+
+    esc(c.status)+' · '+esc(c.id)+' · '+esc(c.file)+'</div>').join('');
+  return '<div class="wstrip"><span class="wl">节点工作态</span>'+chips+
+    '<button class="wlink" type="button" data-work="'+esc(scope)+'">查看该节点工作项 →</button></div>'+
+    ((rows||cases)?'<details class="tnode"><summary>展开本节点 TODO / issue / 测试结果</summary>'+
+      (rows?'<div class="subhead">工作项</div>'+rows:'')+
+      (cases?'<div class="subhead">逐用例测试结果</div>'+cases:'')+'</details>':'');
+}
+function bindWorkLinks(box){
+  box.querySelectorAll('[data-work]').forEach(a=>a.onclick=ev=>{
+    ev.preventDefault();
+    const scope=a.dataset.work;
+    document.querySelector('.tab[data-v="work"]').click();
+    workScope=scope;query='';document.getElementById('q').value='';render();
+  });
+}
+function workItemCard(x){
+  const cls=x.status==='done'?'done':x.status==='blocked'||x.kind==='issue'?(x.status==='blocked'?'blocked':'issue'):'';
+  const refs=(x.refs||[]).map(r=>'<span class="chip s" title="'+esc(r.kind||'')+'">'+esc(r.value||'')+'</span>').join('');
+  return '<div class="witem '+cls+'"><div class="chead"><span class="cid">'+esc(x.id)+'</span>'+
+    '<span class="pill '+(x.kind==='issue'?'p-proposed':'p-done')+'">'+esc(W_KIND[x.kind]||x.kind)+'</span>'+
+    '<span class="pill '+(x.status==='blocked'?'p-superseded':x.status==='done'?'p-done':'p-deferred')+'">'+
+    esc(W_STATUS[x.status]||x.status)+'</span><span class="ctitle">'+esc(x.title)+'</span></div>'+
+    '<div class="wmeta">作用域 <button class="wlink" type="button" data-work="'+esc(x.scope)+'">'+esc(x.scope)+'</button>'+
+    ' · 严重度 '+esc(x.severity||'med')+' · 负责人 '+esc(x.owner||'未指派')+
+    (x.closed_by?' · 关闭人 '+esc(x.closed_by):'')+'</div>'+
+    (x.detail?'<div class="wdetail">'+esc(x.detail)+'</div>':'')+
+    (refs?'<div class="wmeta">关联 '+refs+'</div>':'')+'</div>';
+}
+function testCaseHtml(c){
+  const bad=c.status==='fail'||c.status==='error';
+  return '<div class="tcase '+(bad?'fail':'pass')+'"><span class="wchip '+(bad?'w-fail':'w-test')+'">'+esc(c.status)+'</span> '+
+    esc(c.id)+' <span style="color:var(--mut)">· '+esc(c.file)+'</span></div>';
+}
+function renderWorkbench(box){
+  const cm=DATA.capability_model||{}, sm=cm.summary||{}, w=nodeWork('PROJECT');
+  const tr=DATA.test_results||{}, cases=tr.cases||[];
+  const pending=(DATA.entries||[]).filter(e=>e.status==='proposed'||e.status==='deferred');
+  const queue=cm.next_queue||[];
+  document.getElementById('stats').innerHTML=
+    stat(w.todo.length,'未关闭 TODO','var(--amber)')+
+    stat(w.issues.length,'未关闭 Issue','var(--red)')+
+    stat(w.blocked.length,'阻塞项','var(--red)')+
+    stat(w.failed.length,'失败 / 异常用例','var(--red)')+
+    stat(pending.length,'待裁决决策','var(--amber)')+
+    stat(queue.length,'下一轮任务卡','var(--purple)')+
+    stat(cases.length,'绑定测试用例','var(--green)')+
+    stat(w.health,'项目健康度',w.health>=80?'var(--green)':'var(--amber)');
+  document.getElementById('legend').innerHTML='<span>工作台从同一份账本复算节点工作态；健康度 = 100 − 阻塞×20 − Issue×8 − 失败测试×15 − 证据过期×15 − 含 declared 能力×10。点「查看该节点」可钻取。</span>';
+  let html='<div class="wgrid">'+
+    '<div class="wpanel"><b>证据状态</b><br>新鲜度 '+esc(w.fresh)+' · verified 覆盖 '+((sm.verified_coverage||0)*100).toFixed(0)+'%<br>'+
+    '测试结果投影绑定 '+esc(tr.source_sha256?String(tr.source_sha256).slice(0,12):'（未启用）')+'<br>'+
+    '整体完成度 '+((sm.overall_completion||0)*100).toFixed(0)+'%</div>'+
+    '<div class="wpanel"><b>最需要处理的三件事</b><br>'+
+    (w.blocked.length?'1. 解开 '+w.blocked.length+' 个阻塞 issue<br>':'1. 无阻塞 issue<br>')+
+    (w.failed.length?'2. 修复 '+w.failed.length+' 个失败用例<br>':'2. 测试用例全通过<br>')+
+    (w.todo.length?'3. 推进 '+w.todo.length+' 条 TODO（见下方任务卡）<br>':'3. 暂无未关闭 TODO<br>')+'</div></div>';
+  const focus=w.items.filter(x=>x.status!=='done').sort((a,b)=>{
+    const rank=x=>(x.status==='blocked'?0:x.kind==='issue'?1:x.severity==='high'?2:3);
+    return rank(a)-rank(b);
+  });
+  html+='<div class="day">焦点队列（'+focus.length+' 条，阻塞优先）</div>';
+  const fTotal=focus.length, fShown=focus.slice(0,pageLimit);
+  html+=fShown.length?fShown.map(workItemCard).join(''):'<div class="empty">暂无未关闭工作项</div>';
+  html+=moreHtml(fTotal,fShown.length,' 条工作项');
+  html+='<div class="day">下一轮任务卡（SELECT 产出，按完成度升序）</div>';
+  const qShown=queue.slice(0,pageLimit);
+  html+=qShown.length?qShown.map(t=>'<div class="witem"><div class="chead"><span class="cid">#'+esc(t.rank)+'</span>'+
+    '<span class="capcode">'+esc(t.code)+'</span><span class="ctitle">'+esc(t.action||'')+'</span></div>'+
+    '<div class="wmeta">'+esc(t.level||'')+' → '+esc(t.target_level||'')+' · 缺口 '+esc((t.missing_evidence||[]).join(' / ')||'无')+
+    ' · 文档 '+((t.docs||[]).length)+' 份</div>'+workStripHtml(t.code)+'</div>').join(''):
+    '<div class="empty">任务队列为空：所有能力点已达标，或能力模型尚未生成</div>';
+  html+=moreHtml(queue.length,qShown.length,' 张任务卡');
+  const bad=cases.filter(c=>c.status==='fail'||c.status==='error');
+  html+='<div class="day">失败 / 异常用例明细（'+bad.length+'）</div>';
+  html+=bad.length?bad.slice(0,pageLimit).map(testCaseHtml).join(''):'<div class="empty">无失败用例（或未启用测试结果投影）</div>';
+  html+=moreHtml(bad.length,Math.min(bad.length,pageLimit),' 条失败用例');
+  const stale=allCaps().filter(c=>c.evidence_tier!=='verified');
+  html+='<div class="day">证据待补能力点（'+stale.length+'）</div>';
+  html+=stale.length?stale.slice(0,pageLimit).map(c=>'<div class="tcase pass"><span class="capcode">'+esc(c.code)+'</span> '+
+    esc(c.name)+' · '+esc((c.tier_detail||{}).basis||'仅有文件存在，非实测')+'</div>').join(''):
+    '<div class="empty">所有能力点均已 verified</div>';
+  html+=moreHtml(stale.length,Math.min(stale.length,pageLimit),' 个能力点');
+  box.innerHTML=html;
+  bindWorkLinks(box);bindCapLinks(box);bindMore(box);
+}
+function renderWork(box){
+  const all=DATA.work_items||[];
+  let list=workScope?nodeItems(workScope):all.slice();
+  if(query) list=list.filter(x=>[x.id,x.kind,x.status,x.scope,x.title,x.detail,x.owner,x.severity].join(' ').toLowerCase().includes(query));
+  const rank=x=>x.status==='done'?4:x.status==='blocked'?0:x.kind==='issue'?1:x.severity==='high'?2:3;
+  list=list.sort((a,b)=>rank(a)-rank(b)||String(a.id).localeCompare(String(b.id)));
+  document.getElementById('legend').innerHTML='<span>工作项来自账本内 work_items（唯一写入点 work_panel.py）；'+
+    (workScope?'当前钻取 <b>'+esc(workScope)+'</b>（含其下所有能力点）· 清空搜索并点「工作项」标签可回到全局':'全局视图 · 点模块/组件卡片上的「查看该节点工作项」可钻取')+'</span>';
+  const w=nodeWork(workScope||'PROJECT');
+  let html='<div class="specbox"><b>作用域</b> '+esc(workScope||'PROJECT（全部）')+' · <b>工作项</b> '+list.length+
+    ' · <b>TODO</b> '+w.todo.length+' · <b>Issue</b> '+w.issues.length+'（阻塞 '+w.blocked.length+'） · '+
+    '<b>测试</b> '+w.tests.length+' 条（失败 '+w.failed.length+'） · '+healthChip(w.health)+'</div>';
+  html+=workStripHtml(workScope||'PROJECT');
+  const total=list.length, shown=list.slice(0,pageLimit);
+  html+='<div class="day">TODO / Issue（'+total+'）</div>';
+  html+=shown.length?shown.map(workItemCard).join(''):'<div class="empty">暂无工作项：用 work_panel.py add 写入，不要手改账本</div>';
+  html+=moreHtml(total,shown.length,' 条工作项');
+  const tc=nodeTests(workScope||'PROJECT');
+  html+='<div class="day">逐用例测试结果（'+tc.length+'）</div>';
+  html+=tc.length?tc.slice(0,pageLimit).map(testCaseHtml).join(''):
+    '<div class="empty">该作用域没有绑定测试：跑 run_tests.py 后用 work_panel.py sync-tests 投影进账本</div>';
+  html+=moreHtml(tc.length,Math.min(tc.length,pageLimit),' 条用例');
+  box.innerHTML=html;
+  bindWorkLinks(box);bindMore(box);
+}
 
 function init(){
   // 优先从同目录 JSON 读取（更新后自动同步），失败回退内嵌
   fetch('DECISION_LEDGER.json').then(r=>r.ok?r.json():Promise.reject()).then(d=>{DATA=d;render();}).catch(()=>render());
   document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{
     document.querySelectorAll('.tab').forEach(x=>x.classList.remove('on'));
-    t.classList.add('on'); view=t.dataset.v; pageLimit=PAGE_SIZE; render();
+    t.classList.add('on'); view=t.dataset.v; pageLimit=PAGE_SIZE; workScope=''; render();
   });
   document.getElementById('q').oninput=e=>{query=e.target.value.toLowerCase();pageLimit=PAGE_SIZE;render();};
 }
@@ -219,7 +417,10 @@ function render(){
     stat((cnt.proposed||0)+(cnt.deferred||0),'待裁决 / 暂缓','var(--amber)')+
     stat(cnt.superseded||0,'已被取代（取代链）','var(--red)')+
     stat(((DATA.history||{}).events||[]).length,'历史事件（append-only）','var(--purple)')+
-    stat(((DATA.lessons||{}).items||[]).length,'已确认经验','var(--green)');
+    stat(((DATA.lessons||{}).items||[]).length,'已确认经验','var(--green)')+
+    stat((DATA.work_items||[]).filter(x=>x.status!=='done').length,'未关闭 TODO / Issue','var(--amber)')+
+    stat(((DATA.test_results||{}).cases||[]).filter(c=>c.status==='fail'||c.status==='error').length,
+         '失败 / 异常用例','var(--red)');
   document.getElementById('legend').innerHTML=Object.keys(STATUS).map(k=>'<span class="pill '+STATUS[k].cls+'">'+STATUS[k].label+'</span>').join('')+'<span>点击卡片展开详情 · 红色/橙色为需关注项</span>';
 
   let list=es.filter(match);
@@ -228,6 +429,8 @@ function render(){
   list=list.slice(0,pageLimit);
 
   const box=document.getElementById('list');
+  if(view==='workbench'){ renderWorkbench(box); return; }
+  if(view==='work'){ renderWork(box); return; }
   if(view==='capability'){ renderCapability(box); return; }
   if(view==='history'){ renderHistory(box); return; }
   if(view==='lessons'){ renderLessons(box); return; }
@@ -239,7 +442,7 @@ function render(){
     ps=ps.slice(0,pageLimit);
     box.innerHTML=(ps.length?ps.map(projectCard).join(''):'<div class="empty">无匹配项目</div>')+
       moreHtml(totalProjects,ps.length,' 个项目');
-    bindMore(box);
+    bindMore(box);bindWorkLinks(box);
     return;
   }
   if(view==='modules'){
@@ -251,7 +454,7 @@ function render(){
     mods=mods.slice(0,pageLimit);
     box.innerHTML=(mods.length?mods.map(m=>modCard(m,mm)).join(''):'<div class="empty">无匹配模块</div>')+
       moreHtml(totalModules,mods.length,' 个模块');
-    bindMore(box);
+    bindMore(box);bindWorkLinks(box);
     return;
   }
   if(!totalEntries){box.innerHTML='<div class="empty">无匹配条目</div>';return;}
@@ -264,7 +467,7 @@ function render(){
   }
   box.innerHTML+=moreHtml(totalEntries,list.length,' 条决策');
   box.querySelectorAll('.toggle').forEach(t=>t.onclick=()=>t.closest('.card').classList.toggle('open'));
-  bindCapLinks(box);
+  bindCapLinks(box);bindWorkLinks(box);
   bindMore(box);
 }
 function bindCapLinks(box){
@@ -299,7 +502,9 @@ function modCard(m,mm){
     .find(x=>x.name===m.name)||{};
   const tree=treeHtml(cmMod.component_tree||[],0);
   const capCodes=(cmMod.caps||[]).map(c=>'<a class="capcode" href="#" data-cap="'+esc(c.code)+'" title="'+esc(c.name)+'">'+esc(c.code)+'</a>').join('');
+  const scope=cmMod.code||m.id;
   return '<div class="mod"><h3>'+esc(m.name)+' <span style="font-size:12px;color:var(--mut);font-family:monospace">'+esc(m.id)+'</span></h3>'+
+    workStripHtml(scope)+
     '<div class="mrow"><span class="k">源码</span><span class="v">'+src+'</span></div>'+
     '<div class="mrow"><span class="k">文档</span><span class="v">'+docs+'</span></div>'+
     '<div class="mrow"><span class="k">控制中心</span><span class="v">'+secs+' '+page+'</span></div>'+
@@ -317,7 +522,9 @@ function projectCard(p){
     const docs=docLinks((di.docs||[]).concat(di.plans||[]),'module_doc',6);
     const caps=(m.capability_codes||[]).map(c=>'<span class="capcode">'+esc(c)+'</span>').join('');
     const decs=(m.decisions||[]).map(id=>{const e=DATA.entries.find(x=>x.id===id);return '<span class="chip" title="'+esc(e?e.title:id)+'">'+esc(id)+'</span>'}).join('');
+    const scope=p.id+'.'+String(m.id||'').replace('M-','');
     return '<div class="mtile"><h4>'+esc(m.name)+' <span class="cid">'+esc(m.id)+'</span></h4>'+
+      workStripHtml(scope)+
       '<div style="font-size:11px;color:var(--mut)">'+esc((m.src||[]).join(' · '))+'</div>'+
       '<div class="subhead" style="margin:10px 0 4px">嵌套组件树（点击目录展开）</div><div class="tree">'+tree+'</div>'+
       (docs?'<div style="margin-top:8px"><span class="k" style="color:var(--mut);font-size:11px">文档索引</span><div>'+docs+'</div></div>':'')+
@@ -487,12 +694,14 @@ function renderCapability(box){
           (peek?'<div class="evlink">文档: '+peek+'</div>':'')+'</div>'+
           '<div class="capright"><div class="pc" style="color:'+cHex+'">'+(c.completion*100).toFixed(0)+'%</div>'+
           '<div class="capbar"><i style="width:'+(c.completion*100)+'%;background:'+cHex+'"></i></div></div></div>'+
+          workStripHtml(c.code)+
           '<details class="tnode" style="margin-top:4px"><summary>展开完整文档索引 / 相关经验 / 变更历史</summary>'+docIndexHtml(di)+
           (lh?'<div class="subhead">相关经验（自动附到任务卡）</div>'+lh:'')+
           (hh?'<div class="subhead">变更历史</div>'+hh:'')+'</details></div>';
       }).join('');
       return '<details class="proj"><summary><span class="caret">▶</span><span class="pname">'+esc(m.code)+'</span>'+esc(m.name)+'<span class="chip">'+(m.caps||[]).length+' 能力</span><span class="chip s">'+(m.completion*100).toFixed(0)+'%</span></summary>'+
-        '<div class="pbody"><div class="subhead">嵌套组件（模块内组件树）</div><div class="tree">'+treeHtml(m.component_tree||[],0)+'</div>'+
+        '<div class="pbody">'+workStripHtml(m.code)+
+        '<div class="subhead">嵌套组件（模块内组件树）</div><div class="tree">'+treeHtml(m.component_tree||[],0)+'</div>'+
         '<div class="subhead">模块文档索引</div>'+docIndexHtml(m.doc_index)+
         '<div class="subhead">能力点（点击展开索引与规划）</div>'+caps+'</div></details>';
     }).join('');
@@ -500,9 +709,9 @@ function renderCapability(box){
   }).join('');
   box.innerHTML=specHtml+(projects.length?body:'<div class="empty">无匹配能力节点</div>')+
     moreHtml(totalMods,shownMods,' 个模块');
-  bindMore(box);
+  bindMore(box);bindWorkLinks(box);
 }
-document.getElementById('foot').textContent='账本文件：governance/DECISION_LEDGER.json（唯一事实源） · 历史由状态指纹自动追加、经验由人确认后附到任务卡 · 校验：governance/verify_ledger.py --strict · 能力模型由生成器从证据重算';
+document.getElementById('foot').textContent='账本文件：governance/DECISION_LEDGER.json（唯一事实源） · 工作台/工作项/测试结果来自账本内 work_items 与 test_results 投影 · 校验：governance/verify_ledger.py --strict · 能力模型由生成器从证据重算';
 init();
 </script>
 </body>

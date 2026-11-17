@@ -1,4 +1,5 @@
 """规划图 vs 实际图：能力级 diff、缺口与专家执行顺序。"""
+MODULE_ID = "traceability"
 import json
 import subprocess
 import sys

@@ -18,6 +18,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import os
 import re
@@ -25,6 +26,85 @@ import sys
 from pathlib import Path
 
 SCHEMA = "expert-route/1"
+SOURCE_ROOT = Path(__file__).resolve().parents[1]
+ASSET_SCHEMA = "expert-assets/1"
+FM_NAME = re.compile(r"^name:\s*([A-Za-z0-9._-]+)\s*$", re.M)
+FM_DESC = re.compile(r"^description:\s*\|?\s*(.*)$", re.M)
+
+
+def _fm(text: str) -> tuple[str, str, str]:
+    """极简 frontmatter 读取：name / description 首行 / Triggers 行。标准库实现。"""
+    head = text.split("---", 2)
+    block = head[1] if len(head) >= 3 else ""
+    m = FM_NAME.search(block)
+    name = m.group(1) if m else ""
+    desc = ""
+    triggers = ""
+    for line in block.splitlines():
+        s = line.strip()
+        if not desc and s and not s.startswith(("name:", "description:", "license:",
+                                                "metadata:", "risk_level:", "related_skills:")):
+            desc = s
+        if s.lower().startswith("triggers:"):
+            triggers = s
+    return name, desc, triggers
+
+
+def asset_root(target: Path, explicit: Path | None = None) -> Path:
+    """优先读项目内已安装的资产，其次回落方法论仓库源。"""
+    if explicit:
+        return Path(explicit)
+    installed = Path(target) / ".workbuddy"
+    if (installed / "experts").is_dir() and (installed / "skills").is_dir():
+        return installed
+    return SOURCE_ROOT
+
+
+def load_assets(root: Path) -> dict:
+    """真正读取 EXPERT.md / SKILL.md 内容，而不是只信任硬编码卡片。"""
+    root = Path(root)
+    experts: dict[str, dict] = {}
+    skills: dict[str, dict] = {}
+    rows: list[str] = []
+    for group, pattern, out in (("experts", "experts/*/EXPERT.md", experts),
+                                ("skills", "skills/*/SKILL.md", skills)):
+        for p in sorted(root.glob(pattern)):
+            if not p.is_file():
+                continue
+            text = p.read_text(encoding="utf-8")
+            name, desc, triggers = _fm(text)
+            sha = hashlib.sha256(p.read_bytes()).hexdigest()
+            out[p.parent.name] = {"name": name, "description": desc,
+                                  "triggers": triggers, "sha256": sha}
+            rows.append(f"{p.relative_to(root).as_posix()}:{sha}")
+    missing_experts = sorted(set(EXPERT_CARDS) - set(experts))
+    referenced = {s for c in EXPERT_CARDS.values() for s in c["skills"]}
+    missing_skills = sorted(referenced - set(skills))
+    return {
+        "schema": ASSET_SCHEMA,
+        "root_kind": "installed" if root.name == ".workbuddy" else "source",
+        "expert_count": len(experts), "skill_count": len(skills),
+        "digest": hashlib.sha256("\n".join(rows).encode("utf-8")).hexdigest(),
+        "missing_experts": missing_experts, "missing_skills": missing_skills,
+        "status": "ok" if not (missing_experts or missing_skills) else "incomplete",
+        "experts": experts, "skills": skills,
+        "note": "卡片不再只是硬编码：路由输出携带真实资产摘要，缺文件即 fail-closed",
+    }
+
+
+def check_assets(root: Path) -> dict:
+    a = load_assets(root)
+    errors = list(a["missing_experts"])
+    errors += ["skills/" + s for s in a["missing_skills"]]
+    for group in ("experts", "skills"):
+        for dirname, meta in a[group].items():
+            if meta["name"] != dirname:
+                errors.append(f"{group}/{dirname}: frontmatter name={meta['name']} 与目录名不一致")
+            if not meta["description"]:
+                errors.append(f"{group}/{dirname}: 缺少 description")
+    return {"schema": "expert-assets-check/1", "ok": not errors,
+            "errors": errors, "digest": a["digest"],
+            "expert_count": a["expert_count"], "skill_count": a["skill_count"]}
 
 EXPERT_CARDS = {
     "expert-router": {
@@ -49,20 +129,21 @@ EXPERT_CARDS = {
         "title": "账本治理专家",
         "duty": "维护决策取代链、确认经验、从 next_queue 产出可执行任务卡。",
         "skills": ["ledger-scan", "ledger-verify", "ledger-decide", "ledger-lesson",
-                   "graph-compare", "layout-inspect", "agent-gate"],
+                   "graph-compare", "layout-inspect", "agent-gate", "work-panel"],
         "writes": ["entries", "lessons.items"],
     },
     "evidence-auditor": {
         "title": "证据审计专家",
         "duty": "跑不变量与实测报告，识别假绿灯；失败时冻结后续写入。",
         "skills": ["ledger-guard", "ledger-verify", "graph-compare", "layout-inspect",
-                   "agent-gate", "board-layout", "scale-budget"],
+                   "agent-gate", "board-layout", "scale-budget", "test-map", "work-panel"],
         "writes": [],
     },
     "loop-executor": {
         "title": "循环执行专家",
         "duty": "从一条任务卡补齐契约/实现/单测/测试记录；不得改等级、历史或看板。",
-        "skills": ["ledger-scan", "ledger-verify", "doc-rebuild", "graph-compare", "agent-gate"],
+        "skills": ["ledger-scan", "ledger-verify", "doc-rebuild", "graph-compare",
+                   "agent-gate", "work-panel", "test-map"],
         "writes": ["src/**", "tests/**", "docs/test_records/**"],
     },
     "release-steward": {
@@ -76,7 +157,8 @@ EXPERT_CARDS = {
         "title": "平台治理专家",
         "duty": "治理骨架升级与多 Agent 接入登记的规划与协调；只准备计划与交接卡，不替人批准。",
         "skills": ["ledger-upgrade", "agent-gate", "scenario-guard", "layout-inspect",
-                   "board-layout", "scale-budget"],
+                   "board-layout", "scale-budget", "method-assets", "asset-install",
+                   "test-map", "work-panel"],
         "writes": ["governance_meta", "access（均需人批准，由脚本执行）"],
     },
 }
@@ -99,9 +181,12 @@ INTENT_PATTERNS = {
     "migrate": ("跨版本", "版本升级", "schema", "账本升级", "升级治理骨架",
                 "方法论升级", "工具副本", "回滚升级", "升级后流程",
                 "专家升级", "技能升级", "资产摘要", "看板骨架", "版面差异",
-                "规模预算", "项目太大",
+                "规模预算", "项目太大", "资产安装", "专家可用", "技能可用",
+                "工作台", "工作项", "TODO", "issue", "测试结果视图",
+                "测试架构", "测试模块", "模块重组", "节点视图",
                 "migrate", "migration", "upgrade", "rollback", "ledger_version",
-                "method-assets", "board-contract", "scale-budget"),
+                "method-assets", "board-contract", "scale-budget",
+                "asset-bundle", "work-panel", "test-modules"),
     "access": ("接入 agent", "注册 agent", "多 agent", "agent 权限", "越权",
                "谁能改账本", "接入控制", "审计", "租约",
                "agent registry", "access control", "register agent"),
@@ -303,7 +388,7 @@ def decide(facts: dict, scores: dict[str, int], explicit_mode: str) -> dict:
         }
     elif primary in ("migrate", "access"):
         # 元层意图优先于项目状态：规则本身变了、或要授予写入权限时，
-        # 不能由考古/执行专家顺手完成——批准门与版本五轴需要独立负责人。
+        # 不能由考古/执行专家顺手完成——批准门与版本六轴需要独立负责人。
         route = _card("platform-steward", "high",
                       "治理骨架升级 / 多 Agent 接入属于元层动作：先只读计划，"
                       "再由人批准应用与注册；完成后必须重新取证与复验。", facts,
@@ -451,17 +536,34 @@ def commands_for(expert: str, target_display: str) -> list[str]:
             f"python3 scripts/method_assets.py --check",
             f"python3 scripts/board_contract.py --target {t} check --json",
             f"python3 scripts/scale_budget.py --target {t} --json --check",
+            f"python3 scripts/asset_bundle.py --check",
+            f"python3 scripts/asset_bundle.py verify --target {t} --json",
+            f"python3 scripts/work_panel.py --target {t} check --json",
+            f"python3 scripts/work_panel.py --target {t} nodes --json",
+            f"python3 scripts/test_modules.py --check",
+            f"python3 scripts/route_expert.py --target {t} --check-assets --json",
         ],
     }.get(expert, ["python3 scripts/route_expert.py --help"])
 
 
 def build(target: Path, intent: str, explicit_mode: str,
-          target_display: str, max_files: int = 2000) -> dict:
+          target_display: str, max_files: int = 2000,
+          assets_root: Path | None = None) -> dict:
     facts = inspect(target, max_files=max_files)
     scores = classify_intent(intent)
     decision = decide(facts, scores, explicit_mode)
     route = decision["route"]
     route["suggested_commands"] = commands_for(route["expert"], target_display)
+    root = asset_root(target, assets_root)
+    assets = load_assets(root)
+    route["asset_binding"] = {
+        "root_kind": assets["root_kind"], "digest": assets["digest"][:16],
+        "status": assets["status"], "expert_count": assets["expert_count"],
+        "skill_count": assets["skill_count"],
+    }
+    if assets["status"] != "ok":
+        route["preconditions"] = list(route.get("preconditions", [])) + [
+            "专家/技能资产不完整：先跑 asset_bundle.py install --apply --approved-by <人>"]
     return {
         "schema": SCHEMA,
         "target": target_display,
@@ -471,6 +573,8 @@ def build(target: Path, intent: str, explicit_mode: str,
         "intents": decision["intents"],
         "needs_clarification": decision["clarification"],
         "route": route,
+        "assets": {k: v for k, v in assets.items()
+                   if k not in ("experts", "skills")},
     }
 
 
@@ -508,6 +612,8 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--mode", choices=("auto", "greenfield", "brownfield"),
                     default="auto", help="显式指定项目模式；与事实冲突时会要求澄清")
     ap.add_argument("--max-files", type=int, default=2000, help="只读扫描的文件数上限")
+    ap.add_argument("--assets-root", default="", help="专家/技能资产根（默认优先项目内已安装副本）")
+    ap.add_argument("--check-assets", action="store_true", help="只校验资产齐备性与 frontmatter，不路由")
     ap.add_argument("--json", action="store_true", help="输出机器可读 JSON")
     args = ap.parse_args(argv)
 
@@ -515,7 +621,18 @@ def main(argv: list[str] | None = None) -> int:
     if not target.exists() or not target.is_dir():
         print(f"目标目录不存在：{args.target}", file=sys.stderr)
         return 2
-    result = build(target, args.intent, args.mode, args.target, args.max_files)
+    if args.check_assets:
+        root = asset_root(target, Path(args.assets_root) if args.assets_root else None)
+        result = check_assets(root)
+        print(json.dumps(result, ensure_ascii=False, indent=2, sort_keys=True)
+              if args.json else
+              f"资产自检：{'通过' if result['ok'] else '失败'} · "
+              f"{result['expert_count']} 专家 / {result['skill_count']} 技能 · "
+              f"摘要 {result['digest'][:12]}" +
+              ("\n" + "\n".join(result["errors"]) if result["errors"] else ""))
+        return 0 if result["ok"] else 1
+    result = build(target, args.intent, args.mode, args.target, args.max_files,
+                   Path(args.assets_root) if args.assets_root else None)
     if args.json:
         print(json.dumps(result, ensure_ascii=False, indent=2, sort_keys=True))
     else:

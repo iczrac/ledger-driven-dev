@@ -1,5 +1,6 @@
 """生命周期状态机专项：冻结 / 归档 / 退役 / 任务领用。"""
 from __future__ import annotations
+MODULE_ID = "meta"
 
 import json
 import subprocess

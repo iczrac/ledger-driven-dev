@@ -175,7 +175,7 @@ SCENARIOS: list[dict] = [
                "+ test_scenarios.ScenarioProbeTest.test_unsupported_version_blocks",
          flow=["upgrade.py --target P plan --json",
                "upgrade.py --target P apply --approved-by <人>",
-               "upgrade.py --target P verify --json", "执行 post_upgrade 11 步"],
+               "upgrade.py --target P verify --json", "执行 post_upgrade 18 步"],
          note="迁移只加字段，不改 history.events，因此不追加历史事件；"
               "真正的 ledger_version 数据迁移仍需人工写专用方案"),
     dict(id="T3", axis="时间", name="历史回溯 / 外部取证", axiom="A4", status="covered",
@@ -312,11 +312,61 @@ SCENARIOS: list[dict] = [
          note="基准：1000 能力 / 1500 文件 / 80 事件 → 生成器 4.4s，账本 9.6 MiB，治理文件仍为 4"),
     dict(id="S2", axis="规模", name="生成器全量重算的成本", axiom="A2", status="partial",
          expected="可复现基准 + 阈值告警；超阈值由人决定拆项目或归档，不做静默降级",
-         probe="test_platform_contract.BudgetTest.test_probe_shows_file_count_stays_fixed",
+         probe="test_meta.test_platform_contract.BudgetTest.test_probe_shows_file_count_stays_fixed",
          flow=["scale_probe.py --json", "scale_budget.py --target P --check"],
          note="残差：生成器按能力逐个扫 docs / tests，接近 O(能力 × 文件)，没有增量索引；"
               "触发升级条件：超过 1 万能力或 2 万文件且门禁耗时不可接受时，"
               "再引入缓存/分片，同时必须保持同一份账本可复算"),
+    # U / V / T：可用资产、节点工作台与测试架构（v1.2.0）
+    dict(id="U4", axis="时间", name="项目内手改已安装的 SKILL.md / EXPERT.md", axiom="A3",
+         status="covered",
+         expected="asset_bundle.py verify 报 drift，upgrade.py verify 的 installed_assets 项 warn，"
+                  "upgrade_complete=false；必须重新批准 M7 安装",
+         probe="tests.views.test_assets.AssetsTest.test_installed_copy_drift_is_detected",
+         flow=["asset_bundle.py verify --target P --json",
+               "upgrade.py --target P plan --json",
+               "asset_bundle.py install --target P --apply --approved-by <人>"],
+         note="副本是只读部署产物，不是可编辑的第二份规则；清单外的 .workbuddy 文件不动"),
+    dict(id="U5", axis="时间", name="专家/技能升级后 Agent 仍用旧卡片", axiom="A2",
+         status="covered",
+         expected="route_expert.py 读取真实 EXPERT.md / SKILL.md frontmatter 并把资产摘要写进路由结果；"
+                  "缺文件即 --check-assets fail-closed",
+         probe="tests.views.test_assets.AssetsTest.test_router_consumes_installed_assets",
+         flow=["route_expert.py --target P --check-assets --json",
+               "route_expert.py --target P --intent 升级治理骨架 --json"],
+         note="资产不再只是摘要：安装的副本优先于方法论仓库源被路由消费"),
+    dict(id="V1", axis="视图", name="模块 / 组件上看不到 TODO 与 issue", axiom="A1",
+         status="covered",
+         expected="work_items 按 scope 覆盖项目/模块/能力编码；nodeWork 与 work_panel.py nodes "
+                  "用同一规则复算，节点卡片显示条数、健康度并可下钻",
+         probe="tests.views.test_work_panel.WorkPanelTest.test_node_summary_scopes_work_items",
+         flow=["work_panel.py --target P add --kind todo --scope DEMO.CORE.ORDER.01 ...",
+               "work_panel.py --target P nodes --json", "看板 → 能力地图 / 工作项"],
+         note="派生聚合不落盘，避免产生第三份需要同步的事实"),
+    dict(id="V2", axis="视图", name="手填测试结果投影伪造全绿", axiom="A2",
+         status="covered",
+         expected="test_results.source_sha256 必须等于当前 test_report.json 的 sha256；"
+                  "24 条不变量里 test_results_binding_valid 会拦下",
+         probe="tests.views.test_work_panel.WorkPanelTest.test_tampered_projection_fails_verifier",
+         flow=["work_panel.py --target P sync-tests --apply --approved-by <人>",
+               "verify_ledger.py --root P --strict --json"],
+         note="投影不含 generated_at / raw_tail，保证确定性；原始报告仍是唯一测试事实"),
+    dict(id="V3", axis="视图", name="新项目尚无工作态数据", axiom="A5",
+         status="covered",
+         expected="工作台/工作项视图与节点条在无 work_items / test_results 时显示空态而非报错；"
+                  "全部能力按 declared 显示，不伪装成 verified",
+         probe="tests.views.test_board_views.BoardViewsTest.test_work_views_degrade_without_data",
+         flow=["init_project.py --target P --mode greenfield",
+               "看板 → 工作台", "verify_ledger.py --root P --strict"],
+         note="空数组与缺失字段都按零处理；M8 只新增字段，不改 entries / history"),
+    dict(id="T6", axis="结构", name="测试文件未按开发模块归属 / 清单漂移", axiom="A1",
+         status="covered",
+         expected="tests/MODULES.json + 文件内 MODULE_ID + rglob 三方一致才算通过；"
+                  "模块名与标准库冲突也会被拦",
+         probe="tests.views.test_test_modules.TestModulesTest.test_map_module_id_and_discovery_agree",
+         flow=["test_modules.py --check", "run_tests.py --dir tests --top . --out report.json",
+               "test_modules.py --target P --json"],
+         note="两套发现口径（unittest discover 与 run_tests.py rglob）用例数必须相同"),
 ]
 
 

@@ -1,4 +1,5 @@
 """规范化文档重建与编码索引：单一事实源 → 可对齐 artifact。"""
+MODULE_ID = "traceability"
 import json
 import subprocess
 import sys

@@ -28,6 +28,9 @@
 19. lessons_valid：经验条目合法（confirmed 必含洞察与行动）
 20. lesson_candidates_dedup：候选去重且不与已确认条目冲突
 21. queue_lessons_confirmed：任务卡只引用已确认经验
+22. work_items_valid：节点 TODO / issue 的 id、kind、status、severity、scope 合法
+23. work_item_refs_valid：工作项引用的决策 / 能力 / 路径可解析
+24. test_results_binding_valid：节点测试结果投影绑定当前测试报告且用例状态合法
 
 用法
 ----
@@ -93,8 +96,12 @@ def fingerprint_state(snap: dict) -> str:
 
 
 def verify(repo_root: Path, ledger: dict, registry: dict | None,
-           board_path: Path | None) -> list[dict]:
-    """返回检查结果列表：[{id, ok, detail}, ...]。"""
+           board_path: Path | None, governance_dir: Path | None = None) -> list[dict]:
+    """返回检查结果列表：[{id, ok, detail}, ...]。
+
+    governance_dir 为账本所在目录，用于核对 test_results.source_sha256；
+    省略时由 board_path 或 repo_root/governance 推导，保持旧调用方兼容。
+    """
     results: list[dict] = []
 
     def add(check_id: str, ok: bool, detail: str = "") -> None:
@@ -334,6 +341,79 @@ def verify(repo_root: Path, ledger: dict, registry: dict | None,
     ]
     add("queue_lessons_confirmed", not q_errors, f"未确认引用={q_errors[:5]}")
 
+    # 22. 节点工作项（TODO / issue）：写在工作台视图之前先保证数据自洽
+    items = ledger.get("work_items") or []
+    scopes = {"PROJECT"}
+    for c in codes:
+        parts = c.split(".")
+        scopes.update({c, ".".join(parts[:2]), parts[0]})
+    decisions = {e.get("id") for e in entries}
+    w_errors: list[str] = []
+    if not isinstance(items, list):
+        w_errors.append("work_items 不是数组")
+        items = []
+    w_ids = [x.get("id") for x in items if isinstance(x, dict)]
+    if len(w_ids) != len(set(w_ids)) or any(not x for x in w_ids):
+        w_errors.append("id 重复或为空")
+    for x in items:
+        if not isinstance(x, dict):
+            w_errors.append("含非对象元素")
+            continue
+        if x.get("kind") not in ("todo", "issue"):
+            w_errors.append(f"{x.get('id')}: kind 非法")
+        if x.get("status") not in ("open", "doing", "done", "blocked"):
+            w_errors.append(f"{x.get('id')}: status 非法")
+        if x.get("severity", "med") not in ("low", "med", "high"):
+            w_errors.append(f"{x.get('id')}: severity 非法")
+        if not x.get("title"):
+            w_errors.append(f"{x.get('id')}: 缺 title")
+        if x.get("scope") not in scopes:
+            w_errors.append(f"{x.get('id')}: scope 无法解析")
+    add("work_items_valid", not w_errors, f"工作项 {len(items)} 条 · 错误={w_errors[:5]}")
+
+    # 23. 工作项引用：决策 id / 能力编码必须真实存在，否则看板会给出死链
+    r_errors = []
+    for x in items:
+        if not isinstance(x, dict):
+            continue
+        for r in (x.get("refs") or []):
+            if not isinstance(r, dict):
+                r_errors.append(f"{x.get('id')}: refs 元素非对象")
+                continue
+            kind, value = r.get("kind"), str(r.get("value", ""))
+            if kind == "decision" and value not in decisions:
+                r_errors.append(f"{x.get('id')}: 决策 {value} 不存在")
+            elif kind == "capability" and value not in set(codes):
+                r_errors.append(f"{x.get('id')}: 能力 {value} 不存在")
+            elif kind not in ("decision", "capability", "path"):
+                r_errors.append(f"{x.get('id')}: 引用类型 {kind} 非法")
+    add("work_item_refs_valid", not r_errors, f"错误={r_errors[:5]}")
+
+    # 24. 测试结果投影：只认绑定了当前报告 hash 的只读投影，杜绝手填"全绿"
+    tr = ledger.get("test_results")
+    if tr is None:
+        add("test_results_binding_valid", True, "未启用节点测试结果投影（全部能力按 declared 显示）")
+    elif not isinstance(tr, dict) or tr.get("schema") != "node-test-results/1":
+        add("test_results_binding_valid", False, "test_results.schema 非法")
+    else:
+        t_errors = []
+        tcases = tr.get("cases") or []
+        if not isinstance(tcases, list):
+            t_errors.append("cases 不是数组")
+            tcases = []
+        for c in tcases:
+            if not isinstance(c, dict) or c.get("status") not in ("pass", "fail", "error", "skip"):
+                t_errors.append("用例状态非法")
+        if (tr.get("summary") or {}).get("total") != len(tcases):
+            t_errors.append("summary.total 与 cases 数量不一致")
+        gov = governance_dir or (board_path.parent if board_path else repo_root / "governance")
+        report = Path(gov) / "test_report.json"
+        if report.is_file():
+            want = hashlib.sha256(report.read_bytes()).hexdigest()
+            if tr.get("source_sha256") != want:
+                t_errors.append("source_sha256 与当前测试报告不一致，需 sync-tests")
+        add("test_results_binding_valid", not t_errors, f"错误={t_errors[:5]}")
+
     return results
 
 
@@ -361,7 +441,7 @@ def main() -> None:
     registry = json.loads(reg_path.read_text()) if reg_path.exists() else None
     board = board_path if board_path.exists() else None
 
-    results = verify(repo_root, ledger, registry, board)
+    results = verify(repo_root, ledger, registry, board, ledger_path.parent)
     passed = sum(1 for r in results if r["ok"])
     failed = len(results) - passed
 

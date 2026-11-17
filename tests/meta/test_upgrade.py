@@ -3,6 +3,7 @@
 所有用例都在临时副本上跑，绝不修改 examples/demo-shop 的真实账本。
 """
 from __future__ import annotations
+MODULE_ID = "meta"
 
 import hashlib
 import json
@@ -49,7 +50,7 @@ class UpgradeTest(unittest.TestCase):
     def test_definitions_selfcheck(self):
         self.assertEqual(check_definitions(), [])
         self.assertEqual(plan.__name__, "plan")
-        self.assertEqual(len(POST_UPGRADE), 11)
+        self.assertEqual(len(POST_UPGRADE), 18)
         self.assertEqual(len(TOOLING), 3)
 
     def test_plan_is_read_only_deterministic_and_leak_free(self):
@@ -105,7 +106,7 @@ class UpgradeTest(unittest.TestCase):
             self.assertEqual(tree_hash(target), before)
 
     def test_apply_is_approved_backed_up_and_verifiable(self):
-        """T2 探针：兼容版本的升级有完整闭环，且 21 条不变量仍全绿。"""
+        """T2 探针：兼容版本的升级有完整闭环，且 24 条不变量仍全绿。"""
         with project_copy() as (tmp, target):
             fp_before = current_fingerprint(ledger_of(target))
             n_events = len(ledger_of(target)["history"]["events"])

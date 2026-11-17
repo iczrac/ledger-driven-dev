@@ -65,7 +65,7 @@ EXPERT.md     ──散文──>  Agent  （靠"记得遵守"）
 `revision` 每次写入 +1，让「只改 access、不改能力模型」这类不改变
 `current_fingerprint` 的写入也可数、可检测。
 `audit` 是 append-only：**许可与拒绝都留痕**，事件带前后指纹、registry 摘要、
-批准人与理由。看板 EMBED 由 `ledger_io.write_ledger()` 同步，21 条不变量不破。
+批准人与理由。看板 EMBED 由 `ledger_io.write_ledger()` 同步，24 条不变量不破。
 
 ### 并发三重锁，各管一件事
 
@@ -98,7 +98,7 @@ EXPERT.md     ──散文──>  Agent  （靠"记得遵守"）
 ```bash
 python3 scripts/upgrade.py --target P plan --json
 python3 scripts/upgrade.py --target P apply --approved-by 张三
-# 按 plan.post_upgrade 的 11 步重新取证、核对资产/版面/预算并复验（见 16、18）
+# 按 plan.post_upgrade 的 18 步重新取证、核对资产副本/版面/预算/工作台并复验（见 16、18、19、21）
 python3 scripts/agent_gateway.py --target P status --json
 ```
 
@@ -176,7 +176,7 @@ Agent：status 取票据 → request dry-run → apply → 改代码 → 重跑�
         ↓
 网关：九道门 → 写入 + 租约 + audit + 看板同步
         ↓
-门禁：verify_ledger 21 条 → scenario_guard → layout --diff → check.sh
+门禁：verify_ledger 24 条 → scenario_guard → layout --diff → check.sh
         ↓
 路由：重新 expert-route（状态可能已变），下一轮任务卡由 ledger-steward 分派
 ```

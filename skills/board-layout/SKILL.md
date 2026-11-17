@@ -8,7 +8,7 @@ description: |
 license: MIT
 metadata:
   author: ledger-driven-dev
-  version: "1.1.0"
+  version: "1.2.0"
   risk_level: read_only_with_approved_repair
   related_skills: [ledger-upgrade, layout-inspect, ledger-verify, scale-budget]
 ---
@@ -35,8 +35,9 @@ metadata:
 - CSS 改一行、删一个 tab、改一处 JS → 摘要必变；
 - 摘要写进账本内 `governance_meta.board_skeleton`，**不新建项目文件**。
 
-模板里 `const PAGE_SIZE=200` 是统一分批渲染上限：`entries` / `history` /
-`lessons` / `modules` / `arch` / `capability` 六个视图都按它截断并给「显示更多」。
+模板里 `const PAGE_SIZE=200` 是统一分批渲染上限：全部条目 / 待裁决 / 工作台 /
+工作项 / 时间线 / 模块地图 / 架构钻取 / 能力地图 / 演进历史 / 经验库**十个视图**
+都按它截断并给「显示更多」；节点工作条是卡片内聚合，不额外生成卡片。
 `scale_budget.py` 直接解析该常量，避免预算口径与渲染实现漂移。
 
 ## 步骤
@@ -58,7 +59,7 @@ metadata:
 - 要换样式：**改方法论模板 → 发 tag → 所有项目经升级获得同一版面**。禁止项目内改 CSS/DOM。
 - 归一化只换骨架，数据段用当前账本重新写入；不得借机改决策/历史/能力等级。
 - `rollback` 会把看板恢复到升级前骨架，之后必须重新 `plan → apply → verify`，不能只回滚不管版面。
-- `board_embed_synced`（21 条不变量之一）与骨架契约是两件事：前者管数据，后者管版面，缺一不可。
+- `board_embed_synced`（24 条不变量之一）与骨架契约是两件事：前者管数据，后者管版面，缺一不可。
 
 ## 失败处理
 

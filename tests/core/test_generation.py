@@ -1,4 +1,5 @@
 """生成契约：编码、等级、文档索引、任务队列。"""
+MODULE_ID = "core"
 import re
 import unittest
 

@@ -5,7 +5,7 @@
 ----
 `templates/index.html.template` 里有完整的 CSS、DOM 骨架与渲染 JS。但
 `ledger_io.sync_board()` / 生成器只替换 `const EMBED = {...};\nlet DATA`
-这一段数据，**其余字节一律保留**。于是 21 条不变量里的 board_embed_synced
+这一段数据，**其余字节一律保留**。于是 24 条不变量里的 board_embed_synced
 只保证「数据一致」，无法发现：
   - 某个项目手工改了 CSS 或删了 tab，形成差异化版面；
   - 项目初始化用了旧模板，升级了工具副本却没升级看板骨架；

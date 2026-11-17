@@ -3,11 +3,11 @@
 > 由 `scripts/scenario_matrix.py` 从场景定义渲染。**不要手改本文件**；
 > 修改场景请改 `SCENARIOS`，再重跑 `--emit-md`。
 
-共 54 个场景 · 有效覆盖率 82.4% （covered 计 1，partial 计 0.5，by-design 与 gap 计 0）。
+共 60 个场景 · 有效覆盖率 84.2% （covered 计 1，partial 计 0.5，by-design 与 gap 计 0）。
 
 | 状态 | 数量 | 语义 |
 |---|---:|---|
-| 已覆盖 | 41 | 已覆盖（有探针） |
+| 已覆盖 | 47 | 已覆盖（有探针） |
 | 部分 | 7 | 部分覆盖（有降级与告警，残差见文档） |
 | 边界 | 5 | 边界内刻意不做（附理由） |
 | 缺漏 | 1 | 已知缺漏（本期未实现） |
@@ -69,7 +69,13 @@
 | U3 | 时间 | 专家 / 技能 / 模板 / 文档资产漂移 | A2 | 已覆盖 | 整包资产摘要写进账本；任一资产变化即 plan 要求 M5 重新批准，verify 不再宣布完成 | `test_platform_contract.AssetsTest.test_upgrade_binds_assets_and_detects_drift` |
 | F8 | 失败 | 项目手改看板 CSS / DOM 形成差异化版面 | A3 | 已覆盖 | 去 EMBED 后的骨架 sha256 漂移；plan 列入 M6，归一化后数据段仍与账本等价 | `test_platform_contract.BoardTest.test_drift_is_part_of_the_upgrade_plan` |
 | S1 | 规模 | 大项目账本体积 / 历史事件 / DOM 超预算 | A6 | 已覆盖 | scale_budget.py 按单一阈值表报 ok/warn/exceed，模板按 PAGE_SIZE 分批渲染，治理层文件数保持固定 | `test_platform_contract.BudgetTest.test_thresholds_flag_oversized_project` |
-| S2 | 规模 | 生成器全量重算的成本 | A2 | 部分 | 可复现基准 + 阈值告警；超阈值由人决定拆项目或归档，不做静默降级 | `test_platform_contract.BudgetTest.test_probe_shows_file_count_stays_fixed` |
+| S2 | 规模 | 生成器全量重算的成本 | A2 | 部分 | 可复现基准 + 阈值告警；超阈值由人决定拆项目或归档，不做静默降级 | `test_meta.test_platform_contract.BudgetTest.test_probe_shows_file_count_stays_fixed` |
+| U4 | 时间 | 项目内手改已安装的 SKILL.md / EXPERT.md | A3 | 已覆盖 | asset_bundle.py verify 报 drift，upgrade.py verify 的 installed_assets 项 warn，upgrade_complete=false；必须重新批准 M7 安装 | `tests.views.test_assets.AssetsTest.test_installed_copy_drift_is_detected` |
+| U5 | 时间 | 专家/技能升级后 Agent 仍用旧卡片 | A2 | 已覆盖 | route_expert.py 读取真实 EXPERT.md / SKILL.md frontmatter 并把资产摘要写进路由结果；缺文件即 --check-assets fail-closed | `tests.views.test_assets.AssetsTest.test_router_consumes_installed_assets` |
+| V1 | 视图 | 模块 / 组件上看不到 TODO 与 issue | A1 | 已覆盖 | work_items 按 scope 覆盖项目/模块/能力编码；nodeWork 与 work_panel.py nodes 用同一规则复算，节点卡片显示条数、健康度并可下钻 | `tests.views.test_work_panel.WorkPanelTest.test_node_summary_scopes_work_items` |
+| V2 | 视图 | 手填测试结果投影伪造全绿 | A2 | 已覆盖 | test_results.source_sha256 必须等于当前 test_report.json 的 sha256；24 条不变量里 test_results_binding_valid 会拦下 | `tests.views.test_work_panel.WorkPanelTest.test_tampered_projection_fails_verifier` |
+| V3 | 视图 | 新项目尚无工作态数据 | A5 | 已覆盖 | 工作台/工作项视图与节点条在无 work_items / test_results 时显示空态而非报错；全部能力按 declared 显示，不伪装成 verified | `tests.views.test_board_views.BoardViewsTest.test_work_views_degrade_without_data` |
+| T6 | 结构 | 测试文件未按开发模块归属 / 清单漂移 | A1 | 已覆盖 | tests/MODULES.json + 文件内 MODULE_ID + rglob 三方一致才算通过；模块名与标准库冲突也会被拦 | `tests.views.test_test_modules.TestModulesTest.test_map_module_id_and_discovery_agree` |
 
 ## 最短流程（playbook）
 
@@ -127,7 +133,7 @@
 ### 时间
 
 - **T1 首次运行（无账本）**（已覆盖）：`build_capability_model.py --root P`
-- **T2 跨版本升级 / 迁移**（已覆盖）：`upgrade.py --target P plan --json` → `upgrade.py --target P apply --approved-by <人>` → `upgrade.py --target P verify --json` → `执行 post_upgrade 11 步`
+- **T2 跨版本升级 / 迁移**（已覆盖）：`upgrade.py --target P plan --json` → `upgrade.py --target P apply --approved-by <人>` → `upgrade.py --target P verify --json` → `执行 post_upgrade 18 步`
   - 迁移只加字段，不改 history.events，因此不追加历史事件；真正的 ledger_version 数据迁移仍需人工写专用方案
 - **T3 历史回溯 / 外部取证**（已覆盖）：`verify_ledger.py --strict --json`
 - **T4 git 历史被 rebase / force push 重写**（部分）：`scenario_guard.py --json` → `trace_git.py`
@@ -139,6 +145,10 @@
   - 工具源码变化会让 evidence_binding 失配，verified 回落 declared 是正确行为，危险的是没人重跑
 - **U3 专家 / 技能 / 模板 / 文档资产漂移**（已覆盖）：`method_assets.py --check` → `upgrade.py --target P plan --json` → `upgrade.py --target P apply --approved-by <人>`
   - 资产随方法论仓库 tag 升级、不复制进目标项目；绑定的是摘要，不是第二份文件
+- **U4 项目内手改已安装的 SKILL.md / EXPERT.md**（已覆盖）：`asset_bundle.py verify --target P --json` → `upgrade.py --target P plan --json` → `asset_bundle.py install --target P --apply --approved-by <人>`
+  - 副本是只读部署产物，不是可编辑的第二份规则；清单外的 .workbuddy 文件不动
+- **U5 专家/技能升级后 Agent 仍用旧卡片**（已覆盖）：`route_expert.py --target P --check-assets --json` → `route_expert.py --target P --intent 升级治理骨架 --json`
+  - 资产不再只是摘要：安装的副本优先于方法论仓库源被路由消费
 
 ### 环境
 
@@ -167,6 +177,11 @@
 - **L10 模块拆分 / 重命名**（部分）：`保留编码，仅改 registry.name` → `重跑生成器`
   - 残差：跨仓/跨项目引用无法自动重写，需人工 new → old 映射并写入决策
 
+### 结构
+
+- **T6 测试文件未按开发模块归属 / 清单漂移**（已覆盖）：`test_modules.py --check` → `run_tests.py --dir tests --top . --out report.json` → `test_modules.py --target P --json`
+  - 两套发现口径（unittest discover 与 run_tests.py rglob）用例数必须相同
+
 ### 规模
 
 - **S1 大项目账本体积 / 历史事件 / DOM 超预算**（已覆盖）：`scale_budget.py --target P --json --check` → `scale_probe.py --mods 50 --caps 20 --files 1500 --json` → `file_layout.py --diff --target P --strict`
@@ -174,11 +189,20 @@
 - **S2 生成器全量重算的成本**（部分）：`scale_probe.py --json` → `scale_budget.py --target P --check`
   - 残差：生成器按能力逐个扫 docs / tests，接近 O(能力 × 文件)，没有增量索引；触发升级条件：超过 1 万能力或 2 万文件且门禁耗时不可接受时，再引入缓存/分片，同时必须保持同一份账本可复算
 
+### 视图
+
+- **V1 模块 / 组件上看不到 TODO 与 issue**（已覆盖）：`work_panel.py --target P add --kind todo --scope DEMO.CORE.ORDER.01 ...` → `work_panel.py --target P nodes --json` → `看板 → 能力地图 / 工作项`
+  - 派生聚合不落盘，避免产生第三份需要同步的事实
+- **V2 手填测试结果投影伪造全绿**（已覆盖）：`work_panel.py --target P sync-tests --apply --approved-by <人>` → `verify_ledger.py --root P --strict --json`
+  - 投影不含 generated_at / raw_tail，保证确定性；原始报告仍是唯一测试事实
+- **V3 新项目尚无工作态数据**（已覆盖）：`init_project.py --target P --mode greenfield` → `看板 → 工作台` → `verify_ledger.py --root P --strict`
+  - 空数组与缺失字段都按零处理；M8 只新增字段，不改 entries / history
+
 ## 公理索引
 
-- **A1** 状态完备：在哪 / 去哪 / 谁在改 / 凭什么 / 谁批准（7 个场景）
-- **A2** 证据有效：结论来自可复算证据，且对当前源码有效（11 个场景）
-- **A3** 单点写入：同一事实只有一个写入点（7 个场景）
+- **A1** 状态完备：在哪 / 去哪 / 谁在改 / 凭什么 / 谁批准（9 个场景）
+- **A2** 证据有效：结论来自可复算证据，且对当前源码有效（13 个场景）
+- **A3** 单点写入：同一事实只有一个写入点（8 个场景）
 - **A4** 时间可逆：历史不可篡改，能检测并发覆盖与中断（8 个场景）
-- **A5** 未知即停止：版本 / 路径 / 完整性存疑时 fail-closed（13 个场景）
+- **A5** 未知即停止：版本 / 路径 / 完整性存疑时 fail-closed（14 个场景）
 - **A6** 边界闭合：进入 / 冻结 / 归档 / 退役 / 失效都有出口（8 个场景）

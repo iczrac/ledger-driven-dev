@@ -1,4 +1,5 @@
 """专家路由契约：状态识别、意图冲突、fail-closed 与确定性。"""
+MODULE_ID = "routing"
 import json
 import shutil
 import subprocess

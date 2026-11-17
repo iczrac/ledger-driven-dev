@@ -4,6 +4,7 @@
 跑真实探针（真实临时项目、真实 CLI），其余只校验定义完整性。
 """
 from __future__ import annotations
+MODULE_ID = "routing"
 
 import json
 import subprocess

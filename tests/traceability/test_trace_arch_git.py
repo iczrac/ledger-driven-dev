@@ -1,4 +1,5 @@
 """文档→目标架构、git→决策/迭代追踪：可追溯性的两条输入链路。"""
+MODULE_ID = "traceability"
 import json
 import subprocess
 import sys
