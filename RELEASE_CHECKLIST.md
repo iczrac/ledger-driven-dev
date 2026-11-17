@@ -20,7 +20,7 @@
 - [x] 八种专家角色（路由 / 新建 / 考古 / 账本治理 / 审计 / 执行 / 生命周期 / 平台治理），各含权限矩阵与停止条件
 - [x] 二十个技能（route/discover/bootstrap/scan/verify/decide/lesson/guard/doc-rebuild/graph-compare/scenario-guard/layout-inspect/ledger-upgrade/agent-gate/method-assets/board-layout/scale-budget/asset-install/test-map/work-panel），标准 SKILL.md frontmatter
 - [x] 技能脚本：重复立项、缺行动经验、无理由驳回均由代码拒绝
-- [x] 193 个 unittest 用例（含 12 个升级、15 个网关、2 个元层路由、16 个资产/骨架/规模专项、21 个 v1.2.0 资产/测试架构/工作台专项），零第三方依赖，临时目录隔离
+- [x] 195 个 unittest 用例（含 12 个升级、15 个网关、2 个元层路由、16 个资产/骨架/规模专项、21 个 v1.2.0 资产/测试架构/工作台专项），零第三方依赖，临时目录隔离
 - [x] CI（Python 3.10-3.13 矩阵）/ CD（tag 触发，先门禁后打包）
 - [x] 示例项目已跑通，产出真实账本与看板
 
@@ -39,7 +39,7 @@
 - [x] 示例：看板 EMBED 与账本完全一致；骨架 sha256 与模板一致；JS 通过 node --check
 - [x] 初始化脚本在临时目录跑通，6 个文件正确生成（含 3 个工具副本）
 - [x] 生成器 dry-run 与正式模式均正常
-- [x] `bash scripts/check.sh` 全绿：193 测试（双发现口径）/ 测试架构 / 24 不变量 / 60 场景 / 31 条目 + 12 字段布局 / 升级与接入端到端 / 资产与工作台契约 / 幂等 / 同步 / 脱敏 / 文档链接
+- [x] `bash scripts/check.sh` 全绿：195 测试（双发现口径）/ 测试架构 / 24 不变量 / 60 场景 / 31 条目 + 12 字段布局 / 升级与接入端到端 / 资产与工作台契约 / 幂等 / 同步 / 脱敏 / 文档链接
 - [x] 看板 JS 通过 `node --check`；CI 用同一份门禁脚本，口径一致
 - [x] 负向纪律测试：重复立项、缺 action、无理由驳回均被拒绝
 
@@ -120,6 +120,13 @@
 - [x] 版本六轴、8 条迁移、18 步 `post_upgrade`、11 项 `verify`、八项 `upgrade_complete` 判据均由定义自检与测试复算
 - [x] 新增 docs/19 / 20 / 21 与技能 `asset-install` / `test-map` / `work-panel`；全仓数量口径同步到 1.2.0
 
+## 资产检查作用域补丁（1.2.1）
+
+- [x] `installed_manifest_paths()` 从 `ASSET_MANIFEST.json` 读 28 条清单路径；项目自有技能不参与摘要与 frontmatter 检查
+- [x] 负向证明：自有技能缺 description 仍 `ok`；清单内副本被删仍 `incomplete`
+- [x] 真实存量项目接入验证：目标项目 `--check-assets` 从 `skill_count=37 / ok=false` 变为 `28 / ok=true`，且摘要与权威源一致
+- [x] 资产 frontmatter 统一 1.2.1；`METHOD_VERSION` 同步；已升级项目经 M5 + M7 重绑摘要
+
 ## 脱敏
 
 - [x] 看板模板 EMBED 已替换为空账本骨架
@@ -136,12 +143,12 @@
 - [x] registry.example.json 含字段说明注释
 - [x] 生成器 docstring 含用法说明
 
-## 发布动作（v1.2.0 待执行）
+## 发布动作（v1.2.1 待执行）
 
 - [x] 确认仓库名（`ledger-driven-dev`）
 - [x] `git init` / 添加 remote
 - [x] 检查 `.gitignore`（排除 `__pycache__/`、`*.pyc`、`.venv/`）
-- [x] 提交并打 tag `v1.2.0`
+- [x] 提交并打 tag `v1.2.1`
 - [x] GitHub 仓库描述、topics 标签（README 顶图仍可选）
 
 ## 建议的 topics

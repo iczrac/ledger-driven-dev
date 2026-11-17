@@ -14,7 +14,8 @@ from _base import DEMO, ROOT, demo_copy
 sys.path.insert(0, str(ROOT / "scripts"))
 from asset_bundle import (bundle, check_definitions, install, install_plan,  # noqa: E402
                           read_manifest, verify as assets_verify)
-from route_expert import asset_root, build as route_build, check_assets, load_assets
+from route_expert import (asset_root, build as route_build, check_assets,  # noqa: E402
+                          installed_manifest_paths, load_assets)
 from upgrade import apply as upgrade_apply, plan as upgrade_plan, verify as upgrade_verify
 
 
@@ -90,6 +91,43 @@ class AssetsTest(unittest.TestCase):
             self.assertFalse(check_assets(root)["ok"])
             self.assertEqual(route_build(target, "", "auto", "P")["assets"]["status"],
                              "incomplete")
+
+    def test_project_owned_skills_do_not_poison_asset_check(self):
+        """真实项目 .workbuddy/skills/ 自带技能时，不能把它们的 frontmatter
+        当成方法论资产的缺陷（v1.2.1：真实存量项目试用发现的误判）。"""
+        with demo_copy() as (_tmp, _ledger, _reg, board):
+            target = board.parent.parent
+            install(target, approved_by="gate-bot", apply=True, bind_ledger=False)
+            own = target / ".workbuddy" / "skills" / "my-own-skill" / "SKILL.md"
+            own.parent.mkdir(parents=True, exist_ok=True)
+            own.write_text("---\nname: my-own-skill\n---\n# 项目自有技能，没有 description\n",
+                           encoding="utf-8")
+            root = asset_root(target)
+            scope = installed_manifest_paths(root)
+            self.assertEqual(len(scope), 28)
+            a = load_assets(root, scope)
+            self.assertEqual(a["skill_count"], 20)
+            self.assertEqual(a["asset_count"], 28)
+            self.assertTrue(a["scoped"])
+            res = check_assets(root)
+            self.assertTrue(res["scoped"])
+            self.assertTrue(res["ok"], res["errors"])
+            out = route_build(target, "升级治理骨架", "auto", "P")
+            self.assertEqual(out["assets"]["skill_count"], 20)
+            self.assertEqual(out["route"]["asset_binding"]["status"], "ok")
+
+    def test_scoped_check_still_detects_missing_installed_asset(self):
+        """按清单过滤不等于放松：清单内的副本被删仍要 fail-closed。"""
+        with demo_copy() as (_tmp, _ledger, _reg, board):
+            target = board.parent.parent
+            install(target, approved_by="gate-bot", apply=True, bind_ledger=False)
+            own = target / ".workbuddy" / "skills" / "my-own-skill" / "SKILL.md"
+            own.parent.mkdir(parents=True, exist_ok=True)
+            own.write_text("---\nname: my-own-skill\n---\n# local\n", encoding="utf-8")
+            (target / ".workbuddy" / "skills" / "ledger-verify" / "SKILL.md").unlink()
+            res = check_assets(asset_root(target))
+            self.assertFalse(res["ok"])
+            self.assertIn("skills/ledger-verify", res["errors"])
 
     def test_stale_edited_copy_is_protected(self):
         with demo_copy() as (_tmp, _ledger, _reg, board):

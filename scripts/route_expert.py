@@ -60,8 +60,39 @@ def asset_root(target: Path, explicit: Path | None = None) -> Path:
     return SOURCE_ROOT
 
 
-def load_assets(root: Path) -> dict:
-    """真正读取 EXPERT.md / SKILL.md 内容，而不是只信任硬编码卡片。"""
+def installed_manifest_paths(root: Path) -> set[str] | None:
+    """项目级 .workbuddy/ 有资产清单时，只认清单内的只读部署副本。
+
+    真实项目常在 .workbuddy/skills/ 下放自有技能（格式未必符合方法论
+    frontmatter 约定）。它们不是被安装的资产，不该让 --check-assets 把
+    「项目自有技能缺 description」误判成方法论资产 incomplete。
+    清单缺失 / 损坏 / root 不是项目级资产目录时返回 None，保持全量枚举。
+    """
+    root = Path(root)
+    if root.name != ".workbuddy":
+        return None
+    mf = root.parent / "governance" / "ASSET_MANIFEST.json"
+    if not mf.is_file():
+        return None
+    try:
+        data = json.loads(mf.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return None
+    prefix = str(data.get("install_root", ".workbuddy")).rstrip("/") + "/"
+    paths = {
+        str(row.get("path", ""))[len(prefix):]
+        for row in data.get("files", [])
+        if isinstance(row, dict) and str(row.get("path", "")).startswith(prefix)
+    }
+    return paths or None
+
+
+def load_assets(root: Path, scope: set[str] | None = None) -> dict:
+    """真正读取 EXPERT.md / SKILL.md 内容，而不是只信任硬编码卡片。
+
+    scope 由 installed_manifest_paths() 给出：只把清单内的只读副本当作
+    方法论资产；项目自有技能不参与摘要，也不参与 frontmatter 检查。
+    """
     root = Path(root)
     experts: dict[str, dict] = {}
     skills: dict[str, dict] = {}
@@ -71,12 +102,15 @@ def load_assets(root: Path) -> dict:
         for p in sorted(root.glob(pattern)):
             if not p.is_file():
                 continue
+            rel = p.relative_to(root).as_posix()
+            if scope is not None and rel not in scope:
+                continue
             text = p.read_text(encoding="utf-8")
             name, desc, triggers = _fm(text)
             sha = hashlib.sha256(p.read_bytes()).hexdigest()
             out[p.parent.name] = {"name": name, "description": desc,
                                   "triggers": triggers, "sha256": sha}
-            rows.append(f"{p.relative_to(root).as_posix()}:{sha}")
+            rows.append(f"{rel}:{sha}")
     missing_experts = sorted(set(EXPERT_CARDS) - set(experts))
     referenced = {s for c in EXPERT_CARDS.values() for s in c["skills"]}
     missing_skills = sorted(referenced - set(skills))
@@ -88,12 +122,14 @@ def load_assets(root: Path) -> dict:
         "missing_experts": missing_experts, "missing_skills": missing_skills,
         "status": "ok" if not (missing_experts or missing_skills) else "incomplete",
         "experts": experts, "skills": skills,
+        "scoped": scope is not None, "asset_count": len(rows),
         "note": "卡片不再只是硬编码：路由输出携带真实资产摘要，缺文件即 fail-closed",
     }
 
 
 def check_assets(root: Path) -> dict:
-    a = load_assets(root)
+    scope = installed_manifest_paths(root)
+    a = load_assets(root, scope)
     errors = list(a["missing_experts"])
     errors += ["skills/" + s for s in a["missing_skills"]]
     for group in ("experts", "skills"):
@@ -104,7 +140,8 @@ def check_assets(root: Path) -> dict:
                 errors.append(f"{group}/{dirname}: 缺少 description")
     return {"schema": "expert-assets-check/1", "ok": not errors,
             "errors": errors, "digest": a["digest"],
-            "expert_count": a["expert_count"], "skill_count": a["skill_count"]}
+            "expert_count": a["expert_count"], "skill_count": a["skill_count"],
+            "scoped": a["scoped"], "asset_count": a["asset_count"]}
 
 EXPERT_CARDS = {
     "expert-router": {
@@ -555,11 +592,11 @@ def build(target: Path, intent: str, explicit_mode: str,
     route = decision["route"]
     route["suggested_commands"] = commands_for(route["expert"], target_display)
     root = asset_root(target, assets_root)
-    assets = load_assets(root)
+    assets = load_assets(root, installed_manifest_paths(root))
     route["asset_binding"] = {
         "root_kind": assets["root_kind"], "digest": assets["digest"][:16],
         "status": assets["status"], "expert_count": assets["expert_count"],
-        "skill_count": assets["skill_count"],
+        "skill_count": assets["skill_count"], "scoped": assets["scoped"],
     }
     if assets["status"] != "ok":
         route["preconditions"] = list(route.get("preconditions", [])) + [

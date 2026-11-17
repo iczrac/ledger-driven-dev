@@ -2,6 +2,38 @@
 
 本项目版本遵循语义化版本（SemVer）。
 
+## [1.2.1] - 2026-11-18
+
+把 v1.2.0 首次接入一个真实存量项目（多项目 monorepo）时暴露的集成缺陷修掉。
+
+### 修复：资产检查器不把项目自有技能当成方法论资产
+
+- 现象：目标项目 `.workbuddy/skills/` 本来就有 17 个自有技能，其中一个没有
+  `description` frontmatter。`route_expert.py --check-assets` 全量枚举目录，
+  把它的格式差异判成方法论资产 `incomplete`，`post_upgrade` 第 18 步因此失败——
+  而 28 份只读副本其实逐字节正确。
+- 根因：`asset_root()` 选了项目级 `.workbuddy/` 后，`load_assets()` 没有区分
+  「清单内安装的副本」与「项目本来就有的技能」。
+- 修复：新增 `installed_manifest_paths()`，从 `governance/ASSET_MANIFEST.json`
+  读 28 条清单路径作为 scope；`load_assets()` / `check_assets()` / `build()`
+  只消费清单内资产，输出带 `scoped` / `asset_count`。清单缺失或 root 非项目级
+  资产目录时保持全量枚举，方法论仓库自身行为不变。
+- 负向证明：2 个新用例——项目自有技能缺 description 时仍 `ok`；清单内副本被删
+  仍 fail-closed（`tests/views/test_assets.py`）。
+
+### 引入试用附带发现（不属于本仓库缺陷）
+
+- 旧账本缺 `history` / `lessons` 两个新版字段；用生成器自身的 `evolve()` 建立
+  genesis 基线即可，不需要重算能力等级（该存量项目 47 个能力点等级一字未动）。
+- 旧账本一条决策证据含机器绝对路径，触发 `scenario_guard` 的 `path_hygiene`
+  BLOCK；归一为 `~/...` 后 24/24 不变量全绿、预检 0 block 可写。
+- 多项目 monorepo 与单项目 registry 契约不匹配（场景矩阵 E7 gap）仍然成立；
+  本次试用不运行生成器重算，避免把 4 项目结构压成 1 个。
+
+**195 个 unittest 用例**（+2）、24 条不变量、`check.sh` 全绿。
+资产 frontmatter 版本统一为 1.2.1；`method_assets` / `installed_assets` 摘要变化，
+已升级项目需重新批准升级（M5 + M7）重绑。
+
 ## [1.2.0] - 2026-11-18
 
 三个深化要求：专家和 skill 要**升级到可用**、测试文件要**按开发模块重新组织**、

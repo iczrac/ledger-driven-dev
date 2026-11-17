@@ -7,7 +7,7 @@ description: |
 license: MIT
 metadata:
   author: iczrac
-  version: "1.2.0"
+  version: "1.2.1"
   risk_level: write_with_guard
   related_skills: [ledger-verify, board-layout, scale-budget, agent-gate, test-map]
 ---

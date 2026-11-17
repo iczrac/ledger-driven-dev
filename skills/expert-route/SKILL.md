@@ -8,7 +8,7 @@ description: |
 license: MIT
 metadata:
   author: ledger-driven-dev
-  version: "1.2.0"
+  version: "1.2.1"
   risk_level: read_only
   related_skills: [project-discover, project-bootstrap, ledger-guard]
 ---
