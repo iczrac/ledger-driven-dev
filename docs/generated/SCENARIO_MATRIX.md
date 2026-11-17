@@ -1,0 +1,148 @@
+# 场景覆盖矩阵（生成物）
+
+> 由 `scripts/scenario_matrix.py` 从场景定义渲染。**不要手改本文件**；
+> 修改场景请改 `SCENARIOS`，再重跑 `--emit-md`。
+
+共 44 个场景 · 有效覆盖率 79.5% （covered 计 1，partial 计 0.5，by-design 与 gap 计 0）。
+
+| 状态 | 数量 | 语义 |
+|---|---:|---|
+| 已覆盖 | 32 | 已覆盖（有探针） |
+| 部分 | 6 | 部分覆盖（有降级与告警，残差见文档） |
+| 边界 | 4 | 边界内刻意不做（附理由） |
+| 缺漏 | 2 | 已知缺漏（本期未实现） |
+
+## 场景逐项
+
+| ID | 轴 | 场景 | 公理 | 状态 | 期望行为 | 探针 |
+|---|---|---|---|---|---|---|
+| L1 | 生命周期 | 空目录新建项目 | A6 | 已覆盖 | greenfield-architect 建最小骨架，缺 registry 时不得声称完成度 | `test_routing.RoutingTest.test_greenfield_empty_dir` |
+| L2 | 生命周期 | 历史项目无损接入 | A6 | 已覆盖 | 只读盘点产出草稿，人工确认前不覆盖任何既有文件 | `test_discovery + test_bootstrap` |
+| L3 | 生命周期 | 稳态迭代 | A1 | 已覆盖 | SCAN→SELECT→PLAN→EXECUTE→VERIFY 可循环，重跑幂等 | `test_generation + test_history` |
+| L4 | 生命周期 | 半成品（有账本缺 registry） | A5 | 已覆盖 | 路由到 ledger-steward 补齐唯一手写清单，不重建 history | `test_routing.RoutingTest.test_partial_state` |
+| L5 | 生命周期 | 账本 JSON 损坏 | A5 | 已覆盖 | 冻结写入，先备份再人工修复，verify 通过前不得继续 | `test_scenarios.ScenarioProbeTest.test_corrupt_ledger_blocks_writes` |
+| L6 | 生命周期 | 发布窗口冻结 | A6 | 已覆盖 | lifecycle freeze 后 guard 阻止所有写动作；生成器返回 2 | `test_lifecycle.LifecycleTest.test_freeze_blocks_generator` |
+| L7 | 生命周期 | 归档与移交 | A6 | 已覆盖 | archive 需人工批准，转为不可写终态；只读取证仍可用 | `test_lifecycle.LifecycleTest.test_archive_is_terminal` |
+| L8 | 生命周期 | 冻结期误写 / AI 自行解冻 | A1 | 已覆盖 | unfreeze 无 approved-by 被拒绝；批准人写入 lifecycle.approved_by | `test_lifecycle.LifecycleTest.test_unfreeze_requires_human_approval` |
+| L9 | 生命周期 | 能力退役与编码不复用 | A6 | 已覆盖 | retire 登记四段式编码 + 取代关系；仍活跃则 guard block | `test_scenarios.ScenarioProbeTest.test_retired_cap_conflict_blocks` |
+| L10 | 生命周期 | 模块拆分 / 重命名 | A4 | 部分 | 编码稳定不随名称变化，但无自动 rename 映射表 | `test_generation` |
+| C1 | 变更 | 新增能力 | A1 | 已覆盖 | 等级从证据重算，未达 L5 自动生成 next_action | `test_generation` |
+| C2 | 变更 | 等级上调 | A2 | 已覆盖 | 补齐契约/实现/单测/记录才升级；指纹链追加事件 | `test_history` |
+| C3 | 变更 | 等级回落 / 证据消失 | A2 | 已覆盖 | 证据文件删除后等级回落，历史事件记录降级信号 | `test_generation + test_history` |
+| C4 | 变更 | declared → verified | A2 | 已覆盖 | 只有报告 overall=pass 且匹配单测才升级 | `test_evidence_tier.EvidenceTierTest.test_generator_with_report_upgrades_matching_caps` |
+| C5 | 变更 | 报告丢失 / 整体失败 | A5 | 已覆盖 | 全部回落 declared，不保留旧 verified 徽章 | `test_evidence_tier.EvidenceTierTest.test_failed_report_never_upgrades` |
+| C6 | 变更 | 报告过期（源码改了但没重跑测试） | A2 | 已覆盖 | 源码摘要不匹配 → 报告不予采信，verified 回落 declared | `test_scenarios.ScenarioProbeTest.test_stale_report_downgrades_evidence` |
+| C7 | 变更 | 决策取代 / 撤回 | A4 | 已覆盖 | supersedes 双向一致，取代链连续 | `test_verify` |
+| C8 | 变更 | 目标架构变更 | A1 | 部分 | compare_graphs 显示 planned_only/actual_only 差异 | `test_compare_graphs` |
+| C9 | 变更 | 外部数据源 / 依赖版本变化 | A2 | 边界 | 不绑定具体数据源；由项目自己的测试报告表达 | `test_evidence_tier` |
+| P1 | 并发 | 单人连续重跑（幂等） | A4 | 已覆盖 | 状态未变不追加历史事件，看板 EMBED 保持同步 | `test_generation + check.sh stage_idempotence` |
+| P2 | 并发 | 两 Agent 同时写账本 | A3 | 已覆盖 | 读取时指纹与当前不符 → CAS 拒绝写入，退出码 2 | `test_scenarios.ScenarioProbeTest.test_cas_rejects_stale_write` |
+| P3 | 并发 | 读后写漂移（人工手改账本） | A4 | 已覆盖 | guard 报 concurrent_write block；history 指纹链可发现篡改 | `test_scenarios.ScenarioProbeTest.test_fingerprint_drift_detected` |
+| P4 | 并发 | 长任务中断后恢复 | A4 | 已覆盖 | claim/release 记录领用者；超时锁在 guard 中告警 | `test_lifecycle.LifecycleTest.test_claim_release` |
+| P5 | 并发 | 同一任务被两个 Agent 领用 | A3 | 已覆盖 | 第二次不同 actor 的 claim 被拒绝 | `test_lifecycle.LifecycleTest.test_duplicate_claim_rejected` |
+| P6 | 并发 | CI 与本地结论不一致 | A5 | 部分 | 同一份 check.sh 消除口径差异；环境差异仍需显式声明 | `check.sh` |
+| T1 | 时间 | 首次运行（无账本） | A6 | 已覆盖 | 生成器创建空账本骨架并写入首个历史事件 | `test_generation` |
+| T2 | 时间 | 跨版本升级 / 迁移 | A5 | 部分 | ledger_version 不在支持集合时 guard block，禁止直写 | `test_scenarios.ScenarioProbeTest.test_unsupported_version_blocks` |
+| T3 | 时间 | 历史回溯 / 外部取证 | A4 | 已覆盖 | 事件指纹自证、末事件指纹 == 当前能力模型指纹 | `test_verify + test_history` |
+| T4 | 时间 | git 历史被 rebase / force push 重写 | A4 | 部分 | 浅克隆被 guard 告警；trace_git 不信任 commit message | `test_trace_arch_git` |
+| T5 | 时间 | 报告时间戳跨时区 | A2 | 已覆盖 | 新鲜度用内容摘要判定，不依赖时间戳比较 | `test_scenarios.ScenarioProbeTest.test_freshness_uses_content_not_clock` |
+| E1 | 环境 | 非 git 目录 | A5 | 已覆盖 | guard 告警；trace_git 退出码 2，不伪造提交关联 | `test_trace_arch_git` |
+| E2 | 环境 | 没有测试 / 没有单测 | A2 | 已覆盖 | 全部能力保持 declared，verified 覆盖率为 0 | `test_evidence_tier` |
+| E3 | 环境 | 没有文档 / 文档是自由散文 | A5 | 已覆盖 | architect_from_docs 置信度降级为 low 并给 warnings | `test_trace_arch_git` |
+| E4 | 环境 | 只读文件系统 | A6 | 边界 | guard / verify / trace / route 可只读运行；生成器需要写权限 | `test_scenarios.ScenarioProbeTest.test_guard_is_read_only` |
+| E5 | 环境 | 超大仓库扫描截断 | A5 | 已覆盖 | 扫描达上限标记 truncated，guard 告警，不声称全量覆盖 | `test_discovery + test_scenarios.ScenarioProbeTest.test_truncated_scan_warns` |
+| E6 | 环境 | 非 UTF-8 / Windows 路径 | A5 | 部分 | JSON/HTML 统一 UTF-8，路径相对化；未做跨平台 CI 矩阵 | `test_trace_docs` |
+| E7 | 环境 | monorepo 多项目 / 跨仓依赖 | A1 | 缺漏 | 当前 registry.project.root 只描述单个项目根 | `—` |
+| F1 | 失败 | 未批准就执行 / 越权写账本 | A1 | 已覆盖 | ledger_decide 只写 proposed；解冻/归档必须人工批准 | `test_skills + test_lifecycle` |
+| F2 | 失败 | 人驳回提议 / 优先级争议 | A3 | 边界 | 条目留 deferred/proposed，AI 不替人决定业务优先级 | `test_skills` |
+| F3 | 失败 | 测试偶发失败（flaky） | A2 | 边界 | 报告如实记录 fail，不自动重试 | `test_evidence_tier` |
+| F4 | 失败 | 绝对路径 / 来源项目名词泄露 | A5 | 已覆盖 | guard block；check.sh 卫生阶段扫描全仓 | `test_scenarios.ScenarioProbeTest.test_absolute_path_blocks` |
+| F5 | 失败 | 模板与示例副本漂移 | A5 | 已覆盖 | check.sh 同步阶段逐字节比较；guard 告警 | `check.sh stage_sync` |
+| F6 | 失败 | 看板 EMBED 与账本不一致 | A3 | 已覆盖 | verify 的 board_embed_synced 失败；guard 告警 | `test_verify` |
+| F7 | 失败 | 多人同时改 registry.json | A3 | 缺漏 | CAS 只保护账本，不保护手写清单 | `—` |
+
+## 最短流程（playbook）
+
+### 变更
+
+- **C1 新增能力**（已覆盖）：`编辑 registry.json` → `重跑生成器`
+- **C2 等级上调**（已覆盖）：`补证据` → `重跑生成器` → `verify_ledger.py`
+- **C3 等级回落 / 证据消失**（已覆盖）：`重跑生成器` → `查看 GRAPH_DIFF`
+- **C4 declared → verified**（已覆盖）：`run_tests.py --dir tests --out governance/test_report.json` → `build_capability_model.py --root P --test-report ...`
+- **C5 报告丢失 / 整体失败**（已覆盖）：`重跑生成器（不带报告）`
+- **C6 报告过期（源码改了但没重跑测试）**（已覆盖）：`run_tests.py → 生成账本` → `修改测试文件` → `重跑生成器（同一报告）`
+  - v0.8.0 前是假绿灯：judge_tier 只按文件名匹配
+- **C7 决策取代 / 撤回**（已覆盖）：`ledger_decide.py` → `verify_ledger.py`
+- **C8 目标架构变更**（部分）：`architect_from_docs.py` → `compare_graphs.py`
+  - 残差：差异只报告，不自动回写 registry；避免文档误读直接改动事实源
+- **C9 外部数据源 / 依赖版本变化**（边界）：`在被测项目内跑 run_tests.py`
+  - 理由：方法论项目不应持有外部系统凭据或版本知识
+
+### 失败
+
+- **F1 未批准就执行 / 越权写账本**（已覆盖）：`ledger_decide.py` → `verify_ledger.py`
+- **F2 人驳回提议 / 优先级争议**（边界）：`账本条目置 deferred 并写明理由`
+  - 理由：优先级是业务判断，不应用脚本推断
+- **F3 测试偶发失败（flaky）**（边界）：`run_tests.py --out report.json`
+  - 理由：自动重试会把不稳定测试伪装成通过；稳定性应在被测项目内解决
+- **F4 绝对路径 / 来源项目名词泄露**（已覆盖）：`bash scripts/check.sh`
+- **F5 模板与示例副本漂移**（已覆盖）：`bash scripts/check.sh`
+- **F6 看板 EMBED 与账本不一致**（已覆盖）：`重跑生成器`
+- **F7 多人同时改 registry.json**（缺漏）：`用 git 合并冲突人工裁决`
+  - 缺漏：registry 无内容哈希/锁；依赖版本控制的人工合并，本期未做
+
+### 并发
+
+- **P1 单人连续重跑（幂等）**（已覆盖）：`build_capability_model.py --root P（两次）`
+- **P2 两 Agent 同时写账本**（已覆盖）：`读 current_fingerprint` → `build_capability_model.py --expect-fingerprint FP`
+- **P3 读后写漂移（人工手改账本）**（已覆盖）：`scenario_guard.py --target P --expect-fingerprint FP --strict`
+- **P4 长任务中断后恢复**（已覆盖）：`lifecycle.py claim --code ... --actor ai-1` → `（中断）scenario_guard.py --json` → `lifecycle.py release`
+- **P5 同一任务被两个 Agent 领用**（已覆盖）：`lifecycle.py claim --code ... --actor ai-2（应失败）`
+- **P6 CI 与本地结论不一致**（部分）：`本地 bash scripts/check.sh` → `CI 同一命令`
+  - 残差：Python 版本 / 时区 / 文件系统大小写敏感未做矩阵测试
+
+### 时间
+
+- **T1 首次运行（无账本）**（已覆盖）：`build_capability_model.py --root P`
+- **T2 跨版本升级 / 迁移**（部分）：`导出账本快照` → `scenario_guard.py --strict` → `人工确认迁移`
+  - 残差：只做了 fail-closed，没有自动迁移器；避免静默改写历史语义
+- **T3 历史回溯 / 外部取证**（已覆盖）：`verify_ledger.py --strict --json`
+- **T4 git 历史被 rebase / force push 重写**（部分）：`scenario_guard.py --json` → `trace_git.py`
+  - 残差：无法从本地证明远端未强制推送；需外部签名/服务端保护
+- **T5 报告时间戳跨时区**（已覆盖）：`run_tests.py` → `build_capability_model.py --test-report ...`
+
+### 环境
+
+- **E1 非 git 目录**（已覆盖）：`trace_git.py --target P`
+- **E2 没有测试 / 没有单测**（已覆盖）：`build_capability_model.py --root P`
+- **E3 没有文档 / 文档是自由散文**（已覆盖）：`architect_from_docs.py --target P`
+- **E4 只读文件系统**（边界）：`scenario_guard.py --target P --json`
+  - 理由：生成与校验分离，审计者无需写权限
+- **E5 超大仓库扫描截断**（已覆盖）：`scenario_guard.py --max-files N --json`
+- **E6 非 UTF-8 / Windows 路径**（部分）：`保持源码 UTF-8` → `避免绝对路径写入账本`
+  - 残差：Windows 换行与大小写敏感差异未在 CI 覆盖
+- **E7 monorepo 多项目 / 跨仓依赖**（缺漏）：`每个项目各自 governance/，用外层脚本聚合`
+  - 缺漏：无跨项目依赖图与联合门禁；需要独立的 workspace 层，本期未做
+
+### 生命周期
+
+- **L1 空目录新建项目**（已覆盖）：`route_expert.py --target P` → `init_project.py --target P --mode greenfield`
+- **L2 历史项目无损接入**（已覆盖）：`discover_project.py --target P --dry-run` → `discover_project.py --target P` → `init_project.py --target P --mode adopt --from-draft ...`
+- **L3 稳态迭代**（已覆盖）：`build_capability_model.py --root P`
+- **L4 半成品（有账本缺 registry）**（已覆盖）：`route_expert.py --target P` → `补齐 governance/registry.json`
+- **L5 账本 JSON 损坏**（已覆盖）：`scenario_guard.py --target P --strict` → `备份并修复账本` → `verify_ledger.py --strict`
+- **L6 发布窗口冻结**（已覆盖）：`lifecycle.py --target P freeze --reason ...` → `lifecycle.py --target P unfreeze --approved-by <人>`
+- **L7 归档与移交**（已覆盖）：`lifecycle.py --target P archive --approved-by <人>` → `verify_ledger.py --root P --strict` → `打包 governance/ 交付`
+- **L8 冻结期误写 / AI 自行解冻**（已覆盖）：`lifecycle.py --target P unfreeze --approved-by <人>`
+- **L9 能力退役与编码不复用**（已覆盖）：`lifecycle.py --target P retire --code ... --reason ...` → `从 registry.json 移除该能力` → `build_capability_model.py --root P`
+- **L10 模块拆分 / 重命名**（部分）：`保留编码，仅改 registry.name` → `重跑生成器`
+  - 残差：跨仓/跨项目引用无法自动重写，需人工 new → old 映射并写入决策
+
+## 公理索引
+
+- **A1** 状态完备：在哪 / 去哪 / 谁在改 / 凭什么 / 谁批准（6 个场景）
+- **A2** 证据有效：结论来自可复算证据，且对当前源码有效（8 个场景）
+- **A3** 单点写入：同一事实只有一个写入点（5 个场景）
+- **A4** 时间可逆：历史不可篡改，能检测并发覆盖与中断（7 个场景）
+- **A5** 未知即停止：版本 / 路径 / 完整性存疑时 fail-closed（11 个场景）
+- **A6** 边界闭合：进入 / 冻结 / 归档 / 退役 / 失效都有出口（7 个场景）

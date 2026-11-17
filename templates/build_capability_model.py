@@ -18,6 +18,7 @@
     python3 build_capability_model.py --root examples/demo-shop
     python3 build_capability_model.py --root . --dry-run
     python3 build_capability_model.py --root . --registry custom.json --ledger out.json --no-board
+    python3 build_capability_model.py --root . --expect-fingerprint <fp> --strict-evidence
 
 配置
 ----
@@ -32,8 +33,12 @@ import argparse
 import hashlib
 import json
 import re
+import sys
 from datetime import datetime
 from pathlib import Path
+
+# 场景预检契约：与 scenario_guard.py 保持一致；跨版本直写会破坏历史语义。
+SUPPORTED_LEDGER_VERSIONS = {"1.0"}
 
 # ---- 成熟度定义（可机判定的证据规则）----
 LEVELS = {
@@ -112,6 +117,36 @@ def norm_existing_path(repo_root: Path, value: str, proj_rel: str) -> str:
 
 
 # ------------------------------ 证据分层 ------------------------------
+
+def check_freshness(report: dict, repo_root: Path, proj_rel: str = "") -> tuple[bool, str]:
+    """校验报告的源码绑定摘要是否仍对应当前文件。
+
+    防止「测试跑过之后又改了源码，却继续挂着 verified」的过期证据假绿灯。
+    内容摘要而非时间戳：跨时区、同分钟重跑都不会误判。
+    """
+    binding = report.get("evidence_binding") or {}
+    inputs = binding.get("inputs") or []
+    if binding.get("algorithm") != "sha256-files-v1" or not inputs:
+        return True, "unbound"
+    for item in inputs:
+        rel = str(item.get("path", ""))
+        want = str(item.get("sha256", ""))
+        if not rel or not want:
+            return False, "invalid-input"
+        cands = [repo_root / rel]
+        if proj_rel:
+            cands.append(repo_root / proj_rel / rel)
+        hit = next((p for p in cands if p.is_file()), None)
+        if hit is None:
+            same_name = [p for p in repo_root.rglob(Path(rel).name) if p.is_file()]
+            if len(same_name) == 1:
+                hit = same_name[0]
+        if hit is None:
+            return False, "missing:" + Path(rel).name
+        if hashlib.sha256(hit.read_bytes()).hexdigest() != want:
+            return False, "changed:" + Path(rel).name
+    return True, "fresh"
+
 
 def load_test_report(path: str | None, repo_root: Path) -> dict | None:
     """加载测试报告；路径相对仓库根。报告无效/整体失败时返回 None（不升级任何证据）。"""
@@ -854,6 +889,9 @@ def main() -> None:
     ap.add_argument("--no-board", action="store_true", help="不同步看板内嵌数据")
     ap.add_argument("--test-report", help="测试报告 JSON（由 scripts/run_tests.py 生成）；提供则判定 verified 级证据")
     ap.add_argument("--dry-run", action="store_true", help="只打印摘要，不写文件")
+    ap.add_argument("--expect-fingerprint", help="读取账本时的 current_fingerprint；不符则拒绝写入（CAS）")
+    ap.add_argument("--strict-evidence", action="store_true",
+                    help="拒绝未绑定源码摘要的测试报告（CI / 发布门禁建议开启）")
     args = ap.parse_args()
 
     repo_root = Path(args.root).resolve()
@@ -885,10 +923,43 @@ def main() -> None:
         "architecture": {"projects": []},
     }
 
+    # 场景预检：版本契约 + 并发 CAS（fail-closed，任何一项不过都不写盘）
+    lv = str(ledger.get("ledger_version", "1.0"))
+    if lv not in SUPPORTED_LEDGER_VERSIONS:
+        print(f"[BLOCK] 账本版本 {lv} 不受本生成器支持（支持 {sorted(SUPPORTED_LEDGER_VERSIONS)}）；"
+              "请先导出快照并人工确认迁移，不要跨版本直写。", file=sys.stderr)
+        sys.exit(2)
+    if args.expect_fingerprint:
+        cur_fp = (ledger.get("capability_model", {}).get("history", {})
+                  .get("current_fingerprint"))
+        if cur_fp != args.expect_fingerprint:
+            print(f"[BLOCK] 并发写入：读取时指纹 {args.expect_fingerprint}，当前 {cur_fp}。"
+                  "期间有人改过账本，请重新读取并合并变更后再试。", file=sys.stderr)
+            sys.exit(2)
+
     test_report = load_test_report(args.test_report, repo_root)
     if args.test_report and test_report is None:
         print(f"[WARN] 测试报告不可用或整体未通过（{args.test_report}）；所有证据保持 declared")
+    bound, fresh = False, True
+    if test_report is not None:
+        binding = test_report.get("evidence_binding") or {}
+        bound = bool(binding.get("inputs"))
+        proj_rel = cfg_all["project"]["root"].strip("/")
+        if bound:
+            fresh, detail = check_freshness(test_report, repo_root, proj_rel)
+            if not fresh:
+                print(f"[WARN] 报告源码摘要已过期（{detail}）：报告生成后源码或测试发生变化；"
+                      "本次不予采信，verified 全部回落 declared")
+                test_report = None
+        elif args.strict_evidence:
+            print("[WARN] 报告未绑定源码摘要，--strict-evidence 下不予采信")
+            test_report = None
+        else:
+            print("[WARN] 报告未绑定源码摘要；建议用 v0.8.0+ 的 run_tests.py 重跑")
     model = build(repo_root, cfg_all, ledger, test_report=test_report)
+    model["summary"]["evidence_bound"] = bool(bound and fresh and test_report is not None)
+    model["summary"]["evidence_freshness"] = (
+        "fresh" if bound and fresh else "stale" if bound else "unbound")
     ts = datetime.now().strftime("%Y-%m-%d %H:%M HKT")
     # 历史/经验只依赖派生状态与既有事件；dry-run 也计算，以便预览将产生的事件（不落盘）
     new_event = evolve(ledger, model, ts)
@@ -914,6 +985,13 @@ def main() -> None:
             print(f"  #{t['rank']} {t['code']:<24} {t['level']}→{t['target_level']} "
                   f"缺[{gap}] · {t['action']}{lesson}")
         return
+
+    lc = ledger.get("lifecycle", {})
+    if isinstance(lc, dict) and lc.get("state", "active") != "active":
+        print(f"[BLOCK] 项目生命周期为 {lc.get('state')}：冻结/归档期间不得写入账本。"
+              "用 lifecycle.py unfreeze --approved-by <人> 解冻（归档为终态）。",
+              file=sys.stderr)
+        sys.exit(2)
 
     ledger["capability_model"] = model
     ledger["last_updated"] = ts

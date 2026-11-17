@@ -5,7 +5,7 @@
 --------
 1. 零依赖：只用 unittest，报告是纯 JSON。
 2. 证据可追溯：报告含每个用例的模块/类名、状态、耗时、运行时间戳。
-3. 稳定指纹：报告本身可被 hash，生成器据此判断证据是否来自同一次运行。
+3. 源码绑定：报告含测试文件的内容摘要，生成器据此判断证据是否对**当前**源码有效。
 
 用法
 ----
@@ -25,12 +25,18 @@
         {"id": "tests.test_x.TestY.test_z", "file": "tests/test_x.py",
          "status": "pass|fail|error|skip", "seconds": 0.001}
       ],
-      "overall": "pass|fail"
+      "overall": "pass|fail",
+      "evidence_binding": {
+        "algorithm": "sha256-files-v1",
+        "inputs": [{"path": "tests/test_x.py", "sha256": "..."}],
+        "source_digest": "16位摘要"
+      }
     }
 """
 from __future__ import annotations
 
 import argparse
+import hashlib
 import io
 import json
 import time
@@ -153,6 +159,25 @@ def run(test_dir: Path, pattern: str = "test_*.py", top_dir: Path | None = None)
         test_dir_display = str(test_dir.relative_to(Path.cwd().resolve()))
     except ValueError:
         test_dir_display = test_dir.name
+    # 源码绑定摘要：把「这次通过」绑定到具体文件内容，而不是文件名或时间戳。
+    # 生成器会在重跑时逐个重算；任一变化即判 stale，verified 自动回落 declared。
+    digest_inputs: list[dict] = []
+    for path in sorted(test_dir.rglob(pattern)):
+        if not path.is_file():
+            continue
+        try:
+            rel = path.resolve().relative_to(Path.cwd().resolve()).as_posix()
+        except ValueError:
+            rel = path.name
+        digest_inputs.append({"path": rel,
+                              "sha256": hashlib.sha256(path.read_bytes()).hexdigest()})
+    binding = {
+        "algorithm": "sha256-files-v1",
+        "inputs": digest_inputs,
+        "source_digest": hashlib.sha256(
+            "".join(f"{i['path']}:{i['sha256']}\n" for i in digest_inputs).encode()
+        ).hexdigest()[:16],
+    }
     return {
         "schema": "ledger-test-report/1",
         "generated_at": datetime.now().strftime("%Y-%m-%d %H:%M HKT"),
@@ -169,6 +194,7 @@ def run(test_dir: Path, pattern: str = "test_*.py", top_dir: Path | None = None)
         "cases": cases,
         "overall": overall,
         "raw_tail": stream.getvalue().strip().splitlines()[-5:],
+        "evidence_binding": binding,
     }
 
 
@@ -193,7 +219,7 @@ def main() -> None:
     s = report["summary"]
     print(f"[{report['overall'].upper()}] {s['passed']}/{s['total']} passed "
           f"(fail={s['failed']} error={s['errors']} skip={s['skipped']})")
-    print(f"报告：{out}")
+    print(f"报告：{out} · 源码摘要 {report['evidence_binding']['source_digest']}")
 
 
 if __name__ == "__main__":

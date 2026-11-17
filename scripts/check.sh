@@ -29,7 +29,9 @@ r = json.load(open(sys.argv[1]))
 assert r['schema'] == 'ledger-test-report/1', '报告 schema 错误'
 assert r['overall'] == 'pass', '测试未全过，不得升级 verified'
 assert r['summary']['passed'] >= 3, '通过用例数异常'
-print(f"  实测报告 {r['summary']['passed']}/{r['summary']['total']} passed，overall={r['overall']}")
+assert r['evidence_binding']['inputs'], '报告未绑定源码摘要'
+print(f"  实测报告 {r['summary']['passed']}/{r['summary']['total']} passed，overall={r['overall']}，"
+      f"源码摘要 {r['evidence_binding']['source_digest']}")
 PY
   local rc=$?
   rm -rf "$tmp"
@@ -66,9 +68,9 @@ stage_idempotence(){
   before="$(snapshot "$ledger")"
   # 示例账本处于 verified 稳态，重跑必须带同一份报告才幂等（证据消失则回落是预期语义）
   python3 "$DEMO/build_capability_model.py" --root "$tmp" --registry "$reg" \
-    --ledger "$ledger" --board "$board" --test-report "$report" >/dev/null 2>&1 || { rm -rf "$tmp"; return 1; }
+    --ledger "$ledger" --board "$board" --test-report "$report" --strict-evidence >/dev/null 2>&1 || { rm -rf "$tmp"; return 1; }
   python3 "$DEMO/build_capability_model.py" --root "$tmp" --registry "$reg" \
-    --ledger "$ledger" --board "$board" --test-report "$report" >/dev/null 2>&1 || { rm -rf "$tmp"; return 1; }
+    --ledger "$ledger" --board "$board" --test-report "$report" --strict-evidence >/dev/null 2>&1 || { rm -rf "$tmp"; return 1; }
   after="$(snapshot "$ledger")"
   rm -rf "$tmp"
   if [ "$before" != "$after" ]; then
@@ -89,6 +91,23 @@ ledger = json.load(open(f'{base}/DECISION_LEDGER.json'))
 assert embed == ledger, '看板 EMBED 与账本不一致'
 print('  看板 EMBED 与账本一致；模板脚本与示例副本一致')
 PY
+}
+stage_scenarios(){
+  note '场景矩阵 + 生命周期预检'
+  python3 scripts/scenario_matrix.py --check || return 1
+  python3 scripts/scenario_matrix.py --emit-md docs/generated/SCENARIO_MATRIX.md || return 1
+  git diff --exit-code -- docs/generated/SCENARIO_MATRIX.md >/dev/null || return 1
+  python3 scripts/scenario_guard.py --target examples/demo-shop --strict >/dev/null || return 1
+  local tmp rc
+  tmp="$(mktemp -d)"
+  cp -r examples/demo-shop "$tmp/proj" || { rm -rf "$tmp"; return 1; }
+  python3 scripts/lifecycle.py --target "$tmp/proj" freeze --reason "门禁自检" >/dev/null \
+    || { rm -rf "$tmp"; return 1; }
+  python3 scripts/scenario_guard.py --target "$tmp/proj" --strict >/dev/null
+  rc=$?
+  rm -rf "$tmp"
+  [ "$rc" -eq 2 ] || return 1
+  echo '  场景定义自检、矩阵同步、预检放行与冻结拦截均通过'
 }
 stage_hygiene(){
   note '脱敏 + 文档内链'
@@ -130,6 +149,7 @@ else
   run '测试' stage_tests
   run '证据分层' stage_evidence
   run '账本校验' stage_verify
+  run '场景矩阵' stage_scenarios
   run '幂等' stage_idempotence
   run '同步' stage_sync
   run '卫生' stage_hygiene
@@ -140,4 +160,4 @@ if [ "$FAILURES" -gt 0 ]; then
   printf '质量门禁失败：%d 个阶段未通过\n' "$FAILURES"
   exit 1
 fi
-printf '质量门禁全绿：测试 / 证据分层 / 21 条不变量 / 幂等 / 同步 / 脱敏 / 文档链接\n'
+printf '质量门禁全绿：测试 / 证据分层 / 21 条不变量 / 场景矩阵 / 幂等 / 同步 / 脱敏 / 文档链接\n'

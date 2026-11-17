@@ -63,6 +63,12 @@ EXPERT_CARDS = {
         "skills": ["ledger-scan", "ledger-verify", "doc-rebuild", "graph-compare"],
         "writes": ["src/**", "tests/**", "docs/test_records/**"],
     },
+    "release-steward": {
+        "title": "生命周期与发布治理专家",
+        "duty": "冻结/归档/退役/移交期间只做只读取证；解冻与归档必须有人批准记录。",
+        "skills": ["ledger-verify", "ledger-guard", "graph-compare", "scenario-guard"],
+        "writes": ["lifecycle", "retired_caps"],
+    },
 }
 
 INTENT_PATTERNS = {
@@ -78,6 +84,14 @@ INTENT_PATTERNS = {
              "implement", "code", "fix", "write test"),
     "lesson": ("经验", "复盘", "踩坑", "沉淀", "lesson", "retrospective"),
     "route": ("路由", "该找谁", "哪个专家", "专家路由", "expert route", "route"),
+    "archive": ("归档", "冻结", "解冻", "发布窗口", "移交", "交付完成",
+                "archive", "freeze", "unfreeze", "handover"),
+    "migrate": ("跨版本", "版本升级", "schema", "账本升级",
+                "migrate", "migration", "upgrade", "ledger_version"),
+    "retire": ("退役", "下线能力", "废弃能力", "移除能力", "编码不复用",
+               "retire", "deprecate"),
+    "resume": ("中断", "续跑", "接着做", "断点", "恢复执行", "任务锁",
+               "resume", "continue", "claim"),
 }
 
 FOLLOW_UP = {
@@ -87,6 +101,10 @@ FOLLOW_UP = {
     "lesson": "ledger-steward",
     "adopt": "project-archaeologist",
     "new": "greenfield-architect",
+    "archive": "release-steward",
+    "migrate": "project-archaeologist",
+    "retire": "release-steward",
+    "resume": "loop-executor",
 }
 
 EXCLUDE_DIRS = {
@@ -170,8 +188,16 @@ def inspect(target: Path, max_files: int = 2000) -> dict:
     else:
         mode = "greenfield"
 
+    lifecycle_state = "active"
+    if isinstance(ledger.get("lifecycle"), dict):
+        candidate = str(ledger["lifecycle"].get("state", "active"))
+        if candidate in ("frozen", "archived"):
+            lifecycle_state = candidate
+            mode = candidate  # 生命周期优先于目录结构：冻结/归档时不进入编码
+
     return {
         "mode": mode,
+        "lifecycle": lifecycle_state,
         "ledger": ledger_state,
         "registry": registry_state,
         "registry_modules": registry_modules,
@@ -247,6 +273,16 @@ def decide(facts: dict, scores: dict[str, int], explicit_mode: str) -> dict:
                       facts, blocked=True,
                       preconditions=["不要运行生成器", "先备份 DECISION_LEDGER.json 再人工修复"],
                       stop_if=["账本恢复为合法 JSON 且 verify 通过前，禁止任何写入"])
+    elif mode in ("frozen", "archived"):
+        route = _card("release-steward", "high",
+                      f"账本生命周期为 {mode}；此状态下只允许只读取证与经批准的状态转换。",
+                      facts, blocked=True,
+                      preconditions=["先跑 scenario_guard.py 确认阻塞动作"],
+                      stop_if=["归档是不可写终态", "解冻必须带 --approved-by（人工批准）"])
+        clarification = clarification or {
+            "question": "项目处于冻结/归档态，是否需要经批准解冻？",
+            "options": ["保持只读", "经批准解冻", "复制出新项目"],
+        }
     elif explicit_mode == "greenfield" and mode != "greenfield":
         route = _card("greenfield-architect", "medium",
                       "显式指定新建模式，但目标目录已存在治理或历史资产；需确认是否另起子项目。",
@@ -269,6 +305,22 @@ def decide(facts: dict, scores: dict[str, int], explicit_mode: str) -> dict:
                           "已有可消费的 next_queue，进入一条任务卡的证据补齐循环。", facts,
                           preconditions=["先跑 ledger-guard，确认账本没坏"],
                           stop_if=["verify 失败", "任务卡证据路径不存在"],
+                          next_expert="evidence-auditor")
+        elif primary in ("archive", "retire"):
+            route = _card("release-steward", "high",
+                          "生命周期变更需要人工批准与状态留痕；不得由编码代理顺手完成。", facts,
+                          preconditions=["先跑 scenario_guard.py 确认无阻塞"],
+                          stop_if=["unfreeze / archive 缺少 --approved-by"],
+                          next_expert="evidence-auditor")
+        elif primary == "migrate":
+            route = _card("project-archaeologist", "medium",
+                          "跨版本升级先取证与快照，不做静默迁移。", facts,
+                          preconditions=["导出账本快照", "scenario_guard 版本契约检查"],
+                          stop_if=["版本不兼容时禁止直写"])
+        elif primary == "resume":
+            route = _card("loop-executor", "high",
+                          "断点续跑先检查任务锁，避免两个执行者写同一份事实源。", facts,
+                          preconditions=["scenario_guard.py --json 查看是否有陈旧 claim"],
                           next_expert="evidence-auditor")
         elif primary in ("new", "adopt"):
             route = _card("ledger-steward", "low",
@@ -355,6 +407,11 @@ def commands_for(expert: str, target_display: str) -> list[str]:
             f"cd {t} && python3 -c \"import json;d=json.load(open('governance/DECISION_LEDGER.json'));print(d['capability_model']['next_queue'][0])\"",
             "bash scripts/check.sh",
             f"python3 scripts/code_index.py --target {t}",
+        ],
+        "release-steward": [
+            f"python3 scripts/scenario_guard.py --target {t} --json",
+            f"python3 scripts/lifecycle.py --target {t} status",
+            f"python3 scripts/lifecycle.py --target {t} unfreeze --approved-by 审批人姓名",
         ],
     }.get(expert, ["python3 scripts/route_expert.py --help"])
 

@@ -55,8 +55,8 @@
 
 ## 六、生成文档目录
 
-`docs/generated/` 下的 `PROJECT_BRIEF.md` / `MODULE_MAP.md` / `CAPABILITY_INDEX.md` / `GRAPH_DIFF.md`
-由 `scripts/rebuild_docs.py` 与 `scripts/compare_graphs.py` 从 registry + 账本渲染，
+`docs/generated/` 下的 `PROJECT_BRIEF.md` / `MODULE_MAP.md` / `CAPABILITY_INDEX.md` / `GRAPH_DIFF.md` / `SCENARIO_MATRIX.md`
+由 `scripts/rebuild_docs.py` / `compare_graphs.py` / `scenario_matrix.py` 从事实源渲染，
 **不是人工文档**：不要长期手改，改事实源后重跑；需要保留人工补充时用不同文件名。
 生成文档必须无机器绝对路径、可逐字节复现，并默认跳过既有文件（`--force` 才覆盖）。
 

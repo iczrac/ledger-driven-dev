@@ -2,6 +2,26 @@
 
 本项目版本遵循语义化版本（SemVer）。
 
+## [0.8.0] - 2026-11-17
+
+从第一性原理反查「各种场景的流程应用」，发现 v0.7.0 的两类公理级盲区：证据只做了空间维度（文件存在）没做时间维度（证据是否过期），以及只有项目入口没有项目出口（冻结/归档/退役）。本期把场景覆盖变成可复算的矩阵，并补齐高危缺口。
+
+### 新增
+
+- **`scripts/scenario_matrix.py`**：44 个场景的单一事实源，覆盖 6 条公理 / 6 个轴；`--check` 自检定义、`--emit-md` 渲染 `docs/generated/SCENARIO_MATRIX.md`。covered 必须有探针、gap 必须写代价，覆盖状态由测试复算。
+- **`scripts/scenario_guard.py`**：`scenario-preflight/1`，14 项只读预检（版本契约、冻结/归档、证据绑定与新鲜度、并发 CAS、退役冲突、任务锁、看板同步、git、脱敏、模板、扫描截断），输出 `allowed_actions` / `blocked_actions` / `route_hint`。
+- **`scripts/lifecycle.py`**：冻结 / 解冻 / 归档 / 能力退役 / 任务领用的唯一写入口。状态写进账本内 `lifecycle` / `retired_caps` / `execution` 与 append-only `lifecycle.log`，**不新建第二事实源、不碰 history.events**，并自动同步看板 EMBED。
+- **证据时间维度**：`run_tests.py` 报告新增 `evidence_binding`（逐测试文件 sha256）；生成器 `check_freshness()` 重算，源码变化即回落 `declared`；`--strict-evidence` 拒绝未绑定报告。
+- **并发 CAS**：生成器 `--expect-fingerprint`，读取时指纹与当前不符则退出码 2、不写盘。
+- **生命周期 fail-closed**：`frozen` / `archived` 下生成器拒绝写入；`unfreeze` / `archive` 强制 `--approved-by`。
+- **第七个专家 `release-steward`** 与技能 `scenario-guard`；路由新增 `archive` / `migrate` / `retire` / `resume` 意图与 frozen/archived 状态。
+- **`docs/14-场景矩阵.md`**：六公理推导、场景收敛判据、真缺漏清单、诚实保留的 2 个 gap 与 6 个 partial、四条端到端 playbook。
+
+### 验证
+
+- 测试 79 → **112**（场景矩阵 23 + 生命周期 10）；`check.sh` 新增场景矩阵阶段，幂等阶段启用 `--strict-evidence`。
+- 21 条账本内部不变量保持不变；新检查独立成层，避免旧账本因上下文变化被误判腐化。
+
 ## [0.7.0] - 2026-11-17
 
 用五个反问检验方法本身，并把每个"能"落成可复现脚本：文档重建、目标架构、git 追踪、规划/实际图比对、编码全链路对应。全部产物默认非破坏性，沿用同一套编码与专家路由。

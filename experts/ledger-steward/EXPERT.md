@@ -10,7 +10,7 @@ description: |
 license: MIT
 metadata:
   author: ledger-driven-dev
-  version: "0.7.0"
+  version: "0.8.0"
   role: governance
   requires_mcp: false
 ---
@@ -22,7 +22,7 @@ metadata:
 ## 在专家体系中的位置
 
 本专家是 `governed` 状态下的默认负责人，负责 SCAN→SELECT→PLAN 与经验沉淀。
-当路由结果是 `greenfield-architect` / `project-archaeologist` / `evidence-auditor` / `loop-executor` 时，
+当路由结果是 `greenfield-architect` / `project-archaeologist` / `evidence-auditor` / `loop-executor` / `release-steward` 时，
 不要抢先写账本：等对方完成交接，再进入本角色的循环。
 
 ## 五条信念（不可协商）

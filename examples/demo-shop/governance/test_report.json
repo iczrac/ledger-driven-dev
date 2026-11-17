@@ -1,6 +1,6 @@
 {
   "schema": "ledger-test-report/1",
-  "generated_at": "2026-11-17 22:17 HKT",
+  "generated_at": "2026-11-17 23:03 HKT",
   "test_dir": "examples/demo-shop/tests",
   "command": "unittest load from tests",
   "load_errors": [],
@@ -13,22 +13,22 @@
   },
   "cases": [
     {
-      "id": "_lld_test_data_ready_31043.DataReadyTest.test_required_fields",
+      "id": "_lld_test_data_ready_35777.DataReadyTest.test_required_fields",
       "file": "examples/demo-shop/tests/unit/test_data_ready.py",
       "status": "pass",
-      "seconds": 1.6e-05
+      "seconds": 2.2e-05
     },
     {
-      "id": "_lld_test_order_37231.OrderTest.test_payable",
+      "id": "_lld_test_order_10275.OrderTest.test_payable",
       "file": "examples/demo-shop/tests/unit/test_order.py",
       "status": "pass",
-      "seconds": 1.1e-05
+      "seconds": 1.5e-05
     },
     {
-      "id": "_lld_test_pricing_4387.PricingTest.test_discount",
+      "id": "_lld_test_pricing_32654.PricingTest.test_discount",
       "file": "examples/demo-shop/tests/unit/test_pricing.py",
       "status": "pass",
-      "seconds": 1e-05
+      "seconds": 1.3e-05
     }
   ],
   "overall": "pass",
@@ -38,5 +38,23 @@
     "",
     "OK"
   ],
+  "evidence_binding": {
+    "algorithm": "sha256-files-v1",
+    "inputs": [
+      {
+        "path": "examples/demo-shop/tests/unit/test_data_ready.py",
+        "sha256": "a7be0af643dcab3607629ae320e7c8ed38a556306232fd175918097164bf5747"
+      },
+      {
+        "path": "examples/demo-shop/tests/unit/test_order.py",
+        "sha256": "1904655122c6456b72403358faca04683c4eefac22a4d04bfc5ff856f77b6a02"
+      },
+      {
+        "path": "examples/demo-shop/tests/unit/test_pricing.py",
+        "sha256": "eb520a8f92bbbd415cfab5f4012fd531d18a937c8e2fea9deb3ba5920ba87335"
+      }
+    ],
+    "source_digest": "ce4beb069c1a9c1e"
+  },
   "label": "demo-unit"
 }
