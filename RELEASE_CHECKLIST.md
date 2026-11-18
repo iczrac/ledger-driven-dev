@@ -323,8 +323,8 @@ P1–P3 仍全部未满足，本版按 R4 / G6 降级为「一致性与可适配
 - [x] **G6**：P1–P3 在 `feedback/RELEASE-1.7.0.md` 显式记录「未满足 / 范围裁剪为 R1–R3」
 - [x] `METHOD_VERSION` 与 28 份 frontmatter 统一 1.7.0；`docs/16` 当前示例值同步
 - [x] `ontology.py check` 通过；`ontology_digest` 不变（`SOURCE_FILES` 未改）
-- [ ] **S4**：人批准 `M4 + M5 + M7` 重绑 `P`，复验 `pass=11 / na=1 / warn=0`、`upgrade_complete=true`；六段业务 digest 与三包观察 sha 不变
-- [ ] **发版**：附注 `tag v1.7.0` + push `origin/main`，发版报告与回滚命令见 `feedback/RELEASE-1.7.0.md`
+- [x] **S4**：人批准 `M4 + M5 + M7 + M8` 重绑 `P`（备份 `20261118T135753Z-ed92ea36`），复验 `pass=11 / na=1 / warn=0`、`upgrade_complete=true`、24 条 `23 pass + 1 na`；六段业务 digest 与三包观察 sha 不变，`activation.state=unbound` 已写入 → `feedback/RELEASE-1.7.0.md`
+- [x] **发版**：附注 `tag v1.7.0` + push `origin/main`（本清单提交后立即执行），发版报告与回滚命令见 `feedback/RELEASE-1.7.0.md`
 
 ### 顺延表（v1.7.0 发布点，取代上方 v1.6.0 后对账节的启动建议）
 
