@@ -627,7 +627,8 @@ def main(argv: list[str] | None = None) -> int:
             raise ValueError(f"目标项目不存在：{target}")
 
         if args.command == "digest":
-            result: dict = {"schema": SCHEMA, "ontology_digest": expected_digest(root)}
+            result: dict = {"mode": "digest", "schema": SCHEMA,
+                            "ontology_digest": expected_digest(root)}
         elif args.command == "build":
             onto = build(root)
             result = {"mode": "dry-run", "ontology": onto if args.json else None,

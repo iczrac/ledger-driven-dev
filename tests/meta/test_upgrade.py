@@ -234,6 +234,38 @@ class UpgradeV130Test(unittest.TestCase):
         self.assertIn("governance/run_tests.py", POST_UPGRADE[0])
         self.assertNotIn("scripts/run_tests.py", POST_UPGRADE[0])
 
+    def test_post_upgrade_steps_are_conditional(self):
+        """v1.7.0：取证与 sync-tests 三步在无报告项目上必须可审计地 skip。"""
+        for i in (1, 2, 15):
+            cmd = POST_UPGRADE[i - 1]
+            self.assertIn("if [", cmd)
+            self.assertIn("SKIP", cmd)
+            self.assertIn("status=na", cmd)
+        self.assertEqual(len(POST_UPGRADE), 19)
+
+    def test_m8_writes_activation_placeholder_without_report(self):
+        """v1.7.0：无报告时写 activation 占位，不伪造报告与投影，且 plan 收敛。"""
+        with project_copy() as (tmp, target):
+            gov = target / "governance"
+            report = gov / "test_report.json"
+            if report.is_file():
+                report.unlink()
+            d = ledger_of(target)
+            d.pop("test_results", None)
+            write_ledger(gov, d)
+            apply(target, "张三")
+            after = ledger_of(target)
+            act = after["governance_meta"].get("activation")
+            self.assertIsInstance(act, dict)
+            self.assertEqual(act["state"], "unbound")
+            self.assertFalse(act["all_active"])
+            self.assertFalse(report.exists())
+            self.assertNotIn("test_results", after)
+            second = plan(target)
+            self.assertTrue(second["noop"], second["migrations"])
+            self.assertNotIn("M8-work-panel",
+                             [m["id"] for m in second["migrations"]])
+
 
 if __name__ == "__main__":
     unittest.main()

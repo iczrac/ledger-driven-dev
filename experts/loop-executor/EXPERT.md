@@ -8,7 +8,7 @@ description: |
 license: MIT
 metadata:
   author: ledger-driven-dev
-  version: "1.6.0"
+  version: "1.7.0"
   role: execution
   requires_mcp: false
 ---

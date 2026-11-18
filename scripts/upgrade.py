@@ -35,6 +35,14 @@ v1.1.0 刻意「不把资产复制进项目」，只绑摘要；结果 Agent 在
 v1.2.0 改为**只读部署副本**：权威源仍是方法论仓库 tag，安装产物逐字节一致、
 由 manifest + 账本字段双重校验、禁止在项目内编辑，因此不产生第二事实源。
 
+v1.7.0 的可适配性收敛
+----------------------
+升级后流程里的取证命令对无 tests/ 目录、无实测报告的项目降级为显式 na 与
+可审计 skip 记录，绝不生成报告；M8 在这类项目上写入
+``governance_meta.activation`` 占位（非 null），把「证据能力未激活」从缺失字段
+变成可判定的账本事实。迁移集合与升级后流程的长度保持不变，验收由
+``scripts/acceptance.py`` 的第四层机器断言判定。
+
 纪律
 ----
 1. plan 只读、确定性，不产生时间戳；apply 才允许写，且必须人批准；
@@ -88,7 +96,7 @@ SOURCE_ROOT = Path(__file__).resolve().parents[1]
 SCHEMA_PLAN = "upgrade-plan/1"
 SCHEMA_APPLY = "upgrade-apply/1"
 SCHEMA_VERIFY = "upgrade-verify/1"
-METHOD_VERSION = "1.6.0"
+METHOD_VERSION = "1.7.0"
 LEDGER_SCHEMA_VERSION = "1.0"
 SUPPORTED_LEDGER_VERSIONS = {"1.0"}
 ACCESS_SCHEMA = "access/1"
@@ -126,7 +134,8 @@ MIGRATIONS: list[dict] = [
          note="只读部署副本，权威源仍是方法论仓库；项目内手改副本会被 verify 判漂移"),
     dict(id="M8-work-panel", field="work_items / test_results", kind="ledger-field",
          name="初始化节点工作台字段（TODO / issue / 测试结果投影）", approval=False,
-         note="只新增空数组与可验证投影；无实测报告时不写 test_results（v1.3.0 起不再永久 pending）"),
+         note="只新增空数组与可验证投影；无实测报告时不写 test_results（v1.3.0 起不再永久 pending）；"
+              "v1.7.0 起同时写 governance_meta.activation 占位，明示证据能力未激活"),
 ]
 
 # v1.4.0：基线不可后补。升级动作之前先导出一次观察包，才能 diff 出升级带来的改善。
@@ -139,10 +148,15 @@ PRE_UPGRADE: list[str] = [
 POST_UPGRADE: list[str] = [
     # v1.3.0：报告必须在「目标项目」侧生成，方法论仓库自测由仓库 CI 负责。
     # 非 unittest 技术栈改用 work_panel.py import-report 产出同一份规范报告。
-    "cd P && python3 governance/run_tests.py --dir tests --top . "
-    "--out governance/test_report.json --label project",
-    "cd P && python3 governance/build_capability_model.py --root . "
-    "--test-report governance/test_report.json --strict-evidence",
+    # v1.7.0：无 tests/ 或无报告的项目降级为显式 na 与可审计 skip 记录，
+    # 不得为了让流程继续而伪造报告；skip 输出由 acceptance.py 的负向回归断言。
+    "cd P && if [ -d tests ]; then python3 governance/run_tests.py --dir tests --top . "
+    "--out governance/test_report.json --label project; "
+    "else echo 'SKIP step=1 status=na reason=no-tests-dir'; fi",
+    "cd P && if [ -f governance/test_report.json ]; then "
+    "python3 governance/build_capability_model.py --root . "
+    "--test-report governance/test_report.json --strict-evidence; "
+    "else echo 'SKIP step=2 status=na reason=no-report'; fi",
     "cd P && python3 governance/verify_ledger.py --root . --strict",
     "python3 scripts/upgrade.py --target P verify --json",
     "python3 scripts/board_contract.py --target P check --json",
@@ -155,7 +169,9 @@ POST_UPGRADE: list[str] = [
     "python3 scripts/asset_bundle.py --check",
     "python3 scripts/asset_bundle.py verify --target P --json",
     "python3 scripts/work_panel.py --target P check --json",
-    "python3 scripts/work_panel.py --target P sync-tests --apply --approved-by <人>",
+    "if [ -f P/governance/test_report.json ]; then "
+    "python3 scripts/work_panel.py --target P sync-tests --apply --approved-by '<人>'; "
+    "else echo 'SKIP step=15 status=na reason=no-report'; fi",
     "python3 scripts/work_panel.py --target P nodes --json",
     "python3 scripts/test_modules.py --check",
     "python3 scripts/route_expert.py --target P --check-assets --json",
@@ -201,11 +217,13 @@ def _access_template() -> dict:
 
 
 def _projection_stale(gov: Path, ledger: dict) -> bool:
-    """只有「报告存在但投影缺失 / 过期」才需要 M8。
+    """判 M8 的理由之一：报告存在但投影缺失 / 过期。
 
-    旧判定把 test_results 键缺失当作待办，而 apply 在没有报告时又不写该键，
-    于是每次 plan 都判 M8、noop 永假。无报告是合法的 declared 状态（E2），
-    不该成为永久待办；证据未激活由校验器的 na 态明示。
+    另两个理由在 plan() 里：work_items 键缺失、governance_meta.activation
+    占位缺失。无报告本身不是待办：旧判定把 test_results 键缺失当作待办，
+    而 apply 在没有报告时又不写该键，于是每次 plan 都判 M8、noop 永假。
+    无报告是合法的 declared 状态（E2），证据未激活由校验器的 na 态与
+    activation 占位共同明示。
     """
     report = gov / "test_report.json"
     if not report.is_file():
@@ -271,7 +289,9 @@ def plan(target: Path, source_root: Path = SOURCE_ROOT) -> dict:
             needed.append(MIGRATIONS[5])
         if not inst["noop"]:
             needed.append(MIGRATIONS[6])
-        if "work_items" not in ledger or _projection_stale(gov, ledger):
+        activation = meta.get("activation") if isinstance(meta, dict) else None
+        if ("work_items" not in ledger or _projection_stale(gov, ledger)
+                or not isinstance(activation, dict)):
             needed.append(MIGRATIONS[7])
 
     noop = bool(ledger) and not needed and not blocks
@@ -401,6 +421,15 @@ def apply(target: Path, approved_by: str, *,
             projection = test_results_from_report(gov)
             if projection is not None:
                 ledger["test_results"] = projection
+        # v1.7.0：无报告不写 test_results，但必须写显式 activation 占位；
+        # null 会把「证据能力未激活」与「字段尚未升级」混为一谈。
+        if not isinstance(meta.get("activation"), dict):
+            meta["activation"] = {
+                "schema": "evidence-activation/1",
+                "state": "unbound",
+                "reason": "目标项目无 governance/test_report.json，证据能力未激活",
+                "all_active": False,
+            }
 
     assets = assets_manifest(source_root)
     meta["method_version"] = METHOD_VERSION

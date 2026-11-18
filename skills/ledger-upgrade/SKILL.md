@@ -8,7 +8,7 @@ description: |
 license: MIT
 metadata:
   author: ledger-driven-dev
-  version: "1.6.0"
+  version: "1.7.0"
   risk_level: write_with_approval
   related_skills: [agent-gate, scenario-guard, ledger-verify, layout-inspect,
                    board-layout, scale-budget, method-assets,

@@ -210,14 +210,15 @@
 - [x] 本次发版重绑 `M4 + M5 + M7`：`method_assets` `9493bc9e… → 264026fd…`；备份 `20261118T102418Z-5cd2106a`，复验与回滚命令见 `feedback/RELEASE-1.6.0.md`
 - [x] **本版 `feedback_closed = 4`**（发布时点：`feedback/observations.jsonl` 13 条，4 条收敛为四产物、9 条 `open`）；2026-11-18 规划收口再 triage 3 条后为 **5**，见文末「路线图对账」
 - [x] `CHANGELOG` / 本清单 / `README` 口径一致；`bash scripts/check.sh` 14 阶段全绿
-- [ ] 条件化第 1/2/15 步 SOP（目标项目无 `tests/` 时的降级路径）→ **攒批**至下一次功能迭代，且须由 `acceptance.py` 机器判据校验，见 `feedback/ACCEPTANCE-1.7.0-PRECONDITIONS.md` G2
-- [ ] M8 `activation` 占位与 `all_active` 语义 → 同上，见 G3
+- [x] 条件化第 1/2/15 步 SOP（目标项目无 `tests/` 时的降级路径）→ **v1.7.0 已交付**，由 `acceptance.py` 的 G2 机器判据校验，证据见 `feedback/S2-1.7.0-RED.md` / `feedback/RELEASE-1.7.0.md`
+- [x] M8 `activation` 占位与 `all_active` 语义 → **v1.7.0 已交付**，G3 机器判据 + `P` 侧 24 条三态不变量复验
 - [ ] `registry/2` 多项目数据契约：留 **v2.0.0**，需人批准数据迁移 + 备份 + 双写兼容期（本清单唯一主条目，**不得由 Agent 自动执行**）
 
 ### 设计内告警（不掩盖、不在本版修）
 
 - E7 `cardinality_contradiction`：单项目 registry vs 4 项目能力模型，`ontology.py check --target` 仍 `ok=false`，但第七轴 `binding=pass`。
-- `evidence_rebaseline=na` / `all_active=false`：目标项目无测试报告，47 个能力仍 `declared`。
+- `evidence_rebaseline=na` / `all_active=false`：目标项目无测试报告，47 个能力仍
+  `declared`；v1.7.0 起由 `governance_meta.activation.state=unbound` 明示未激活。
 - `scale_budget` 的 `project_files=49078` 超阈值告警。
 
 ## 路线图对账（v1.6.0 后，2026-11-18）
@@ -299,3 +300,45 @@ G1–G6、启动序列、固定成本）、更新本节。`feedback/*` 与根级
 **边界**：`METHOD_VERSION` 仍 1.6.0、`tag v1.6.0` 仍指 `a22f3eb`、未发版、
 未写 `P`（97 个在途改动与账本 mtime 未变）、未把 6 条 `open` 伪装成收敛。
 下一轮若实现 v1.7.0，须一并授权完整「S1→S4→发版 + `P` 重绑」。
+
+**执行结果（2026-11-18，v1.7.0）**：用户授权落实 A，上述授权已给出；因
+P1–P3 仍全部未满足，本版按 R4 / G6 降级为「一致性与可适配性」收敛版，
+只交付 R1–R3，语义图再次顺延。上方「`docs/23` 第七节仍写着旧规划」的失配
+已由 G1 机器断言修复；顺延表以 `CHANGELOG` 的 1.7.0 段落与下节为准。
+
+## v1.7.0 发布检查（一致性与可适配性收敛版）
+
+> 顺序不可交换：S1 固化证据 → S2 先写红灯 → S3 转绿 → S4 重绑 → 发版。
+> P1–P3 未满足（取证见 `feedback/S1-1.7.0-BASELINE.md`），语义图顺延；
+> 范围裁剪按 G6 记入 `feedback/RELEASE-1.7.0.md`。
+
+- [x] **S1**：本地固化基线（三包 sha / 两项摘要 / 门禁基线 / `P` 边界），未 push / 未打 tag → `feedback/S1-1.7.0-BASELINE.md`
+- [x] **S2**：G1–G3 落成 `acceptance.py` 第四层 + 第 15 门禁阶段，刻意红灯（13 绿 / 2 红）→ `feedback/S2-1.7.0-RED.md`
+- [x] **S3**：R1 规划一致性 / R2 条件化 SOP / R3 M8 `activation` 占位；L4 三项转绿
+- [x] **G1**：`docs/23` 第七节与 `CHANGELOG` 顺延锚点由机器断言校验，不是人眼复核
+- [x] **G2**：空 `tests/` fixture 上三条命令 SKIP、不生成 `test_report.json`；`POST_UPGRADE` 仍 19 步
+- [x] **G3**：无报告项目写入 `governance_meta.activation.state=unbound`；24 条三态不变量仍 `23 pass + 1 na`
+- [x] **G4**：三包观察 sha 与 7 条 `closed` 证据不变；append-only 探针幂等
+- [x] **G5**：`bash scripts/check.sh` 15/15 全绿、`acceptance/1 overall=pass`、drift 0、3 份派生可复算
+- [x] **G6**：P1–P3 在 `feedback/RELEASE-1.7.0.md` 显式记录「未满足 / 范围裁剪为 R1–R3」
+- [x] `METHOD_VERSION` 与 28 份 frontmatter 统一 1.7.0；`docs/16` 当前示例值同步
+- [x] `ontology.py check` 通过；`ontology_digest` 不变（`SOURCE_FILES` 未改）
+- [ ] **S4**：人批准 `M4 + M5 + M7` 重绑 `P`，复验 `pass=11 / na=1 / warn=0`、`upgrade_complete=true`；六段业务 digest 与三包观察 sha 不变
+- [ ] **发版**：附注 `tag v1.7.0` + push `origin/main`，发版报告与回滚命令见 `feedback/RELEASE-1.7.0.md`
+
+### 顺延表（v1.7.0 发布点，取代上方 v1.6.0 后对账节的启动建议）
+
+| 版本 | 内容 | 状态 |
+|---|---|---|
+| v1.6.0 | 验收契约 / append-only / 版本统一 | 已发布（S1–S4 序列占用，语义图未实现） |
+| v1.7.0 | 一致性与可适配性收敛版（R1–R3） | **本版发布** |
+| v1.8.0 | Risk & Evidence（polarity / confidence / contradicting evidence） | 顺延 |
+| v1.9.0 | Agent Autonomy Ladder | 顺延 |
+| v2.0.0 | `registry/2` 多项目数据契约 | 不变，需人批准数据迁移 |
+| 待定 | Semantic Graph（Statement 再化 / K3 推理机 / 最小割集 RCA） | 再次顺延，须先满足 P1–P3 |
+
+### 设计内告警（本版仍如实保留）
+
+E7 `cardinality_contradiction`（`ontology.py check --target P` 仍 `ok=false`、
+第七轴 `binding=pass`）、`evidence_rebaseline=na` / `all_active=false`、
+`scale_budget` 项目文件阈值告警 —— 三者均未被收敛版掩盖。

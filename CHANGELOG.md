@@ -2,6 +2,75 @@
 
 本项目版本遵循语义化版本（SemVer）。
 
+## [1.7.0] - 2026-11-18
+
+「一致性与可适配性」收敛版。**修的是「规划与发布是否一致、无测试报告项目
+能否诚实降级、未激活状态能否被账本表达」，不是新增治理对象**；已引入项目
+需人批准重绑一次资产摘要。
+
+### 决策依据（第一性原理）
+
+用户授权落实 A（完整 S1 → S2 → S3 → S4 → 发版 + `P` 重绑），但语义图的三项
+启动前置条件在本版起点全部未满足：P1 `P` 的真实 CI 报告（无 `tests/`、
+无 `test_report.json`、47 能力仍 `declared`）、P2 `ontology.py check` 的 A2
+可判定、P3 规划一致性机器断言。按 `feedback/ACCEPTANCE-1.7.0-PRECONDITIONS.md`
+的 R4 / G6，**语义图顺延**，本版只做 R1–R3：不把 `declared` 伪装成 `verified`，
+不把 6 条 `open` 观察勾成闭环，也不为改一句路线图单独发一版。
+
+顺序不可交换：S1 固化证据 → S2 先把 G1–G3 落成 `acceptance.py` 第四层机器
+断言并刻意红灯（13 阶段绿 / 2 阶段红）→ S3 实现 R1–R3 转绿 → S4 人批准
+重绑 `P` → 发版。
+
+### 新增：`acceptance.py` 第四层（G1–G3）
+
+- G1 `roadmap_consistency`：抽 `docs/23` 第七节与 `CHANGELOG` 的 1.7.0 段落，
+  断言两处都含 `v1.7.0 / v1.8.0 / v1.9.0 / v2.0.0` 顺延锚点与「收敛版」，
+  且不再出现「v1.6.0 才做语义图」；由机器判定而非人眼复核。
+- G2 `conditional_sop`：静态断言 `POST_UPGRADE` 三条取证命令带 shell 守卫与
+  `SKIP / status=na`；动态在空 `tests/` fixture 上真实执行，断言不生成
+  `governance/test_report.json`。`POST_UPGRADE` 长度仍为 19。
+- G3 `activation_placeholder`：在临时副本上真实调用 `upgrade.apply()`，
+  断言无报告项目写入 `governance_meta.activation`（`state=unbound`），
+  且 24 条三态不变量仍 `23 pass + 1 na`、`all_active=false`。
+- `scripts/check.sh` 新增第 15 阶段 `stage_preconditions`（`--preconditions`
+  只跑 L4）；检测器自测由 16 个扩到 20 个，全部绿灯且不断言仓库红绿。
+
+### 修复 / 收敛
+
+- **R1 规划一致性**：`docs/23` 第七节改为顺延表，与本版 `CHANGELOG`、
+  `RELEASE_CHECKLIST.md` 一致；失配不再靠人眼复核挂着。
+- **R2 条件化 SOP**：`POST_UPGRADE` 的取证与 `sync-tests` 命令对无 `tests/`、
+  无报告项目降级为显式 `na` + 可审计 skip 记录，绝不伪造报告。
+- **R3 M8 `activation` 占位**：`plan()` 把 `governance_meta.activation` 缺失
+  纳入 M8 触发条件；`apply()` 写入 `evidence-activation/1` 的 `unbound` 占位，
+  使「证据能力未激活」成为可判定账本事实而非 `null`。`verify` 仍 12 项、
+  `upgrade_complete` 仍九项判据，三态语义不回归。
+- 顺带修 `scripts/ontology.py digest` 的非 `--json` 文本输出（`KeyError: 'mode'`）；
+  该缺陷不影响任何摘要与门禁，S1 基线已如实记录。
+
+### 版本提升的成本与边界
+
+`METHOD_VERSION` 与 28 份资产 frontmatter 统一 1.7.0；`docs/16` 的当前示例值
+同步，历史引用（tag `v1.6.0`、「v1.5.0 起」）保留。`ontology.py` 的
+`SOURCE_FILES` 不含版本脚本、编号文档与 `acceptance.py`，因此
+`ontology_digest` 不变；但 `scripts/upgrade.py` / `docs/23` / frontmatter 均在
+`ASSET_GROUPS`，`method_assets.digest` 必变，`P` 需一次性人批准
+`M4 + M5 + M7` 重绑并留新备份与回滚命令。
+
+### 顺延表（与 `docs/23` 第七节机器校验一致）
+
+| 版本 | 内容 | 状态 |
+|---|---|---|
+| v1.7.0 | 一致性与可适配性收敛版（R1–R3） | **本版发布** |
+| v1.8.0 | Risk & Evidence（polarity / confidence / contradicting evidence） | 顺延 |
+| v1.9.0 | Agent Autonomy Ladder | 顺延 |
+| v2.0.0 | `registry/2` 多项目数据契约 | 不变，需人批准数据迁移 |
+| 待定 | Semantic Graph（Statement 再化 / K3 推理机 / 最小割集 RCA） | 再次顺延，须先满足 P1–P3 |
+
+未做（留后续）：语义图（P1–P3 缺一不可）、`registry/2`。设计内告警
+E7 `cardinality_contradiction`、`evidence_rebaseline=na`、`scale_budget`
+项目文件阈值均如实保留，未掩盖。
+
 ## [1.6.0] - 2026-11-18
 
 验收契约与写入语义的收口版。**修的是「怎么证明修好了」和「证据会不会被自己删掉」，
