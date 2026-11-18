@@ -240,12 +240,16 @@ def _monorepo_dirs(repo_root: Path, configured: str) -> list[Path]:
     if primary.exists():
         return [primary]
     found = []
-    projects = repo_root / "projects"
-    if projects.is_dir():
-        for child in sorted(projects.iterdir()):
+    # v2.0.0：monorepo 容器目录不止 projects/，示例/多项目仓也常见 examples/。
+    # 扫描两者下的同名目录，保留 projects/ 优先语义。
+    for container in ("projects", "examples"):
+        base = repo_root / container
+        if not base.is_dir():
+            continue
+        for child in sorted(base.iterdir()):
             if child.is_dir():
                 candidate = child / configured
-                if candidate.exists():
+                if candidate.exists() and candidate not in found:
                     found.append(candidate)
     return found
 
@@ -278,6 +282,29 @@ def LEVELS_CODE(level) -> int:
         return level
     m = re.match(r"L(\d+)", str(level))
     return int(m.group(1)) if m else 0
+
+
+def code_namespace(project_code: str, module_code: str) -> str:
+    """v2.0.0 registry/2：返回 4 段编码的前两段命名空间。
+
+    第一性原理：能力编码规范是 ``{项目}.{模块}.{域}.{序号}`` 恰好 4 段
+    （见 verify_ledger.CODE_RE）。registry 有两种合法写法：
+      - 单项目模板：``project.code=DEMO`` + ``module.code=DATA``（模块码不含项目段）
+        → 命名空间 ``DEMO.DATA``；
+      - 多项目 monorepo：``project.code=<ROOT>`` + ``module.code=<PROJ>.DATA``
+        （模块码已含项目段）→ 命名空间直接用 ``<PROJ>.DATA``。
+
+    判据：module_code 含 ``.`` 且首段为大写项目码时，视为已含项目段，直接用；
+    否则补 ``project_code`` 前缀。绝不产生 5 段码或 ``<ROOT>.<ROOT>`` 前缀泄漏。
+    """
+    module_code = str(module_code or "").strip()
+    project_code = str(project_code or "").strip()
+    if "." in module_code:
+        first = module_code.split(".", 1)[0]
+        # 已含项目段（首段全大写且为合法项目码段）；直接采用，不再拼 project_code。
+        if first.isupper() and re.fullmatch(r"[A-Z][A-Z0-9]*", first):
+            return module_code
+    return f"{project_code}.{module_code}" if project_code else module_code
 
 
 def judge_level(
@@ -562,8 +589,10 @@ def build(repo_root: Path, cfg_all: dict, ledger: dict, test_report: dict | None
 
     for midx, mod in enumerate(cfg_all["modules"], 1):
         mcode = mod["code"]
+        # v2.0.0 registry/2：module/code 编码统一走命名空间，杜绝 5 段码。
+        cap_ns = code_namespace(code, mcode)
         mnode = {
-            "code": f"{code}.{mcode}", "name": mod["name"],
+            "code": cap_ns, "name": mod["name"],
             "index": midx, "caps": [],
         }
         mm_mod = mm_by_name.get(mod["name"])
@@ -593,7 +622,7 @@ def build(repo_root: Path, cfg_all: dict, ledger: dict, test_report: dict | None
             hints = registry_hints + [h for h in ledger_hints if h not in registry_hints]
             level, ev = judge_level(repo_root, proj_root, proj_rel, cfg_all, impl_globs, hints)
             tier, tier_detail = judge_tier(ev.get("unit_test", []), test_report)
-            cap_code = f"{code}.{mcode}.{domain}.{cidx:02d}"
+            cap_code = f"{cap_ns}.{domain}.{cidx:02d}"
             cnode = {
                 "code": cap_code,
                 "name": cap_name,

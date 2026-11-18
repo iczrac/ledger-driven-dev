@@ -99,6 +99,16 @@ GENERATOR_TPL = "templates/build_capability_model.py"
 ACCEPT_1_8_DOC = "feedback/ACCEPTANCE-1.8.0.md"
 L5_ANCHORS = ("default_source_dirs", "classname", "evidence_hints", "no_regress")
 
+# ---------------------------------------------------------------- L6
+# v2.0.0 registry/2 多项目编码契约：修 monorepo 的 5 段码，双写兼容单项目模板。
+#   R1 code_namespace 导出          → templates/build_capability_model.py
+#   R2 build 两处 code 经命名空间生成 → templates/build_capability_model.py
+#   R3 4 段码负向回归               → tests/core/test_registry2.py
+#   R4 契约文档四锚点               → feedback/ACCEPTANCE-2.0.0.md
+ACCEPT_2_0_DOC = "feedback/ACCEPTANCE-2.0.0.md"
+REGISTRY2_TEST = "tests/core/test_registry2.py"
+L6_ANCHORS = ("code_namespace", "registry2_contract", "no_prefix_leak", "cap_code_format")
+
 CN = {"零": 0, "一": 1, "二": 2, "三": 3, "四": 4, "五": 5,
       "六": 6, "七": 7, "八": 8, "九": 9}
 TOKEN = re.compile(r"([0-9]+|[一二三四五六七八九十]+)\s*(轴|步|项)")
@@ -586,6 +596,91 @@ def evidence_end_to_end(root: Path = ROOT, tmp: Path | None = None) -> dict:
     return {"status": "pass" if not errors else "fail", "errors": errors}
 
 
+# ---------------------------------------------------------------- L6 (v2.0.0)
+def _load_module(path: Path):
+    """按文件路径加载模块，避免 sys.path 污染与同名模块冲突。"""
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("_accept_mod", path)
+    if spec is None or spec.loader is None:
+        raise ValueError(f"无法加载模块：{path}")
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
+
+
+def code_namespace_check(root: Path = ROOT) -> dict:
+    """R1：生成器须导出 code_namespace，且双写兼容（含项目段直用 / 否则加前缀）。"""
+    path = root / GENERATOR_TPL
+    syms = _source_symbols(path)
+    errors = []
+    if "code_namespace" not in syms:
+        errors.append(f"{GENERATOR_TPL} 缺少函数 code_namespace()")
+    try:
+        gen = _load_module(path)
+        fn = getattr(gen, "code_namespace", None)
+        if not callable(fn):
+            errors.append("code_namespace 不可调用")
+        else:
+            # 双写兼容：monorepo 已含项目段直用；单项目补前缀
+            cases = [
+                (("ROOT", "PROJ.DATA"), "PROJ.DATA"),
+                (("DEMO", "DATA"), "DEMO.DATA"),
+                (("ROOT", "MIND.DEC"), "MIND.DEC"),
+                (("HELM", "API"), "HELM.API"),
+            ]
+            for args, expect in cases:
+                got = fn(*args)
+                if got != expect:
+                    errors.append(f"code_namespace{args}={got!r}，期望 {expect!r}")
+    except Exception as exc:  # noqa: BLE001
+        errors.append(f"code_namespace 加载/调用失败：{exc}")
+    return {"status": "pass" if not errors else "fail", "errors": errors}
+
+
+def registry2_contract_check(root: Path = ROOT) -> dict:
+    """R2：build 的 module/cap code 均经 code_namespace 生成，无裸 f"{code}.{mcode}"。
+
+    允许两种等价实现：每处各自调用 code_namespace()，或在循环开头算一次
+    namespace（如 cap_ns）供 module code 与 cap code 共用。
+    """
+    text = _source_text(root / GENERATOR_TPL)
+    errors = []
+    if 'f"{code}.{mcode}"' in text or 'f"{code}.{mcode}.{domain}' in text:
+        errors.append(f"{GENERATOR_TPL} 仍有裸拼接 code.mcode（未走 code_namespace）")
+    calls = text.count("code_namespace(")  # 定义 1 处 + build 中至少 1 处
+    uses_ns = 'f"{cap_ns}.{domain}' in text or 'f"{ns}.{domain}' in text
+    if calls < 2 and not uses_ns:
+        errors.append("build 未见 code_namespace 调用或共用命名空间（module/cap code 未受契约约束）")
+    if '"code": cap_ns' not in text and '"code": f"{code}.{mcode}"' in text:
+        errors.append("module code 未走命名空间")
+    return {"status": "pass" if not errors else "fail", "errors": errors}
+
+
+def no_prefix_leak_check(root: Path = ROOT) -> dict:
+    """R3：必须有 4 段码负向回归测试文件，覆盖双写与无前缀泄漏。"""
+    path = root / REGISTRY2_TEST
+    text = _source_text(path)
+    errors = []
+    if not text:
+        errors.append(f"缺少 {REGISTRY2_TEST}")
+    for anchor in ("code_namespace", "4 段", "DEMO.DATA"):
+        if anchor not in text:
+            errors.append(f"{REGISTRY2_TEST} 缺少锚点 {anchor}")
+    return {"status": "pass" if not errors else "fail", "errors": errors}
+
+
+def cap_code_format_check(root: Path = ROOT) -> dict:
+    """R4：v2.0.0 契约文档存在且含四锚点。"""
+    text = _source_text(root / ACCEPT_2_0_DOC)
+    errors = []
+    if not text:
+        errors.append(f"缺少 {ACCEPT_2_0_DOC}")
+    for anchor in L6_ANCHORS:
+        if anchor not in text:
+            errors.append(f"{ACCEPT_2_0_DOC} 缺少锚点 {anchor}")
+    return {"status": "pass" if not errors else "fail", "errors": errors}
+
+
 def build(root: Path = ROOT, tmp: Path | None = None,
           only_preconditions: bool = False) -> dict:
     c = constants(root)
@@ -610,6 +705,10 @@ def build(root: Path = ROOT, tmp: Path | None = None,
     h3 = no_regression_guard(root)
     h4 = l5_contract_doc(root)
     h5 = evidence_end_to_end(root)
+    r1 = code_namespace_check(root)
+    r2 = registry2_contract_check(root)
+    r3 = no_prefix_leak_check(root)
+    r4 = cap_code_format_check(root)
     checks: list[dict] = []
     if not only_preconditions:
         checks += [
@@ -641,6 +740,13 @@ def build(root: Path = ROOT, tmp: Path | None = None,
             {"id": "no_regression_guard", "status": h3["status"], "errors": h3["errors"]},
             {"id": "l5_contract_doc", "status": h4["status"], "errors": h4["errors"]},
             {"id": "evidence_end_to_end", "status": h5["status"], "errors": h5["errors"]},
+        ]
+        # L6 属于 v2.0.0 registry/2 契约，不并入 preconditions 范围。
+        checks += [
+            {"id": "code_namespace", "status": r1["status"], "errors": r1["errors"]},
+            {"id": "registry2_contract", "status": r2["status"], "errors": r2["errors"]},
+            {"id": "no_prefix_leak", "status": r3["status"], "errors": r3["errors"]},
+            {"id": "cap_code_format", "status": r4["status"], "errors": r4["errors"]},
         ]
     return {"schema": SCHEMA, "method_version": c["version"],
             "constants": c["expect"], "basis": c["basis"],

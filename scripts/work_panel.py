@@ -544,6 +544,23 @@ def check(target: Path) -> dict:
             "nodes": len(nodes(ledger)["nodes"])}
 
 
+def activation_from_report(tr: dict) -> dict:
+    """v2.0.0：据真实报告同步证据激活态，杜绝账本占位与实际相反。
+
+    无报告 / 报告未通过 / 无用例时保持 unbound（诚实），不伪造 active。
+    报告 overall=pass 且有用例时置 active，reason 说明绑定来源。
+    """
+    cases = tr.get("cases") or []
+    bound = bool(cases) and tr.get("overall") == "pass"
+    return {
+        "schema": "evidence-activation/1",
+        "state": "active" if bound else "unbound",
+        "reason": (f"已绑定 {REPORT_REL}（{len(cases)} 用例，overall=pass），证据能力激活"
+                   if bound else "测试报告未通过或无用例，证据能力未激活"),
+        "all_active": bound,
+    }
+
+
 def sync_tests(target: Path, *, approved_by: str = "", apply: bool = False) -> dict:
     target = Path(target)
     gov = target / "governance"
@@ -552,11 +569,15 @@ def sync_tests(target: Path, *, approved_by: str = "", apply: bool = False) -> d
         raise ValueError(f"找不到可读的测试报告：{REPORT_REL}")
     ledger = load_ledger(gov)
     current = ledger.get("test_results")
-    same = current == tr
+    activation = activation_from_report(tr)
+    meta = ledger.get("governance_meta") or {}
+    activation_changed = meta.get("activation") != activation
+    same = current == tr and not activation_changed
     if not apply:
         return {"schema": SCHEMA_ACTION, "action": "sync-tests", "mode": "dry-run",
                 "noop": same, "cases": len(tr["cases"]),
                 "source_sha256": tr["source_sha256"],
+                "activation": activation["state"],
                 "message": "只读预演；写盘需 --apply --approved-by <人>"}
     if not approved_by:
         raise ValueError("同步测试结果必须提供 --approved-by（人工批准）")
@@ -565,11 +586,13 @@ def sync_tests(target: Path, *, approved_by: str = "", apply: bool = False) -> d
                 "noop": True, "cases": len(tr["cases"]),
                 "message": "投影已与当前报告一致，无需写入"}
     ledger["test_results"] = tr
+    if isinstance(ledger.get("governance_meta"), dict):
+        ledger["governance_meta"]["activation"] = activation
     write_ledger(gov, ledger)
     return {"schema": SCHEMA_ACTION, "action": "sync-tests", "mode": "apply",
             "noop": False, "approved_by": approved_by, "cases": len(tr["cases"]),
-            "source_sha256": tr["source_sha256"],
-            "message": "测试结果投影已写回账本并同步看板"}
+            "source_sha256": tr["source_sha256"], "activation": activation["state"],
+            "message": "测试结果投影与激活态已写回账本并同步看板"}
 
 
 def add_item(target: Path, *, kind: str, scope: str, title: str, detail: str = "",

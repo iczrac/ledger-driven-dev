@@ -17,9 +17,10 @@
         "tests/core/test_generation.py",
         "tests/core/test_history.py",
         "tests/core/test_evidence_tier.py",
-        "tests/core/test_verify.py",
-        "tests/core/test_evidence_adapter.py"
-      ]
+    "tests/core/test_verify.py",
+    "tests/core/test_evidence_adapter.py",
+    "tests/core/test_registry2.py"
+   ]
     },
     {
       "id": "adoption",

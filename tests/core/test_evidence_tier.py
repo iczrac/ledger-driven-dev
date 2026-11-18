@@ -17,6 +17,15 @@ REPORT_SCHEMA = "ledger-test-report/1"
 
 
 def _report(cases, overall="pass"):
+    # v2.0.0：报告须带合法源码绑定（algorithm + 真实文件 sha256），
+    # 否则新生成器按 v1.8.0 空绑定拒绝逻辑不采信，verified 无法升级。
+    src = Path(GOV).parent / "src" / "contracts" / "order_schema.py"
+    binding = {
+        "algorithm": "sha256-files-v1",
+        "inputs": [{"path": "examples/demo-shop/src/contracts/order_schema.py",
+                    "sha256": __import__("hashlib").sha256(src.read_bytes()).hexdigest()}],
+        "source_digest": "fixture",
+    }
     return {
         "schema": REPORT_SCHEMA,
         "generated_at": "2026-11-17 22:00 HKT",
@@ -24,6 +33,7 @@ def _report(cases, overall="pass"):
         "overall": overall,
         "cases": cases,
         "summary": {"total": len(cases)},
+        "evidence_binding": binding,
     }
 
 
@@ -81,7 +91,7 @@ class EvidenceTierTest(unittest.TestCase):
             result = subprocess.run(
                 [_sys.executable, str(GOV / "build_capability_model.py"),
                  "--root", str(root), "--registry", str(reg),
-                 "--ledger", str(ledger), "--board", str(board)] + cmd,
+                 "--ledger", str(ledger), "--board", str(board), "--allow-regress"] + cmd,
                 capture_output=True, text=True)
             self.assertEqual(result.returncode, 0, result.stderr)
             d = json.loads(ledger.read_text())
@@ -103,7 +113,7 @@ class EvidenceTierTest(unittest.TestCase):
                 [_sys.executable, str(GOV / "build_capability_model.py"),
                  "--root", str(root), "--registry", str(reg),
                  "--ledger", str(ledger), "--board", str(board),
-                 "--test-report", str(rp)], capture_output=True, text=True)
+                 "--test-report", str(rp), "--allow-regress"], capture_output=True, text=True)
             # 注入腐化：把 verified 改成无依据
             d = json.loads(ledger.read_text())
             for p in d["capability_model"]["projects"]:

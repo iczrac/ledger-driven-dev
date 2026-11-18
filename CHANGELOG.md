@@ -2,6 +2,41 @@
 
 本项目版本遵循语义化版本（SemVer）。
 
+## [2.0.0] - 2026-11-19
+
+**registry/2 多项目编码契约版**。承接 v1.8.0 交付核实与用户「a」（正式立项 v2.0.0
+破坏性迁移授权）：v1.8.0 的工具层已能保证证据适配与不降级，但主仓 registry 的
+`project.code=<ROOT>` + `module.code=<PROJ>.DATA` 会被生成器拼成 5 段码
+`<ROOT>.<PROJ>.DATA.READY.01`，写盘后 24 不变量跌为 21 pass / 3 fail。本版从根上
+修复编码契约：生成器新增 `code_namespace()`，module/cap code 均经它生成，
+产出合法 4 段码并保持单项目模板双写兼容；P1 的真实 verified 升级随之可安全落盘。
+
+### 决策依据（第一性原理）
+
+「判据绿 ≠ 结果绿」：v1.8.0 的 `no_regress()` 靠剥离前缀对齐得出「降级 0」，
+但写盘把 5 段码写进权威账本，校验器的 `CODE_RE`（4 段）立即判非法。教育是：
+判据必须与写盘结果同格式，不能靠对齐技巧绕过。本版让生成器直接产出与账本、
+校验器一致的 4 段码，从源头消除失配，而不是继续在判据层打补丁。
+
+### 本版内容
+
+- `templates/build_capability_model.py` 新增 `code_namespace(project_code, module_code)`：
+  module_code 含项目段（首段大写）时直接用，否则补 project_code 前缀；
+- `build()` 的 module code 与 cap code 均改经命名空间生成，无 5 段码泄漏；
+- `acceptance/1` 第六层（L6）四项机器断言：`code_namespace` / `registry2_contract` /
+  `no_prefix_leak` / `cap_code_format`；
+- `tests/core/test_registry2.py` 9 项专项（双写 / 4 段 / 无泄漏 / no_regress 对齐 /
+  真实账本 47 code 合法）；
+- 单项目模板 `DEMO.DATA.READY.01` 双写兼容，示例项目不受影响。
+
+### 顺延
+
+| 版本 | 内容 | 状态 |
+|---|---|---|
+| v1.9.0 | Risk & Evidence（polarity / confidence / contradicting evidence）+ Agent Autonomy Ladder | 顺延 |
+| v2.0.0 | `registry/2` 多项目编码契约 / P1 数据迁移 | **本版发布** |
+| 待定 | Semantic Graph（Statement 再化 / K3 推理机 / 最小割集 RCA） | 顺延，须先满足 P1–P3（P1 本版满足） |
+
 ## [1.8.0] - 2026-11-18
 
 **证据适配与不降级版**。承接 v1.7.0 交付核实与用户「先做 a」的真实执行：

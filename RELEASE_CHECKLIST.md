@@ -212,7 +212,8 @@
 - [x] `CHANGELOG` / 本清单 / `README` 口径一致；`bash scripts/check.sh` 14 阶段全绿
 - [x] 条件化第 1/2/15 步 SOP（目标项目无 `tests/` 时的降级路径）→ **v1.7.0 已交付**，由 `acceptance.py` 的 G2 机器判据校验，证据见 `feedback/S2-1.7.0-RED.md` / `feedback/RELEASE-1.7.0.md`
 - [x] M8 `activation` 占位与 `all_active` 语义 → **v1.7.0 已交付**，G3 机器判据 + `P` 侧 24 条三态不变量复验
-- [ ] `registry/2` 多项目数据契约：留 **v2.0.0**，需人批准数据迁移 + 备份 + 双写兼容期（本清单唯一主条目，**不得由 Agent 自动执行**）
+- [x] `registry/2` 多项目数据契约：由 **v2.0.0** 交付（`code_namespace` 4 段码 + 双写兼容），
+      经用户「a」显式授权 + 备份 + 人批准 S4 重绑完成；见证 `feedback/RELEASE-2.0.0.md`
 
 ### 设计内告警（不掩盖、不在本版修）
 
@@ -359,3 +360,21 @@ E7 `cardinality_contradiction`（`ontology.py check --target P` 仍 `ok=false`�
 - 主仓 `governance/registry.json` 与 `capability_model` **本版未写盘**；P1 最终满足需独立人批准数据迁移
 - 语义图仍顺延（须 P1–P3 全满足）；`registry/2` 仍 v2.0.0
 - E7 `cardinality_contradiction`、`evidence_rebaseline=na`、`scale_budget` 告警、6 条 `open` 观察均保留
+
+## v2.0.0 发布检查（registry/2 多项目编码契约）
+
+> 顺序不可交换：S1 固化证据 → S2 先写红灯 → S3 转绿 → S4 重绑 → 发版。
+> 授权：用户「a」= 正式立项 v2.0.0 破坏性迁移。
+
+- [x] **S1**：`feedback/S1-2.0.0-BASELINE.md` 固化三方摘要 / 观察包三 sha / P1 真实报告（182 passed）/ 5 段码写盘失败复现
+- [x] **S2**：`feedback/S2-2.0.0-RED.md` 记录 L6 三项红灯（code_namespace / registry2_contract / no_prefix_leak）
+- [x] **S3**：`feedback/S3-2.0.0-GREEN.md`；生成器 `code_namespace()` + build 两处 code 改经命名空间；L6 四项转绿、14 项验收全 PASS、273/273 单测
+- [x] **双写兼容**：单项目模板 `DEMO.DATA.READY.01` 与 monorepo `APEX.DATA.READY.01` 均 4 段合法（专项测试覆盖）
+- [x] **根因修复**：真实 P dry-run 产出 0 个 5 段码、0 个 `RACOS.` 泄漏、level 保持 `L5:20/L3:22/L2:5`、`no_regress=[]`
+- [ ] **S4**：人批准 apply 重绑 `P`（M3+M4+M5+M7 + P1 三步数据迁移），24 不变量无 fail、P1 verified 落盘
+- [ ] **发版**：附注 `tag v2.0.0` + push；发版报告见 `feedback/RELEASE-2.0.0.md`
+
+### 本版边界（不掩盖）
+
+- 语义图（Statement 再化 / K3 / 最小割集 RCA）仍顺延（P2/P3 尚未复验）
+- E7 `cardinality_contradiction`、`scale_budget` 告警、6 条 `open` 观察按既有状态保留/复验

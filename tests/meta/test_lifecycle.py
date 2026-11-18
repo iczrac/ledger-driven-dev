@@ -79,7 +79,7 @@ class LifecycleTest(unittest.TestCase):
             p = subprocess.run(
                 [sys.executable, str(proj / "governance" / "build_capability_model.py"),
                  "--root", str(tmp), "--registry", str(reg),
-                 "--ledger", str(ledger), "--board", str(board)],
+                 "--ledger", str(ledger), "--board", str(board), "--allow-regress"],
                 capture_output=True, text=True)
             self.assertEqual(p.returncode, 2, p.stdout + p.stderr)
             self.assertIn("[BLOCK]", p.stderr)

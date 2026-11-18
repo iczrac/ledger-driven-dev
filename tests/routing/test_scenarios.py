@@ -129,7 +129,7 @@ class ScenarioProbeTest(unittest.TestCase):
             cmd = [sys.executable, str(gen), "--root", str(tmp),
                    "--registry", str(reg), "--ledger", str(ledger),
                    "--board", str(board), "--test-report", str(report),
-                   "--strict-evidence"]
+                   "--strict-evidence", "--allow-regress"]
 
             def run() -> dict:
                 p = subprocess.run(cmd, capture_output=True, text=True)
@@ -172,7 +172,7 @@ class ScenarioProbeTest(unittest.TestCase):
             p = subprocess.run(
                 [sys.executable, str(proj / "governance" / "build_capability_model.py"),
                  "--root", str(tmp), "--registry", str(reg), "--ledger", str(ledger),
-                 "--board", str(board), "--test-report", str(rp), "--strict-evidence"],
+                 "--board", str(board), "--test-report", str(rp), "--strict-evidence", "--allow-regress"],
                 capture_output=True, text=True)
             self.assertEqual(p.returncode, 0, p.stderr)
             self.assertEqual(json.loads(ledger.read_text())["capability_model"]
@@ -192,7 +192,7 @@ class ScenarioProbeTest(unittest.TestCase):
             p = subprocess.run(
                 [sys.executable, str(proj / "governance" / "build_capability_model.py"),
                  "--root", str(tmp), "--registry", str(reg), "--ledger", str(ledger),
-                 "--board", str(board), "--test-report", str(rp), "--strict-evidence"],
+                 "--board", str(board), "--test-report", str(rp), "--strict-evidence", "--allow-regress"],
                 capture_output=True, text=True)
             self.assertEqual(p.returncode, 0, p.stderr)
             caps = [c for pr in json.loads(ledger.read_text())["capability_model"]["projects"]

@@ -35,11 +35,17 @@ def demo_copy():
 
 
 def run_generator(root: Path, ledger: Path, registry: Path, board: Path,
-                  dry: bool = False) -> subprocess.CompletedProcess:
+                  dry: bool = False, allow_regress: bool = True) -> subprocess.CompletedProcess:
+    """行为探针默认绕过不降级门禁：fixture 账本的 level 是历史值，重算会回落，
+    但这些测试测的是证据分层/历史/生命周期行为，不是测不降级（后者由
+    test_registry2 / acceptance L5-L6 专门覆盖）。
+    """
     cmd = [sys.executable, str(GENERATOR), "--root", str(root),
            "--registry", str(registry), "--ledger", str(ledger), "--board", str(board)]
     if dry:
         cmd.append("--dry-run")
+    if allow_regress:
+        cmd.append("--allow-regress")
     return subprocess.run(cmd, capture_output=True, text=True)
 
 

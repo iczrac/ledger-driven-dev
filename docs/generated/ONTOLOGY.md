@@ -1,6 +1,6 @@
 # 本体投影（generated，只读）
 
-schema `ledger-ontology/1` · digest `63ab23dfe7c59ff27118483bd8c17194e770d1e471c993228b4ac345179b1b94`
+schema `ledger-ontology/1` · digest `af5527160ddc879735e5dcc23f23ee39dbccc9fe98deb935211c9725fd7d9904`
 
 由 `python3 scripts/ontology.py build --apply --approved-by <人>` 从事实源渲染。
 **不是人工文档，也不是第二事实源**：删掉本文件后 build 可逐字节复原。
@@ -109,11 +109,11 @@ schema `ledger-ontology/1` · digest `63ab23dfe7c59ff27118483bd8c17194e770d1e471
 | 文件 | 角色 | sha256 |
 |---|---|---|
 | `docs/STANDARD.md` | ubiquitous_language | `c4177d34f5472cc8…` |
-| `scripts/work_panel.py` | value_domains | `ab8ebe8b13440183…` |
+| `scripts/work_panel.py` | value_domains | `586b3245b16ba8e6…` |
 | `scripts/scenario_matrix.py` | value_domains | `651dcbe75cb71dfe…` |
 | `scripts/ledger_feedback.py` | value_domains | `ee3d577f0a600e05…` |
 | `scripts/agent_gateway.py` | value_domains | `efa78204bdbe89b6…` |
-| `templates/build_capability_model.py` | value_domains | `36c00416e1327ce0…` |
+| `templates/build_capability_model.py` | value_domains | `1596f80e16d0f91d…` |
 | `templates/verify_ledger.py` | axioms | `3747a5e212c783f7…` |
 
 漂移条目：0
