@@ -164,7 +164,7 @@
 - [x] 工具副本同步：`templates/verify_ledger.py` → `examples/demo-shop/governance/`
 - [x] 资产 frontmatter 统一 1.3.0；`METHOD_VERSION` 同步
 - [x] `bash scripts/check.sh` 全绿
-- [ ] 已引入项目重新批准升级（M4 + M5）重绑摘要（由项目负责人决定，不自动执行）
+- [x] 已引入项目重新批准升级（`M4 + M5`）重绑摘要：已由 S4（`M5 + M7`）与 v1.6.0 发版（`M4 + M5 + M7`）完成，见 `feedback/S4-REBIND-1.5.0.md` / `feedback/RELEASE-1.6.0.md`
 
 ## v1.4.0 发布检查（反向回流闭环 / L0）
 
@@ -178,7 +178,7 @@
 - [x] 9 个新回归（含「先失败后通过」的闭环证明），测试架构清单纳管 22 个文件
 - [x] `docs/22-反向回流.md`；28 份资产 frontmatter 与 `METHOD_VERSION` 统一 1.4.0
 - [x] `bash scripts/check.sh` 全绿：211 测试 / 24 条三态不变量 / 12 个阶段（含反向回流）
-- [ ] 已引入项目升级到 1.4.0：需项目负责人单独批准写盘；执行顺序必须是「导出基线 → 升级 → 复导 → diff → triage」
+- [x] 已引入项目升级到 1.4.0：未单独执行 1.4.0，由 U（`1.2.1 → 1.5.0`，备份 `20261118T072013Z-ad0f73f7`）跨版本覆盖；证据见 `feedback/UPGRADE-DIFF-1.5.0.md`
 
 ## v1.5.0 发布检查（本体投影 / 派生只读元契约）
 
@@ -192,8 +192,7 @@
 - [x] 12 个新回归（含「先失败后通过」与写盘无批准人被拒），测试架构清单纳管 23 个文件
 - [x] `docs/23-本体投影.md`；28 份资产 frontmatter 与 `METHOD_VERSION` 统一 1.5.0
 - [x] `bash scripts/check.sh` 全绿：223 测试 / 24 条三态不变量 / 13 个阶段（含本体层）
-- [ ] 已引入项目升级到 1.5.0：需项目负责人单独批准写盘；执行顺序仍是「导出基线 → 升级 → 复导 → diff → triage」
-- [ ] `registry/2` 多项目数据契约：留 v2.0.0，需人批准数据迁移 + 备份 + 双写兼容期
+- [x] 已引入项目升级到 1.5.0：由 U 完成（`1.2.1 → 1.5.0`），`verify 11 pass / 1 na / 0 warn`、10/10 看板视图；基线 → 升级 → 复导 → diff → triage 全链证据见 `feedback/UPGRADE-DIFF-1.5.0.md`
 
 ## v1.6.0 发布检查（验收契约 / 写入语义 / 版本统一）
 
@@ -209,13 +208,58 @@
 - [x] `ontology.py check` 通过：升版本不改 `ontology_digest`（版本脚本不在 `SOURCE_FILES`），仍为 `e258dec1…`
 - [x] **S4**：已引入项目人批准重绑 `M5 + M7`（备份 `20261118T100016Z-ccd42d92`），复验 `pass=11 / na=1 / warn=0`、`upgrade_complete=true`；业务数据六段 digest 与三包观察 sha 不变
 - [x] 本次发版重绑 `M4 + M5 + M7`：`method_assets` `9493bc9e… → 264026fd…`；备份 `20261118T102418Z-5cd2106a`，复验与回滚命令见 `feedback/RELEASE-1.6.0.md`
+- [x] **本版 `feedback_closed = 4`**（发布时点：`feedback/observations.jsonl` 13 条，4 条收敛为四产物、9 条 `open`）；2026-11-18 规划收口再 triage 3 条后为 **5**，见文末「路线图对账」
 - [x] `CHANGELOG` / 本清单 / `README` 口径一致；`bash scripts/check.sh` 14 阶段全绿
-- [ ] 条件化第 1/2/15 步 SOP（目标项目无 `tests/` 时的降级路径）
-- [ ] M8 `activation` 占位与 `all_active` 语义
-- [ ] `registry/2` 多项目数据契约：留 v2.0.0
+- [ ] 条件化第 1/2/15 步 SOP（目标项目无 `tests/` 时的降级路径）→ 合并进 **v1.7.0**，见文末「路线图对账」
+- [ ] M8 `activation` 占位与 `all_active` 语义 → 合并进 **v1.7.0**
+- [ ] `registry/2` 多项目数据契约：留 **v2.0.0**，需人批准数据迁移 + 备份 + 双写兼容期（本清单唯一主条目）
 
 ### 设计内告警（不掩盖、不在本版修）
 
 - E7 `cardinality_contradiction`：单项目 registry vs 4 项目能力模型，`ontology.py check --target` 仍 `ok=false`，但第七轴 `binding=pass`。
 - `evidence_rebaseline=na` / `all_active=false`：目标项目无测试报告，47 个能力仍 `declared`。
 - `scale_budget` 的 `project_files=49078` 超阈值告警。
+
+## 路线图对账（v1.6.0 后，2026-11-18）
+
+> 本节是**规划对账**，不是第二份状态清单。观察状态权威源仍是
+> `feedback/observations.jsonl`，发布状态权威源仍是 `DECISION_LEDGER.json`。
+> 完整取证见 `feedback/ROADMAP-AUDIT-1.6.0.md`。
+
+### 失配与顺延
+
+`docs/23-本体投影.md` 第七节与 ODLA 提案第 7 节把 **v1.6.0** 定义为
+「Semantic Graph：Statement 再化 + K3 推理机 + 最小割集根因分析」；
+而实际发布的 v1.6.0 是「验收契约 + append-only 写入语义 + 版本统一」
+（S1–S4 反向优化序列占用了该版本）。**语义图未实现**，规划陈述必须顺延：
+
+| 原定版本 | 内容 | 调整后 |
+|---|---|---|
+| v1.6.0 | Semantic Graph | 已由 S1–S4 占用；语义图顺延 **v1.7.0** |
+| v1.7.0 | Risk & Evidence（polarity / confidence / contradicting evidence） | 顺延 **v1.8.0** |
+| v1.8.0 | Agent Autonomy Ladder | 顺延 **v1.9.0** |
+| v2.0.0 | `registry/2`（破坏性） | **不变**，仍需人批准数据迁移 + 备份 + 双写兼容期 |
+
+注：`docs/23` 正文仍保留旧规划表述。修正它会改变 `method_assets.digest`（整包
+摘要含编号文档），因此必须与 v1.7.0 实现合并为**一次发版 + 一次主仓重绑**，
+不单独为改一句话再发一版。这是整包摘要绑定的固有成本，不是缺陷。
+
+### 观察包收敛（本轮）
+
+`feedback/observations.jsonl` 13 条：人批准 triage 3 条
+（版本落差 → `migration: scripts/upgrade.py`；两条历史迁移日志 → `wontfix`
+append-only 事实），`open 9 → 6`、`feedback_closed 4 → 5`。既有 4 条已收敛
+证据逐字段不变；`baseline.jsonl` / `post-v150.jsonl` 两包 sha 不变。
+
+剩余 6 条 `open` 的处方：`test_results` 绑定与 `verified` 升级、
+`registry/2`（v2.0.0）、`access` 名册激活（`agent_gateway.py register` 需人批准）、
+`lifecycle` 登记（`lifecycle.py status`）、经验候选确认（`ledger_lesson.py --confirm`）、
+`test_results` 投影未绑定。前两类需方法论仓迭代，后四类主要是目标项目侧动作。
+
+### 启动成本（必须一次性合并）
+
+任何权威源改动（`docs/23`、`upgrade.py`、`templates/*`、新增脚本）都会改变
+`method_assets.digest`，需再次人批准 `M5 + M7` 重绑主仓并复验。因此 v1.7.0 应把
+「语义图 + 条件化 SOP + M8 `activation` 占位 + `docs/23` 规划修正」合并为一次
+迭代，按 S1 固化证据 → S2 先写红灯 → S3 转绿 → S4 重绑 → 发版推进。
+`registry/2` 独立立项，需人批准数据迁移，不得由 Agent 自动执行。
