@@ -276,9 +276,14 @@ stage_feedback(){
   echo "  真实观察包 feedback_closed=${fc}，产物引用存在，导出幂等"
 }
 stage_acceptance(){
-  note '验收契约：正文数字 vs 代码常量 / 派生可复算 / 观察包 append-only'
+  note '验收契约：L1 正文数字 / L2 派生可复算 / L3 观察包 append-only / L4 前置条件'
   # S2 阶段本项预期红灯：先定义「什么算修好」，S3 改权威源后转绿。
   python3 scripts/acceptance.py --check --full
+}
+stage_preconditions(){
+  note 'v1.7.0 前置条件（独立阶段）：G1 规划一致性 / G2 条件化 SOP / G3 activation 占位'
+  # 与第 14 阶段同源断言，单列出来是为了让「范围裁剪」不会被整包绿灯掩盖。
+  python3 scripts/acceptance.py --preconditions --check --full
 }
 stage_hygiene(){
   note '脱敏 + 文档内链'
@@ -331,6 +336,7 @@ else
   run '本体层' stage_ontology
   run '卫生' stage_hygiene
   run '验收契约' stage_acceptance
+  run '前置条件' stage_preconditions
 fi
 
 printf '\n'
@@ -338,4 +344,4 @@ if [ "$FAILURES" -gt 0 ]; then
   printf '质量门禁失败：%d 个阶段未通过\n' "$FAILURES"
   exit 1
 fi
-printf '质量门禁全绿：测试 / 测试架构 / 证据分层 / 24 条三态不变量 / 场景矩阵 / 文件布局 / 升级与接入 / 资产与工作台契约 / 幂等 / 同步 / 反向回流 / 本体层 / 脱敏 / 文档链接 / 验收契约\n'
+printf '质量门禁全绿：测试 / 测试架构 / 证据分层 / 24 条三态不变量 / 场景矩阵 / 文件布局 / 升级与接入 / 资产与工作台契约 / 幂等 / 同步 / 反向回流 / 本体层 / 脱敏 / 文档链接 / 验收契约 / 前置条件\n'

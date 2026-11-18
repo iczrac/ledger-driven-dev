@@ -18,7 +18,9 @@ from _base import ROOT
 
 sys.path.insert(0, str(ROOT / "scripts"))
 from acceptance import (AXIS_KEYS, TOKEN, build, check_derived, classify,  # noqa: E402
-                        constants, evaluate_probe, historical, scan_literals, to_int)
+                        constants, evaluate_activation, evaluate_conditional,
+                        evaluate_probe, historical, roadmap_consistency,
+                        scan_literals, to_int)
 
 EXPECT = {"axis": 7, "pre_steps": 1, "post_steps": 19,
           "verify_checks": 12, "gate_criteria": 9}
@@ -231,6 +233,82 @@ class AppendOnlyTest(unittest.TestCase):
         self.assertIn("不幂等", " ".join(r2["errors"]))
 
 
+class PreconditionTest(unittest.TestCase):
+    """L4 绿灯自测：只证明判定逻辑有效，不断言当前仓库是红是绿。"""
+
+    ROADMAP_OK = ("## 七、后续\n\n"
+                  "v1.6.0 实际发布的是验收契约，语义图顺延。\n"
+                  "| v1.7.0 | 一致性与可适配性收敛版 |\n"
+                  "| v1.8.0 | Risk & Evidence |\n"
+                  "| v1.9.0 | Agent Autonomy Ladder |\n"
+                  "| v2.0.0 | registry/2 |\n")
+    CHANGELOG_OK = ("## [1.7.0] - 2026-11-18\n\n"
+                    "一致性与可适配性收敛版：v1.7.0 / v1.8.0 / v1.9.0 / v2.0.0。\n")
+    PRECOND_OK = ("v1.7.0 降级为「一致性与可适配性」收敛版，语义图再次顺延。\n")
+
+    def _tree(self, root: Path, roadmap: str, changelog: str, precond: str) -> None:
+        for d in ("docs", "feedback"):
+            (root / d).mkdir(parents=True, exist_ok=True)
+        (root / "docs" / "23-本体投影.md").write_text(roadmap, encoding="utf-8")
+        (root / "CHANGELOG.md").write_text(changelog, encoding="utf-8")
+        (root / "feedback" / "ACCEPTANCE-1.7.0-PRECONDITIONS.md").write_text(
+            precond, encoding="utf-8")
+
+    def test_roadmap_consistency_pass_and_named_failures(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            self._tree(root, self.ROADMAP_OK, self.CHANGELOG_OK, self.PRECOND_OK)
+            r = roadmap_consistency(root)
+            self.assertEqual(r["status"], "pass", r["errors"])
+            self.assertEqual(r["anchors"], ["v1.7.0", "v1.8.0", "v1.9.0", "v2.0.0"])
+
+            self._tree(root, "## 七、后续\n\nv1.6.0 才把本体投影升级为语义图。\n"
+                       + self.ROADMAP_OK.split("\n", 2)[2],
+                       self.CHANGELOG_OK, self.PRECOND_OK)
+            r2 = roadmap_consistency(root)
+            self.assertEqual(r2["status"], "fail")
+            self.assertTrue(any("v1.6.0 才" in e for e in r2["errors"]), r2["errors"])
+
+            self._tree(root, self.ROADMAP_OK.replace("| v1.8.0", "| vX"),
+                       self.CHANGELOG_OK, self.PRECOND_OK)
+            r3 = roadmap_consistency(root)
+            self.assertEqual(r3["status"], "fail")
+            self.assertTrue(any("v1.8.0" in e for e in r3["errors"]), r3["errors"])
+
+            self._tree(root, self.ROADMAP_OK, "## [1.6.0] - old\n\n无新段落\n",
+                       self.PRECOND_OK)
+            r4 = roadmap_consistency(root)
+            self.assertEqual(r4["status"], "fail")
+            self.assertTrue(any("1.7.0 发布段落" in e for e in r4["errors"]), r4["errors"])
+
+    def test_evaluate_conditional_named_failures(self):
+        cmds = ["noop"] * 19
+        for i in (1, 2, 15):
+            cmds[i - 1] = ("if [ -d tests ]; then run; "
+                           "else printf 'SKIP step=%d status=na\\n'; fi" % i)
+        skips = [{"step": i, "skip": True} for i in (1, 2, 15)]
+        self.assertEqual(evaluate_conditional(cmds, 19, skips, False)["status"], "pass")
+        bad = list(cmds)
+        bad[0] = "cd P && python3 governance/run_tests.py"
+        self.assertEqual(evaluate_conditional(bad, 19, skips, False)["status"], "fail")
+        self.assertEqual(evaluate_conditional(cmds, 19,
+                         [{"step": 1, "skip": False}], False)["status"], "fail")
+        self.assertEqual(evaluate_conditional(cmds, 19, skips, True)["status"], "fail")
+        self.assertEqual(evaluate_conditional(cmds, 20, skips, False)["status"], "fail")
+
+    def test_evaluate_activation_named_failures(self):
+        inv = {"passed": 23, "failed": 0, "na": 1, "all_active": False}
+        self.assertEqual(evaluate_activation({"state": "unbound"}, inv)["status"], "pass")
+        self.assertEqual(evaluate_activation(None, inv)["status"], "fail")
+        self.assertEqual(evaluate_activation({}, inv)["status"], "fail")
+        self.assertEqual(evaluate_activation({"state": "unbound"},
+                         {**inv, "na": 0, "all_active": True})["status"], "fail")
+        self.assertEqual(evaluate_activation({"state": "unbound"},
+                         {**inv, "passed": 22})["status"], "fail")
+        self.assertEqual(evaluate_activation({"state": "unbound"},
+                         {**inv, "failed": 1})["status"], "fail")
+
+
 class BuildTest(unittest.TestCase):
 
     def test_schema_is_stable_and_deterministic(self):
@@ -238,12 +316,22 @@ class BuildTest(unittest.TestCase):
         b = build(ROOT)
         self.assertEqual(a["schema"], "acceptance/1")
         self.assertEqual(a["constants"], EXPECT)
+        self.assertEqual(a["scope"], "full")
         self.assertEqual([c["id"] for c in a["checks"]],
-                         ["literal_drift", "derived_reproducible", "append_only"])
+                         ["literal_drift", "derived_reproducible", "append_only",
+                          "roadmap_consistency", "conditional_sop",
+                          "activation_placeholder"])
         # 不写死 overall：S3 转绿后本用例仍须通过。
         self.assertEqual(json.dumps(a, ensure_ascii=False, sort_keys=True),
                          json.dumps(b, ensure_ascii=False, sort_keys=True),
                          "验收报告必须确定性、无时间戳")
+
+    def test_preconditions_scope_is_exactly_l4(self):
+        r = build(ROOT, only_preconditions=True)
+        self.assertEqual(r["scope"], "preconditions")
+        self.assertEqual([c["id"] for c in r["checks"]],
+                         ["roadmap_consistency", "conditional_sop",
+                          "activation_placeholder"])
 
 
 if __name__ == "__main__":

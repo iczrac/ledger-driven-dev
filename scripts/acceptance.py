@@ -9,15 +9,18 @@ v1.5.0 发版只批量更新了资产 frontmatter 的 ``version``，正文里的
 覆盖写，会销毁观察包里已收敛的 triage 证据——本质是观察包缺 append-only
 写入契约。
 
-本脚本是**只读的验收定义**，分三层，全部不写权威文件：
+本脚本是**只读的验收定义**，分四层，全部不写权威文件：
 
   L1 literal_drift        手写源与派生文件里的计数 == upgrade.py 的代码常量
   L2 derived_reproducible 派生文件可由生成器复算（禁止手改派生文件绕过 L1）
   L3 append_only          观察包重复导出不销毁既有证据、按 obs_id 去重、幂等
+  L4 preconditions        v1.7.0 的 G1 / G2 / G3 机器断言（规划一致性 /
+                          条件化 SOP / 无报告时的 activation 占位）
 
-S2 阶段 L1 / L3 预期为红灯；S3 改权威源后三层同时转绿。本脚本自身不改任何
-实现，探针只在临时目录运行。它不新增第二事实源：期望值全部由 ``upgrade.py``
-的 AST 抽取，派生层复用三个既有 ``--emit-md`` 生成器。
+v1.6.0 的 S2 阶段 L1 / L3 预期为红灯；v1.7.0 的 S2 阶段 L4 三项同样刻意红灯，
+S3 改权威源后四层同时转绿。本脚本自身不改任何实现，探针只在临时目录运行。
+它不新增第二事实源：期望值全部由 ``upgrade.py`` 的 AST 抽取，派生层复用三个
+既有 ``--emit-md`` 生成器，L4 的 G3 在临时副本上真实调用 ``upgrade.apply()``。
 
 纪律
 ----
@@ -75,6 +78,15 @@ DERIVED = (
     ("docs/generated/TEST_MODULES.md", "scripts/test_modules.py"),
 )
 
+# ---------------------------------------------------------------- L4
+# v1.7.0 收敛版前置条件：G1 规划一致性 / G2 条件化 SOP / G3 activation 占位。
+# 三者都是「机器断言」，不是人眼复核；期望值从权威源文本与真实升级动作取得。
+ROADMAP_DOC = "docs/23-本体投影.md"
+CHANGELOG_DOC = "CHANGELOG.md"
+PRECOND_DOC = "feedback/ACCEPTANCE-1.7.0-PRECONDITIONS.md"
+DELAY_ANCHORS = ("v1.7.0", "v1.8.0", "v1.9.0", "v2.0.0")
+CONDITIONAL_STEPS = (1, 2, 15)
+
 CN = {"零": 0, "一": 1, "二": 2, "三": 3, "四": 4, "五": 5,
       "六": 6, "七": 7, "八": 8, "九": 9}
 TOKEN = re.compile(r"([0-9]+|[一二三四五六七八九十]+)\s*(轴|步|项)")
@@ -105,6 +117,7 @@ def constants(root: Path = ROOT) -> dict:
     tree = ast.parse(src)
     version = None
     pre_steps = post_steps = None
+    post_cmds: list[str] = []
     for node in tree.body:
         if isinstance(node, ast.Assign):
             names = [t.id for t in node.targets if isinstance(t, ast.Name)]
@@ -124,6 +137,13 @@ def constants(root: Path = ROOT) -> dict:
                     pre_steps = len(val.elts)
                 else:
                     post_steps = len(val.elts)
+                    # 相邻字符串字面量在 AST 里已合并为单个 Constant，可直接求值。
+                    # 抽文本供 G2 的静态守卫检查与动态负向回归使用，不写死任何步骤内容。
+                    try:
+                        post_cmds = [x for x in (ast.literal_eval(e) for e in val.elts)
+                                     if isinstance(x, str)]
+                    except (ValueError, TypeError, SyntaxError):
+                        post_cmds = []
 
     verify_ids: set[str] = set()
     gate_ids: set[str] = set()
@@ -161,6 +181,7 @@ def constants(root: Path = ROOT) -> dict:
                    "post_steps": post_steps, "verify_checks": len(verify_ids),
                    "gate_criteria": len(gate_ids)},
         "verify_ids": sorted(verify_ids), "gate_ids": sorted(gate_ids),
+        "post_upgrade_cmds": post_cmds,
         "basis": f"{UPGRADE} AST：METHOD_VERSION / PRE_UPGRADE / POST_UPGRADE 长度 / "
                  f"verify() 内 add() 去重 id / c['id'] in (...) 判据元组",
         "basis_errors": basis_errors,
@@ -307,32 +328,223 @@ def evaluate_probe(before: list[dict], after: list[dict], after2: list[dict],
             "closed_before": len(closed)}
 
 
-def build(root: Path = ROOT, tmp: Path | None = None) -> dict:
+# ---------------------------------------------------------------- L4 实现
+def _heading_section(text: str, heading_re: str) -> str:
+    """取二级标题正文到下一个二级标题（或文末）；找不到返回空串。"""
+    m = re.search(heading_re, text, re.M)
+    if not m:
+        return ""
+    rest = text[m.end():]
+    nxt = re.search(r"^##\s", rest, re.M)
+    return rest[:nxt.start()] if nxt else rest
+
+
+def roadmap_consistency(root: Path = ROOT) -> dict:
+    """G1：docs/23 第七节不再把 v1.6.0 定义为语义图，且与 CHANGELOG 顺延表一致。
+
+    机器断言而非人眼复核：三份文档必须含同一组顺延锚点，CHANGELOG 必须有
+    1.7.0 发布段落，前置契约必须写明 P1–P3 不满足时的范围裁剪依据。
+    """
+    errors: list[str] = []
+    paths = {"docs/23": root / ROADMAP_DOC, "CHANGELOG": root / CHANGELOG_DOC,
+             "PRECONDITIONS": root / PRECOND_DOC}
+    texts: dict[str, str] = {}
+    for name, p in paths.items():
+        if not p.is_file():
+            errors.append(f"缺 {name}（{p.name}）")
+        else:
+            texts[name] = p.read_text(encoding="utf-8")
+    sec = _heading_section(texts.get("docs/23", ""), r"^##\s*七、后续\s*$")
+    rel = _heading_section(texts.get("CHANGELOG", ""), r"^##\s*\[1\.7\.0\][^\n]*$")
+    if not sec:
+        errors.append("docs/23 第七节缺失")
+    if re.search(r"v1\.6\.0\s*才", sec):
+        errors.append("docs/23 第七节仍写着「v1.6.0 才做语义图」")
+    if not rel:
+        errors.append("CHANGELOG 缺 1.7.0 发布段落")
+    for label, block in (("docs/23 第七节", sec), ("CHANGELOG 1.7.0 段落", rel)):
+        for anchor in DELAY_ANCHORS:
+            if anchor not in block:
+                errors.append(f"{label} 缺顺延锚点 {anchor}")
+        if "收敛版" not in block:
+            errors.append(f"{label} 未写明「一致性与可适配性」收敛版范围")
+    pre = texts.get("PRECONDITIONS", "")
+    if "收敛版" not in pre or "语义图再次顺延" not in pre:
+        errors.append("前置契约未写明 P1–P3 不满足时的范围裁剪依据")
+    return {"status": "pass" if not errors else "fail", "errors": errors,
+            "roadmap_chars": len(sec), "changelog_chars": len(rel),
+            "anchors": list(DELAY_ANCHORS)}
+
+
+def _materialize(cmd: str, target: Path) -> str:
+    """把 SOP 里记作 P 的目标项目占位符换成临时 fixture 路径。"""
+    return re.sub(r"(?<![\w])P(?![\w])", str(target), cmd)
+
+
+def evaluate_conditional(cmds: list[str], post_steps: int,
+                         skips: list[dict], generated: bool) -> dict:
+    """纯函数：G2 判定逻辑，供绿灯自测喂正确/错误输入。"""
+    errors: list[str] = []
+    if len(cmds) != post_steps:
+        errors.append("POST_UPGRADE 文本抽取与 AST 长度不一致")
+    for i in CONDITIONAL_STEPS:
+        if i > len(cmds):
+            errors.append(f"第 {i} 步不存在")
+            continue
+        cmd = cmds[i - 1]
+        if "if [" not in cmd:
+            errors.append(f"第 {i} 步缺 shell 条件守卫")
+        if "SKIP" not in cmd or "status=na" not in cmd:
+            errors.append(f"第 {i} 步缺可审计 skip 记录（SKIP / status=na）")
+    for s in skips:
+        if not s.get("skip"):
+            errors.append(f"第 {s.get('step')} 步在空 tests/ fixture 上未降级为 skip："
+                          f"{str(s.get('detail', ''))[:100]}")
+    if generated:
+        errors.append("空 tests/ fixture 上仍生成了 governance/test_report.json")
+    return {"status": "pass" if not errors else "fail", "errors": errors}
+
+
+def conditional_sop(root: Path = ROOT) -> dict:
+    """G2：第 1/2/15 步在无 tests/ 项目上降级为显式 na + 可审计 skip 记录。
+
+    静态检查三步都带 shell 守卫与 SKIP/status=na；动态在空 fixture 上真实
+    执行三步命令，断言不生成 governance/test_report.json。post 步数不变。
+    """
     c = constants(root)
-    with (tempfile.TemporaryDirectory() if tmp is None else _NullCtx(tmp)) as td:
-        work = Path(td)
-        lit = scan_literals(root, c["expect"])
-        der = check_derived(root, work)
-        probe = merge_probe(root, work)
-    app = evaluate_probe(probe["before"], probe["after"], probe["after2"],
-                         probe["rc1"], probe["rc2"])
-    checks = [
-        {"id": "literal_drift",
-         "status": "fail" if lit["drifts"] or c["basis_errors"] else "pass",
-         "scanned_files": lit["scanned_files"], "drift_count": lit["drift_count"],
-         "items": lit["drifts"], "basis_errors": c["basis_errors"]},
-        {"id": "derived_reproducible",
-         "status": "pass" if all(x["reproducible"] for x in der) else "fail",
-         "items": der},
-        {"id": "append_only", "status": app["status"],
-         "rows_before": app["rows_before"], "rows_after": app["rows_after"],
-         "closed_before": app["closed_before"], "errors": app["errors"]},
+    cmds = c["post_upgrade_cmds"]
+    skips: list[dict] = []
+    generated = False
+    with tempfile.TemporaryDirectory() as td:
+        proj = Path(td) / "P"
+        (proj / "governance").mkdir(parents=True)
+        for i in CONDITIONAL_STEPS:
+            if i > len(cmds):
+                skips.append({"step": i, "skip": False, "detail": "步骤不存在"})
+                continue
+            r = subprocess.run(["bash", "-c", _materialize(cmds[i - 1], proj)],
+                               cwd=root, capture_output=True, text=True)
+            skipped = r.returncode == 0 and "SKIP" in r.stdout
+            skips.append({"step": i, "skip": skipped,
+                          "detail": f"rc={r.returncode} / {r.stdout[:70]!r} / "
+                                    f"{r.stderr[:70]!r}"})
+        generated = (proj / "governance" / "test_report.json").exists()
+    verdict = evaluate_conditional(cmds, c["expect"]["post_steps"], skips, generated)
+    return {"status": verdict["status"], "errors": verdict["errors"],
+            "post_steps": len(cmds), "conditional_steps": list(CONDITIONAL_STEPS),
+            "skips": skips, "report_generated": generated}
+
+
+def evaluate_activation(activation: object, invariants: dict) -> dict:
+    """纯函数：G3 判定逻辑，供绿灯自测喂正确/错误输入。"""
+    errors: list[str] = []
+    if not isinstance(activation, dict) or not activation.get("state"):
+        errors.append("M8 未写入显式 activation 占位（仍为 null）")
+    if invariants.get("failed") != 0 or invariants.get("na") != 1 \
+            or invariants.get("all_active") is not False:
+        errors.append("三态语义回归：需要 failed=0 / na=1 / all_active=false")
+    if invariants.get("passed") != 23:
+        errors.append("24 条不变量计数回归：需要 23 pass + 1 na")
+    return {"status": "pass" if not errors else "fail", "errors": errors}
+
+
+def activation_placeholder(root: Path = ROOT) -> dict:
+    """G3：无报告时 M8 写入显式 activation 占位，且三态不变量不回归。
+
+    在临时副本上真实调用 upgrade.apply()（人批准探针），读回账本与校验器
+    输出；不触碰任何权威文件，也不触碰目标项目 P。
+    """
+    errors: list[str] = []
+    activation: object = None
+    invariants: dict = {}
+    with tempfile.TemporaryDirectory() as td:
+        base = Path(td)
+        proj = base / "examples" / "demo-shop"
+        shutil.copytree(root / "examples" / "demo-shop", proj,
+                        ignore=shutil.ignore_patterns("__pycache__"))
+        (proj / "governance" / "test_report.json").unlink(missing_ok=True)
+        lp = proj / "governance" / "DECISION_LEDGER.json"
+        ledger = json.loads(lp.read_text(encoding="utf-8"))
+        ledger.pop("test_results", None)
+        lp.write_text(json.dumps(ledger, ensure_ascii=False, indent=2), encoding="utf-8")
+        sys.path.insert(0, str(root / "scripts"))
+        import upgrade  # noqa: E402  — 复用真实升级器，不重写第二套规则
+        p = upgrade.plan(proj, root)
+        if p["blocks"]:
+            errors.append("fixture 升级被前置条件阻止："
+                          + "；".join(b["id"] for b in p["blocks"]))
+        else:
+            upgrade.apply(proj, "acceptance-gate", source_root=root, p=p)
+        after = json.loads(lp.read_text(encoding="utf-8"))
+        activation = (after.get("governance_meta") or {}).get("activation")
+        out = subprocess.run(
+            [sys.executable, str(proj / "governance" / "verify_ledger.py"),
+             "--root", str(base), "--registry", str(proj / "governance" / "registry.json"),
+             "--ledger", str(lp), "--board", str(proj / "governance" / "index.html"),
+             "--json"], capture_output=True, text=True)
+        try:
+            v = json.loads(out.stdout)
+            invariants = {k: v.get(k) for k in
+                          ("passed", "failed", "na", "all_ok", "all_active")}
+        except json.JSONDecodeError:
+            errors.append("verify_ledger.py --json 输出不可解析：" + out.stderr[:80])
+    verdict = evaluate_activation(activation, invariants)
+    errors.extend(verdict["errors"])
+    return {"status": "pass" if not errors else "fail", "errors": errors,
+            "activation_state": activation.get("state") if isinstance(activation, dict) else None,
+            "invariants": invariants}
+
+
+def build(root: Path = ROOT, tmp: Path | None = None,
+          only_preconditions: bool = False) -> dict:
+    c = constants(root)
+    lit: dict | None = None
+    review: list[dict] = []
+    der: list[dict] = []
+    app: dict = {"status": "pass", "rows_before": 0, "rows_after": 0,
+                 "closed_before": 0, "errors": []}
+    if not only_preconditions:
+        with (tempfile.TemporaryDirectory() if tmp is None else _NullCtx(tmp)) as td:
+            work = Path(td)
+            lit = scan_literals(root, c["expect"])
+            der = check_derived(root, work)
+            probe = merge_probe(root, work)
+        app = evaluate_probe(probe["before"], probe["after"], probe["after2"],
+                             probe["rc1"], probe["rc2"])
+        review = lit["review"]
+    g1 = roadmap_consistency(root)
+    g2 = conditional_sop(root)
+    g3 = activation_placeholder(root)
+    checks: list[dict] = []
+    if not only_preconditions:
+        checks += [
+            {"id": "literal_drift",
+             "status": "fail" if lit["drifts"] or c["basis_errors"] else "pass",
+             "scanned_files": lit["scanned_files"], "drift_count": lit["drift_count"],
+             "items": lit["drifts"], "basis_errors": c["basis_errors"]},
+            {"id": "derived_reproducible",
+             "status": "pass" if all(x["reproducible"] for x in der) else "fail",
+             "items": der},
+            {"id": "append_only", "status": app["status"],
+             "rows_before": app["rows_before"], "rows_after": app["rows_after"],
+             "closed_before": app["closed_before"], "errors": app["errors"]},
+        ]
+    checks += [
+        {"id": "roadmap_consistency", "status": g1["status"],
+         "errors": g1["errors"], "anchors": g1["anchors"]},
+        {"id": "conditional_sop", "status": g2["status"], "errors": g2["errors"],
+         "post_steps": g2["post_steps"], "skips": g2["skips"],
+         "report_generated": g2["report_generated"]},
+        {"id": "activation_placeholder", "status": g3["status"],
+         "errors": g3["errors"], "activation_state": g3["activation_state"],
+         "invariants": g3["invariants"]},
     ]
     return {"schema": SCHEMA, "method_version": c["version"],
             "constants": c["expect"], "basis": c["basis"],
             "verify_ids": c["verify_ids"], "gate_ids": c["gate_ids"],
-            "checks": checks, "review": lit["review"],
-            "review_count": lit["review_count"],
+            "checks": checks, "review": review,
+            "review_count": len(review),
+            "scope": "preconditions" if only_preconditions else "full",
             "overall": "fail" if any(x["status"] != "pass" for x in checks) else "pass"}
 
 
@@ -348,7 +560,8 @@ class _NullCtx:
 
 
 def render(result: dict, full: bool = False) -> str:
-    lines = [f"验收契约 {result['schema']} · 目标版本 {result['method_version']}",
+    lines = [f"验收契约 {result['schema']} · 目标版本 {result['method_version']}"
+             f" · 范围 {result['scope']}",
              f"代码常量：轴={result['constants']['axis']} "
              f"pre={result['constants']['pre_steps']} "
              f"post={result['constants']['post_steps']} "
@@ -371,11 +584,21 @@ def render(result: dict, full: bool = False) -> str:
             for it in c["items"]:
                 lines.append(f"         {'OK ' if it['reproducible'] else 'STALE '}{it['path']}"
                              + ("" if it["reproducible"] else f" — {it['reason']}"))
-        else:
+        elif c["id"] == "append_only":
             lines.append(f"         观察包 {c['rows_before']} → {c['rows_after']} 行，"
                          f"含 {c['closed_before']} 条已收敛证据")
             for e in c["errors"]:
                 lines.append(f"         {e}")
+        else:  # L4 前置条件三项
+            for e in c["errors"]:
+                lines.append(f"         {e}")
+            if c["id"] == "conditional_sop":
+                lines.append(f"         post 步数 {c['post_steps']}；"
+                             f"空 fixture 生成报告={c['report_generated']}；"
+                             f"skip={[x['skip'] for x in c['skips']]}")
+            if c["id"] == "activation_placeholder":
+                lines.append(f"         activation={c['activation_state']}；"
+                             f"不变量 {c['invariants']}")
     lines.append(f"结论：{result['overall'].upper()}"
                  + ("（S2 预期红灯；S3 改权威源后转绿）" if result["overall"] == "fail" else ""))
     return "\n".join(lines)
@@ -387,8 +610,10 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--check", action="store_true", help="按验收契约判定，未达标返回 1")
     ap.add_argument("--json", action="store_true", help="输出 acceptance/1 JSON")
     ap.add_argument("--full", action="store_true", help="文本摘要列出全部漂移")
+    ap.add_argument("--preconditions", action="store_true",
+                    help="只跑 L4 的 G1 / G2 / G3 机器断言（第 15 门禁阶段）")
     args = ap.parse_args(argv)
-    result = build()
+    result = build(only_preconditions=args.preconditions)
     if args.json:
         print(json.dumps(result, ensure_ascii=False, indent=2))
     else:
