@@ -48,7 +48,8 @@ REQUIRED = ("schema", "obs_id", "source_ref", "method_version", "phase", "sympto
             "affected_axis", "severity", "evidence_sha", "status")
 AXES = ("method_version", "ledger_version", "tool_hashes", "method_assets",
         "board_skeleton", "installed_assets", "work_items", "test_results",
-        "access", "lifecycle", "registry", "evidence", "hygiene", "scale", "general")
+        "access", "lifecycle", "registry", "evidence", "hygiene", "scale",
+        "ontology", "general")
 
 # 症状关键词 -> 受影响轴。只是默认分类，triage 时可人工改。
 AXIS_HINTS = (
@@ -62,6 +63,9 @@ AXIS_HINTS = (
     ("board", "board_skeleton"), ("看板", "board_skeleton"), ("embed", "board_skeleton"),
     ("hygiene", "hygiene"), ("脱敏", "hygiene"), ("分片", "scale"), ("规模", "scale"),
     ("upgrade", "method_version"), ("升级", "method_version"), ("迁移", "method_version"),
+    # v1.5.0：本体漂移单独成轴，排在其他提示之后，避免改变既有观察的分类。
+    ("本体", "ontology"), ("基数", "ontology"), ("取值域", "ontology"),
+    ("状态词", "ontology"), ("ontology", "ontology"),
 )
 
 

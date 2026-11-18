@@ -2,6 +2,72 @@
 
 本项目版本遵循语义化版本（SemVer）。
 
+## [1.5.0] - 2026-11-18
+
+本体投影层落地。**只改方法论仓库权威源，不触碰任何已引入项目的账本数据契约、
+不自动升级任何项目、不改 `registry` 数据形状。**
+
+### 决策依据
+
+这套系统早就在隐式回答本体四问（实体 / 取值域 / 关系基数 / 公理），问题不是
+「要不要有本体」，而是「要不要把散落的答案收成一份可机器复算的元契约」。
+取证发现 `docs/STANDARD.md` 第四章只声明 4 类状态机、实际运行 9 套以上；
+账本 `fields` 只自述 5 个字段而实际条目有 12 个；`registry.project` 是单数 dict
+而派生能力模型有 4 个项目。**没有任何机器能命名这是一条基数公理违例**，
+所以此前只能靠「不跑生成器重算」人为回避。
+
+关键判断：本体一旦变成第二份手维护的事实，`registry.json` 的覆辙会原样重演。
+因此唯一自洽的形态是 `ONTOLOGY = f(权威源)` 的**派生只读投影**：删光派生文件
+也能逐字节复原。另外「状态词全项目统一」这句抽象本身是错的——9 套状态机属于
+9 类实体，本体统一的是 `<Type>.field` 形式，不是取值。
+
+顺序上本体必须排在 `registry/2` 之前：**先定义什么合法，再改数据长什么样**。
+
+### 新增：`scripts/ontology.py`
+
+- `build` 用 AST 从 `docs/STANDARD.md` 词表 + 6 个脚本的真实枚举 + 校验器
+  `add()` 的 24 个不变量 id 抽取 TBox，输出确定性 `ledger-ontology/1`；
+  每个来源带 `sha256`，每条关系带 `derivation` 与 `source_ref`（无孤儿边）。
+- `check` 校验投影同步、来源绑定、幂等、声明值 ↔ 代码枚举一致、词表分型；
+  `--target P` 只读检查三类漂移：`polyseme_violation` /
+  `cardinality_contradiction` / `undeclared_entity` + `undeclared_value`。
+  未升级项目记 `na`，不把「未启用」算成通过。
+- `diff --target P` 复用 `ledger_feedback.make_obs` 输出
+  `affected_axis=ontology` 观察，走 v1.4.0 四产物 triage 闭环；
+  `emit-md` / `digest` 提供只读视图与摘要。写盘一律需 `--apply --approved-by`。
+- 不引入 OWL / RDF / 图数据库 / 开放世界语义；零第三方依赖、无时间戳。
+
+### 词表与第七轴
+
+- `docs/STANDARD.md` 第四章改写为 **18 个 `<Type>.field` 分型取值域**，
+  并把 `level` / `evidence_tier` / `severity` / `confidence` 四条序数尺度解耦。
+  只改代码不改词表判 `undeclared_value`，只改词表不改代码判 `undeclared_entity`。
+- `docs/generated/ONTOLOGY.json` + `ONTOLOGY.md` 为派生只读投影。
+- `upgrade.py apply` 在 **M5 分支**写入 `governance_meta.ontology_digest`
+  （第七轴，只存摘要不复制本体）；`verify` 新增 `ontology_binding`
+  （`pass` / `na` / `warn`）。**8 条迁移与 19 步升级后流程保持不变**。
+
+### 真实闭环
+
+首次对存量多项目仓库运行 `diff`，把此前模糊的 monorepo gap 命名为
+`cardinality_contradiction`（4 个项目 vs 单数 project，命中 A4），
+并 triage 成 `tests/meta/test_ontology.py` 的负向回归。观察包从
+**12 条 / 3 收敛**变为 **13 条 / 4 收敛**。
+
+### 验证
+
+- 新增 `tests/meta/test_ontology.py` 12 个回归（含「先失败后通过」、
+  非法状态词、伪造单项目 registry、幂等、无批准人写盘被拒、第七轴绑定）；
+  `tests/MODULES.json` 纳管 23 个测试文件。
+- `scripts/check.sh` 新增「本体层」阶段（共 13 阶段），并在「升级与接入」
+  阶段校验升级后的第七轴绑定。
+- `docs/23-本体投影.md`；28 份资产 frontmatter 与 `METHOD_VERSION` 统一 1.5.0。
+
+### 边界
+
+`registry/2` 多项目契约仍留 **v2.0.0** 且需人批准数据迁移；语义图、
+风险/证据语义、Agent 自治阶梯顺延 v1.6.0 / v1.7.0 / v1.8.0。
+
 ## [1.4.0] - 2026-11-18
 
 反向回流闭环（L0 元层）落地。**只改方法论仓库权威源，不触碰任何已引入项目的账本

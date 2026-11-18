@@ -78,12 +78,13 @@ from asset_bundle import (bundle as installed_bundle,  # noqa: E402
 from work_panel import check as work_panel_check  # noqa: E402
 from work_panel import test_results_from_report  # noqa: E402
 from test_modules import validate as test_modules_validate  # noqa: E402
+from ontology import expected_digest  # noqa: E402
 
 SOURCE_ROOT = Path(__file__).resolve().parents[1]
 SCHEMA_PLAN = "upgrade-plan/1"
 SCHEMA_APPLY = "upgrade-apply/1"
 SCHEMA_VERIFY = "upgrade-verify/1"
-METHOD_VERSION = "1.4.0"
+METHOD_VERSION = "1.5.0"
 LEDGER_SCHEMA_VERSION = "1.0"
 SUPPORTED_LEDGER_VERSIONS = {"1.0"}
 ACCESS_SCHEMA = "access/1"
@@ -407,6 +408,9 @@ def apply(target: Path, approved_by: str, *,
         "file_count": assets["file_count"], "counts": assets["counts"],
         "source": "方法论仓库 tag（权威源，不复制；只读副本由 M7 安装）",
     }
+    # 第七轴：本体投影摘要。只存可复算的 digest，不复制本体内容；
+    # ontology.py check --target P 会重算比对，删光派生文件也能复原。
+    meta["ontology_digest"] = expected_digest(source_root)
     meta["board_skeleton"] = {
         "digest": template_digest(source_root),
         "source": "templates/index.html.template",
@@ -494,6 +498,20 @@ def verify(target: Path, source_root: Path = SOURCE_ROOT) -> dict:
             "资产不可用：" + "；".join(e["reason"] for e in iv["errors"][:3]),
             "" if iv["ok"] else iv["hint"])
 
+        # 第七轴：本体是可丢弃重建的派生投影，账本只存 digest，校验靠复算。
+        want_ontology = expected_digest(source_root)
+        got_ontology = meta.get("ontology_digest")
+        if got_ontology is None:
+            add("ontology_binding", "na",
+                "目标项目尚未绑定 ontology_digest（升级后由 M5 写入）",
+                "python3 scripts/upgrade.py --target P apply --approved-by <人>")
+        elif got_ontology == want_ontology:
+            add("ontology_binding", "pass", "本体投影摘要与权威源一致")
+        else:
+            add("ontology_binding", "warn",
+                f"本体投影漂移：项目 {str(got_ontology)[:12]} / 权威源 {want_ontology[:12]}",
+                "重新 plan → 人批准 apply → 复验")
+
         wp = work_panel_check(target)
         add("work_panel", "pass" if wp["ok"] else "warn",
             f"节点工作态自洽（{wp.get('work_items', 0)} 工作项 / "
@@ -535,7 +553,7 @@ def verify(target: Path, source_root: Path = SOURCE_ROOT) -> dict:
                 # 但 upgrade_complete 不等于「证据已激活」。
                 c["status"] in ("pass", "na") for c in checks
                 if c["id"] in ("method_version", "tool_hashes", "access_schema",
-                               "method_assets", "board_skeleton",
+                               "method_assets", "board_skeleton", "ontology_binding",
                                "installed_assets", "work_panel",
                                "evidence_rebaseline")),
             "post_upgrade_required": list(POST_UPGRADE),

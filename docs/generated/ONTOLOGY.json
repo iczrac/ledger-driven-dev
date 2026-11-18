@@ -1,0 +1,779 @@
+{
+  "schema": "ledger-ontology/1",
+  "generated_by": "scripts/ontology.py build",
+  "source": "方法论仓库权威源（只读投影，不是第二事实源）",
+  "source_refs": [
+    {
+      "path": "docs/STANDARD.md",
+      "role": "ubiquitous_language",
+      "sha256": "c4177d34f5472cc86a0eb3b0af7df42e9f0a4f2a1e9080b4e29c16326f428c57"
+    },
+    {
+      "path": "scripts/work_panel.py",
+      "role": "value_domains",
+      "sha256": "9e8b1d0469449a854dcfea70a30bdcdf072d8de3c131145bcfbc36c3b5d1936a"
+    },
+    {
+      "path": "scripts/scenario_matrix.py",
+      "role": "value_domains",
+      "sha256": "f9f747f1870a0db41a76be5671d4d51707a12aa0e6925bce26608717f763c0b1"
+    },
+    {
+      "path": "scripts/ledger_feedback.py",
+      "role": "value_domains",
+      "sha256": "f1ddc074c3cb1614d6a65211c3c07e02ef06be31343f2992a4527326db5e6dfd"
+    },
+    {
+      "path": "scripts/agent_gateway.py",
+      "role": "value_domains",
+      "sha256": "efa78204bdbe89b6fe7e3e44fe0c9e05038d4593871a9399b33102e86d85b5dd"
+    },
+    {
+      "path": "templates/build_capability_model.py",
+      "role": "value_domains",
+      "sha256": "56beec24e4a15a7e90a34e787805e19d8a4fffae075c4c5702707e54145b80d8"
+    },
+    {
+      "path": "templates/verify_ledger.py",
+      "role": "axioms",
+      "sha256": "3747a5e212c783f7025ed99cfb5dca1f7fe75081bc5e766f024fcab5a4c322b4"
+    }
+  ],
+  "bounded_contexts": [
+    {
+      "id": "BC-FACT",
+      "name": "账本事实",
+      "responsibility": "决策 / 能力 / 工作项 / 测试投影",
+      "relation": "shared-kernel"
+    },
+    {
+      "id": "BC-METHOD",
+      "name": "方法论与版本",
+      "responsibility": "版本 / 迁移 / 资产 / 发布",
+      "relation": "published-language"
+    },
+    {
+      "id": "BC-VERIFY",
+      "name": "校验与证据",
+      "responsibility": "不变量 / 门禁 / 证据分层",
+      "relation": "downstream"
+    },
+    {
+      "id": "BC-ADOPT",
+      "name": "目标项目落地",
+      "responsibility": "升级 / 只读副本 / 骨架",
+      "relation": "conformist+acl"
+    },
+    {
+      "id": "BC-FEEDBACK",
+      "name": "观察与回流",
+      "responsibility": "观察 / triage / 基线 diff",
+      "relation": "upstream"
+    },
+    {
+      "id": "BC-DOMAIN",
+      "name": "业务领域",
+      "responsibility": "被治理项目 1..N",
+      "relation": "consumer"
+    }
+  ],
+  "entity_types": [
+    {
+      "id": "Project",
+      "bc": "BC-DOMAIN",
+      "source": "capability_model.projects[]"
+    },
+    {
+      "id": "Module",
+      "bc": "BC-DOMAIN",
+      "source": "capability_model.projects[].modules[]"
+    },
+    {
+      "id": "Capability",
+      "bc": "BC-DOMAIN",
+      "source": "registry.modules[].caps[]"
+    },
+    {
+      "id": "Decision",
+      "bc": "BC-FACT",
+      "source": "entries[]"
+    },
+    {
+      "id": "Rationale",
+      "bc": "BC-FACT",
+      "source": "entries[].rationale"
+    },
+    {
+      "id": "Evidence",
+      "bc": "BC-VERIFY",
+      "source": "entries[].evidence[] / test_results"
+    },
+    {
+      "id": "Claim",
+      "bc": "BC-VERIFY",
+      "source": "entries[].decision"
+    },
+    {
+      "id": "Risk",
+      "bc": "BC-FEEDBACK",
+      "source": "work_items[kind=issue] / observations"
+    },
+    {
+      "id": "Action",
+      "bc": "BC-FACT",
+      "source": "work_items[] / upgrade_log"
+    },
+    {
+      "id": "Outcome",
+      "bc": "BC-VERIFY",
+      "source": "test_results / verify 输出"
+    },
+    {
+      "id": "Observation",
+      "bc": "BC-FEEDBACK",
+      "source": "feedback/observations.jsonl"
+    },
+    {
+      "id": "Lesson",
+      "bc": "BC-FACT",
+      "source": "lessons.items[]"
+    },
+    {
+      "id": "Pattern",
+      "bc": "BC-METHOD",
+      "source": "lessons / 回归用例"
+    },
+    {
+      "id": "Agent",
+      "bc": "BC-ADOPT",
+      "source": "access.agents[]"
+    },
+    {
+      "id": "Asset",
+      "bc": "BC-METHOD",
+      "source": "governance_meta.method_assets"
+    },
+    {
+      "id": "Invariant",
+      "bc": "BC-VERIFY",
+      "source": "verify_ledger.py add() ids"
+    }
+  ],
+  "ledger_top_fields": [
+    "access",
+    "architecture",
+    "capability_model",
+    "coding_spec",
+    "doc_index",
+    "entries",
+    "fields",
+    "governance_meta",
+    "history",
+    "last_updated",
+    "ledger_version",
+    "lessons",
+    "lifecycle",
+    "module_map",
+    "next_queue",
+    "observations",
+    "owner",
+    "purpose",
+    "registry",
+    "test_results",
+    "title",
+    "work_items",
+    "workflow"
+  ],
+  "ubiquitous_language": [
+    {
+      "term": "affected_axis",
+      "entities": [
+        "Observation"
+      ],
+      "qualified_form": "<Type>.affected_axis",
+      "polyseme": false,
+      "definition": "按实体分型的状态词，禁止裸用"
+    },
+    {
+      "term": "case_status",
+      "entities": [
+        "TestResult"
+      ],
+      "qualified_form": "<Type>.case_status",
+      "polyseme": false,
+      "definition": "按实体分型的状态词，禁止裸用"
+    },
+    {
+      "term": "confidence",
+      "entities": [],
+      "qualified_form": "<Type>.confidence",
+      "polyseme": false,
+      "definition": "断言置信度，必须可回溯至 evidence_binding"
+    },
+    {
+      "term": "disposition",
+      "entities": [
+        "Observation"
+      ],
+      "qualified_form": "<Type>.disposition",
+      "polyseme": false,
+      "definition": "按实体分型的状态词，禁止裸用"
+    },
+    {
+      "term": "evidence_tier",
+      "entities": [
+        "Capability"
+      ],
+      "qualified_form": "<Type>.evidence_tier",
+      "polyseme": false,
+      "definition": "按实体分型的状态词，禁止裸用"
+    },
+    {
+      "term": "kind",
+      "entities": [
+        "HistoryEvent",
+        "WorkItem"
+      ],
+      "qualified_form": "<Type>.kind",
+      "polyseme": true,
+      "definition": "按实体分型的状态词，禁止裸用"
+    },
+    {
+      "term": "level",
+      "entities": [
+        "Capability"
+      ],
+      "qualified_form": "<Type>.level",
+      "polyseme": false,
+      "definition": "按实体分型的状态词，禁止裸用"
+    },
+    {
+      "term": "role",
+      "entities": [
+        "Agent"
+      ],
+      "qualified_form": "<Type>.role",
+      "polyseme": false,
+      "definition": "按实体分型的状态词，禁止裸用"
+    },
+    {
+      "term": "severity",
+      "entities": [
+        "Observation",
+        "WorkItem"
+      ],
+      "qualified_form": "<Type>.severity",
+      "polyseme": true,
+      "definition": "按实体分型的状态词，禁止裸用"
+    },
+    {
+      "term": "source_adapter",
+      "entities": [
+        "TestReport"
+      ],
+      "qualified_form": "<Type>.source_adapter",
+      "polyseme": false,
+      "definition": "按实体分型的状态词，禁止裸用"
+    },
+    {
+      "term": "status",
+      "entities": [
+        "Check",
+        "Decision",
+        "Lesson",
+        "LessonCandidate",
+        "Observation",
+        "Scenario",
+        "WorkItem"
+      ],
+      "qualified_form": "<Type>.status",
+      "polyseme": true,
+      "definition": "按实体分型的状态词，禁止裸用"
+    }
+  ],
+  "value_domains": [
+    {
+      "id": "Agent.role",
+      "entity": "Agent",
+      "field": "role",
+      "values": [
+        "evidence-auditor",
+        "expert-router",
+        "greenfield-architect",
+        "ledger-steward",
+        "loop-executor",
+        "platform-steward",
+        "project-archaeologist",
+        "release-steward"
+      ],
+      "declared_ref": "docs/STANDARD.md#四",
+      "implementation": "scripts/agent_gateway.py#ROLE_POLICIES",
+      "observed_values": [
+        "evidence-auditor",
+        "expert-router",
+        "greenfield-architect",
+        "ledger-steward",
+        "loop-executor",
+        "platform-steward",
+        "project-archaeologist",
+        "release-steward"
+      ],
+      "observed_ref": "scripts/agent_gateway.py#ROLE_POLICIES"
+    },
+    {
+      "id": "Capability.evidence_tier",
+      "entity": "Capability",
+      "field": "evidence_tier",
+      "values": [
+        "declared",
+        "verified"
+      ],
+      "declared_ref": "docs/STANDARD.md#四",
+      "implementation": "templates/build_capability_model.py#EVIDENCE_TIER_SPEC",
+      "observed_values": [
+        "declared",
+        "verified"
+      ],
+      "observed_ref": "templates/build_capability_model.py#EVIDENCE_TIER_SPEC"
+    },
+    {
+      "id": "Capability.level",
+      "entity": "Capability",
+      "field": "level",
+      "values": [
+        "L0",
+        "L1",
+        "L2",
+        "L3",
+        "L4",
+        "L5"
+      ],
+      "declared_ref": "docs/STANDARD.md#四",
+      "implementation": "templates/build_capability_model.py#LEVELS",
+      "observed_values": [
+        "L0",
+        "L1",
+        "L2",
+        "L3",
+        "L4",
+        "L5"
+      ],
+      "observed_ref": "templates/build_capability_model.py#LEVELS"
+    },
+    {
+      "id": "Check.status",
+      "entity": "Check",
+      "field": "status",
+      "values": [
+        "fail",
+        "na",
+        "pass"
+      ],
+      "declared_ref": "docs/STANDARD.md#四",
+      "implementation": "templates/verify_ledger.py#三态语义",
+      "observed_values": [],
+      "observed_ref": null
+    },
+    {
+      "id": "Decision.status",
+      "entity": "Decision",
+      "field": "status",
+      "values": [
+        "decided",
+        "deferred",
+        "done",
+        "proposed",
+        "superseded"
+      ],
+      "declared_ref": "docs/STANDARD.md#四",
+      "implementation": "entries[].status",
+      "observed_values": [],
+      "observed_ref": null
+    },
+    {
+      "id": "HistoryEvent.kind",
+      "entity": "HistoryEvent",
+      "field": "kind",
+      "values": [
+        "change",
+        "genesis",
+        "manual"
+      ],
+      "declared_ref": "docs/STANDARD.md#四",
+      "implementation": "templates/build_capability_model.py#HISTORY_SPEC",
+      "observed_values": [],
+      "observed_ref": null
+    },
+    {
+      "id": "Lesson.status",
+      "entity": "Lesson",
+      "field": "status",
+      "values": [
+        "confirmed",
+        "draft",
+        "retired"
+      ],
+      "declared_ref": "docs/STANDARD.md#四",
+      "implementation": "templates/verify_ledger.py#LESSON_STATUS",
+      "observed_values": [
+        "confirmed",
+        "draft",
+        "retired"
+      ],
+      "observed_ref": "templates/verify_ledger.py#LESSON_STATUS"
+    },
+    {
+      "id": "LessonCandidate.status",
+      "entity": "LessonCandidate",
+      "field": "status",
+      "values": [
+        "dismissed",
+        "open"
+      ],
+      "declared_ref": "docs/STANDARD.md#四",
+      "implementation": "templates/build_capability_model.py#LESSONS_SPEC",
+      "observed_values": [],
+      "observed_ref": null
+    },
+    {
+      "id": "Observation.affected_axis",
+      "entity": "Observation",
+      "field": "affected_axis",
+      "values": [
+        "access",
+        "board_skeleton",
+        "evidence",
+        "general",
+        "hygiene",
+        "installed_assets",
+        "ledger_version",
+        "lifecycle",
+        "method_assets",
+        "method_version",
+        "ontology",
+        "registry",
+        "scale",
+        "test_results",
+        "tool_hashes",
+        "work_items"
+      ],
+      "declared_ref": "docs/STANDARD.md#四",
+      "implementation": "scripts/ledger_feedback.py#AXES",
+      "observed_values": [
+        "access",
+        "board_skeleton",
+        "evidence",
+        "general",
+        "hygiene",
+        "installed_assets",
+        "ledger_version",
+        "lifecycle",
+        "method_assets",
+        "method_version",
+        "ontology",
+        "registry",
+        "scale",
+        "test_results",
+        "tool_hashes",
+        "work_items"
+      ],
+      "observed_ref": "scripts/ledger_feedback.py#AXES"
+    },
+    {
+      "id": "Observation.disposition",
+      "entity": "Observation",
+      "field": "disposition",
+      "values": [
+        "invariant",
+        "migration",
+        "regression",
+        "scenario",
+        "wontfix"
+      ],
+      "declared_ref": "docs/STANDARD.md#四",
+      "implementation": "scripts/ledger_feedback.py#DISPOSITIONS",
+      "observed_values": [
+        "invariant",
+        "migration",
+        "regression",
+        "scenario",
+        "wontfix"
+      ],
+      "observed_ref": "scripts/ledger_feedback.py#DISPOSITIONS"
+    },
+    {
+      "id": "Observation.severity",
+      "entity": "Observation",
+      "field": "severity",
+      "values": [
+        "high",
+        "low",
+        "med"
+      ],
+      "declared_ref": "docs/STANDARD.md#四",
+      "implementation": "scripts/ledger_feedback.py#make_obs",
+      "observed_values": [],
+      "observed_ref": null
+    },
+    {
+      "id": "Observation.status",
+      "entity": "Observation",
+      "field": "status",
+      "values": [
+        "closed",
+        "open"
+      ],
+      "declared_ref": "docs/STANDARD.md#四",
+      "implementation": "feedback/observations.jsonl",
+      "observed_values": [],
+      "observed_ref": null
+    },
+    {
+      "id": "Scenario.status",
+      "entity": "Scenario",
+      "field": "status",
+      "values": [
+        "by-design",
+        "covered",
+        "gap",
+        "partial"
+      ],
+      "declared_ref": "docs/STANDARD.md#四",
+      "implementation": "scripts/scenario_matrix.py#STATUSES",
+      "observed_values": [
+        "by-design",
+        "covered",
+        "gap",
+        "partial"
+      ],
+      "observed_ref": "scripts/scenario_matrix.py#STATUSES"
+    },
+    {
+      "id": "TestReport.source_adapter",
+      "entity": "TestReport",
+      "field": "source_adapter",
+      "values": [
+        "auto",
+        "jest",
+        "junit",
+        "ledger"
+      ],
+      "declared_ref": "docs/STANDARD.md#四",
+      "implementation": "scripts/work_panel.py#ADAPTERS",
+      "observed_values": [
+        "auto",
+        "jest",
+        "junit",
+        "ledger"
+      ],
+      "observed_ref": "scripts/work_panel.py#ADAPTERS"
+    },
+    {
+      "id": "TestResult.case_status",
+      "entity": "TestResult",
+      "field": "case_status",
+      "values": [
+        "error",
+        "fail",
+        "pass",
+        "skip"
+      ],
+      "declared_ref": "docs/STANDARD.md#四",
+      "implementation": "scripts/work_panel.py#CASE_STATUSES",
+      "observed_values": [
+        "error",
+        "fail",
+        "pass",
+        "skip"
+      ],
+      "observed_ref": "scripts/work_panel.py#CASE_STATUSES"
+    },
+    {
+      "id": "WorkItem.kind",
+      "entity": "WorkItem",
+      "field": "kind",
+      "values": [
+        "issue",
+        "todo"
+      ],
+      "declared_ref": "docs/STANDARD.md#四",
+      "implementation": "scripts/work_panel.py#KINDS",
+      "observed_values": [
+        "issue",
+        "todo"
+      ],
+      "observed_ref": "scripts/work_panel.py#KINDS"
+    },
+    {
+      "id": "WorkItem.severity",
+      "entity": "WorkItem",
+      "field": "severity",
+      "values": [
+        "high",
+        "low",
+        "med"
+      ],
+      "declared_ref": "docs/STANDARD.md#四",
+      "implementation": "scripts/work_panel.py#SEVERITIES",
+      "observed_values": [
+        "high",
+        "low",
+        "med"
+      ],
+      "observed_ref": "scripts/work_panel.py#SEVERITIES"
+    },
+    {
+      "id": "WorkItem.status",
+      "entity": "WorkItem",
+      "field": "status",
+      "values": [
+        "blocked",
+        "doing",
+        "done",
+        "open"
+      ],
+      "declared_ref": "docs/STANDARD.md#四",
+      "implementation": "scripts/work_panel.py#STATUSES",
+      "observed_values": [
+        "blocked",
+        "doing",
+        "done",
+        "open"
+      ],
+      "observed_ref": "scripts/work_panel.py#STATUSES"
+    }
+  ],
+  "relations": [
+    {
+      "id": "contains",
+      "domain": "Project",
+      "range": "Module",
+      "cardinality": "1..N",
+      "derivation": "capability_model.projects[].modules[]",
+      "source_ref": "templates/build_capability_model.py"
+    },
+    {
+      "id": "supersedes",
+      "domain": "Decision",
+      "range": "Decision",
+      "cardinality": "0..1",
+      "derivation": "entries[].supersedes",
+      "source_ref": "templates/verify_ledger.py#supersede_chain_consistent"
+    },
+    {
+      "id": "verifiedBy",
+      "domain": "Capability",
+      "range": "Evidence",
+      "cardinality": "0..N",
+      "derivation": "test_results / evidence_binding",
+      "source_ref": "templates/verify_ledger.py#test_results_binding_valid"
+    },
+    {
+      "id": "decides",
+      "domain": "Decision",
+      "range": "Capability",
+      "cardinality": "0..N",
+      "derivation": "capability_model decision refs",
+      "source_ref": "templates/verify_ledger.py#decision_refs_valid"
+    },
+    {
+      "id": "actsOn",
+      "domain": "Action",
+      "range": "Capability",
+      "cardinality": "0..N",
+      "derivation": "work_items[].scope",
+      "source_ref": "templates/verify_ledger.py#work_item_refs_valid"
+    },
+    {
+      "id": "generalizesFrom",
+      "domain": "Lesson",
+      "range": "Outcome",
+      "cardinality": "1..N",
+      "derivation": "lessons.candidates[]",
+      "source_ref": "templates/verify_ledger.py#lesson_candidates_dedup"
+    },
+    {
+      "id": "detects",
+      "domain": "Observation",
+      "range": "Risk",
+      "cardinality": "0..N",
+      "derivation": "feedback/observations.jsonl",
+      "source_ref": "scripts/ledger_feedback.py"
+    }
+  ],
+  "cardinality_axioms": [
+    {
+      "id": "A1",
+      "statement": "dependsOn 无环",
+      "check": "acyclicity"
+    },
+    {
+      "id": "A2",
+      "statement": "level >= L3 必须有新鲜 verified 证据",
+      "check": "evidence_freshness"
+    },
+    {
+      "id": "A3",
+      "statement": "每个能力恰好一个 owner",
+      "check": "ownership_exactly_one"
+    },
+    {
+      "id": "A4",
+      "statement": "Project 基数 1..N，能力编码在 project 内唯一",
+      "check": "project_cardinality"
+    },
+    {
+      "id": "G1",
+      "statement": "无孤儿边：每条关系可从事实源复算",
+      "check": "no_orphan_edge"
+    },
+    {
+      "id": "G3",
+      "statement": "Kleene K3：含 Unknown 不得派生 pass",
+      "check": "three_valued"
+    },
+    {
+      "id": "G4",
+      "statement": "append-only：只取代不删除",
+      "check": "append_only"
+    }
+  ],
+  "invariant_ids": [
+    "board_embed_synced",
+    "completion_matches_level",
+    "component_paths_exist",
+    "decision_refs_valid",
+    "doc_paths_exist",
+    "encoding_format",
+    "encoding_unique",
+    "entry_ids_unique",
+    "evidence_tier_valid",
+    "history_chain_consistent",
+    "history_current_matches",
+    "history_event_fingerprints",
+    "history_state_encoding",
+    "lesson_candidates_dedup",
+    "lessons_valid",
+    "next_action_present",
+    "queue_lessons_confirmed",
+    "registry_impls_exist",
+    "supersede_chain_consistent",
+    "test_results_binding_valid",
+    "verified_tier_not_premature",
+    "verified_tier_traceable",
+    "work_item_refs_valid",
+    "work_items_valid"
+  ],
+  "drift": [],
+  "summary": {
+    "bounded_contexts": 6,
+    "entity_types": 16,
+    "value_domains": 18,
+    "relations": 7,
+    "axioms": 31,
+    "source_files": 7,
+    "polyseme_terms": 3,
+    "drift_count": 0
+  },
+  "ontology_digest": "c399ff180ebc06c8a351dfad77e7689f8d90d54d72dbbc601733c527e3026377"
+}

@@ -47,7 +47,45 @@ stage_test_modules(){
     || { rm -rf "$tmp"; return 1; }
   rm -rf "$tmp"
   python3 scripts/test_modules.py --target examples/demo-shop --json >/dev/null || return 1
-  echo '  6 个开发模块、22 个测试文件、映射渲染与目标缺口检查均一致'
+  echo '  6 个开发模块、23 个测试文件、映射渲染与目标缺口检查均一致'
+}
+stage_ontology(){
+  note '本体层：投影可复算 / 词表分型 / 三类漂移 / 第七轴'
+  python3 scripts/ontology.py check --json >/dev/null || return 1
+  local tmp proj out
+  tmp="$(mktemp -d)"
+  cp -r examples/demo-shop "$tmp/proj" || { rm -rf "$tmp"; return 1; }
+  proj="$tmp/proj"
+  python3 - "$proj/governance/DECISION_LEDGER.json" <<'PY' || { rm -rf "$tmp"; return 1; }
+import json, sys
+p = sys.argv[1]
+d = json.load(open(p))
+d['entries'][0]['status'] = 'rogue-status'
+d['status'] = 'bare'
+first = d['capability_model']['projects'][0]
+d['capability_model']['projects'] = [first, json.loads(json.dumps(first))]
+open(p, 'w').write(json.dumps(d, ensure_ascii=False))
+PY
+  # 注入缺陷后 check 必须失败，diff 必须把三类漂移命名成 ontology 观察
+  if python3 scripts/ontology.py check --target "$proj" --json >/dev/null 2>&1; then
+    echo '  注入非法状态词/基数违例后本体检查仍通过'
+    rm -rf "$tmp"; return 1
+  fi
+  out="$(python3 scripts/ontology.py diff --target "$proj" --json)" \
+    || { rm -rf "$tmp"; return 1; }
+  python3 - "$out" <<'PY' || { rm -rf "$tmp"; return 1; }
+import json, sys
+d = json.loads(sys.argv[1])
+kinds = [v['kind'] for v in d['violations']]
+assert 'undeclared_value' in kinds, kinds
+assert 'cardinality_contradiction' in kinds, kinds
+assert 'polyseme_violation' in kinds, kinds
+assert d['observations'] and all(o['affected_axis'] == 'ontology' for o in d['observations'])
+print(f"  三类漂移均被命名：{len(d['observations'])} 条 ontology 观察")
+PY
+  local rc=$?
+  rm -rf "$tmp"
+  return $rc
 }
 stage_evidence(){
   note '证据分层：生成实测报告并确认 verified 判定'
@@ -174,6 +212,8 @@ stage_upgrade_access(){
     || { rm -rf "$tmp"; return 1; }
   python3 scripts/upgrade.py --target "$proj" verify --json >/dev/null \
     || { rm -rf "$tmp"; return 1; }
+  python3 scripts/ontology.py check --target "$proj" --json >/dev/null \
+    || { rm -rf "$tmp"; echo '  升级后第七轴 ontology_digest 未绑定'; return 1; }
   python3 scripts/asset_bundle.py verify --target "$proj" --json >/dev/null \
     || { rm -rf "$tmp"; echo '  升级后专家/技能副本不可用'; return 1; }
   python3 scripts/work_panel.py --target "$proj" check --json >/dev/null \
@@ -199,7 +239,7 @@ stage_upgrade_access(){
     --board "$gov/index.html" --strict >/dev/null \
     || { rm -rf "$tmp"; return 1; }
   rm -rf "$tmp"
-  echo '  升级计划/备份/复验、可用资产、节点工作台、注册批准、写入审计、默认拒绝、24 条三态不变量均通过'
+  echo '  升级计划/备份/复验、第七轴本体绑定、可用资产、节点工作台、注册批准、写入审计、默认拒绝、24 条三态不变量均通过'
 }
 stage_contracts(){
   note '资产 / 看板骨架 / 规模预算 / 节点工作台契约'
@@ -276,6 +316,7 @@ else
   run '幂等' stage_idempotence
   run '同步' stage_sync
   run '反向回流' stage_feedback
+  run '本体层' stage_ontology
   run '卫生' stage_hygiene
 fi
 
@@ -284,4 +325,4 @@ if [ "$FAILURES" -gt 0 ]; then
   printf '质量门禁失败：%d 个阶段未通过\n' "$FAILURES"
   exit 1
 fi
-printf '质量门禁全绿：测试 / 测试架构 / 证据分层 / 24 条三态不变量 / 场景矩阵 / 文件布局 / 升级与接入 / 资产与工作台契约 / 幂等 / 同步 / 反向回流 / 脱敏 / 文档链接\n'
+printf '质量门禁全绿：测试 / 测试架构 / 证据分层 / 24 条三态不变量 / 场景矩阵 / 文件布局 / 升级与接入 / 资产与工作台契约 / 幂等 / 同步 / 反向回流 / 本体层 / 脱敏 / 文档链接\n'

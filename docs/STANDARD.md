@@ -49,12 +49,43 @@
 
 代码变了文档没变，视为改动未完成。`scripts/check.sh` 的文档内链检查能保证链接有效，但**不能保证内容同步**——这仍需人判断。
 
-## 四、状态词（全项目统一，不得自造）
+## 四、词表：按实体分型的状态机
 
-- **决策**：`proposed`（待裁决）/ `decided`（已裁决）/ `done`（已完成）/ `deferred`（暂缓、需理由）/ `superseded`（已被取代）。
-- **能力成熟度**：`L0` 规划 → `L1` 契约 → `L2` 实现 → `L3` 单测 → `L4` 运行验证 → `L5` 生产闭环。完成度恒等于 `level / 5`。
-- **经验**：`draft` / `confirmed` / `retired`；候选为 `open` / `dismissed`。
-- **历史事件**：`genesis`（基线）/ `change`（派生状态变化）/ `manual`（人工标注）。
+**「状态词全项目统一」是错的**。不同实体本来就该有不同的状态机；把它们压成一个
+词表会丢掉语义。统一的是**形式**而不是**取值**：任何状态词必须写成
+`<Type>.field`，裸 `status` / `level` / `severity` 视为同形异义
+（`polyseme_violation`）。`scripts/ontology.py` 同时读本表与各脚本里的真实枚举，
+`build` 比对两者，`diff` 把不一致输出成 `affected_axis=ontology` 的观察。
+
+| 实体 | 字段 | 取值域 | 实现来源 |
+|---|---|---|---|
+| Agent | role | evidence-auditor · expert-router · greenfield-architect · ledger-steward · loop-executor · platform-steward · project-archaeologist · release-steward | scripts/agent_gateway.py#ROLE_POLICIES |
+| Capability | evidence_tier | declared · verified | templates/build_capability_model.py#EVIDENCE_TIER_SPEC |
+| Capability | level | L0 · L1 · L2 · L3 · L4 · L5 | templates/build_capability_model.py#LEVELS |
+| Check | status | fail · na · pass | templates/verify_ledger.py#三态语义 |
+| Decision | status | decided · deferred · done · proposed · superseded | entries[].status |
+| HistoryEvent | kind | change · genesis · manual | templates/build_capability_model.py#HISTORY_SPEC |
+| Lesson | status | confirmed · draft · retired | templates/verify_ledger.py#LESSON_STATUS |
+| LessonCandidate | status | dismissed · open | templates/build_capability_model.py#LESSONS_SPEC |
+| Observation | affected_axis | access · board_skeleton · evidence · general · hygiene · installed_assets · ledger_version · lifecycle · method_assets · method_version · ontology · registry · scale · test_results · tool_hashes · work_items | scripts/ledger_feedback.py#AXES |
+| Observation | disposition | invariant · migration · regression · scenario · wontfix | scripts/ledger_feedback.py#DISPOSITIONS |
+| Observation | severity | high · low · med | scripts/ledger_feedback.py#make_obs |
+| Observation | status | closed · open | feedback/observations.jsonl |
+| Scenario | status | by-design · covered · gap · partial | scripts/scenario_matrix.py#STATUSES |
+| TestReport | source_adapter | auto · jest · junit · ledger | scripts/work_panel.py#ADAPTERS |
+| TestResult | case_status | error · fail · pass · skip | scripts/work_panel.py#CASE_STATUSES |
+| WorkItem | kind | issue · todo | scripts/work_panel.py#KINDS |
+| WorkItem | severity | high · low · med | scripts/work_panel.py#SEVERITIES |
+| WorkItem | status | blocked · doing · done · open | scripts/work_panel.py#STATUSES |
+
+四条序数尺度互不换算，也不得互相替代：`level`（能力成熟度，完成度恒等于
+`level / 5`）、`evidence_tier`（证据层级）、`severity`（风险严重度）、
+`confidence`（断言置信度，必须可回溯到 `evidence_binding`）。
+
+新增状态词的正确流程：先改实现里的枚举 → 同步改本表 → 跑
+`python3 scripts/ontology.py build --apply --approved-by <人>` → `check`。
+只改代码不改本表会被判 `undeclared_value`；只改本表不改代码会被判
+`undeclared_entity`。
 
 ## 五、路径约定
 

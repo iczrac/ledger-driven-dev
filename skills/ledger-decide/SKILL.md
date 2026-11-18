@@ -8,7 +8,7 @@ description: |
 license: MIT
 metadata:
   author: ledger-driven-dev
-  version: "1.4.0"
+  version: "1.5.0"
   risk_level: write_with_guard
   related_skills: [ledger-scan, ledger-verify, ledger-lesson]
 ---
