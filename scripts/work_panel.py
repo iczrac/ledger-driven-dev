@@ -255,11 +255,80 @@ def _cases_from_ledger(d: dict) -> list[dict]:
             for c in d.get("cases", []) if isinstance(c, dict)]
 
 
-def _cases_from_junit(raw: bytes) -> list[dict]:
+def default_source_dirs(target: Path) -> list[str]:
+    """探测项目的源码/测试布局，返回用于证据绑定的目录列表。
+
+    单一布局（根目录 src/ + tests/）优先；monorepo 则扫描 projects/* 下的
+    src 与 tests 子目录。返回相对项目根的路径，绝不返回绝对路径。
+    v1.8.0：修复默认 src,tests 对 monorepo 产生空绑定的缺口。
+    """
+    root = Path(target).expanduser().resolve()
+    found: list[str] = []
+    for rel in ("src", "tests"):
+        if (root / rel).is_dir():
+            found.append(rel)
+    if found:
+        return found
+    projects = root / "projects"
+    if projects.is_dir():
+        for child in sorted(projects.iterdir()):
+            if not child.is_dir():
+                continue
+            for sub in ("src", "tests"):
+                d = child / sub
+                if d.is_dir():
+                    found.append(d.relative_to(root).as_posix())
+    return found
+
+
+def _unit_test_whitelist(target: Path) -> dict[str, str]:
+    """从账本 capability_model 收集 unit_tests 白名单：文件名 → 相对路径。
+
+    仅用于把 JUnit classname 反解成真实测试文件路径；白名单来自单一事实源，
+    不凭空猜路径。缺账本时返回空映射（此时 classname_to_file 不编造）。
+    """
+    try:
+        ledger = load_ledger(Path(target) / "governance")
+    except (ValueError, OSError):
+        return {}  # 无账本时不猜路径；空绑定拒绝仍会在本报告里生效
+    model = ledger.get("capability_model") or {}
+    out: dict[str, str] = {}
+    for proj in model.get("projects") or []:
+        for mod in proj.get("modules") or []:
+            for cap in mod.get("caps") or []:
+                for item in cap.get("evidence", {}).get("unit_test") or []:
+                    rel = str(item)
+                    out[Path(rel).name] = rel
+                for rel in cap.get("unit_tests") or []:
+                    rel = str(rel)
+                    out[Path(rel).name] = rel
+    return out
+
+
+def classname_to_file(classname: str, whitelist: dict[str, str]) -> str:
+    """把 JUnit classname（如 a.b.test_x）反解为账本白名单内的真实路径。
+
+    只接受 basename 精确命中白名单；命中不到返回空串，绝不猜测。
+    """
+    if not classname or not whitelist:
+        return ""
+    # classname 可能带类名/测试名后缀（a.b.test_x.Test.test_y），
+    # 逐段尝试，取第一个命中白名单的文件名；不命中返回空串（不猜）。
+    parts = classname.split(".")
+    for i in range(len(parts), 0, -1):
+        leaf = parts[i - 1]
+        candidate = leaf if leaf.endswith(".py") else leaf + ".py"
+        if candidate in whitelist:
+            return whitelist[candidate]
+    return ""
+
+
+def _cases_from_junit(raw: bytes, whitelist: dict[str, str] | None = None) -> list[dict]:
     try:
         tree = ET.fromstring(raw)
     except ET.ParseError as exc:
         raise ValueError(f"JUnit XML 解析失败：{exc}")
+    whitelist = whitelist or {}
     cases = []
     for tc in tree.iter("testcase"):
         name = tc.get("name") or "unnamed"
@@ -272,8 +341,10 @@ def _cases_from_junit(raw: bytes) -> list[dict]:
             seconds = round(float(tc.get("time") or 0), 6)
         except ValueError:
             seconds = 0
+        # v1.8.0：JUnit 原生无 file 属性，用 classname 按账本单位测试白名单反解。
+        file_path = tc.get("file") or classname_to_file(cls, whitelist)
         cases.append({"id": f"{cls}.{name}" if cls else name,
-                      "file": tc.get("file") or "", "status": status,
+                      "file": file_path, "status": status,
                       "seconds": seconds})
     return cases
 
@@ -302,7 +373,7 @@ def normalize_report(raw: bytes, adapter: str, target: Path,
     """把任意受支持框架的报告规范化成 ledger-test-report/1，绝不伪造通过。"""
     kind = detect_adapter(raw) if adapter == "auto" else adapter
     if kind == "junit":
-        cases = _cases_from_junit(raw)
+        cases = _cases_from_junit(raw, _unit_test_whitelist(target))
     else:
         try:
             d = json.loads(raw.decode("utf-8"))
@@ -316,6 +387,10 @@ def normalize_report(raw: bytes, adapter: str, target: Path,
         if c["status"] in counts:
             counts[c["status"]] += 1
     load_errors = [] if cases else ["导入后用例为空：拒绝生成全绿报告"]
+    binding = _binding_from_dirs(target, dirs)
+    # v1.8.0 缺口 A：空证据绑定（sha256 空串）不得判绿，杜绝「形式合规实质无绑定」。
+    if not binding["inputs"]:
+        load_errors.append("证据绑定为空（源码目录不存在）：拒绝生成全绿报告")
     overall = "pass" if (cases and not counts["fail"] and not counts["error"]
                          and counts["pass"] > 0 and not load_errors) else "fail"
     return {
@@ -330,7 +405,7 @@ def normalize_report(raw: bytes, adapter: str, target: Path,
         "cases": cases,
         "overall": overall,
         "source_adapter": kind,
-        "evidence_binding": _binding_from_dirs(target, dirs),
+        "evidence_binding": binding,
     }
 
 
@@ -344,7 +419,7 @@ def import_report(target: Path, *, source: str, adapter: str = "auto",
         raise ValueError(f"找不到外部报告：{src}")
     if adapter not in ADAPTERS:
         raise ValueError(f"适配器必须是 {sorted(ADAPTERS)}")
-    scan_dirs = dirs or ["src", "tests"]
+    scan_dirs = dirs or default_source_dirs(target)
     report = normalize_report(src.read_bytes(), adapter, target, scan_dirs)
     out = target / REPORT_REL
     base = {"schema": SCHEMA_ACTION, "action": "import-report",
@@ -588,8 +663,8 @@ def main(argv: list[str] | None = None) -> int:
     ir = common(sub.add_parser("import-report", help="导入外部 CI 测试报告"))
     ir.add_argument("--from", dest="source", required=True, help="外部报告路径")
     ir.add_argument("--adapter", choices=sorted(ADAPTERS), default="auto")
-    ir.add_argument("--source-dir", dest="source_dirs", default="src,tests",
-                    help="逗号分隔；用于生成源码绑定摘要")
+    ir.add_argument("--source-dir", dest="source_dirs", default=None,
+                    help="逗号分隔；缺省时自动探测 src/tests 或 projects/*/{src,tests}")
     args = ap.parse_args(argv)
     target = Path(args.target).expanduser().resolve()
     try:
@@ -603,7 +678,8 @@ def main(argv: list[str] | None = None) -> int:
             result = sync_tests(target, approved_by=args.approved_by, apply=args.apply)
             rc = 0
         elif args.command == "import-report":
-            dirs = [x.strip() for x in args.source_dirs.split(",") if x.strip()]
+            dirs = ([x.strip() for x in args.source_dirs.split(",") if x.strip()]
+                    if args.source_dirs else None)
             result = import_report(target, source=args.source, adapter=args.adapter,
                                    dirs=dirs, approved_by=args.approved_by,
                                    apply=args.apply)

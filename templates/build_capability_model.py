@@ -209,6 +209,77 @@ def glob_files(root: Path, patterns: list[str]) -> list[Path]:
     return sorted(found)
 
 
+def evidence_hints(ledger: dict, cap_code: str) -> list[str]:
+    """从账本既有证据派生单测/测试记录的文件名 hints（v1.8.0 缺口 D）。
+
+    第一性原理：hints 的唯一用途是把能力匹配到它自己的证据文件；账本
+    capability_model 里已有的 evidence.unit_test / evidence.test_record 就是
+    这份映射的权威记录。以文件名（stem）作为 hint 复用，避免 registry 里
+    填能力代码而永远匹配不到文件。账本无该能力证据时返回空列表（不猜）。
+    """
+    model = ledger.get("capability_model") or {}
+    for proj in model.get("projects") or []:
+        for mod in proj.get("modules") or []:
+            for cap in mod.get("caps") or []:
+                if cap.get("code") != cap_code:
+                    continue
+                ev = cap.get("evidence") or {}
+                names: list[str] = []
+                for key in ("unit_test", "test_record"):
+                    for item in ev.get(key) or []:
+                        stem = Path(str(item)).stem
+                        if stem and stem not in names:
+                            names.append(stem)
+                return names[:8]
+    return []
+
+
+def _monorepo_dirs(repo_root: Path, configured: str) -> list[Path]:
+    """把配置的单一目录扩展为 monorepo 下的同名目录（v1.8.0 缺口 C）。"""
+    primary = repo_root / configured
+    if primary.exists():
+        return [primary]
+    found = []
+    projects = repo_root / "projects"
+    if projects.is_dir():
+        for child in sorted(projects.iterdir()):
+            if child.is_dir():
+                candidate = child / configured
+                if candidate.exists():
+                    found.append(candidate)
+    return found
+
+
+def no_regress(old_ledger: dict, new_model: dict) -> list[str]:
+    """重算不得降级任何能力的 level（v1.8.0 不降级硬门禁）。
+
+    返回降级描述列表；非空即拒绝写盘。只比较 code→level_code，
+    不改任何事实，纯判定。
+    """
+    old = {}
+    for p in (old_ledger.get("capability_model") or {}).get("projects") or []:
+        for m in p.get("modules") or []:
+            for c in m.get("caps") or []:
+                if c.get("code"):
+                    old[c["code"]] = LEVELS_CODE(c.get("level"))
+    errors = []
+    for p in new_model.get("projects") or []:
+        for m in p.get("modules") or []:
+            for c in m.get("caps") or []:
+                code = c.get("code")
+                if code in old and LEVELS_CODE(c.get("level")) < old[code]:
+                    errors.append(f"{code}: L{old[code]} → L{LEVELS_CODE(c.get('level'))}")
+    return errors
+
+
+def LEVELS_CODE(level) -> int:
+    """level 可能是 int 或 'L5' 字符串，统一成整数。"""
+    if isinstance(level, int):
+        return level
+    m = re.match(r"L(\d+)", str(level))
+    return int(m.group(1)) if m else 0
+
+
 def judge_level(
     repo_root: Path, proj_root: Path, proj_rel: str, cfg: dict,
     impl_globs: list[str], hints: list[str],
@@ -230,24 +301,22 @@ def judge_level(
             if v not in ev["contract"]:
                 ev["contract"].append(v)
 
-    # L3 单测：按 hint 匹配 tests/ 下文件名
-    test_root = proj_root / cfg.get("unit_test_dir", "tests/unit")
-    if test_root.exists():
-        hits = [
-            f for f in test_root.rglob("*")
-            if f.is_file() and f.suffix in CODE_EXT
-            and any(h.lower() in f.stem.lower() for h in hints)
-        ]
-        ev["unit_test"] = [rel_path(repo_root, x) for x in hits[:4]]
+    # L3 单测：按 hint 匹配 tests/ 下文件名（v1.8.0：monorepo 多项目目录）
+    test_roots = _monorepo_dirs(repo_root, cfg.get("unit_test_dir", "tests/unit"))
+    ut_hits: list[Path] = []
+    for test_root in test_roots:
+        ut_hits.extend(f for f in test_root.rglob("*")
+                       if f.is_file() and f.suffix in CODE_EXT
+                       and any(h.lower() in f.stem.lower() for h in hints))
+    ev["unit_test"] = [rel_path(repo_root, x) for x in ut_hits[:4]]
 
-    # L4 测试记录
-    tr = proj_root / cfg.get("test_record_dir", "docs/test_records")
-    if tr.exists():
-        hits = [
-            f for f in tr.glob("*.md")
-            if any(h.lower() in f.stem.lower() for h in hints)
-        ]
-        ev["test_record"] = [rel_path(repo_root, x) for x in hits[:4]]
+    # L4 测试记录（v1.8.0：同样覆盖 monorepo 多项目）
+    tr_roots = _monorepo_dirs(repo_root, cfg.get("test_record_dir", "docs/test_records"))
+    tr_hits: list[Path] = []
+    for tr in tr_roots:
+        tr_hits.extend(f for f in tr.glob("*.md")
+                       if any(h.lower() in f.stem.lower() for h in hints))
+    ev["test_record"] = [rel_path(repo_root, x) for x in tr_hits[:4]]
 
     # L5 治理门禁
     gov_dir = cfg.get("governance_dir", "governance")
@@ -517,7 +586,11 @@ def build(repo_root: Path, cfg_all: dict, ledger: dict, test_report: dict | None
             cap_name = cap["name"]
             domain = cap["domain"]
             impl_globs = cap.get("impl", [])
-            hints = cap.get("hints", [])
+            cap_code_src = cap.get("code", "")
+            # v1.8.0：以账本既有证据派生 hints，与 registry hints 合并（去重保序）。
+            registry_hints = list(cap.get("hints", []))
+            ledger_hints = evidence_hints(ledger, cap_code_src)
+            hints = registry_hints + [h for h in ledger_hints if h not in registry_hints]
             level, ev = judge_level(repo_root, proj_root, proj_rel, cfg_all, impl_globs, hints)
             tier, tier_detail = judge_tier(ev.get("unit_test", []), test_report)
             cap_code = f"{code}.{mcode}.{domain}.{cidx:02d}"
@@ -890,6 +963,8 @@ def main() -> None:
     ap.add_argument("--test-report", help="测试报告 JSON（由 scripts/run_tests.py 生成）；提供则判定 verified 级证据")
     ap.add_argument("--dry-run", action="store_true", help="只打印摘要，不写文件")
     ap.add_argument("--expect-fingerprint", help="读取账本时的 current_fingerprint；不符则拒绝写入（CAS）")
+    ap.add_argument("--allow-regress", action="store_true",
+                    help="人批准的数据迁移专用：允许能力 level 下降（默认拒绝，v1.8.0 门禁）")
     ap.add_argument("--strict-evidence", action="store_true",
                     help="拒绝未绑定源码摘要的测试报告（CI / 发布门禁建议开启）")
     args = ap.parse_args()
@@ -985,6 +1060,15 @@ def main() -> None:
             print(f"  #{t['rank']} {t['code']:<24} {t['level']}→{t['target_level']} "
                   f"缺[{gap}] · {t['action']}{lesson}")
         return
+
+    # v1.8.0 不降级硬门禁：重算不得把任何能力 level 调低。
+    # 默认开启；--allow-regress 仅供人批准的数据迁移显式绕过。
+    if not getattr(args, "allow_regress", False):
+        down = no_regress(ledger, model)
+        if down:
+            print("[BLOCK] 重算会降级以下能力，拒绝写盘：" + "; ".join(down[:10]),
+                  file=sys.stderr)
+            sys.exit(2)
 
     lc = ledger.get("lifecycle", {})
     if isinstance(lc, dict) and lc.get("state", "active") != "active":

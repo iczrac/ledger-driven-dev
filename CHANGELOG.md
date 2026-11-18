@@ -2,6 +2,51 @@
 
 本项目版本遵循语义化版本（SemVer）。
 
+## [1.8.0] - 2026-11-18
+
+**证据适配与不降级版**。承接 v1.7.0 交付核实与用户「先做 a」的真实执行：
+P1 未被满足的根因不是「主仓没有测试」（主仓有 1,248 个自有测试文件、
+12,186 个可收集用例），而是方法论仓与生成器的四处适配缺口。本版把这四处
+缺口产品化为机器保证，**不碰主仓权威数据**；主仓 registry / capability_model
+的修复作为独立的人批准数据迁移方案另行处理。
+
+### 决策依据（第一性原理）
+
+选项 A（人批准真实证据绑定）在写盘前被证伪： runners 能产出 19 passed 的真实
+JUnit，合规映射也能让 `judge_tier` 命中 `verified`，但生成器用现有 registry
+重算会把 47 个能力从 `L5:20/L3:22/L2:5` 降到 `L2:46/L0:1` —— 绿灯没拿到，
+既有等级先毁。按「诚实 > 绿灯」「先确认数据正常再重建快照」停止写盘，
+转以工具层根治：先保证重算不降级，再谈升级 verified。
+
+### 新增：acceptance/1 第五层（L5）
+
+四项机器断言：`evidence_adapter`（work_panel 布局探测 + classname→file + 空绑定拒绝）、
+`no_regression_guard`（生成器 hints 派生 + 不降级门禁）、`l5_contract_doc`、
+`evidence_end_to_end`。`only_preconditions` 范围仍为原 L4 三项，v1.7.0 语义不变。
+统一门禁从 15 阶段扩到 16 阶段。
+
+### 缺口 → 实现
+
+- **A 空绑定判绿**：`work_panel.default_source_dirs()` 探测根 `src/tests` 或
+  `projects/*/{src,tests}`；空 `evidence_binding.inputs` 时 `overall=fail`。
+- **B JUnit 无 file**：`work_panel.classname_to_file()` 按账本 unit_tests 白名单
+  反解 basename，命中不到返回空串（不猜）。
+- **C 目录失配**：生成器 `_monorepo_dirs()` 把单目录扩展为 `projects/*` 同名目录。
+- **D hints 失配**：生成器 `evidence_hints()` 从账本既有 evidence 派生文件名 stem。
+- **不降级门禁**：`no_regress()` 比较 code→level，任何下降即 `[BLOCK]` 拒绝写盘；
+  `--allow-regress` 仅供人批准的数据迁移显式绕过。
+
+### 验证
+
+真实探针报告（19 passed）在新模板上 `build()`：level 保持 `L5:20/L3:22/L2:5`、
+降级数 0、`verified=9`；此前一次「降级 0」是 code 前缀失配造成的假阴性，已纠正。
+264/264 单测、16 阶段门禁、`acceptance/1` 十项全 PASS。
+
+### 边界
+
+语义图仍顺延（P1 最终满足需主仓数据迁移 + 人批准）；主仓账本与 registry
+在本版未被写盘；`ontology_digest` 因 SOURCE_FILES 含被改脚本而变化，S4 需重绑。
+
 ## [1.7.0] - 2026-11-18
 
 「一致性与可适配性」收敛版。**修的是「规划与发布是否一致、无测试报告项目

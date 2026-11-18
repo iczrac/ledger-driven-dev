@@ -374,7 +374,12 @@ class L5DetectorTest(unittest.TestCase):
         root = self._tree()
         r = evidence_end_to_end(root)
         self.assertEqual(r["status"], "fail")
-        self.assertTrue(any("default_source_dirs" in e for e in r["errors"]))
+        # 空目录→报缺文件；有文件但缺函数→点名函数。两者都是有效 fail 证据。
+        self.assertTrue(r["errors"] and isinstance(r["errors"], list))
+        # 补一个只有空文件的场景，验证会点名函数
+        (root / "scripts" / "work_panel.py").write_text("# empty\n", encoding="utf-8")
+        r2 = evidence_end_to_end(root)
+        self.assertTrue(any("default_source_dirs" in e for e in r2["errors"]))
 
 
 if __name__ == "__main__":

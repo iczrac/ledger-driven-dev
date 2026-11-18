@@ -332,9 +332,9 @@ P1–P3 仍全部未满足，本版按 R4 / G6 降级为「一致性与可适配
 |---|---|---|
 | v1.6.0 | 验收契约 / append-only / 版本统一 | 已发布（S1–S4 序列占用，语义图未实现） |
 | v1.7.0 | 一致性与可适配性收敛版（R1–R3） | **本版发布** |
-| v1.8.0 | Risk & Evidence（polarity / confidence / contradicting evidence） | 顺延 |
-| v1.9.0 | Agent Autonomy Ladder | 顺延 |
-| v2.0.0 | `registry/2` 多项目数据契约 | 不变，需人批准数据迁移 |
+| v1.8.0 | 证据适配与不降级（L5 四缺口） | **本版发布（S3 转绿；S4 待发版）** |
+| v1.9.0 | Risk & Evidence（polarity / confidence / contradicting evidence） | 顺延 |
+| v2.0.0 | `registry/2` 多项目数据契约 / Agent Autonomy Ladder | 不变，需人批准数据迁移 |
 | 待定 | Semantic Graph（Statement 再化 / K3 推理机 / 最小割集 RCA） | 再次顺延，须先满足 P1–P3 |
 
 ### 设计内告警（本版仍如实保留）
@@ -342,3 +342,20 @@ P1–P3 仍全部未满足，本版按 R4 / G6 降级为「一致性与可适配
 E7 `cardinality_contradiction`（`ontology.py check --target P` 仍 `ok=false`、
 第七轴 `binding=pass`）、`evidence_rebaseline=na` / `all_active=false`、
 `scale_budget` 项目文件阈值告警 —— 三者均未被收敛版掩盖。
+
+## v1.8.0 发布检查（证据适配与不降级版）
+
+- [x] **S1**：`feedback/S1-1.8.0-BASELINE.md` 固化四缺口、两仓映射、不降级配方与三方摘要
+- [x] **S2**：`feedback/S2-1.8.0-RED.md` 记录 L5 四断言红灯（L1–L4 全 PASS、L5 四项 FAIL）
+- [x] **S3**：L5 十项 checks 全 PASS、16 阶段门禁、264/264 单测
+- [ ] **S4**：人批准 apply 重绑 `P`（`M3+M4+M5+M7` + 第七轴 ontology 摘要刷新）
+- [ ] **发版**：附注 `tag v1.8.0` + push；发版报告见 `feedback/RELEASE-1.8.0.md`
+- [x] **G1 规划一致性**：`docs/23` 第七节 / `CHANGELOG` / 本清单顺延表含 v1.7.0–v2.0.0 锚点
+- [x] **不降级**：真实报告在新模板 `build()` 上 level 保持 `L5:20/L3:22/L2:5`、降级数 0、`verified=9`
+- [x] **诚实纠正**：早期「降级 0」为 code 前缀失配的假阴性，剥离前缀后重新对齐并修正
+
+### 本版边界（不掩盖）
+
+- 主仓 `governance/registry.json` 与 `capability_model` **本版未写盘**；P1 最终满足需独立人批准数据迁移
+- 语义图仍顺延（须 P1–P3 全满足）；`registry/2` 仍 v2.0.0
+- E7 `cardinality_contradiction`、`evidence_rebaseline=na`、`scale_budget` 告警、6 条 `open` 观察均保留

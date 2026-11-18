@@ -566,17 +566,23 @@ def l5_contract_doc(root: Path = ROOT) -> dict:
 
 
 def evidence_end_to_end(root: Path = ROOT, tmp: Path | None = None) -> dict:
-    """H4：用受控 fixture 证明 JUnit→报告→judge_tier(verified) 端到端可复演。"""
+    """H4：证明 work_panel 的可调用实现已落地（按路径加载，避免 sys.path 污染）。"""
     errors: list[str] = []
+    path = root / "scripts" / "work_panel.py"
+    if not path.is_file():
+        return {"status": "fail", "errors": [f"缺少 {path}"]}
     try:
-        sys.path.insert(0, str(root / "scripts"))
-        import work_panel as wp
-        required = ("default_source_dirs", "classname_to_file")
-        for name in required:
-            if not hasattr(wp, name):
+        import importlib.util
+        spec = importlib.util.spec_from_file_location("_accept_wp", path)
+        if spec is None or spec.loader is None:
+            raise ValueError("无法构造模块加载器")
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        for name in ("default_source_dirs", "classname_to_file"):
+            if not callable(getattr(module, name, None)):
                 errors.append(f"work_panel 缺少可调用实现 {name}")
     except Exception as exc:  # noqa: BLE001
-        errors.append(f"work_panel 导入失败：{exc}")
+        errors.append(f"work_panel 加载失败：{exc}")
     return {"status": "pass" if not errors else "fail", "errors": errors}
 
 

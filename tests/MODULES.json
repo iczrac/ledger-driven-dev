@@ -8,19 +8,27 @@
       "id": "core",
       "name": "账本与生成器",
       "scope": "capability_model / history / evidence_tier / verify_ledger",
-      "owner_scripts": ["templates/build_capability_model.py", "templates/verify_ledger.py", "scripts/run_tests.py"],
+      "owner_scripts": [
+        "templates/build_capability_model.py",
+        "templates/verify_ledger.py",
+        "scripts/run_tests.py"
+      ],
       "files": [
         "tests/core/test_generation.py",
         "tests/core/test_history.py",
         "tests/core/test_evidence_tier.py",
-        "tests/core/test_verify.py"
+        "tests/core/test_verify.py",
+        "tests/core/test_evidence_adapter.py"
       ]
     },
     {
       "id": "adoption",
       "name": "新建与存量接入",
       "scope": "greenfield bootstrap / brownfield discovery",
-      "owner_scripts": ["scripts/init_project.py", "scripts/discover_project.py"],
+      "owner_scripts": [
+        "scripts/init_project.py",
+        "scripts/discover_project.py"
+      ],
       "files": [
         "tests/adoption/test_bootstrap.py",
         "tests/adoption/test_discovery.py"
@@ -30,7 +38,12 @@
       "id": "routing",
       "name": "专家路由与纪律",
       "scope": "route_expert / skills / scenario_matrix",
-      "owner_scripts": ["scripts/route_expert.py", "scripts/scenario_matrix.py", "scripts/ledger_decide.py", "scripts/ledger_lesson.py"],
+      "owner_scripts": [
+        "scripts/route_expert.py",
+        "scripts/scenario_matrix.py",
+        "scripts/ledger_decide.py",
+        "scripts/ledger_lesson.py"
+      ],
       "files": [
         "tests/routing/test_routing.py",
         "tests/routing/test_skills.py",
@@ -41,7 +54,15 @@
       "id": "meta",
       "name": "元层：升级、接入、生命周期",
       "scope": "upgrade / agent_gateway / lifecycle / file_layout / platform contracts / feedback / ontology / acceptance",
-      "owner_scripts": ["scripts/upgrade.py", "scripts/agent_gateway.py", "scripts/lifecycle.py", "scripts/file_layout.py", "scripts/ledger_feedback.py", "scripts/ontology.py", "scripts/acceptance.py"],
+      "owner_scripts": [
+        "scripts/upgrade.py",
+        "scripts/agent_gateway.py",
+        "scripts/lifecycle.py",
+        "scripts/file_layout.py",
+        "scripts/ledger_feedback.py",
+        "scripts/ontology.py",
+        "scripts/acceptance.py"
+      ],
       "files": [
         "tests/meta/test_upgrade.py",
         "tests/meta/test_agent_gateway.py",
@@ -57,7 +78,12 @@
       "id": "traceability",
       "name": "可追溯闭环",
       "scope": "doc rebuild / architecture from docs / git trace / graph compare",
-      "owner_scripts": ["scripts/rebuild_docs.py", "scripts/architect_from_docs.py", "scripts/trace_git.py", "scripts/compare_graphs.py"],
+      "owner_scripts": [
+        "scripts/rebuild_docs.py",
+        "scripts/architect_from_docs.py",
+        "scripts/trace_git.py",
+        "scripts/compare_graphs.py"
+      ],
       "files": [
         "tests/traceability/test_trace_docs.py",
         "tests/traceability/test_trace_arch_git.py",
@@ -68,7 +94,12 @@
       "id": "views",
       "name": "资产可用、工作台与看板视图",
       "scope": "asset_bundle / work_panel / index.html.template / test_modules",
-      "owner_scripts": ["scripts/asset_bundle.py", "scripts/work_panel.py", "scripts/board_contract.py", "scripts/test_modules.py"],
+      "owner_scripts": [
+        "scripts/asset_bundle.py",
+        "scripts/work_panel.py",
+        "scripts/board_contract.py",
+        "scripts/test_modules.py"
+      ],
       "files": [
         "tests/views/test_assets.py",
         "tests/views/test_work_panel.py",
