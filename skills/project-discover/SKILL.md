@@ -8,7 +8,7 @@ description: |
 license: MIT
 metadata:
   author: ledger-driven-dev
-  version: "1.5.0"
+  version: "1.6.0"
   risk_level: write_draft_only
   related_skills: [expert-route, project-bootstrap, ledger-scan]
 ---

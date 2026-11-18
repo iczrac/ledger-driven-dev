@@ -7,6 +7,7 @@ from __future__ import annotations
 MODULE_ID = "meta"
 
 import json
+import re
 import shutil
 import sys
 import tempfile
@@ -23,6 +24,15 @@ EXPECT = {"axis": 7, "pre_steps": 1, "post_steps": 19,
           "verify_checks": 12, "gate_criteria": 9}
 
 
+def source_version() -> str:
+    """独立从权威源读版本号：发版时测试不需要手工同步字面量。"""
+    m = re.search(r'^METHOD_VERSION\s*=\s*"([^"]+)"',
+                  (ROOT / "scripts" / "upgrade.py").read_text(encoding="utf-8"),
+                  re.M)
+    assert m, "夹具失效：upgrade.py 里找不到 METHOD_VERSION"
+    return m.group(1)
+
+
 def hits(line: str) -> list[tuple[str, int]]:
     return [x for x in (classify(line, m) for m in TOKEN.finditer(line)) if x]
 
@@ -33,7 +43,7 @@ class ConstantsTest(unittest.TestCase):
         c = constants(ROOT)
         self.assertEqual(c["expect"], EXPECT)
         self.assertEqual(c["basis_errors"], [])
-        self.assertEqual(c["version"], "1.5.0")
+        self.assertEqual(c["version"], source_version())
         self.assertEqual(len(c["verify_ids"]), 12)
         self.assertEqual(len(c["gate_ids"]), 9)
         self.assertEqual(len(AXIS_KEYS), 7)
@@ -47,9 +57,12 @@ class ConstantsTest(unittest.TestCase):
             root = Path(td)
             (root / "scripts").mkdir()
             src = (ROOT / "scripts" / "upgrade.py").read_text(encoding="utf-8")
+            mutated = src.replace(f'METHOD_VERSION = "{source_version()}"',
+                                  'METHOD_VERSION = "9.9.9"')
+            self.assertIn('METHOD_VERSION = "9.9.9"', mutated,
+                          "夹具失效：源码版本字面量替换未命中")
             (root / "scripts" / "upgrade.py").write_text(
-                src.replace('METHOD_VERSION = "1.5.0"', 'METHOD_VERSION = "9.9.9"')
-                   .replace('    "python3 scripts/ledger_feedback.py export --target P "\n'
+                mutated.replace('    "python3 scripts/ledger_feedback.py export --target P "\n'
                             '    "--out feedback/observations.jsonl --phase after-upgrade '
                             '--apply --approved-by <人>",\n]',
                             '    "python3 scripts/ledger_feedback.py export --target P "\n'
