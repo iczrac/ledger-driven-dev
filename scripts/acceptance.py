@@ -109,6 +109,17 @@ ACCEPT_2_0_DOC = "feedback/ACCEPTANCE-2.0.0.md"
 REGISTRY2_TEST = "tests/core/test_registry2.py"
 L6_ANCHORS = ("code_namespace", "registry2_contract", "no_prefix_leak", "cap_code_format")
 
+# ---------------------------------------------------------------- L7
+# v2.0.1 registry schema/2 容器契约：把单项目 project + modules[] 升级为
+# schema=registry/2 + projects[]，同时保留旧形状双读。
+#   S1 契约文档锚点 → feedback/ACCEPTANCE-2.0.1.md
+#   S2 专项测试     → tests/core/test_registry_schema.py
+#   S3 唯一 codec   → templates/registry_codec.py（目标项目副本 governance/registry_codec.py）
+ACCEPT_2_0_1_DOC = "feedback/ACCEPTANCE-2.0.1.md"
+REGISTRY_SCHEMA_TEST = "tests/core/test_registry_schema.py"
+REGISTRY_CODEC = "templates/registry_codec.py"
+L7_ANCHORS = ("registry/2", "dual_read", "stable_code", "single_codec")
+
 CN = {"零": 0, "一": 1, "二": 2, "三": 3, "四": 4, "五": 5,
       "六": 6, "七": 7, "八": 8, "九": 9}
 TOKEN = re.compile(r"([0-9]+|[一二三四五六七八九十]+)\s*(轴|步|项)")
@@ -681,6 +692,93 @@ def cap_code_format_check(root: Path = ROOT) -> dict:
     return {"status": "pass" if not errors else "fail", "errors": errors}
 
 
+# ---------------------------------------------------------------- L7 (v2.0.1)
+def registry_schema_doc_check(root: Path = ROOT) -> dict:
+    """S1：registry schema/2 契约文档存在且含四锚点。"""
+    text = _source_text(root / ACCEPT_2_0_1_DOC)
+    errors = []
+    if not text:
+        errors.append(f"缺少 {ACCEPT_2_0_1_DOC}")
+    for anchor in L7_ANCHORS:
+        if anchor not in text:
+            errors.append(f"{ACCEPT_2_0_1_DOC} 缺少锚点 {anchor}")
+    return {"status": "pass" if not errors else "fail", "errors": errors}
+
+
+def registry_schema_test_check(root: Path = ROOT) -> dict:
+    """S2：必须有 schema v2 双读/稳定码专项测试。"""
+    text = _source_text(root / REGISTRY_SCHEMA_TEST)
+    errors = []
+    if not text:
+        errors.append(f"缺少 {REGISTRY_SCHEMA_TEST}")
+    for anchor in (*L7_ANCHORS, "normalize_projects"):
+        if anchor not in text:
+            errors.append(f"{REGISTRY_SCHEMA_TEST} 缺少锚点 {anchor}")
+    return {"status": "pass" if not errors else "fail", "errors": errors}
+
+
+def registry_codec_contract_check(root: Path = ROOT) -> dict:
+    """S3：唯一 codec 必须由 registry_codec 提供，生成器/校验器/投影器共同消费。"""
+    errors = []
+    path = root / REGISTRY_CODEC
+    if not path.is_file():
+        errors.append(f"缺少 {REGISTRY_CODEC}")
+    else:
+        syms = _source_symbols(path)
+        for name in ("code_namespace", "cap_code", "normalize_projects", "iter_caps"):
+            if name not in syms:
+                errors.append(f"{REGISTRY_CODEC} 缺少函数 {name}()")
+    consumers = (
+        GENERATOR_TPL,
+        "templates/verify_ledger.py",
+        "scripts/trace_common.py",
+    )
+    for rel in consumers:
+        text = _source_text(root / rel)
+        if "registry_codec" not in text:
+            errors.append(f"{rel} 未消费 registry_codec（存在第二套 codec 风险）")
+    trace_text = _source_text(root / "scripts/trace_common.py")
+    if 'f"{code}.{mcode}.{domain}' in trace_text:
+        errors.append("trace_common.py 仍有裸拼五段码")
+    return {"status": "pass" if not errors else "fail", "errors": errors}
+
+
+def registry_dual_read_check(root: Path = ROOT) -> dict:
+    """S3：旧 project + modules[] 与新 projects[] 必须归一化出同一组能力码。"""
+    errors = []
+    path = root / REGISTRY_CODEC
+    if not path.is_file():
+        return {"status": "fail", "errors": [f"缺少 {REGISTRY_CODEC}"]}
+    try:
+        codec = _load_module(path)
+        fn = getattr(codec, "iter_caps", None)
+        if not callable(fn):
+            return {"status": "fail", "errors": ["iter_caps 不可调用"]}
+        legacy = {
+            "project": {"code": "DEMO", "root": ".", "governance_gate": True},
+            "modules": [{"code": "DATA", "caps": [
+                {"name": "数据就绪", "domain": "READY", "code": "DEMO.DATA.READY.01"}]}],
+        }
+        modern = {
+            "schema": "registry/2",
+            "projects": [{
+                "code": "DEMO", "root": ".", "governance_gate": True,
+                "modules": [{"code": "DATA", "caps": [
+                    {"name": "数据就绪", "domain": "READY", "code": "DEMO.DATA.READY.01"}]}],
+            }],
+        }
+        expected = ["DEMO.DATA.READY.01"]
+        old_codes = [c["code"] for c in fn(legacy)]
+        new_codes = [c["code"] for c in fn(modern)]
+        if old_codes != expected:
+            errors.append(f"旧形状归一化得到 {old_codes}，期望 {expected}")
+        if new_codes != expected:
+            errors.append(f"新形状归一化得到 {new_codes}，期望 {expected}")
+    except Exception as exc:  # noqa: BLE001
+        errors.append(f"registry_codec 加载/双读失败：{exc}")
+    return {"status": "pass" if not errors else "fail", "errors": errors}
+
+
 def build(root: Path = ROOT, tmp: Path | None = None,
           only_preconditions: bool = False) -> dict:
     c = constants(root)
@@ -709,6 +807,10 @@ def build(root: Path = ROOT, tmp: Path | None = None,
     r2 = registry2_contract_check(root)
     r3 = no_prefix_leak_check(root)
     r4 = cap_code_format_check(root)
+    s1 = registry_schema_doc_check(root)
+    s2 = registry_schema_test_check(root)
+    s3 = registry_codec_contract_check(root)
+    s4 = registry_dual_read_check(root)
     checks: list[dict] = []
     if not only_preconditions:
         checks += [
@@ -747,6 +849,13 @@ def build(root: Path = ROOT, tmp: Path | None = None,
             {"id": "registry2_contract", "status": r2["status"], "errors": r2["errors"]},
             {"id": "no_prefix_leak", "status": r3["status"], "errors": r3["errors"]},
             {"id": "cap_code_format", "status": r4["status"], "errors": r4["errors"]},
+        ]
+        # L7 属于 v2.0.1 registry schema/2 容器契约，不并入 preconditions 范围。
+        checks += [
+            {"id": "registry_schema_doc", "status": s1["status"], "errors": s1["errors"]},
+            {"id": "registry_schema_test", "status": s2["status"], "errors": s2["errors"]},
+            {"id": "registry_codec_contract", "status": s3["status"], "errors": s3["errors"]},
+            {"id": "registry_dual_read", "status": s4["status"], "errors": s4["errors"]},
         ]
     return {"schema": SCHEMA, "method_version": c["version"],
             "constants": c["expect"], "basis": c["basis"],

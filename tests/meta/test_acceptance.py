@@ -325,7 +325,9 @@ class BuildTest(unittest.TestCase):
                           "no_regression_guard", "l5_contract_doc",
                           "evidence_end_to_end", "code_namespace",
                           "registry2_contract", "no_prefix_leak",
-                          "cap_code_format"])
+                          "cap_code_format", "registry_schema_doc",
+                          "registry_schema_test", "registry_codec_contract",
+                          "registry_dual_read"])
         # 不写死 overall：S3 转绿后本用例仍须通过。
         self.assertEqual(json.dumps(a, ensure_ascii=False, sort_keys=True),
                          json.dumps(b, ensure_ascii=False, sort_keys=True),
