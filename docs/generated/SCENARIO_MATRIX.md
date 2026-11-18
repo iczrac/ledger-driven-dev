@@ -133,7 +133,7 @@
 ### 时间
 
 - **T1 首次运行（无账本）**（已覆盖）：`build_capability_model.py --root P`
-- **T2 跨版本升级 / 迁移**（已覆盖）：`upgrade.py --target P plan --json` → `upgrade.py --target P apply --approved-by <人>` → `upgrade.py --target P verify --json` → `执行 post_upgrade 18 步`
+- **T2 跨版本升级 / 迁移**（已覆盖）：`upgrade.py --target P plan --json` → `upgrade.py --target P apply --approved-by <人>` → `upgrade.py --target P verify --json` → `执行 post_upgrade 19 步`
   - 迁移只加字段，不改 history.events，因此不追加历史事件；真正的 ledger_version 数据迁移仍需人工写专用方案
 - **T3 历史回溯 / 外部取证**（已覆盖）：`verify_ledger.py --strict --json`
 - **T4 git 历史被 rebase / force push 重写**（部分）：`scenario_guard.py --json` → `trace_git.py`

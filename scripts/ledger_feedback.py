@@ -11,6 +11,8 @@
 设计约束
 --------
 * export 绝不写目标项目；写观察包需 --apply --approved-by <人>。
+* 观察包是 append-only 证据，不是可重建的派生报表：重复 export 先读既有行，
+  按 obs_id 幂等合并，既有行（尤其已收敛 triage）优先保留，只追加新 id。
 * 脱敏是数据驱动的：项目标识从目标项目自己的 registry / 账本提取，代码里不硬编码
   任何具体项目名词；额外词表可用 --terms 注入（文件不进仓库）。
 * 观察 id 由内容派生，重复 export 幂等；不含时间戳，便于 diff 与回放。
@@ -363,6 +365,34 @@ def write_lines(path: Path, rows: list[dict]) -> None:
                          for x in rows), encoding="utf-8")
 
 
+def merge_observations(existing: list[dict], incoming: list[dict]) -> list[dict]:
+    """append-only 合并：既有行优先，按 obs_id 幂等去重，输出顺序确定。
+
+    观察包是证据而非派生报表。已收敛的 triage 字段只由人写一次，后续 export
+    不得用新采集的 open 行覆盖它；同 id 的新观察丢弃，新 id 追加在尾部。
+    返回「既有行原序 + 首次出现的新行」，使连续合并逐字节稳定。
+    """
+    seen: set[str] = set()
+    merged: list[dict] = []
+    for o in (*existing, *incoming):
+        oid = o.get("obs_id")
+        if not oid or oid in seen:
+            continue
+        seen.add(oid)
+        merged.append(o)
+    return merged
+
+
+def export_payload(data: dict, rows: list[dict]) -> dict:
+    """把「实际写盘 / 实际展示」的观察行压成确定性摘要，不另立事实源。"""
+    return {"schema": SCHEMA, "source_ref": data["source_ref"],
+            "method_version": data["method_version"], "count": len(rows),
+            "sha256": sha256_bytes("".join(
+                json.dumps(x, ensure_ascii=False, sort_keys=True) + "\n"
+                for x in rows).encode()),
+            "observations": rows}
+
+
 def check_rows(rows: list[dict], root: Path = ROOT) -> dict:
     errors: list[str] = []
     seen: set[str] = set()
@@ -418,19 +448,23 @@ def cmd_export(args) -> dict:
     extra = load_terms(args.terms)
     data = collect(args.target, args.note, not args.no_probe, extra, args.phase)
     rows = data["observations"]
-    payload = {"schema": SCHEMA, "source_ref": data["source_ref"],
-               "method_version": data["method_version"], "count": len(rows),
-               "sha256": sha256_bytes("".join(
-                   json.dumps(x, ensure_ascii=False, sort_keys=True) + "\n"
-                   for x in rows).encode()),
-               "observations": rows}
+    payload = export_payload(data, rows)
     if args.out:
         if not (args.apply and args.approved_by):
             return {"mode": "dry-run", **payload,
                     "reason": "写盘需要 --apply --approved-by <人>"}
-        write_lines(args.out, rows)
-        return {"mode": "apply", "out": str(Path(args.out).expanduser().resolve()),
-                "approved_by": args.approved_by, **payload}
+        out_path = Path(args.out).expanduser()
+        existing = read_lines(out_path) if out_path.is_file() else []
+        merged = merge_observations(existing, rows)
+        write_lines(out_path, merged)
+        return {"mode": "apply", "out": str(out_path.resolve()),
+                "approved_by": args.approved_by,
+                **export_payload(data, merged),
+                "merge": {"existing_rows": len(existing),
+                          "collected_rows": len(rows),
+                          "added_rows": len(merged) - len(existing),
+                          "preserved_closed": sum(
+                              1 for o in existing if o.get("status") == "closed")}}
     return {"mode": "dry-run", **payload}
 
 

@@ -13,7 +13,7 @@ from _base import ROOT, demo_copy
 
 sys.path.insert(0, str(ROOT / "scripts"))
 from ledger_feedback import (check_rows, collect, cmd_export, cmd_triage,  # noqa: E402
-                             read_lines, redact, write_lines)
+                             merge_observations, read_lines, redact, write_lines)
 
 
 def tree_hash(root: Path) -> str:
@@ -160,6 +160,80 @@ class ClosureTest(unittest.TestCase):
             result = cmd_triage(args)
             self.assertTrue(result["check"]["ok"])
             self.assertEqual(result["check"]["feedback_closed"], 0)
+
+
+class AppendOnlyTest(unittest.TestCase):
+    """升级现场第 19 步的回归：重复导出不得销毁已收敛证据。"""
+
+    @staticmethod
+    def _seeded(path: Path) -> list[dict]:
+        rows = [
+            {"schema": "ledger-observations/1", "obs_id": "OBS-closed0001",
+             "status": "closed", "disposition": "regression",
+             "artifact_ref": "scripts/ledger_feedback.py", "reason": "已收敛",
+             "approved_by": "张三"},
+            {"schema": "ledger-observations/1", "obs_id": "OBS-open00001",
+             "status": "open"},
+        ]
+        write_lines(path, rows)
+        return rows
+
+    def test_existing_row_wins_over_fresh_open_row(self):
+        existing = [
+            {"obs_id": "OBS-closed0001", "status": "closed",
+             "disposition": "regression", "artifact_ref": "scripts/acceptance.py",
+             "reason": "已收敛", "approved_by": "张三"},
+        ]
+        incoming = [
+            {"obs_id": "OBS-closed0001", "status": "open",
+             "disposition": None, "artifact_ref": None, "reason": None},
+            {"obs_id": "OBS-new000001", "status": "open"},
+        ]
+        merged = merge_observations(existing, incoming)
+        self.assertEqual([o["obs_id"] for o in merged],
+                         ["OBS-closed0001", "OBS-new000001"])
+        self.assertEqual(merged[0], existing[0], "既有 triage 字段不得被改写")
+
+    def test_merge_is_idempotent_and_order_stable(self):
+        existing = [{"obs_id": "OBS-a", "status": "open"},
+                    {"obs_id": "OBS-b", "status": "closed"}]
+        incoming = [{"obs_id": "OBS-c", "status": "open"},
+                    {"obs_id": "OBS-a", "status": "open"},
+                    {"obs_id": "OBS-c", "status": "open"}]
+        once = merge_observations(existing, incoming)
+        twice = merge_observations(once, incoming)
+        self.assertEqual(twice, once)
+        self.assertEqual([o["obs_id"] for o in once], ["OBS-a", "OBS-b", "OBS-c"])
+
+    def test_export_preserves_closed_evidence_and_is_idempotent(self):
+        with demo_copy() as (tmp, *_):
+            target = tmp / "examples" / "demo-shop"
+            out = tmp / "obs.jsonl"
+            seeded = self._seeded(out)
+            first = run_export(target, out=str(out), apply=True, approved_by="张三")
+            after = read_lines(out)
+            self.assertEqual(first["mode"], "apply")
+            self.assertEqual(first["count"], len(after))
+            self.assertEqual(first["merge"]["existing_rows"], len(seeded))
+            self.assertEqual(first["merge"]["preserved_closed"], 1)
+            self.assertGreaterEqual(first["merge"]["added_rows"], 1)
+            self.assertEqual(after[0], seeded[0], "已收敛证据逐字段不变")
+            ids = [o["obs_id"] for o in after]
+            self.assertEqual(len(ids), len(set(ids)), "obs_id 不得重复")
+            self.assertTrue({o["obs_id"] for o in seeded}.issubset(set(ids)),
+                            "既有观察不得消失")
+            second = run_export(target, out=str(out), apply=True, approved_by="张三")
+            self.assertEqual(read_lines(out), after, "连续导出逐行一致")
+            self.assertEqual(second["merge"]["added_rows"], 0)
+            self.assertEqual(second["sha256"], first["sha256"])
+
+    def test_export_creates_file_when_absent(self):
+        with demo_copy() as (tmp, *_):
+            target = tmp / "examples" / "demo-shop"
+            out = tmp / "fresh.jsonl"
+            result = run_export(target, out=str(out), apply=True, approved_by="张三")
+            self.assertEqual(result["merge"]["existing_rows"], 0)
+            self.assertEqual(len(read_lines(out)), result["count"])
 
 
 if __name__ == "__main__":

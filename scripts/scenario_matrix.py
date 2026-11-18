@@ -175,7 +175,7 @@ SCENARIOS: list[dict] = [
                "+ test_scenarios.ScenarioProbeTest.test_unsupported_version_blocks",
          flow=["upgrade.py --target P plan --json",
                "upgrade.py --target P apply --approved-by <人>",
-               "upgrade.py --target P verify --json", "执行 post_upgrade 18 步"],
+               "upgrade.py --target P verify --json", "执行 post_upgrade 19 步"],
          note="迁移只加字段，不改 history.events，因此不追加历史事件；"
               "真正的 ledger_version 数据迁移仍需人工写专用方案"),
     dict(id="T3", axis="时间", name="历史回溯 / 外部取证", axiom="A4", status="covered",

@@ -168,8 +168,15 @@ PY
 stage_scenarios(){
   note '场景矩阵 + 生命周期预检'
   python3 scripts/scenario_matrix.py --check || return 1
-  python3 scripts/scenario_matrix.py --emit-md docs/generated/SCENARIO_MATRIX.md || return 1
-  git diff --exit-code -- docs/generated/SCENARIO_MATRIX.md >/dev/null || return 1
+  # 与 stage_layout / stage_test_modules 同口径：派生文件必须可由生成器复算。
+  # 不能用 git diff --exit-code（与上次提交比），合法重算会被误判成手改派生文件。
+  local tmp
+  tmp="$(mktemp -d)"
+  python3 scripts/scenario_matrix.py --emit-md "$tmp/SCENARIO_MATRIX.md" >/dev/null \
+    || { rm -rf "$tmp"; return 1; }
+  cmp -s "$tmp/SCENARIO_MATRIX.md" docs/generated/SCENARIO_MATRIX.md \
+    || { rm -rf "$tmp"; return 1; }
+  rm -rf "$tmp"
   python3 scripts/scenario_guard.py --target examples/demo-shop --strict >/dev/null || return 1
   local tmp rc
   tmp="$(mktemp -d)"

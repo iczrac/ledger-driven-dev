@@ -43,7 +43,7 @@ access_registry → known_action → agent_identity → role_policy → scope_po
 # 0) 前置：项目必须已升级（access 登记由 M2 建立）
 python3 scripts/upgrade.py --target P plan --json
 python3 scripts/upgrade.py --target P apply --approved-by <人>
-# 按 post_upgrade 的 18 步重新取证、核对资产/版面/预算并复验
+# 按 post_upgrade 的 19 步重新取证、核对资产/版面/预算并复验
 
 # 1) 取票据
 python3 scripts/agent_gateway.py --target P status --json

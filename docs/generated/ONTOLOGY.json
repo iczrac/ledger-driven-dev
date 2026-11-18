@@ -16,12 +16,12 @@
     {
       "path": "scripts/scenario_matrix.py",
       "role": "value_domains",
-      "sha256": "f9f747f1870a0db41a76be5671d4d51707a12aa0e6925bce26608717f763c0b1"
+      "sha256": "651dcbe75cb71dfe16bb644f0fdd1fd274b59e6d9bda920c6525964bda291e17"
     },
     {
       "path": "scripts/ledger_feedback.py",
       "role": "value_domains",
-      "sha256": "f1ddc074c3cb1614d6a65211c3c07e02ef06be31343f2992a4527326db5e6dfd"
+      "sha256": "ee3d577f0a600e058f3a1da8c36dfeec25b0711dcad60408a6313f154bb33397"
     },
     {
       "path": "scripts/agent_gateway.py",
@@ -775,5 +775,5 @@
     "polyseme_terms": 3,
     "drift_count": 0
   },
-  "ontology_digest": "c399ff180ebc06c8a351dfad77e7689f8d90d54d72dbbc601733c527e3026377"
+  "ontology_digest": "e258dec16ceff2bb1252538dd36d52ed2b963a652e068bc05b7719fec0b9fcf2"
 }

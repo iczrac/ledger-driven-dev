@@ -64,7 +64,7 @@
 | `lifecycle / lifecycle.log` | lifecycle.py | state-field / append-only | 冻结、归档、批准人、状态变更日志。**不是 governance/lifecycle.log 文件**。 |
 | `retired_caps / execution.claims` | lifecycle.py | state-field | 退役编码登记与任务领用锁，保证编码不复用、同码不被两个执行者同时领用。 |
 | `provenance` | init_project.py | bootstrap | 接入来源（template / 草稿相对路径）、模式与意图，外部绝对路径自动脱敏。 |
-| `governance_meta / upgrade_log` | upgrade.py | state-field / append-only | 版本六轴、已应用迁移、工具 sha256 与升级/回滚日志。**不是 UPGRADE_LOG.md 文件**。 |
+| `governance_meta / upgrade_log` | upgrade.py | state-field / append-only | 版本七轴、已应用迁移、工具 sha256 与升级/回滚日志。**不是 UPGRADE_LOG.md 文件**。 |
 | `governance_meta.method_assets / board_skeleton / installed_assets` | upgrade.py | state-field | 整包资产摘要、看板骨架摘要，以及项目级已安装副本的逐文件绑定；三者任一漂移都要重新批准升级。 |
 | `work_items` | work_panel.py | state-field | 节点级 TODO / issue 的唯一写入点；scope 可指向项目、模块或四段式能力编码。 |
 | `test_results` | work_panel.py sync-tests | state-field | 测试报告的可验证投影（source_sha256 绑定原报告）；供工作台显示模块/组件级逐用例结果。 |

@@ -292,7 +292,7 @@ LEDGER_FIELDS: list[dict] = [
          purpose="接入来源（template / 草稿相对路径）、模式与意图，外部绝对路径自动脱敏。"),
     dict(path="governance_meta / upgrade_log", owner="upgrade.py",
          write="state-field / append-only",
-         purpose="版本六轴、已应用迁移、工具 sha256 与升级/回滚日志。**不是 UPGRADE_LOG.md 文件**。"),
+         purpose="版本七轴、已应用迁移、工具 sha256 与升级/回滚日志。**不是 UPGRADE_LOG.md 文件**。"),
     dict(path="governance_meta.method_assets / board_skeleton / installed_assets",
          owner="upgrade.py", write="state-field",
          purpose="整包资产摘要、看板骨架摘要，以及项目级已安装副本的逐文件绑定；三者任一漂移都要重新批准升级。"),

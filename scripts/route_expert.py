@@ -425,7 +425,7 @@ def decide(facts: dict, scores: dict[str, int], explicit_mode: str) -> dict:
         }
     elif primary in ("migrate", "access"):
         # 元层意图优先于项目状态：规则本身变了、或要授予写入权限时，
-        # 不能由考古/执行专家顺手完成——批准门与版本六轴需要独立负责人。
+        # 不能由考古/执行专家顺手完成——批准门与版本七轴需要独立负责人。
         route = _card("platform-steward", "high",
                       "治理骨架升级 / 多 Agent 接入属于元层动作：先只读计划，"
                       "再由人批准应用与注册；完成后必须重新取证与复验。", facts,

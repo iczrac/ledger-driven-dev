@@ -16,7 +16,7 @@ v0.9.0 只做了 `ledger_version` 的 fail-closed，于是已有项目面临三�
 
     PLAN → SNAPSHOT → APPLY → VERIFY → RE-BASELINE → AUDIT
 
-版本六轴（缺一不可）
+版本七轴（缺一不可）
 --------------------
     method_version   方法论/工具链版本（本文件 METHOD_VERSION），写进账本
     ledger_version   账本数据契约版本（1.0）；不兼容时只 fail-closed，不猜迁移
@@ -24,6 +24,10 @@ v0.9.0 只做了 `ledger_version` 的 fail-closed，于是已有项目面临三�
     method_assets    专家/技能/路由/模板/文档整包摘要；资产升级必须重新批准
     board_skeleton   去 EMBED 后的看板骨架 sha256；统一 CSS/DOM/JS，禁止项目改版
     installed_assets 项目级 .workbuddy/ 内已安装副本的逐文件摘要；缺失/手改即判不可用
+    ontology_digest  本体投影的只读摘要；权威源字节变了就必须重新绑定
+
+正文里的计数以本文件的常量为准，由 scripts/acceptance.py 的验收契约门禁校验，
+不要在文档里凭记忆手抄数字。
 
 v1.2.0 的边界变化
 ------------------

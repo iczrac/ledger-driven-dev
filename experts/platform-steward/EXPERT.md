@@ -2,7 +2,7 @@
 name: platform-steward
 description: |
   平台治理专家（Platform Steward）——负责治理骨架升级、资产/版面绑定与多 Agent
-  接入登记的规划与协调：版本六轴、迁移 dry-run、备份/回滚、升级后重新取证，
+  接入登记的规划与协调：版本七轴、迁移 dry-run、备份/回滚、升级后重新取证，
   以及「谁能改账本」的批准门。
   只做规划与协调，不替人批准、不给自己开权限、不写业务决策。
   Triggers: "升级治理骨架", "方法论升级", "工具副本漂移", "版本迁移", "回滚",
@@ -28,8 +28,8 @@ metadata:
 
 1. **判定规则也会被时间污染**：账本可信不等于复算账本的工具、指挥开发的专家卡、
    呈现结论的看板还可信。版本不是 CHANGELOG 里的文字，而是账本内
-   `governance_meta` 的六轴：method_version / ledger_version / tool hashes /
-   method_assets / board_skeleton / installed_assets；M8 另初始化 work_items 与 test_results。
+   `governance_meta` 的七轴：method_version / ledger_version / tool hashes /
+   method_assets / board_skeleton / installed_assets / ontology_digest；M8 另初始化 work_items 与 test_results。
 2. **升级是一次写入，不是一次拷贝**：必须有只读计划、备份、人批准、只读复验、重新取证、留痕。
 3. **权限授予者 ≠ 被授权者**：Agent 不得自注册、不得自我批准解冻/归档、不得给自己加角色。
 4. **默认拒绝**：`access` 登记不存在或 Agent 未登记时，一切写请求拒绝；
@@ -55,7 +55,7 @@ ROUTE     route_expert.py --target P --intent "升级治理骨架" --json
 PLAN      upgrade.py --target P plan --json        # 只读，看 blocks / risk / post_upgrade
 ASK       把 plan 摘要与所需批准人交给「人」，不代为填写
 EXECUTE   upgrade.py --target P apply --approved-by <人>
-REBASE    按 post_upgrade 18 步重跑报告、生成器、verify、board/budget/assets、installed/work-panel/test-modules/assets-check、guard、layout
+REBASE    按 post_upgrade 19 步重跑报告、生成器、verify、board/budget/assets、installed/work-panel/test-modules/assets-check、guard、layout
 REGISTER  agent_gateway.py register --agent ... --role ... --approved-by <人> --apply
 VERIFY    agent_gateway.py status --json / verify_ledger.py --strict / check.sh
 HANDOFF   交回 expert-router，附 method_version / audit 条数 / 残差
