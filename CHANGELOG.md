@@ -2,6 +2,48 @@
 
 本项目版本遵循语义化版本（SemVer）。
 
+## [1.3.0] - 2026-11-18
+
+从「引入试用」反向回流的第一批：修掉假绿灯、永久待办与取证入口错配。
+只改方法论仓库权威源，**不触碰任何已引入项目的账本数据契约**。
+
+### R1 绿灯三态：`na` 不再算 `pass`
+
+- 现象：校验器第 24 条在 `test_results` 缺失时直接记通过；`upgrade.py verify()`
+  在「无实测报告」时同样记 `pass`。于是「24/24 全绿」可以出现在证据根本
+  没接上的项目上——与 v0.5.0 修过的假绿灯属同一类。
+- 修复：每条不变量返回 `status = pass | fail | na`，保留 `ok` 兼容旧调用方；
+  `--strict` 只对 `fail` 返回 1；新增 `--require-active` 让 `na` 也算失败；
+  `--json` 增加 `na` / `all_active` / `activation.inactive` 明示未启用项。
+  `upgrade.py verify()` 的 `evidence_rebaseline` 无报告时改记 `na`，
+  `summary` 增加 `na` 计数；`upgrade_complete` 明确只回答「升级动作是否完成」，
+  不再被误读为「证据已激活」。
+
+### R2 M8 永久 pending：迁移判定与写盘行为对齐
+
+- 现象：`plan()` 把 `test_results` 键缺失当作待办，`apply()` 在没有实测报告时
+  又不写这个键，于是每次升级都判 M8、`noop` 永假（v1.2.0 → v1.2.1 已重现）。
+- 修复：新增 `_projection_stale()`——只有「报告存在但投影缺失 /
+  `source_sha256` 过期」才需要 M8；无报告是合法的 `declared` 状态（E2），
+  不再构成永久待办。无报告项目的第二次 `plan` 现在收敛为 `noop=True`。
+
+### R3 取证入口：报告契约开放化
+
+- 现象：`POST_UPGRADE` 第 1 步跑的是方法论仓库自身 `scripts/run_tests.py`，
+  第 2 步却在目标项目消费该报告；且 `run_tests.py` 只支持 unittest discover，
+  混合测试栈的项目无法产出报告，能力永远停在 `declared`。
+- 修复：第 1 步改为在目标项目侧运行 `governance/run_tests.py`（仓库自测
+  回归 CI）；`work_panel.py` 新增 `import-report`，把 JUnit XML、jest JSON
+  或任意符合 `ledger-test-report/1` 的 JSON 规范化成同一份报告，带
+  `source_adapter` 与同源 `evidence_binding`（路径全部项目根相对）。
+  默认 dry-run，写盘需 `--apply --approved-by <人>`；空用例报告判
+  `overall=fail`，绝不伪造全绿。规范化后仍走既有 `sync-tests` →
+  生成器 `--strict-evidence` 链路。
+
+**新增 7 个回归用例**（合计 202），24 条不变量、`check.sh` 全绿。
+资产 frontmatter 版本统一 1.3.0；`method_assets` 摘要变化，
+已升级项目需重新批准升级（M4 + M5）重绑。
+
 ## [1.2.1] - 2026-11-18
 
 把 v1.2.0 首次接入一个真实存量项目（多项目 monorepo）时暴露的集成缺陷修掉。

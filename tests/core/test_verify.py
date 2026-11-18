@@ -2,9 +2,12 @@
 MODULE_ID = "core"
 import copy
 import json
+import subprocess
+import sys
 import unittest
 
-from _base import ROOT, demo_copy, load_ledger, run_verify
+from _base import ROOT, VERIFIER, demo_copy, load_ledger, run_verify
+from ledger_io import write_ledger
 
 
 class VerifyTest(unittest.TestCase):
@@ -52,6 +55,45 @@ class VerifyTest(unittest.TestCase):
             c = d["capability_model"]["projects"][0]["modules"][0]["caps"][0]
             c["doc_index"]["impl"] = [{"path": "examples/demo-shop/docs/GHOST.md"}]
         self._corrupt_and_check(mutate, "doc_paths_exist")
+
+
+class TristateTest(unittest.TestCase):
+    """v1.3.0：能力未启用（na）绝不能被记成 pass。"""
+
+    @staticmethod
+    def _run(root, ledger, reg, board, *extra):
+        return subprocess.run(
+            [sys.executable, str(VERIFIER), "--root", str(root),
+             "--registry", str(reg), "--ledger", str(ledger),
+             "--board", str(board), "--json", *extra],
+            capture_output=True, text=True)
+
+    def test_missing_projection_is_na_not_pass(self):
+        with demo_copy() as (root, ledger, reg, board):
+            d = json.loads(ledger.read_text())
+            d.pop("test_results", None)
+            write_ledger(ledger.parent, d)
+            payload = json.loads(run_verify(root, ledger, reg, board).stdout)
+            row = next(c for c in payload["checks"]
+                       if c["id"] == "test_results_binding_valid")
+            self.assertEqual(row["status"], "na")
+            self.assertFalse(row["ok"])
+            self.assertEqual(payload["na"], 1)
+            self.assertEqual(payload["passed"], 23)
+            self.assertEqual(payload["failed"], 0)
+            self.assertFalse(payload["all_active"])
+
+    def test_strict_ignores_na_but_require_active_does_not(self):
+        with demo_copy() as (root, ledger, reg, board):
+            d = json.loads(ledger.read_text())
+            d.pop("test_results", None)
+            write_ledger(ledger.parent, d)
+            soft = self._run(root, ledger, reg, board, "--strict")
+            self.assertEqual(soft.returncode, 0, soft.stdout + soft.stderr)
+            hard = self._run(root, ledger, reg, board,
+                             "--strict", "--require-active")
+            self.assertEqual(hard.returncode, 1)
+            self.assertEqual(json.loads(hard.stdout)["na"], 1)
 
 
 if __name__ == "__main__":

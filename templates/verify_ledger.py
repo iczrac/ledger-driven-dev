@@ -32,14 +32,25 @@
 23. work_item_refs_valid：工作项引用的决策 / 能力 / 路径可解析
 24. test_results_binding_valid：节点测试结果投影绑定当前测试报告且用例状态合法
 
+三态语义
+--------
+每条检查返回 status = pass | fail | na：
+  - pass：能力已启用且校验通过；
+  - fail：能力已启用但校验失败（--strict 因此返回 1）；
+  - na：能力未启用（例如没有实测报告、没有节点测试结果投影）。
+na 绝不计入 pass。旧版把「未启用」写成 pass，于是 24/24 全绿可以掩盖
+「证据根本没接上」——这是 v1.3.0 修掉的假绿灯。需要「未启用也算失败」的
+项目可加 --require-active，逐步收紧而不破坏既有项目。
+
 用法
 ----
     python3 verify_ledger.py --root examples/demo-shop --registry examples/demo-shop/governance/registry.json \
         --ledger examples/demo-shop/governance/DECISION_LEDGER.json --board examples/demo-shop/governance/index.html
     python3 verify_ledger.py --root . --json        # 机器可读输出
-    python3 verify_ledger.py --root . --strict      # 任何失败返回非零退出码
+    python3 verify_ledger.py --root . --strict      # 存在 fail 返回非零退出码
+    python3 verify_ledger.py --root . --strict --require-active  # na 也算失败
 
-退出码：0=全部通过；1=存在失败（仅 --strict）；2=无法读取输入。
+退出码：0=无 fail（允许 na）；1=存在 fail，或 --require-active 下存在 na；2=无法读取输入。
 
 依赖：仅标准库。
 """
@@ -104,8 +115,13 @@ def verify(repo_root: Path, ledger: dict, registry: dict | None,
     """
     results: list[dict] = []
 
-    def add(check_id: str, ok: bool, detail: str = "") -> None:
-        results.append({"id": check_id, "ok": bool(ok), "detail": detail})
+    def add(check_id: str, ok: bool, detail: str = "",
+            status: str | None = None) -> None:
+        st = status or ("pass" if ok else "fail")
+        if st not in ("pass", "fail", "na"):
+            raise ValueError(f"非法检查状态：{st}")
+        results.append({"id": check_id, "ok": st == "pass",
+                        "status": st, "detail": detail})
 
     entries = ledger.get("entries", [])
     cm = ledger.get("capability_model", {})
@@ -392,7 +408,8 @@ def verify(repo_root: Path, ledger: dict, registry: dict | None,
     # 24. 测试结果投影：只认绑定了当前报告 hash 的只读投影，杜绝手填"全绿"
     tr = ledger.get("test_results")
     if tr is None:
-        add("test_results_binding_valid", True, "未启用节点测试结果投影（全部能力按 declared 显示）")
+        add("test_results_binding_valid", False,
+            "未启用节点测试结果投影（全部能力按 declared 显示）", status="na")
     elif not isinstance(tr, dict) or tr.get("schema") != "node-test-results/1":
         add("test_results_binding_valid", False, "test_results.schema 非法")
     else:
@@ -425,7 +442,9 @@ def main() -> None:
     ap.add_argument("--registry", help="registry.json 路径（默认 <root>/governance/registry.json）")
     ap.add_argument("--board", help="看板 HTML 路径（默认 <root>/governance/index.html）")
     ap.add_argument("--json", action="store_true", help="输出 JSON")
-    ap.add_argument("--strict", action="store_true", help="有失败时返回退出码 1")
+    ap.add_argument("--strict", action="store_true", help="有 fail 时返回退出码 1")
+    ap.add_argument("--require-active", action="store_true",
+                    help="na（能力未启用）也算失败，用于逐步收紧治理成熟度")
     args = ap.parse_args()
 
     repo_root = Path(args.root).resolve()
@@ -442,21 +461,32 @@ def main() -> None:
     board = board_path if board_path.exists() else None
 
     results = verify(repo_root, ledger, registry, board, ledger_path.parent)
-    passed = sum(1 for r in results if r["ok"])
-    failed = len(results) - passed
+    passed = sum(1 for r in results if r["status"] == "pass")
+    na = sum(1 for r in results if r["status"] == "na")
+    failed = sum(1 for r in results if r["status"] == "fail")
+    inactive = [r["id"] for r in results if r["status"] == "na"]
+    blocking = failed + (na if args.require_active else 0)
 
     if args.json:
         print(json.dumps({
-            "passed": passed, "failed": failed,
-            "all_ok": failed == 0, "checks": results,
+            "passed": passed, "failed": failed, "na": na,
+            "all_ok": failed == 0,
+            "all_active": na == 0,
+            "activation": {"inactive": inactive,
+                           "note": "na = 能力未启用，不计入 pass；--require-active 可判失败"},
+            "checks": results,
         }, ensure_ascii=False, indent=2))
     else:
         for r in results:
-            mark = "PASS" if r["ok"] else "FAIL"
+            mark = {"pass": "PASS", "fail": "FAIL", "na": "NA  "}[r["status"]]
             print(f"[{mark}] {r['id']}" + (f" — {r['detail']}" if r["detail"] else ""))
-        print(f"\n{passed}/{len(results)} 检查通过" + (f"，{failed} 失败" if failed else ""))
+        print(f"\n{passed}/{len(results)} 检查通过" +
+              (f"，{failed} 失败" if failed else "") +
+              (f"，{na} 未启用（na）" if na else ""))
+        if inactive:
+            print("未启用：" + ", ".join(inactive))
 
-    if args.strict and failed:
+    if args.strict and blocking:
         raise SystemExit(1)
 
 

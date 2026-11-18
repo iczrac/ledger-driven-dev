@@ -8,7 +8,7 @@ description: |
 license: MIT
 metadata:
   author: ledger-driven-dev
-  version: "1.2.1"
+  version: "1.3.0"
   risk_level: read_only
   related_skills: [ledger-verify, ledger-guard, expert-route, graph-compare]
 ---

@@ -8,7 +8,7 @@ description: |
 license: MIT
 metadata:
   author: ledger-driven-dev
-  version: "1.2.1"
+  version: "1.3.0"
   risk_level: read_only_with_approved_repair
   related_skills: [ledger-upgrade, layout-inspect, ledger-verify, scale-budget]
 ---

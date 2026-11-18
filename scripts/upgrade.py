@@ -83,7 +83,7 @@ SOURCE_ROOT = Path(__file__).resolve().parents[1]
 SCHEMA_PLAN = "upgrade-plan/1"
 SCHEMA_APPLY = "upgrade-apply/1"
 SCHEMA_VERIFY = "upgrade-verify/1"
-METHOD_VERSION = "1.2.1"
+METHOD_VERSION = "1.3.0"
 LEDGER_SCHEMA_VERSION = "1.0"
 SUPPORTED_LEDGER_VERSIONS = {"1.0"}
 ACCESS_SCHEMA = "access/1"
@@ -121,11 +121,14 @@ MIGRATIONS: list[dict] = [
          note="只读部署副本，权威源仍是方法论仓库；项目内手改副本会被 verify 判漂移"),
     dict(id="M8-work-panel", field="work_items / test_results", kind="ledger-field",
          name="初始化节点工作台字段（TODO / issue / 测试结果投影）", approval=False,
-         note="只新增空数组与可验证投影，不改写 entries / history / capability_model"),
+         note="只新增空数组与可验证投影；无实测报告时不写 test_results（v1.3.0 起不再永久 pending）"),
 ]
 
 POST_UPGRADE: list[str] = [
-    "python3 scripts/run_tests.py --dir tests --out governance/test_report.json",
+    # v1.3.0：报告必须在「目标项目」侧生成，方法论仓库自测由仓库 CI 负责。
+    # 非 unittest 技术栈改用 work_panel.py import-report 产出同一份规范报告。
+    "cd P && python3 governance/run_tests.py --dir tests --top . "
+    "--out governance/test_report.json --label project",
     "cd P && python3 governance/build_capability_model.py --root . "
     "--test-report governance/test_report.json --strict-evidence",
     "cd P && python3 governance/verify_ledger.py --root . --strict",
@@ -180,6 +183,22 @@ def _meta_template(from_method: str) -> dict:
 def _access_template() -> dict:
     return {"schema": ACCESS_SCHEMA, "revision": 0,
             "agents": [], "leases": [], "audit": []}
+
+
+def _projection_stale(gov: Path, ledger: dict) -> bool:
+    """只有「报告存在但投影缺失 / 过期」才需要 M8。
+
+    旧判定把 test_results 键缺失当作待办，而 apply 在没有报告时又不写该键，
+    于是每次 plan 都判 M8、noop 永假。无报告是合法的 declared 状态（E2），
+    不该成为永久待办；证据未激活由校验器的 na 态明示。
+    """
+    report = gov / "test_report.json"
+    if not report.is_file():
+        return False
+    tr = ledger.get("test_results")
+    if not isinstance(tr, dict):
+        return True
+    return tr.get("source_sha256") != sha256_file(report)
 
 
 def plan(target: Path, source_root: Path = SOURCE_ROOT) -> dict:
@@ -237,7 +256,7 @@ def plan(target: Path, source_root: Path = SOURCE_ROOT) -> dict:
             needed.append(MIGRATIONS[5])
         if not inst["noop"]:
             needed.append(MIGRATIONS[6])
-        if "work_items" not in ledger or "test_results" not in ledger:
+        if "work_items" not in ledger or _projection_stale(gov, ledger):
             needed.append(MIGRATIONS[7])
 
     noop = bool(ledger) and not needed and not blocks
@@ -488,17 +507,22 @@ def verify(target: Path, source_root: Path = SOURCE_ROOT) -> dict:
             else:
                 add("evidence_rebaseline", "pass", "证据与当前源码一致")
         else:
-            # 没有测试的项目全部能力是 declared（E2），本来就无需重绑；
-            # 只有「报告存在但过期/未通过」才构成升级未完成的证据。
-            add("evidence_rebaseline", "pass", "无实测报告，全部能力为 declared，无需重绑")
+            # 无报告 = 证据能力未激活，不是「升级完成且证据已验证」。
+            # 用 na 明示，避免把全部 declared 的项目算进「证据复验通过」。
+            add("evidence_rebaseline", "na",
+                "无实测报告：能力仍为 declared，证据复验未启用",
+                "接上项目侧测试报告后重跑本项；可用 work_panel.py import-report")
 
     blocked = any(c["status"] == "block" for c in checks)
     return {"schema": SCHEMA_VERIFY, "target": ".", "checks": checks,
             "summary": {"pass": sum(c["status"] == "pass" for c in checks),
                         "warn": sum(c["status"] == "warn" for c in checks),
+                        "na": sum(c["status"] == "na" for c in checks),
                         "block": sum(c["status"] == "block" for c in checks)},
             "upgrade_complete": not blocked and all(
-                c["status"] == "pass" for c in checks
+                # na 表示能力未启用，不阻止「升级动作已完成」的判定；
+                # 但 upgrade_complete 不等于「证据已激活」。
+                c["status"] in ("pass", "na") for c in checks
                 if c["id"] in ("method_version", "tool_hashes", "access_schema",
                                "method_assets", "board_skeleton",
                                "installed_assets", "work_panel",

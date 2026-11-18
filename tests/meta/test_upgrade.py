@@ -16,7 +16,7 @@ from contextlib import contextmanager
 from pathlib import Path
 
 from _base import DEMO, ROOT, run_verify
-from ledger_io import current_fingerprint, load_ledger
+from ledger_io import current_fingerprint, load_ledger, write_ledger
 
 sys.path.insert(0, str(ROOT / "scripts"))
 from upgrade import (METHOD_VERSION, POST_UPGRADE, TOOLING, apply,  # noqa: E402
@@ -203,6 +203,33 @@ class UpgradeTest(unittest.TestCase):
                                 "apply", "--json"], capture_output=True, text=True)
             self.assertEqual(p.returncode, 1)
             self.assertIn("approved-by", p.stderr)
+
+
+class UpgradeV130Test(unittest.TestCase):
+    """v1.3.0：无实测报告的项目不得让 M8 永久 pending。"""
+
+    def test_plan_converges_without_test_report(self):
+        with project_copy() as (tmp, target):
+            gov = target / "governance"
+            report = gov / "test_report.json"
+            if report.is_file():
+                report.unlink()
+            d = ledger_of(target)
+            d.pop("test_results", None)
+            write_ledger(gov, d)
+            apply(target, "张三")
+            second = plan(target)
+            self.assertTrue(second["noop"], second["migrations"])
+            self.assertNotIn("M8-work-panel",
+                             [m["id"] for m in second["migrations"]])
+            v = verify(target)
+            self.assertEqual(v["summary"]["na"], 1)
+            self.assertTrue(v["upgrade_complete"])
+
+    def test_post_upgrade_report_is_generated_in_target(self):
+        self.assertTrue(POST_UPGRADE[0].startswith("cd P && "))
+        self.assertIn("governance/run_tests.py", POST_UPGRADE[0])
+        self.assertNotIn("scripts/run_tests.py", POST_UPGRADE[0])
 
 
 if __name__ == "__main__":

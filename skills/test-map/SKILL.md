@@ -7,7 +7,7 @@ description: |
 license: MIT
 metadata:
   author: iczrac
-  version: "1.2.1"
+  version: "1.3.0"
   risk_level: read_only
   related_skills: [ledger-verify, scenario-guard, layout-inspect, asset-install]
 ---

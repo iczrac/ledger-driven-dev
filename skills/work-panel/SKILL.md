@@ -7,7 +7,7 @@ description: |
 license: MIT
 metadata:
   author: iczrac
-  version: "1.2.1"
+  version: "1.3.0"
   risk_level: write_with_guard
   related_skills: [ledger-verify, board-layout, scale-budget, agent-gate, test-map]
 ---
@@ -76,3 +76,19 @@ cd P && python3 governance/verify_ledger.py --root . --strict   # 24 条不变�
 | `source_sha256 与当前报告不一致` | 重跑 `run_tests.py` 后 `sync-tests --apply` |
 | `summary.total 与 cases 数量不一致` | 不要手改投影，重新同步 |
 | 工作台空白 | 项目尚未 M8 初始化：跑 `upgrade.py apply --approved-by <人>` |
+| 项目不是标准库测试栈 | 用 `import-report` 把 CI 报告规范化，再 `sync-tests --apply` |
+
+## v1.3.0：导入外部 CI 报告
+
+`test_report.json` 是开放契约，不限定测试框架。非 unittest 栈用：
+
+```
+python3 scripts/work_panel.py --target P import-report --from ci/junit.xml \
+    --adapter auto --source-dir src,tests --apply --approved-by <人>
+```
+
+`--adapter` 支持 `junit`（JUnit XML）、`jest`（jest JSON）、`ledger`
+（已符合 `ledger-test-report/1` 的 JSON），`auto` 自动探测。导入会重算
+`evidence_binding`（项目根相对路径），空用例报告判 `overall=fail`。
+默认 dry-run，写盘必须人工批准。之后照常 `sync-tests --apply` →
+生成器 `--strict-evidence`。账本投影不带 `source_adapter`，避免新增事实源。

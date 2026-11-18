@@ -154,3 +154,14 @@
 ## 建议的 topics
 
 `developer-tools` `knowledge-management` `ai-agent` `documentation` `methodology` `single-source-of-truth` `python`
+
+## v1.3.0 发布检查（反向回流第一批）
+
+- [x] R1：校验器三态输出；无投影记 `na`；`--require-active` 可判失败
+- [x] R2：无报告项目第二次 `plan` 收敛 `noop=True`；`verify.summary.na` 可观测
+- [x] R3：`POST_UPGRADE[0]` 在目标项目侧生成报告；`import-report` 三种适配器 + 干跑纪律
+- [x] 7 个新回归（na 不计 pass / require-active / 幂等收敛 / 三适配器 / 干跑批准 / 空报告不绿）
+- [x] 工具副本同步：`templates/verify_ledger.py` → `examples/demo-shop/governance/`
+- [x] 资产 frontmatter 统一 1.3.0；`METHOD_VERSION` 同步
+- [x] `bash scripts/check.sh` 全绿
+- [ ] 已引入项目重新批准升级（M4 + M5）重绑摘要（由项目负责人决定，不自动执行）

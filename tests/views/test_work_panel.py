@@ -6,6 +6,7 @@ import copy
 import json
 import subprocess
 import sys
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -13,8 +14,9 @@ from _base import DEMO, ROOT, demo_copy
 
 sys.path.insert(0, str(ROOT / "scripts"))
 from ledger_io import load_ledger, write_ledger  # noqa: E402
-from work_panel import (add_item, cap_index, check, close_item, nodes,  # noqa: E402
-                        sync_tests, test_results_from_report, validate,
+from work_panel import (add_item, cap_index, check, close_item,  # noqa: E402
+                        detect_adapter, import_report, nodes, sync_tests,
+                        normalize_report, test_results_from_report, validate,
                         valid_scopes)
 
 
@@ -161,6 +163,82 @@ class WorkPanelTest(unittest.TestCase):
         r = check(ROOT / "examples" / "demo-shop")
         self.assertTrue(r["ok"], r["errors"])
         self.assertGreater(r["nodes"], 0)
+
+
+class ImportReportTest(unittest.TestCase):
+    """v1.3.0：外部 CI 报告可规范化，且不得伪造全绿。"""
+
+    def setUp(self):
+        self.td = tempfile.TemporaryDirectory()
+        base = Path(self.td.name)
+        self.proj = base / "proj"
+        (self.proj / "src").mkdir(parents=True)
+        (self.proj / "tests").mkdir()
+        (self.proj / "src" / "a.py").write_text("x = 1\n")
+        (self.proj / "tests" / "test_a.py").write_text("def test_a(): pass\n")
+        self.ext = base / "ci"
+        self.ext.mkdir()
+
+    def tearDown(self):
+        self.td.cleanup()
+
+    def _write(self, name, data):
+        p = self.ext / name
+        p.write_bytes(data if isinstance(data, bytes) else
+                      json.dumps(data, ensure_ascii=False).encode("utf-8"))
+        return p
+
+    def test_three_adapters_autodetect(self):
+        junit = self._write("j.xml", b'<testsuites><testsuite>'
+                                     b'<testcase classname="C" name="ok" time="0.1"/>'
+                                     b'<testcase classname="C" name="bad"><failure/></testcase>'
+                                     b'</testsuite></testsuites>')
+        jest = self._write("jest.json", {"testResults": [{
+            "name": "a.test.js", "assertionResults": [
+                {"fullName": "a", "status": "passed", "duration": 10},
+                {"fullName": "b", "status": "skipped"}]}]})
+        ledger = self._write("ledger.json", {
+            "schema": "ledger-test-report/1",
+            "cases": [{"id": "t1", "file": "tests/test_a.py",
+                       "status": "pass", "seconds": 0.1}]})
+        for path, kind, n, overall in ((junit, "junit", 2, "fail"),
+                                       (jest, "jest", 2, "pass"),
+                                       (ledger, "ledger", 1, "pass")):
+            r = normalize_report(path.read_bytes(), "auto", self.proj,
+                                 ["src", "tests"])
+            self.assertEqual(r["source_adapter"], kind)
+            self.assertEqual(r["schema"], "ledger-test-report/1")
+            self.assertEqual(len(r["cases"]), n)
+            self.assertEqual(r["overall"], overall)
+            self.assertTrue(r["evidence_binding"]["inputs"])
+            self.assertTrue(all(not x["path"].startswith("/")
+                                for x in r["evidence_binding"]["inputs"]))
+
+    def test_dry_run_and_human_approval(self):
+        src = self._write("ledger.json", {
+            "schema": "ledger-test-report/1",
+            "cases": [{"id": "t1", "file": "tests/test_a.py",
+                       "status": "pass", "seconds": 0.1}]})
+        out = self.proj / "governance" / "test_report.json"
+        dry = import_report(self.proj, source=str(src), adapter="auto")
+        self.assertEqual(dry["mode"], "dry-run")
+        self.assertFalse(out.exists())
+        with self.assertRaises(ValueError):
+            import_report(self.proj, source=str(src), adapter="auto", apply=True)
+        done = import_report(self.proj, source=str(src), adapter="auto",
+                             approved_by="张三", apply=True)
+        self.assertEqual(done["mode"], "apply")
+        rep = json.loads(out.read_text())
+        self.assertEqual(rep["source_adapter"], "ledger")
+        self.assertTrue(rep["evidence_binding"]["inputs"])
+
+    def test_empty_report_never_green(self):
+        src = self._write("empty.xml", b"<testsuites></testsuites>")
+        r = normalize_report(src.read_bytes(), "junit", self.proj,
+                             ["src", "tests"])
+        self.assertEqual(r["overall"], "fail")
+        self.assertEqual(r["summary"]["total"], 0)
+        self.assertTrue(r["load_errors"])
 
 
 if __name__ == "__main__":

@@ -39,6 +39,16 @@ scope 语义
         --title "补边界用例" --apply --approved-by 张三 --json
     python3 scripts/work_panel.py --target P close --id W-TODO-001 \
         --apply --approved-by 张三 --json
+    python3 scripts/work_panel.py --target P import-report --from ci/junit.xml \
+        --adapter auto --source-dir src,tests --apply --approved-by 张三 --json
+
+v1.3.0 报告契约
+----------------
+`governance/test_report.json` 是**开放契约**：只要求 `schema` / `summary` /
+`cases[]` / `overall` / `evidence_binding`，不要求由哪个测试框架产生。标准库栈
+可直接用 `run_tests.py` 生成；其它栈用 `import-report` 把 JUnit XML、jest JSON
+或任意符合契约的 JSON 规范化成同一份报告，再照常 `sync-tests` → 生成器取证。
+`source_adapter` 只留在原始报告里，账本投影仍只保留看板需要的字段。
 
 退出码：0 成功；1 被拒绝 / 校验失败；2 输入错误。
 """
@@ -49,6 +59,8 @@ import hashlib
 import json
 import re
 import sys
+import xml.etree.ElementTree as ET
+from datetime import datetime
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -67,6 +79,10 @@ STATUSES = {"open", "doing", "done", "blocked"}
 SEVERITIES = {"low", "med", "high"}
 CASE_STATUSES = {"pass", "fail", "error", "skip"}
 CAP_RE = re.compile(r"^[A-Z][A-Z0-9]*\.[A-Z][A-Z0-9]*\.[A-Z][A-Z0-9]*\.\d{2}$")
+REPORT_SCHEMA = "ledger-test-report/1"
+ADAPTERS = {"auto", "ledger", "junit", "jest"}
+SOURCE_SUFFIXES = {".py", ".js", ".jsx", ".mjs", ".cjs", ".ts", ".tsx",
+                   ".go", ".java", ".rs", ".rb", ".php"}
 
 
 def _sha256_file(p: Path) -> str:
@@ -189,6 +205,165 @@ def validate(ledger: dict, governance_dir: Path | None = None) -> list[str]:
                 if report.is_file() and tr.get("source_sha256") != _sha256_file(report):
                     errs.append("test_results.source_sha256 与当前测试报告不一致（需 sync-tests）")
     return errs
+
+
+def detect_adapter(raw: bytes) -> str:
+    head = raw.lstrip()[:256]
+    if head.startswith(b"<"):
+        return "junit"
+    try:
+        d = json.loads(raw.decode("utf-8"))
+    except (UnicodeDecodeError, json.JSONDecodeError):
+        raise ValueError("无法识别报告格式，请显式指定 --adapter")
+    if isinstance(d, dict) and d.get("schema") == REPORT_SCHEMA:
+        return "ledger"
+    if isinstance(d, dict) and "testResults" in d:
+        return "jest"
+    raise ValueError("无法识别报告格式，请显式指定 --adapter")
+
+
+def _binding_from_dirs(root: Path, dirs: list[str]) -> dict:
+    """与 run_tests.py 同口径的源码绑定；路径一律相对项目根，避免绝对路径污染。"""
+    root = root.resolve()
+    inputs: list[dict] = []
+    for rel in dirs:
+        base = root / rel
+        if not base.is_dir():
+            continue
+        for path in sorted(base.rglob("*")):
+            if not path.is_file() or path.suffix not in SOURCE_SUFFIXES:
+                continue
+            try:
+                name = path.resolve().relative_to(root).as_posix()
+            except ValueError:
+                continue
+            inputs.append({"path": name,
+                           "sha256": hashlib.sha256(path.read_bytes()).hexdigest()})
+    return {
+        "algorithm": "sha256-files-v1",
+        "inputs": inputs,
+        "source_digest": hashlib.sha256(
+            "".join(f"{i['path']}:{i['sha256']}\n" for i in inputs).encode("utf-8")
+        ).hexdigest()[:16],
+        "source_adapter": "import-report",
+    }
+
+
+def _cases_from_ledger(d: dict) -> list[dict]:
+    return [{"id": c.get("id", ""), "file": c.get("file", ""),
+             "status": c.get("status", ""), "seconds": c.get("seconds", 0)}
+            for c in d.get("cases", []) if isinstance(c, dict)]
+
+
+def _cases_from_junit(raw: bytes) -> list[dict]:
+    try:
+        tree = ET.fromstring(raw)
+    except ET.ParseError as exc:
+        raise ValueError(f"JUnit XML 解析失败：{exc}")
+    cases = []
+    for tc in tree.iter("testcase"):
+        name = tc.get("name") or "unnamed"
+        cls = tc.get("classname") or ""
+        kids = {child.tag.split("}")[-1] for child in tc}
+        status = ("skip" if "skipped" in kids else
+                  "error" if "error" in kids else
+                  "fail" if "failure" in kids else "pass")
+        try:
+            seconds = round(float(tc.get("time") or 0), 6)
+        except ValueError:
+            seconds = 0
+        cases.append({"id": f"{cls}.{name}" if cls else name,
+                      "file": tc.get("file") or "", "status": status,
+                      "seconds": seconds})
+    return cases
+
+
+def _cases_from_jest(d: dict) -> list[dict]:
+    status_map = {"passed": "pass", "failed": "fail", "skipped": "skip",
+                  "pending": "skip", "todo": "skip"}
+    cases = []
+    for tr in d.get("testResults", []) or []:
+        if not isinstance(tr, dict):
+            continue
+        for a in tr.get("assertionResults", []) or []:
+            if not isinstance(a, dict):
+                continue
+            cases.append({
+                "id": a.get("fullName") or a.get("title") or "",
+                "file": tr.get("name", ""),
+                "status": status_map.get(a.get("status", ""), "error"),
+                "seconds": round((a.get("duration") or 0) / 1000, 6),
+            })
+    return cases
+
+
+def normalize_report(raw: bytes, adapter: str, target: Path,
+                     dirs: list[str]) -> dict:
+    """把任意受支持框架的报告规范化成 ledger-test-report/1，绝不伪造通过。"""
+    kind = detect_adapter(raw) if adapter == "auto" else adapter
+    if kind == "junit":
+        cases = _cases_from_junit(raw)
+    else:
+        try:
+            d = json.loads(raw.decode("utf-8"))
+        except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+            raise ValueError(f"报告不是合法 JSON：{exc}")
+        if not isinstance(d, dict):
+            raise ValueError("报告顶层必须是对象")
+        cases = _cases_from_jest(d) if kind == "jest" else _cases_from_ledger(d)
+    counts = {s: 0 for s in ("pass", "fail", "error", "skip")}
+    for c in cases:
+        if c["status"] in counts:
+            counts[c["status"]] += 1
+    load_errors = [] if cases else ["导入后用例为空：拒绝生成全绿报告"]
+    overall = "pass" if (cases and not counts["fail"] and not counts["error"]
+                         and counts["pass"] > 0 and not load_errors) else "fail"
+    return {
+        "schema": REPORT_SCHEMA,
+        "generated_at": datetime.now().strftime("%Y-%m-%d %H:%M HKT"),
+        "test_dir": ",".join(dirs),
+        "command": f"work_panel.py import-report --adapter {kind}",
+        "load_errors": load_errors,
+        "summary": {"total": len(cases), "passed": counts["pass"],
+                    "failed": counts["fail"], "errors": counts["error"],
+                    "skipped": counts["skip"]},
+        "cases": cases,
+        "overall": overall,
+        "source_adapter": kind,
+        "evidence_binding": _binding_from_dirs(target, dirs),
+    }
+
+
+def import_report(target: Path, *, source: str, adapter: str = "auto",
+                  dirs: list[str] | None = None,
+                  approved_by: str = "", apply: bool = False) -> dict:
+    """导入外部 CI 报告；默认 dry-run，写盘需 --apply --approved-by。"""
+    target = Path(target).expanduser().resolve()
+    src = Path(source).expanduser()
+    if not src.is_file():
+        raise ValueError(f"找不到外部报告：{src}")
+    if adapter not in ADAPTERS:
+        raise ValueError(f"适配器必须是 {sorted(ADAPTERS)}")
+    scan_dirs = dirs or ["src", "tests"]
+    report = normalize_report(src.read_bytes(), adapter, target, scan_dirs)
+    out = target / REPORT_REL
+    base = {"schema": SCHEMA_ACTION, "action": "import-report",
+            "adapter": report["source_adapter"], "cases": len(report["cases"]),
+            "overall": report["overall"],
+            "source_digest": report["evidence_binding"]["source_digest"],
+            "out": REPORT_REL}
+    if not apply:
+        return {**base, "mode": "dry-run",
+                "message": "只读预演；写盘需 --apply --approved-by <人>"}
+    if not approved_by:
+        raise ValueError("导入测试报告必须提供 --approved-by（人工批准）")
+    overwrote = out.is_file()
+    out.parent.mkdir(parents=True, exist_ok=True)
+    out.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n",
+                   encoding="utf-8")
+    return {**base, "mode": "apply", "noop": False, "overwrote": overwrote,
+            "approved_by": approved_by,
+            "message": "报告已规范化；接着跑 sync-tests 与生成器取证"}
 
 
 def test_results_from_report(governance_dir: Path) -> dict | None:
@@ -410,6 +585,11 @@ def main(argv: list[str] | None = None) -> int:
     a.add_argument("--refs", default="", help="逗号分隔：D-001 / capability:CODE / path:xxx")
     c = common(sub.add_parser("close", help="关闭工作项"))
     c.add_argument("--id", required=True)
+    ir = common(sub.add_parser("import-report", help="导入外部 CI 测试报告"))
+    ir.add_argument("--from", dest="source", required=True, help="外部报告路径")
+    ir.add_argument("--adapter", choices=sorted(ADAPTERS), default="auto")
+    ir.add_argument("--source-dir", dest="source_dirs", default="src,tests",
+                    help="逗号分隔；用于生成源码绑定摘要")
     args = ap.parse_args(argv)
     target = Path(args.target).expanduser().resolve()
     try:
@@ -421,6 +601,12 @@ def main(argv: list[str] | None = None) -> int:
             rc = 0
         elif args.command == "sync-tests":
             result = sync_tests(target, approved_by=args.approved_by, apply=args.apply)
+            rc = 0
+        elif args.command == "import-report":
+            dirs = [x.strip() for x in args.source_dirs.split(",") if x.strip()]
+            result = import_report(target, source=args.source, adapter=args.adapter,
+                                   dirs=dirs, approved_by=args.approved_by,
+                                   apply=args.apply)
             rc = 0
         elif args.command == "add":
             refs = [x.strip() for x in args.refs.split(",") if x.strip()]
