@@ -210,9 +210,9 @@
 - [x] 本次发版重绑 `M4 + M5 + M7`：`method_assets` `9493bc9e… → 264026fd…`；备份 `20261118T102418Z-5cd2106a`，复验与回滚命令见 `feedback/RELEASE-1.6.0.md`
 - [x] **本版 `feedback_closed = 4`**（发布时点：`feedback/observations.jsonl` 13 条，4 条收敛为四产物、9 条 `open`）；2026-11-18 规划收口再 triage 3 条后为 **5**，见文末「路线图对账」
 - [x] `CHANGELOG` / 本清单 / `README` 口径一致；`bash scripts/check.sh` 14 阶段全绿
-- [ ] 条件化第 1/2/15 步 SOP（目标项目无 `tests/` 时的降级路径）→ 合并进 **v1.7.0**，见文末「路线图对账」
-- [ ] M8 `activation` 占位与 `all_active` 语义 → 合并进 **v1.7.0**
-- [ ] `registry/2` 多项目数据契约：留 **v2.0.0**，需人批准数据迁移 + 备份 + 双写兼容期（本清单唯一主条目）
+- [ ] 条件化第 1/2/15 步 SOP（目标项目无 `tests/` 时的降级路径）→ **攒批**至下一次功能迭代，且须由 `acceptance.py` 机器判据校验，见 `feedback/ACCEPTANCE-1.7.0-PRECONDITIONS.md` G2
+- [ ] M8 `activation` 占位与 `all_active` 语义 → 同上，见 G3
+- [ ] `registry/2` 多项目数据契约：留 **v2.0.0**，需人批准数据迁移 + 备份 + 双写兼容期（本清单唯一主条目，**不得由 Agent 自动执行**）
 
 ### 设计内告警（不掩盖、不在本版修）
 
@@ -263,3 +263,39 @@ append-only 事实），`open 9 → 6`、`feedback_closed 4 → 5`。既有 4 �
 「语义图 + 条件化 SOP + M8 `activation` 占位 + `docs/23` 规划修正」合并为一次
 迭代，按 S1 固化证据 → S2 先写红灯 → S3 转绿 → S4 重绑 → 发版推进。
 `registry/2` 独立立项，需人批准数据迁移，不得由 Agent 自动执行。
+
+### 依赖顺序修正（2026-11-18 第二轮决策，**取代上方启动建议**）
+
+> 完整取证与判据见 `feedback/ACCEPTANCE-1.7.0-PRECONDITIONS.md`。
+> 上方「v1.7.0 应把语义图 + … 合并」的顺序被本段修正：**语义图不再无条件纳入 v1.7.0**。
+
+从「规则可复放 + 事实可验证 + 不可伪造」推出三条约束，全部指向
+「本轮不发版、不写 `P`」：
+
+- **C1 诚实 > 绿灯**：`P` 无 `tests/`、无 `test_report.json`、
+  `activation=null`、`test_results=null`；`docs/11` 的两条不变量会抓伪造
+  `verified`。`na` 与 47 个 `declared` 是正确状态，不得用方法论仓自身测试顶替。
+- **C2 依赖顺序**：`ontology.py` A2 要求 L3+ 有新鲜 `verified` 证据、G3 要求
+  含 Unknown 不得派生 `pass`。47 能力全 `declared` → K3 推理恒 Unknown →
+  **语义图在零 `verified` 事实上是空集推理**，必须先有证据再做推理。
+- **C3 版本经济**：实证 `docs/23`、`scripts/upgrade.py`、`templates/*`、
+  frontmatter 均在 `ASSET_GROUPS`；改任一处即触发一次发版 +
+  `P` 的 `M4 + M5 + M7` 全量重绑。刚发 v1.6.0 就为 3 个小修再发版 = 零散发版，禁止。
+
+**语义图启动前置条件 P1–P3**（缺一则 v1.7.0 降级为「一致性与可适配性」收敛版，
+语义图再次顺延）：P1 `P` 至少一条能力由其真实 CI 报告升为 `verified`；
+P2 `ontology.py check --target P` 中 A2 可判定；P3 规划一致性已由机器门禁校验。
+
+**本轮实际推进（零摘要成本）**：修订仓外 ODLA 提案第 7 节（消除一处
+「v1.6.0 = Semantic Graph」错误陈述 + 补依赖顺序判据）、新增
+`feedback/ACCEPTANCE-1.7.0-PRECONDITIONS.md`（S2 红灯定义书：6 条转绿判据
+G1–G6、启动序列、固定成本）、更新本节。`feedback/*` 与根级 md 均为 `ZERO`
+作用域，`method_assets 264026fd…` 与 `ontology_digest e258dec1…` 不变。
+
+**已知且刻意保留的失配**：`docs/23` 第七节仍写着旧规划。修它属 `ASSET` 改动，
+须与下一次功能实现攒成一次发版；G1 要求届时把它升级为 `acceptance.py` 的
+机器断言（不是人眼复核），确保失配不会永久挂着。
+
+**边界**：`METHOD_VERSION` 仍 1.6.0、`tag v1.6.0` 仍指 `a22f3eb`、未发版、
+未写 `P`（97 个在途改动与账本 mtime 未变）、未把 6 条 `open` 伪装成收敛。
+下一轮若实现 v1.7.0，须一并授权完整「S1→S4→发版 + `P` 重绑」。
