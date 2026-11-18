@@ -371,10 +371,29 @@ E7 `cardinality_contradiction`（`ontology.py check --target P` 仍 `ok=false`�
 - [x] **S3**：`feedback/S3-2.0.0-GREEN.md`；生成器 `code_namespace()` + build 两处 code 改经命名空间；L6 四项转绿、14 项验收全 PASS、273/273 单测
 - [x] **双写兼容**：单项目模板 `DEMO.DATA.READY.01` 与 monorepo `APEX.DATA.READY.01` 均 4 段合法（专项测试覆盖）
 - [x] **根因修复**：真实 P dry-run 产出 0 个 5 段码、0 个 `RACOS.` 泄漏、level 保持 `L5:20/L3:22/L2:5`、`no_regress=[]`
-- [ ] **S4**：人批准 apply 重绑 `P`（M3+M4+M5+M7 + P1 三步数据迁移），24 不变量无 fail、P1 verified 落盘
-- [ ] **发版**：附注 `tag v2.0.0` + push；发版报告见 `feedback/RELEASE-2.0.0.md`
+- [x] **S4**：人批准 apply 重绑 `P`（M3+M4+M5+M7 + P1 三步数据迁移），24 不变量无 fail、P1 verified 落盘
+- [x] **发版**：附注 `tag v2.0.0` + push；发版报告见 `feedback/RELEASE-2.0.0.md`
 
 ### 本版边界（不掩盖）
 
 - 语义图（Statement 再化 / K3 / 最小割集 RCA）仍顺延（P2/P3 尚未复验）
 - E7 `cardinality_contradiction`、`scale_budget` 告警、6 条 `open` 观察按既有状态保留/复验
+
+## v2.0.1 发布检查（registry schema/2 容器）
+
+> 顺序不可交换：S1 基线 → S2 红灯 → S3 转绿 → S4 人批准重绑 → 发版 → 独立复放核实。
+> 授权：用户在“下一步路径”中选择 registry schema v2。
+
+- [x] **S1**：`feedback/S1-REGISTRY-SCHEMA-V2-BASELINE.md` 固化 v2.0.0 全绿基线、消费者地图、容器双读与第二套 codec 风险
+- [x] **S2**：`feedback/S2-2.0.1-RED.md` 记录 L7 两项 fail、专项 7 项全未通过
+- [x] **S3**：`feedback/S3-2.0.1-GREEN.md`；唯一 codec、双读、4 工具副本、18 项 acceptance、282/282 单测
+- [x] **S4**：`feedback/S4-2.0.1-REBIND.md`；备份后迁移为 4 个 `projects[]`，47 code 逐项全等，M4/M5/M7 重绑，24 不变量全 pass
+- [x] **语义契约**：registry 与 capability_model 同为 4 项目，本体 A4 真正一致（不再靠单项目掩盖）
+- [ ] **发版**：附注 `tag v2.0.1` + push；发版报告见 `feedback/RELEASE-2.0.1.md`
+- [ ] **独立复放**：`feedback/DELIVERY-VERIFY-2.0.1.md`
+
+### 本版边界（不掩盖）
+
+- 语义图 R4 仍顺延；本版只做 registry 容器与 codec 契约；
+- `scale_budget` 告警与 6 条 open 观察保留；
+- 目标项目根仓库不整体提交，只留下治理文件与备份链。
