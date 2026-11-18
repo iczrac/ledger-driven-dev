@@ -40,8 +40,8 @@
     {
       "id": "meta",
       "name": "元层：升级、接入、生命周期",
-      "scope": "upgrade / agent_gateway / lifecycle / file_layout / platform contracts / feedback / ontology",
-      "owner_scripts": ["scripts/upgrade.py", "scripts/agent_gateway.py", "scripts/lifecycle.py", "scripts/file_layout.py", "scripts/ledger_feedback.py", "scripts/ontology.py"],
+      "scope": "upgrade / agent_gateway / lifecycle / file_layout / platform contracts / feedback / ontology / acceptance",
+      "owner_scripts": ["scripts/upgrade.py", "scripts/agent_gateway.py", "scripts/lifecycle.py", "scripts/file_layout.py", "scripts/ledger_feedback.py", "scripts/ontology.py", "scripts/acceptance.py"],
       "files": [
         "tests/meta/test_upgrade.py",
         "tests/meta/test_agent_gateway.py",
@@ -49,7 +49,8 @@
         "tests/meta/test_layout.py",
         "tests/meta/test_platform_contract.py",
         "tests/meta/test_feedback.py",
-        "tests/meta/test_ontology.py"
+        "tests/meta/test_ontology.py",
+        "tests/meta/test_acceptance.py"
       ]
     },
     {

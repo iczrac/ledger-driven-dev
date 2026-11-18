@@ -47,7 +47,7 @@ stage_test_modules(){
     || { rm -rf "$tmp"; return 1; }
   rm -rf "$tmp"
   python3 scripts/test_modules.py --target examples/demo-shop --json >/dev/null || return 1
-  echo '  6 个开发模块、23 个测试文件、映射渲染与目标缺口检查均一致'
+  echo '  开发模块清单 / MODULE_ID / 发现口径 / 映射渲染 / 目标缺口检查均一致'
 }
 stage_ontology(){
   note '本体层：投影可复算 / 词表分型 / 三类漂移 / 第七轴'
@@ -268,6 +268,11 @@ stage_feedback(){
   [ "$a" = "$b" ] || { echo '  观察导出不幂等'; return 1; }
   echo "  真实观察包 feedback_closed=${fc}，产物引用存在，导出幂等"
 }
+stage_acceptance(){
+  note '验收契约：正文数字 vs 代码常量 / 派生可复算 / 观察包 append-only'
+  # S2 阶段本项预期红灯：先定义「什么算修好」，S3 改权威源后转绿。
+  python3 scripts/acceptance.py --check --full
+}
 stage_hygiene(){
   note '脱敏 + 文档内链'
   if grep -rliE 'RacOS|APEX|Tushare|tdx-connector|ClickHouse|Minervini|Keychain' \
@@ -318,6 +323,7 @@ else
   run '反向回流' stage_feedback
   run '本体层' stage_ontology
   run '卫生' stage_hygiene
+  run '验收契约' stage_acceptance
 fi
 
 printf '\n'
@@ -325,4 +331,4 @@ if [ "$FAILURES" -gt 0 ]; then
   printf '质量门禁失败：%d 个阶段未通过\n' "$FAILURES"
   exit 1
 fi
-printf '质量门禁全绿：测试 / 测试架构 / 证据分层 / 24 条三态不变量 / 场景矩阵 / 文件布局 / 升级与接入 / 资产与工作台契约 / 幂等 / 同步 / 反向回流 / 本体层 / 脱敏 / 文档链接\n'
+printf '质量门禁全绿：测试 / 测试架构 / 证据分层 / 24 条三态不变量 / 场景矩阵 / 文件布局 / 升级与接入 / 资产与工作台契约 / 幂等 / 同步 / 反向回流 / 本体层 / 脱敏 / 文档链接 / 验收契约\n'
