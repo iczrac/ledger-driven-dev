@@ -20,7 +20,7 @@
 - [x] 八种专家角色（路由 / 新建 / 考古 / 账本治理 / 审计 / 执行 / 生命周期 / 平台治理），各含权限矩阵与停止条件
 - [x] 二十个技能（route/discover/bootstrap/scan/verify/decide/lesson/guard/doc-rebuild/graph-compare/scenario-guard/layout-inspect/ledger-upgrade/agent-gate/method-assets/board-layout/scale-budget/asset-install/test-map/work-panel），标准 SKILL.md frontmatter
 - [x] 技能脚本：重复立项、缺行动经验、无理由驳回均由代码拒绝
-- [x] 223 个 unittest 用例（含 v1.3.0 的 7 个三态/幂等/适配器回归、v1.4.0 的 9 个反向回流专项、v1.5.0 的 12 个本体投影专项），零第三方依赖，临时目录隔离
+- [x] 243 个 unittest 用例（含 v1.3.0 的 7 个三态/幂等/适配器回归、v1.4.0 的 9 个反向回流专项、v1.5.0 的 12 个本体投影专项、v1.6.0 的 16 个验收契约专项 + 4 个 append-only 回归），零第三方依赖，临时目录隔离
 - [x] CI（Python 3.10-3.13 矩阵）/ CD（tag 触发，先门禁后打包）
 - [x] 示例项目已跑通，产出真实账本与看板
 
@@ -194,3 +194,28 @@
 - [x] `bash scripts/check.sh` 全绿：223 测试 / 24 条三态不变量 / 13 个阶段（含本体层）
 - [ ] 已引入项目升级到 1.5.0：需项目负责人单独批准写盘；执行顺序仍是「导出基线 → 升级 → 复导 → diff → triage」
 - [ ] `registry/2` 多项目数据契约：留 v2.0.0，需人批准数据迁移 + 备份 + 双写兼容期
+
+## v1.6.0 发布检查（验收契约 / 写入语义 / 版本统一）
+
+> 顺序不可交换：S1 固化证据 → S2 先写红灯 → S3 转绿 → S4 重绑 → 发版。
+
+- [x] **S1**：本地固化升级前后观察证据（`feedback/UPGRADE-DIFF-1.5.0.md`），三包 sha 与闭环计数留档；未 push / 未打 tag
+- [x] **S2**：`scripts/acceptance.py` + 16 个绿灯自测 + 第 14 个门禁阶段；刻意红灯 `13 PASS / 1 FAIL`，27 处漂移 / 15 文件、append-only 违例（13→10 行）如实记录
+- [x] **S3**：三层验收转绿 —— `drift=0`（85 文件）/ 3 份派生可复算 / 观察包 13→23 行且 4 条已收敛证据逐字段不变；10 处历史复核留痕；`check.sh` 14/14 全绿、243 测试、24/24 三态不变量
+- [x] `ledger_feedback.py` 的 `export` 改为 append-only 合并；`triage` 语义不变；`docs/22` 补写入契约
+- [x] `stage_scenarios` 改用「临时重算 + cmp」，门禁不再把合法重算判成手改派生文件
+- [x] `test_acceptance.py` 的版本断言改为从 `upgrade.py` 动态读取，发版不再需要手改测试
+- [x] `METHOD_VERSION` 与 28 份资产 frontmatter 统一 1.6.0；`docs/16` 当前示例值同步；历史性「v1.5.0 起」保留
+- [x] `ontology.py check` 通过：升版本不改 `ontology_digest`（版本脚本不在 `SOURCE_FILES`），仍为 `e258dec1…`
+- [x] **S4**：已引入项目人批准重绑 `M5 + M7`（备份 `20261118T100016Z-ccd42d92`），复验 `pass=11 / na=1 / warn=0`、`upgrade_complete=true`；业务数据六段 digest 与三包观察 sha 不变
+- [x] 本次发版重绑 `M4 + M5 + M7`：`method_assets` `9493bc9e… → 264026fd…`；备份 `20261118T102418Z-5cd2106a`，复验与回滚命令见 `feedback/RELEASE-1.6.0.md`
+- [x] `CHANGELOG` / 本清单 / `README` 口径一致；`bash scripts/check.sh` 14 阶段全绿
+- [ ] 条件化第 1/2/15 步 SOP（目标项目无 `tests/` 时的降级路径）
+- [ ] M8 `activation` 占位与 `all_active` 语义
+- [ ] `registry/2` 多项目数据契约：留 v2.0.0
+
+### 设计内告警（不掩盖、不在本版修）
+
+- E7 `cardinality_contradiction`：单项目 registry vs 4 项目能力模型，`ontology.py check --target` 仍 `ok=false`，但第七轴 `binding=pass`。
+- `evidence_rebaseline=na` / `all_active=false`：目标项目无测试报告，47 个能力仍 `declared`。
+- `scale_budget` 的 `project_files=49078` 超阈值告警。

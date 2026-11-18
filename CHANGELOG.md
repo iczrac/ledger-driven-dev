@@ -2,6 +2,70 @@
 
 本项目版本遵循语义化版本（SemVer）。
 
+## [1.6.0] - 2026-11-18
+
+验收契约与写入语义的收口版。**修的是「怎么证明修好了」和「证据会不会被自己删掉」，
+不是新增治理对象**；已引入项目需人批准重绑一次摘要。
+
+### 决策依据
+
+v1.5.0 之后出现两个必须按序处理的问题：
+
+1. 正文里的计数（六轴 / 18 步 / 11 项 / 八项）与 `upgrade.py` 的真实常量
+   （七轴 / 19 步 / 12 项 / 九项）漂移了 27 处，而门禁全绿 —— 测试只证明代码自洽，
+   不证明文档没有在骗人。
+2. `ledger_feedback.py export` 的覆盖写会把已收敛的 triage 证据抹掉：
+   第 19 步 SOP 在真实项目上重跑，观察包从 13 行变 10 行、4 条闭环证据全部消失。
+   **反向回流闭环能产证据，却不能保住证据**，这是根因级缺陷。
+
+顺序按「先定义验收，再改权威源」：S1 本地固化升级前后证据（不 push / 不打 tag）
+→ S2 写会失败的负向回归与第 14 个门禁阶段（刻意红灯）→ S3 让三层验收转绿
+→ S4 人批准重绑目标项目 → 本版统一发版。任何一步反过来做，都无法证明改动有效。
+
+发版时否决了「把版本号从资产摘要口径剥离」：`upgrade.py` 既是权威工具又定义版本，
+其 sha 属于 `tools` 轴与 `scripts` 资产；剥离等于让版本标识与规则内容脱钩，正是
+本系统要防的第二事实源。**发版触发实例重绑是正确语义**。真正该解耦的是测试里的
+硬编码版本号 —— `test_acceptance.py` 改为从 `upgrade.py` 动态读取。
+
+### 新增：`scripts/acceptance.py`（`acceptance/1`）
+
+- 期望值全部从 `upgrade.py` 的 **AST** 抽取（版本 / 七轴 / 1 pre / 19 post /
+  12 个 verify id / 9 个判据 id），检测器里不写死任何计数。
+- 三层判定：`L1` 字面量扫描手写源、资产与生成器源（含派生文件），按行级历史豁免
+  区分 `drift` 与 `review`；`L2` 三份派生文档必须可由各自生成器复算；
+  `L3` 用真实 export 探针验证观察包 append-only、已收敛 triage 证据不丢、
+  `obs_id` 去重、重复导出幂等。
+- `--check` 非零退出；`scripts/check.sh` 新增第 14 阶段 `stage_acceptance`。
+- 16 个绿灯自测只证明检测器本身有效，不断言当前仓库是红是绿；S3 转绿后仍全通过。
+- 扫描范围含 `scripts/*.py`，因此找出了 11 个文档复核没发现的根因：
+  2 份派生文件的漂移源头在 **4 个生成器源码**里。只改派生文件会让 `L2` 立刻变红。
+
+### 修复
+
+- **`ledger_feedback.py` append-only**：新增 `merge_observations()` 纯函数，
+  `export` 写盘改为「读既有行 → 按 `obs_id` 合并 → 既有行优先 → 确定性顺序」，
+  已收敛 triage 证据永不被覆盖；`triage` 的整体重写语义保持不变；
+  payload 的 `count` / `sha256` / `observations` 与 `merge` 统计反映实际写入结果。
+  4 个新增回归，`docs/22` 补写入契约。
+- **27 处计数漂移**：先改 4 个生成器源，再用 `--emit-md` 重算派生文件，
+  从未手改 `docs/generated/`；10 处历史演进陈述逐条确认并补版本边界，不伪装成当前值。
+  `upgrade.py` / `docs/16` 写明「计数以代码常量为准，由 `acceptance.py` 校验」。
+- **`stage_scenarios` 误判**：原先唯一用 `git diff --exit-code`（与 HEAD 比）检查
+  派生文件，把合法重算当成手改；统一到另两阶段的「临时重算 + `cmp`」只读口径。
+- 因 `ledger_feedback.py` / `scenario_matrix.py` 属于 `ontology.py` 的 `SOURCE_FILES`，
+  重算第七轴 `ontology_digest`：`c399ff18… → e258dec1…`。
+
+### 版本提升的成本与边界
+
+- `METHOD_VERSION` 与 28 份资产 frontmatter 统一 1.6.0；`docs/16` 的示例值同步，
+  历史性「v1.5.0 起」保留。
+- 本体的 `SOURCE_FILES` 刻意不含版本脚本，因此**升版本不改 `ontology_digest`**；
+  但 `scripts/upgrade.py` 在资产摘要作用域内，`method_assets.digest` 必变，
+  已引入项目需再跑一次 M4 + M5 + M7 并复验。
+- 未做（留后续）：条件化第 1/2/15 步 SOP、M8 `activation` 占位、`registry/2`
+  多项目数据契约。设计内告警 E7 `cardinality_contradiction`、
+  `evidence_rebaseline=na`、`scale_budget` 项目文件阈值均未掩盖。
+
 ## [1.5.0] - 2026-11-18
 
 本体投影层落地。**只改方法论仓库权威源，不触碰任何已引入项目的账本数据契约、
