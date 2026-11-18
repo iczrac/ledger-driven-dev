@@ -19,8 +19,9 @@ from _base import ROOT
 sys.path.insert(0, str(ROOT / "scripts"))
 from acceptance import (AXIS_KEYS, TOKEN, build, check_derived, classify,  # noqa: E402
                         constants, evaluate_activation, evaluate_conditional,
-                        evaluate_probe, historical, roadmap_consistency,
-                        scan_literals, to_int)
+                        evaluate_probe, evidence_adapter, evidence_end_to_end,
+                        historical, l5_contract_doc, no_regression_guard,
+                        roadmap_consistency, scan_literals, to_int)
 
 EXPECT = {"axis": 7, "pre_steps": 1, "post_steps": 19,
           "verify_checks": 12, "gate_criteria": 9}
@@ -320,7 +321,9 @@ class BuildTest(unittest.TestCase):
         self.assertEqual([c["id"] for c in a["checks"]],
                          ["literal_drift", "derived_reproducible", "append_only",
                           "roadmap_consistency", "conditional_sop",
-                          "activation_placeholder"])
+                          "activation_placeholder", "evidence_adapter",
+                          "no_regression_guard", "l5_contract_doc",
+                          "evidence_end_to_end"])
         # 不写死 overall：S3 转绿后本用例仍须通过。
         self.assertEqual(json.dumps(a, ensure_ascii=False, sort_keys=True),
                          json.dumps(b, ensure_ascii=False, sort_keys=True),
@@ -332,6 +335,46 @@ class BuildTest(unittest.TestCase):
         self.assertEqual([c["id"] for c in r["checks"]],
                          ["roadmap_consistency", "conditional_sop",
                           "activation_placeholder"])
+
+
+class L5DetectorTest(unittest.TestCase):
+    """L5 检测器专项：喂合成输入验证四个断言能判定，不锁定仓库当前红绿。"""
+
+    def _tree(self):
+        td = tempfile.mkdtemp()
+        root = Path(td)
+        (root / "scripts").mkdir()
+        (root / "templates").mkdir()
+        (root / "feedback").mkdir()
+        return root
+
+    def test_evidence_adapter_names_each_missing_symbol(self):
+        root = self._tree()
+        r = evidence_adapter(root)
+        self.assertEqual(r["status"], "fail")
+        self.assertIn("default_source_dirs", " ".join(r["errors"]))
+        self.assertIn("classname_to_file", " ".join(r["errors"]))
+
+    def test_no_regression_guard_names_missing_gate(self):
+        root = self._tree()
+        r = no_regression_guard(root)
+        self.assertEqual(r["status"], "fail")
+        self.assertIn("evidence_hints", " ".join(r["errors"]))
+        self.assertIn("no_regress", " ".join(r["errors"]))
+
+    def test_l5_contract_doc_requires_all_anchors(self):
+        root = self._tree()
+        (root / "feedback" / "ACCEPTANCE-1.8.0.md").write_text(
+            "default_source_dirs classname evidence_hints no_regress", encoding="utf-8")
+        self.assertEqual(l5_contract_doc(root)["status"], "pass")
+        (root / "feedback" / "ACCEPTANCE-1.8.0.md").write_text("partial", encoding="utf-8")
+        self.assertEqual(l5_contract_doc(root)["status"], "fail")
+
+    def test_end_to_end_reports_missing_callable(self):
+        root = self._tree()
+        r = evidence_end_to_end(root)
+        self.assertEqual(r["status"], "fail")
+        self.assertTrue(any("default_source_dirs" in e for e in r["errors"]))
 
 
 if __name__ == "__main__":

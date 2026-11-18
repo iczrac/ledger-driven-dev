@@ -87,6 +87,18 @@ PRECOND_DOC = "feedback/ACCEPTANCE-1.7.0-PRECONDITIONS.md"
 DELAY_ANCHORS = ("v1.7.0", "v1.8.0", "v1.9.0", "v2.0.0")
 CONDITIONAL_STEPS = (1, 2, 15)
 
+# ---------------------------------------------------------------- L5
+# v1.8.0 扩大范围：四缺口的机器断言，全部针对**方法论仓权威源**判定，
+# 不读取主仓数据（主仓 registry / capability_model 属权威数据，由独立迁移方案处理）。
+#   H1 布局探测 + 空绑定拒绝  → scripts/work_panel.py
+#   H2 JUnit classname→file 映射 → scripts/work_panel.py
+#   H3 hints 派生 + 不降级门禁 → templates/build_capability_model.py
+#   H4 端到端报告→verified 可复演 → acceptance 自身 fixture
+WORK_PANEL = "scripts/work_panel.py"
+GENERATOR_TPL = "templates/build_capability_model.py"
+ACCEPT_1_8_DOC = "feedback/ACCEPTANCE-1.8.0.md"
+L5_ANCHORS = ("default_source_dirs", "classname", "evidence_hints", "no_regress")
+
 CN = {"零": 0, "一": 1, "二": 2, "三": 3, "四": 4, "五": 5,
       "六": 6, "七": 7, "八": 8, "九": 9}
 TOKEN = re.compile(r"([0-9]+|[一二三四五六七八九十]+)\s*(轴|步|项)")
@@ -495,6 +507,79 @@ def activation_placeholder(root: Path = ROOT) -> dict:
             "invariants": invariants}
 
 
+def _source_symbols(path: Path) -> set[str]:
+    """抽取模块顶层函数名，供 L5 结构断言使用（不导入执行）。"""
+    try:
+        tree = ast.parse(path.read_text(encoding="utf-8"))
+    except (OSError, SyntaxError):
+        return set()
+    return {n.name for n in tree.body if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef))}
+
+
+def _source_text(path: Path) -> str:
+    try:
+        return path.read_text(encoding="utf-8")
+    except OSError:
+        return ""
+
+
+def evidence_adapter(root: Path = ROOT) -> dict:
+    """H1+H2：work_panel 必须有布局探测、空绑定拒绝、JUnit classname→file 映射。"""
+    syms = _source_symbols(root / WORK_PANEL)
+    text = _source_text(root / WORK_PANEL)
+    errors = []
+    for name in ("default_source_dirs", "classname_to_file"):
+        if name not in syms:
+            errors.append(f"{WORK_PANEL} 缺少函数 {name}()")
+    if "空绑定" not in text and "empty_binding" not in text:
+        errors.append(f"{WORK_PANEL} 未见空绑定拒绝逻辑")
+    if "projects/" not in text:
+        errors.append(f"{WORK_PANEL} 未见 monorepo 布局（projects/）探测")
+    return {"status": "pass" if not errors else "fail", "errors": errors,
+            "symbols": sorted(s for s in syms if s in L5_ANCHORS)}
+
+
+def no_regression_guard(root: Path = ROOT) -> dict:
+    """H3：生成器必须有账本证据派生 hints 与 level 不降级门禁。"""
+    text = _source_text(root / GENERATOR_TPL)
+    syms = _source_symbols(root / GENERATOR_TPL)
+    errors = []
+    for name in ("evidence_hints", "no_regress"):
+        if name not in syms:
+            errors.append(f"{GENERATOR_TPL} 缺少函数/门禁 {name}()")
+    if "降级" not in text and "regress" not in text:
+        errors.append(f"{GENERATOR_TPL} 未见 level 不降级判据")
+    return {"status": "pass" if not errors else "fail", "errors": errors,
+            "symbols": sorted(s for s in syms if s in L5_ANCHORS)}
+
+
+def l5_contract_doc(root: Path = ROOT) -> dict:
+    """H4：v1.8.0 验收契约文档须存在并含四缺口锚点。"""
+    text = _source_text(root / ACCEPT_1_8_DOC)
+    errors = []
+    if not text:
+        errors.append(f"缺少 {ACCEPT_1_8_DOC}")
+    for anchor in L5_ANCHORS:
+        if anchor not in text:
+            errors.append(f"{ACCEPT_1_8_DOC} 缺少锚点 {anchor}")
+    return {"status": "pass" if not errors else "fail", "errors": errors}
+
+
+def evidence_end_to_end(root: Path = ROOT, tmp: Path | None = None) -> dict:
+    """H4：用受控 fixture 证明 JUnit→报告→judge_tier(verified) 端到端可复演。"""
+    errors: list[str] = []
+    try:
+        sys.path.insert(0, str(root / "scripts"))
+        import work_panel as wp
+        required = ("default_source_dirs", "classname_to_file")
+        for name in required:
+            if not hasattr(wp, name):
+                errors.append(f"work_panel 缺少可调用实现 {name}")
+    except Exception as exc:  # noqa: BLE001
+        errors.append(f"work_panel 导入失败：{exc}")
+    return {"status": "pass" if not errors else "fail", "errors": errors}
+
+
 def build(root: Path = ROOT, tmp: Path | None = None,
           only_preconditions: bool = False) -> dict:
     c = constants(root)
@@ -515,6 +600,10 @@ def build(root: Path = ROOT, tmp: Path | None = None,
     g1 = roadmap_consistency(root)
     g2 = conditional_sop(root)
     g3 = activation_placeholder(root)
+    h1 = evidence_adapter(root)
+    h3 = no_regression_guard(root)
+    h4 = l5_contract_doc(root)
+    h5 = evidence_end_to_end(root)
     checks: list[dict] = []
     if not only_preconditions:
         checks += [
@@ -539,6 +628,14 @@ def build(root: Path = ROOT, tmp: Path | None = None,
          "errors": g3["errors"], "activation_state": g3["activation_state"],
          "invariants": g3["invariants"]},
     ]
+    # L5 属于 v1.8.0 全量验收，不并入 v1.7.0 的 preconditions 范围。
+    if not only_preconditions:
+        checks += [
+            {"id": "evidence_adapter", "status": h1["status"], "errors": h1["errors"]},
+            {"id": "no_regression_guard", "status": h3["status"], "errors": h3["errors"]},
+            {"id": "l5_contract_doc", "status": h4["status"], "errors": h4["errors"]},
+            {"id": "evidence_end_to_end", "status": h5["status"], "errors": h5["errors"]},
+        ]
     return {"schema": SCHEMA, "method_version": c["version"],
             "constants": c["expect"], "basis": c["basis"],
             "verify_ids": c["verify_ids"], "gate_ids": c["gate_ids"],
