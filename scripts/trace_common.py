@@ -6,7 +6,13 @@
 from __future__ import annotations
 
 import json
+import sys
 from pathlib import Path
+
+# v2.0.1：可追溯投影器只消费唯一 registry codec，不再裸拼五段码。
+_TEMPLATES = Path(__file__).resolve().parents[1] / "templates"
+sys.path.insert(0, str(_TEMPLATES))
+from registry_codec import iter_caps as registry_iter_caps  # noqa: E402
 
 
 def load_json(path: Path, label: str = "文件") -> dict:
@@ -41,9 +47,6 @@ def write_if_absent(path: Path, content: str, force: bool = False) -> str:
 
 def iter_caps(registry: dict, ledger: dict) -> list[dict]:
     """按 registry 顺序展开能力，附账本实际状态（若已生成）。"""
-    project = registry.get("project", {})
-    code = str(project.get("code", "PROJ")).upper()
-    proj_root = str(project.get("root", ".")).strip("/")
     cm = ledger.get("capability_model", {})
     actual: dict[str, dict] = {}
     for p in cm.get("projects", []):
@@ -52,7 +55,7 @@ def iter_caps(registry: dict, ledger: dict) -> list[dict]:
                 if c.get("code"):
                     actual[c["code"]] = c
 
-    def norm(path: str) -> str:
+    def norm(path: str, proj_root: str) -> str:
         """账本路径相对仓库根；统一归一到项目根，便于与 git 路径对齐。"""
         val = str(path)
         if proj_root in ("", "."):
@@ -63,34 +66,35 @@ def iter_caps(registry: dict, ledger: dict) -> list[dict]:
         return val[len(prefix):] if val.startswith(prefix) else val
 
     out: list[dict] = []
-    for mod in registry.get("modules", []):
-        mcode = str(mod.get("code", "CORE")).upper()
-        for idx, cap in enumerate(mod.get("caps", []), start=1):
-            domain = str(cap.get("domain", "ITEM")).upper()
-            cap_code = f"{code}.{mcode}.{domain}.{idx:02d}"
-            live = actual.get(cap_code, {})
-            raw_di = live.get("doc_index", {}) or {}
-            raw_ev = live.get("evidence", {}) or {}
-            di = {k: [{**x, "path": norm(x["path"])} if isinstance(x, dict) and x.get("path") else x
-                      for x in (v or [])] for k, v in raw_di.items()}
-            ev = {k: [norm(x) if isinstance(x, str) else x for x in (v or [])]
-                  for k, v in raw_ev.items()}
-            out.append({
-                "code": cap_code,
-                "module_code": mcode,
-                "module_name": mod.get("name", mcode),
-                "domain": domain,
-                "name": cap.get("name", domain.title()),
-                "impl": list(cap.get("impl", []) or []),
-                "hints": list(cap.get("hints", []) or []),
-                "level": int(live.get("level", 0) or 0),
-                "tier": live.get("evidence_tier", "declared"),
-                "doc_index": di,
-                "evidence": ev,
-                "entry_ids": sorted({x.get("id") for x in di.get("decisions", [])
-                                     if isinstance(x, dict) and x.get("id")}),
-                "next_action": live.get("next_action", ""),
-            })
+    for rcap in registry_iter_caps(registry):
+        proj_root = rcap["project_root"]
+        cap_code = rcap["code"]
+        live = actual.get(cap_code, {})
+        raw_di = live.get("doc_index", {}) or {}
+        raw_ev = live.get("evidence", {}) or {}
+        di = {k: [{**x, "path": norm(x["path"], proj_root)}
+                  if isinstance(x, dict) and x.get("path") else x
+                  for x in (v or [])] for k, v in raw_di.items()}
+        ev = {k: [norm(x, proj_root) if isinstance(x, str) else x for x in (v or [])]
+              for k, v in raw_ev.items()}
+        out.append({
+            "code": cap_code,
+            "project_code": rcap["project_code"],
+            "project_root": proj_root,
+            "module_code": rcap["module_code"],
+            "module_name": rcap["module_name"],
+            "domain": rcap["domain"],
+            "name": rcap["name"],
+            "impl": rcap["impl"],
+            "hints": rcap["hints"],
+            "level": int(live.get("level", 0) or 0),
+            "tier": live.get("evidence_tier", "declared"),
+            "doc_index": di,
+            "evidence": ev,
+            "entry_ids": sorted({x.get("id") for x in di.get("decisions", [])
+                                 if isinstance(x, dict) and x.get("id")}),
+            "next_action": live.get("next_action", ""),
+        })
     return out
 
 

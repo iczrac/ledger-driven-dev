@@ -1,7 +1,7 @@
 # FILE_LAYOUT · 引入方案后的文件布局
 
 > 本文件由 `scripts/file_layout.py` 从布局定义渲染；请勿手改。
-> schema `file-layout/1` · 条目 31 · 引入后新增 26 项 · 账本内字段 12 项。
+> schema `file-layout/1` · 条目 32 · 引入后新增 27 项 · 账本内字段 12 项。
 
 ## 分层含义
 
@@ -44,7 +44,8 @@
 | `governance/ADOPTION_REPORT.md` | 草稿层 | 引入方案后新增 | 仅存量接入路径出现 | discover_project.py | `write-if-absent` | 禁 | 可提交（便于离线审计）或 CI 重跑 | 人类可读的接入盘点报告：候选模块、能力点、置信度、风险与下一步。　保护：只读发现 / 截断与无测试告警。 |
 | `governance/build_capability_model.py` | 工具层 | 引入方案后新增 | 治理骨架必需 | init_project.py（复制模板） | `bootstrap` | 禁 | 建议提交 git | 生成器副本：从 registry + 证据重算账本与看板。　保护：check.sh 模板/示例逐字节同步 / --no-generator 可跳过。　注：不要在目标项目里改这份副本；升级方法论后同步 templates/ 版本。 |
 | `governance/verify_ledger.py` | 工具层 | 引入方案后新增 | 治理骨架必需 | init_project.py（复制模板） | `bootstrap` | 禁 | 建议提交 git | 校验器副本：回答「账本内部坏没坏」。　保护：24 条不变量 / 模板同步。　注：与 scenario_guard.py 分工：后者回答「现在能不能动它」，未复制进目标项目。 |
-| `governance/run_tests.py` | 工具层 | 引入方案后新增 | 治理骨架必需 | init_project.py（复制 scripts/） | `bootstrap` | 禁 | 建议提交 git | 测试报告生成器副本，产出 governance/test_report.json。　保护：报告含源码绑定摘要。　注：这是特意复制进目标项目的第 3 个工具，让项目脱离本仓库也能独立复算证据。 |
+| `governance/registry_codec.py` | 工具层 | 引入方案后新增 | 治理骨架必需 | init_project.py（复制模板） | `bootstrap` | 禁 | 建议提交 git | registry schema/2 唯一编码与容器归一化契约，供生成器和校验器共同消费。　保护：唯一 code_namespace / cap_code / normalize_projects / iter_caps。　注：禁止在目标项目里改写；code 规则只在本方法的权威模板维护。 |
+| `governance/run_tests.py` | 工具层 | 引入方案后新增 | 治理骨架必需 | init_project.py（复制 scripts/） | `bootstrap` | 禁 | 建议提交 git | 测试报告生成器副本，产出 governance/test_report.json。　保护：报告含源码绑定摘要。　注：这是特意复制进目标项目的第 4 个工具，让项目脱离本仓库也能独立复算证据。 |
 | `.workbuddy/` | 资产层 | 引入方案后新增 | 跑对应命令后才出现（不出现属正常） | asset_bundle.py | `write-if-absent` | 禁 | 可提交（便于离线审计）或 CI 重跑 | 平台项目级 Agent 资产目录；升级 M7 后才有内容，权威源仍是方法论仓库。　保护：asset_bundle.py verify 逐文件 sha256 / manifest 整包摘要。　注：这里只放由治理升级安装的副本；用户自己放的技能不属于治理清单，不会被删除。 |
 | `.workbuddy/skills/` | 资产层 | 引入方案后新增 | 跑对应命令后才出现（不出现属正常） | asset_bundle.py | `rewrite` | 禁 | 可提交（便于离线审计）或 CI 重跑 | 可被 Agent 平台直接加载的技能副本，每个技能一个 <name>/SKILL.md。　保护：frontmatter name 与目录名一致 / 逐字节副本校验。　注：禁止在项目内编辑；改技能要改方法论仓库并发版，再由 M7 重新安装。 |
 | `.workbuddy/experts/` | 资产层 | 引入方案后新增 | 跑对应命令后才出现（不出现属正常） | asset_bundle.py | `rewrite` | 禁 | 可提交（便于离线审计）或 CI 重跑 | 专家包副本，每个专家一个 <name>/EXPERT.md；路由优先消费这份已安装资产。　保护：frontmatter name 与目录名一致 / 逐字节副本校验。　注：路由卡若引用的专家缺文件，--check-assets 会 fail-closed 报 incomplete。 |

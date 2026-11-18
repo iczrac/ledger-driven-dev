@@ -103,7 +103,7 @@ scale_budget：<ok|warn|exceed>   PAGE_SIZE：<n>
 - 只跑 `apply` 不跑 `post_upgrade` → 工具副本变了但证据过期，`verified` 静默回落。
 - 用时间戳判断"是否已升级" → 一律看 `method_version` 与工具 sha256。
 - 把 `upgrade_log` / `access.audit` 导出成独立文件 → 第二事实源。
-- 在目标项目里手改 3 个工具副本 → 下次 `plan` 报 drifted，但仍应按流程同步模板。
+- 在目标项目里手改 4 个工具副本 → 下次 `plan` 报 drifted，但仍应按流程同步模板。
 - 把网关当安全沙箱宣传 → 它是策略执行点；强隔离需要容器 / 只读挂载 / CI 只接受网关产物。
 - 为了让 `verify` 变绿手改 `method_assets.digest`，或在项目里改 CSS 追平版面 → 伪造版本绑定 / 制造第二套版面。
 - 项目一大就拆账本或删 `history.events` → 破坏单一事实源与 append-only 历史。

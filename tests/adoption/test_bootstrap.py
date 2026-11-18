@@ -44,7 +44,8 @@ class BootstrapTest(unittest.TestCase):
         self.assertEqual(proc.returncode, 0, proc.stderr)
         gov = root / "governance"
         for name in ("registry.json", "DECISION_LEDGER.json", "index.html",
-                     "build_capability_model.py", "verify_ledger.py", "run_tests.py"):
+                     "build_capability_model.py", "verify_ledger.py",
+                     "registry_codec.py", "run_tests.py"):
             self.assertTrue((gov / name).exists(), name)
         reg = json.loads((gov / "registry.json").read_text())
         ledger = json.loads((gov / "DECISION_LEDGER.json").read_text())

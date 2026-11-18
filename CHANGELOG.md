@@ -2,6 +2,32 @@
 
 本项目版本遵循语义化版本（SemVer）。
 
+## [2.0.1] - 2026-11-19
+
+**registry schema/2 容器版**。v2.0.0 修好了四段码生成，但 registry 仍是
+`project` + 平坦 `modules[]`；多项目 monorepo 只是把项目段内嵌在模块码里，
+本体 A4 的「registry 与 capability_model 项目基数一致」靠账本维持单项目掩盖。
+本版把容器层契约化：新增唯一 codec，支持 `schema=registry/2` + `projects[]`，
+同时保留单项目双读；目标项目的 registry 数据形状迁移仍须人批准、备份与重绑。
+
+### 本版内容
+
+- 新增 `templates/registry_codec.py`，统一 `code_namespace` / `cap_code` /
+  `normalize_projects` / `iter_caps`，成为生成器、校验器与可追溯投影器的唯一 codec；
+- 生成器遍历归一化后的 projects[]，summary.projects 不再硬编码为 1；
+- 校验器不变量 #9 与 `trace_common.iter_caps()` 改为消费同一 codec，堵住
+  `trace_common` 裸拼五段码的盲区；
+- 第四工具副本 `governance/registry_codec.py` 纳入 TOOLING、布局契约、
+  初始化与逐字节同步门禁；
+- `acceptance/1` 第七层（L7）四项机器断言：`registry_schema_doc` /
+  `registry_schema_test` / `registry_codec_contract` / `registry_dual_read`；
+- `tests/core/test_registry_schema.py` 7 项专项覆盖双读、稳定码与唯一 codec。
+
+### 边界
+
+本版只交付工具链契约；真实 registry 从单项目容器迁移为四项目 `projects[]`
+属于破坏性数据迁移，需人批准、带清单备份、append-only 审计与独立复放核实。
+
 ## [2.0.0] - 2026-11-19
 
 **registry/2 多项目编码契约版**。承接 v1.8.0 交付核实与用户「a」（正式立项 v2.0.0

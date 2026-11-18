@@ -6,15 +6,16 @@
     python3 scripts/init_project.py --target /path/to/legacy --mode adopt \
         --from-draft /path/to/legacy/governance/registry.draft.json --code LEGACY
 
-会创建（共 6 个文件，全部落在 <target>/governance/）：
+会创建（共 7 个文件，全部落在 <target>/governance/）：
     registry.json                 能力注册表（新建为空清单；接入来自草稿）—— 唯一手写清单
     DECISION_LEDGER.json          账本骨架（含接入来源 provenance）
     index.html                    可视化看板（EMBED 由生成器同步）
     build_capability_model.py     生成器副本（来自 templates/）
     verify_ledger.py              校验器副本（来自 templates/）
+    registry_codec.py             registry schema/2 唯一编码契约副本（来自 templates/）
     run_tests.py                  测试报告生成器副本（来自 scripts/）
 
-后三个是工具副本，可用 --no-generator 一并跳过；不在目标项目里手改它们，
+后四个是工具副本，可用 --no-generator 一并跳过；不在目标项目里手改它们，
 升级方法论时从 templates/ / scripts/ 重新同步。
 不会覆盖已存在文件（除非 --force）；草稿、源码与既有账本永不自动改写。
 目录含义与所有权见 docs/15-文件架构.md 与 scripts/file_layout.py。
@@ -182,7 +183,7 @@ def main() -> int:
         print(f"写入: {path}")
 
     if not args.no_generator:
-        for name in ("build_capability_model.py", "verify_ledger.py"):
+        for name in ("build_capability_model.py", "verify_ledger.py", "registry_codec.py"):
             gen = gov / name
             if gen.exists() and not args.force:
                 print(f"跳过（已存在）: {gen}")

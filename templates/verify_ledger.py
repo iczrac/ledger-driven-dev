@@ -60,7 +60,15 @@ import argparse
 import hashlib
 import json
 import re
+import sys
 from pathlib import Path
+
+# v2.0.1：校验器与生成器共用同一 registry codec，避免第二套 code 规则。
+try:
+    from registry_codec import iter_caps as registry_iter_caps
+except ModuleNotFoundError:  # pragma: no cover - 仅在 spec 加载路径触发
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    from registry_codec import iter_caps as registry_iter_caps
 
 # 四段式：项目.模块.域均以大写字母开头；序号段为两位数字
 CODE_RE = re.compile(r"^[A-Z][A-Z0-9]*\.[A-Z][A-Z0-9]*\.[A-Z][A-Z0-9]*\.\d{2}$")
@@ -234,18 +242,16 @@ def verify(repo_root: Path, ledger: dict, registry: dict | None,
 
     # 9. registry 声明的实现路径真实存在
     if registry:
-        proj_rel = registry.get("project", {}).get("root", "").strip("/")
-        proj_root = repo_root / proj_rel
         empty_impl: list[str] = []
-        for mod in registry.get("modules", []):
-            for cap in mod.get("caps", []):
-                globs = cap.get("impl", [])
-                hit = any(
-                    (proj_root / g).exists() or list(proj_root.glob(g))
-                    for g in globs
-                )
-                if globs and not hit:
-                    empty_impl.append(f"{mod['code']}.{cap.get('domain')}:{globs}")
+        for cap in registry_iter_caps(registry):
+            proj_root = repo_root / cap["project_root"]
+            globs = cap["impl"]
+            hit = any(
+                (proj_root / g).exists() or list(proj_root.glob(g))
+                for g in globs
+            )
+            if globs and not hit:
+                empty_impl.append(f"{cap['code']}:{globs}")
         add("registry_impls_exist", not empty_impl, f"空实现={empty_impl[:5]}")
     else:
         add("registry_impls_exist", True, "未提供 registry，跳过")

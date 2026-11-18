@@ -28,7 +28,7 @@ def _codec():
 
 def _legacy() -> dict:
     return {
-        "project": {"code": "PROJ", "root": ".", "governance_gate": True},
+        "project": {"code": "PROJ", "name": "项目", "root": ".", "governance_gate": True},
         "modules": [{
             "code": "DATA",
             "name": "数据",

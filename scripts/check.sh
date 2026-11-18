@@ -153,6 +153,7 @@ stage_sync(){
   note '模板 / 示例同步 + 看板 EMBED 一致'
   cmp -s templates/build_capability_model.py "$DEMO/build_capability_model.py" || return 1
   cmp -s templates/verify_ledger.py "$DEMO/verify_ledger.py" || return 1
+  cmp -s templates/registry_codec.py "$DEMO/registry_codec.py" || return 1
   python3 - "$DEMO" <<'PY' || return 1
 import json, re, sys
 base = sys.argv[1]
@@ -201,7 +202,7 @@ stage_layout(){
   rm -rf "$tmp"
   python3 scripts/file_layout.py --diff --target examples/demo-shop --strict >/dev/null || return 1
   cmp -s scripts/run_tests.py "$DEMO/run_tests.py" || return 1
-  echo '  布局定义、渲染同步、示例骨架与第 3 个工具副本均一致'
+  echo '  布局定义、渲染同步、示例骨架与第 4 个工具副本均一致'
 }
 stage_upgrade_access(){
   note '升级与多 Agent 接入（端到端，临时副本）'

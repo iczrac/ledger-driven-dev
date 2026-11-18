@@ -37,6 +37,18 @@ import sys
 from datetime import datetime
 from pathlib import Path
 
+# v2.0.1：唯一 registry codec。脚本被复制到目标项目时，sys.path[0] 是脚本目录；
+# 被测试以 spec 方式加载时，显式补同目录，避免第二套编码实现。
+try:
+    from registry_codec import cap_code as codec_cap_code
+    from registry_codec import code_namespace as _codec_code_namespace
+    from registry_codec import normalize_projects
+except ModuleNotFoundError:  # pragma: no cover - 仅在 spec 加载路径触发
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    from registry_codec import cap_code as codec_cap_code
+    from registry_codec import code_namespace as _codec_code_namespace
+    from registry_codec import normalize_projects
+
 # 场景预检契约：与 scenario_guard.py 保持一致；跨版本直写会破坏历史语义。
 SUPPORTED_LEDGER_VERSIONS = {"1.0"}
 
@@ -297,14 +309,7 @@ def code_namespace(project_code: str, module_code: str) -> str:
     判据：module_code 含 ``.`` 且首段为大写项目码时，视为已含项目段，直接用；
     否则补 ``project_code`` 前缀。绝不产生 5 段码或 ``<ROOT>.<ROOT>`` 前缀泄漏。
     """
-    module_code = str(module_code or "").strip()
-    project_code = str(project_code or "").strip()
-    if "." in module_code:
-        first = module_code.split(".", 1)[0]
-        # 已含项目段（首段全大写且为合法项目码段）；直接采用，不再拼 project_code。
-        if first.isupper() and re.fullmatch(r"[A-Z][A-Z0-9]*", first):
-            return module_code
-    return f"{project_code}.{module_code}" if project_code else module_code
+    return _codec_code_namespace(project_code, module_code)
 
 
 def judge_level(
@@ -526,10 +531,11 @@ def build_doc_index(
 
 def build(repo_root: Path, cfg_all: dict, ledger: dict, test_report: dict | None = None) -> dict:
     """构建 capability_model 与 architecture.component_tree。"""
-    project_cfg = cfg_all["project"]
-    code = project_cfg["code"]
-    proj_rel = project_cfg["root"].strip("/")
-    proj_root = repo_root / proj_rel
+    projects_cfg = normalize_projects(cfg_all)
+    if not projects_cfg:
+        raise SystemExit("registry 未提供 project 或 projects[]，无法生成能力模型")
+    first_cfg = projects_cfg[0]
+    code = first_cfg["code"]
 
     model = {
         "version": "1.0",
@@ -540,7 +546,7 @@ def build(repo_root: Path, cfg_all: dict, ledger: dict, test_report: dict | None
             "format": "{项目}.{模块}.{能力域}.{序号}",
             "example": f"{code}.DATA.READY.01",
             "segments": {
-                "项目": "项目代码，来自 registry.json project.code",
+                "项目": "项目代码，来自 registry.json 的 project.code 或 projects[].code",
                 "模块": "项目内一级能力域代码（DATA/CORE/...）",
                 "能力域": "能力点域代码（READY/CORE/...）",
                 "序号": "两位序号，01 起；废弃标 retired 不复用",
@@ -577,92 +583,110 @@ def build(repo_root: Path, cfg_all: dict, ledger: dict, test_report: dict | None
 
     entries = ledger.get("entries", [])
     mm_by_name = {m.get("name"): m for m in ledger.get("module_map", {}).get("modules", [])}
-    arch_mod_by_id = {}
-    for ap in ledger.get("architecture", {}).get("projects", []):
-        if ap.get("id") == code:
-            arch_mod_by_id = {m.get("id"): m for m in ap.get("modules", [])}
+    arch_projects = ledger.get("architecture", {}).get("projects", [])
 
     total_caps = 0
+    total_modules = 0
+    completion_sum = 0.0
     level_dist: dict[str, int] = {}
     tier_dist: dict[str, int] = {}
-    pnode = {"code": code, "name": project_cfg.get("name", code), "root": proj_rel, "modules": []}
 
-    for midx, mod in enumerate(cfg_all["modules"], 1):
-        mcode = mod["code"]
-        # v2.0.0 registry/2：module/code 编码统一走命名空间，杜绝 5 段码。
-        cap_ns = code_namespace(code, mcode)
-        mnode = {
-            "code": cap_ns, "name": mod["name"],
-            "index": midx, "caps": [],
-        }
-        mm_mod = mm_by_name.get(mod["name"])
-        arch_mod = arch_mod_by_id.get(f"M-{mcode}")
-        src_globs = mod.get("src") or (arch_mod or {}).get("src") or [
-            s for c in mod["caps"] for s in c.get("impl", []) if s.endswith("/")
-        ]
-        mnode["component_tree"] = build_component_tree(repo_root, proj_root, src_globs, cfg_all)
-        mnode["doc_index"] = {
-            "docs": [
-                {"path": norm_existing_path(repo_root, d, proj_rel),
-                 "title": Path(d).name, "kind": "module_doc"}
-                for d in (mm_mod or {}).get("docs", [])
-            ],
-            "page": (mm_mod or {}).get("page") or (arch_mod or {}).get("page", ""),
-            "sections": (mm_mod or {}).get("sections") or (arch_mod or {}).get("sections", []),
+    # v2.0.1：同一生成器同时消费旧单项目形状与新 projects[] 形状。
+    for project_cfg in projects_cfg:
+        code = project_cfg["code"]
+        proj_rel = project_cfg["root"]
+        proj_root = repo_root / proj_rel
+        arch_mod_by_id = {}
+        for ap in arch_projects:
+            if ap.get("id") == code:
+                arch_mod_by_id = {m.get("id"): m for m in ap.get("modules", [])}
+
+        pnode = {
+            "code": code, "name": project_cfg.get("name", code),
+            "root": proj_rel, "modules": [],
         }
 
-        for cidx, cap in enumerate(mod["caps"], 1):
-            cap_name = cap["name"]
-            domain = cap["domain"]
-            impl_globs = cap.get("impl", [])
-            cap_code_src = cap.get("code", "")
-            # v1.8.0：以账本既有证据派生 hints，与 registry hints 合并（去重保序）。
-            registry_hints = list(cap.get("hints", []))
-            ledger_hints = evidence_hints(ledger, cap_code_src)
-            hints = registry_hints + [h for h in ledger_hints if h not in registry_hints]
-            level, ev = judge_level(repo_root, proj_root, proj_rel, cfg_all, impl_globs, hints)
-            tier, tier_detail = judge_tier(ev.get("unit_test", []), test_report)
-            cap_code = f"{cap_ns}.{domain}.{cidx:02d}"
-            cnode = {
-                "code": cap_code,
-                "name": cap_name,
-                "domain": domain,
-                "level": level,
-                "level_code": LEVELS[level]["code"],
-                "completion": round(level / 5, 2),
-                "evidence": ev,
-                "evidence_tier": tier,
-                "tier_detail": tier_detail,
-                "next_level": min(level + 1, 5),
-                "next_action": (
-                    LEVELS[min(level + 1, 5)]["rule"]
-                    if level < 5 else "保持生产闭环，持续监控"
-                ),
-                "status": (
-                    "operational" if level == 5
-                    else "active" if level >= 2
-                    else "planned" if level <= 1 else "in_progress"
-                ),
-                "doc_index": build_doc_index(
-                    repo_root, proj_root, proj_rel, cfg_all, domain, cap_name,
-                    hints, ev, mm_mod, entries, code,
-                ),
+        for midx, mod in enumerate(project_cfg["modules"], 1):
+            mcode = str(mod.get("code", "CORE") or "CORE").strip().upper()
+            # v2.0.0 registry/2：module/code 编码统一走唯一 codec，杜绝 5 段码。
+            cap_ns = code_namespace(code, mcode)
+            mnode = {
+                "code": cap_ns, "name": mod["name"],
+                "index": midx, "caps": [],
             }
-            mnode["caps"].append(cnode)
-            total_caps += 1
-            lc = LEVELS[level]["code"]
-            level_dist[lc] = level_dist.get(lc, 0) + 1
-            tier_dist[tier] = tier_dist.get(tier, 0) + 1
+            mm_mod = mm_by_name.get(mod["name"])
+            arch_mod = arch_mod_by_id.get(f"M-{mcode}")
+            src_globs = mod.get("src") or (arch_mod or {}).get("src") or [
+                s for c in mod["caps"] for s in c.get("impl", []) if s.endswith("/")
+            ]
+            mnode["component_tree"] = build_component_tree(
+                repo_root, proj_root, src_globs, project_cfg)
+            mnode["doc_index"] = {
+                "docs": [
+                    {"path": norm_existing_path(repo_root, d, proj_rel),
+                     "title": Path(d).name, "kind": "module_doc"}
+                    for d in (mm_mod or {}).get("docs", [])
+                ],
+                "page": (mm_mod or {}).get("page") or (arch_mod or {}).get("page", ""),
+                "sections": (mm_mod or {}).get("sections") or (arch_mod or {}).get("sections", []),
+            }
 
-        mnode["completion"] = round(
-            sum(c["completion"] for c in mnode["caps"]) / len(mnode["caps"]), 2
-        ) if mnode["caps"] else 0.0
-        pnode["modules"].append(mnode)
+            for cidx, cap in enumerate(mod.get("caps") or [], 1):
+                cap_name = cap["name"]
+                domain = str(cap["domain"]).strip().upper()
+                impl_globs = cap.get("impl", [])
+                cap_code_src = cap.get("code", "")
+                # v1.8.0：以账本既有证据派生 hints，与 registry hints 合并（去重保序）。
+                registry_hints = list(cap.get("hints", []))
+                ledger_hints = evidence_hints(ledger, cap_code_src)
+                hints = registry_hints + [h for h in ledger_hints if h not in registry_hints]
+                level, ev = judge_level(
+                    repo_root, proj_root, proj_rel, project_cfg, impl_globs, hints)
+                tier, tier_detail = judge_tier(ev.get("unit_test", []), test_report)
+                # v2.0.1 stable_code：显式 code 合法时优先，迁移前后身份不变。
+                cap_code = codec_cap_code(code, mcode, domain, cidx, cap_code_src)
+                cnode = {
+                    "code": cap_code,
+                    "name": cap_name,
+                    "domain": domain,
+                    "level": level,
+                    "level_code": LEVELS[level]["code"],
+                    "completion": round(level / 5, 2),
+                    "evidence": ev,
+                    "evidence_tier": tier,
+                    "tier_detail": tier_detail,
+                    "next_level": min(level + 1, 5),
+                    "next_action": (
+                        LEVELS[min(level + 1, 5)]["rule"]
+                        if level < 5 else "保持生产闭环，持续监控"
+                    ),
+                    "status": (
+                        "operational" if level == 5
+                        else "active" if level >= 2
+                        else "planned" if level <= 1 else "in_progress"
+                    ),
+                    "doc_index": build_doc_index(
+                        repo_root, proj_root, proj_rel, project_cfg, domain, cap_name,
+                        hints, ev, mm_mod, entries, code,
+                    ),
+                }
+                mnode["caps"].append(cnode)
+                total_caps += 1
+                lc = LEVELS[level]["code"]
+                level_dist[lc] = level_dist.get(lc, 0) + 1
+                tier_dist[tier] = tier_dist.get(tier, 0) + 1
 
-    pnode["completion"] = round(
-        sum(m["completion"] for m in pnode["modules"]) / len(pnode["modules"]), 2
-    ) if pnode["modules"] else 0.0
-    model["projects"].append(pnode)
+            mnode["completion"] = round(
+                sum(c["completion"] for c in mnode["caps"]) / len(mnode["caps"]), 2
+            ) if mnode["caps"] else 0.0
+            pnode["modules"].append(mnode)
+
+        pnode["completion"] = round(
+            sum(m["completion"] for m in pnode["modules"]) / len(pnode["modules"]), 2
+        ) if pnode["modules"] else 0.0
+        model["projects"].append(pnode)
+        total_modules += len(pnode["modules"])
+        completion_sum += pnode["completion"]
 
     model["loop_protocol"] = {
         "purpose": "驱动 规划→实现→验证→决策 的自动循环。",
@@ -682,11 +706,11 @@ def build(repo_root: Path, cfg_all: dict, ledger: dict, test_report: dict | None
         ],
     }
     model["summary"] = {
-        "projects": 1,
-        "modules": len(pnode["modules"]),
+        "projects": len(projects_cfg),
+        "modules": total_modules,
         "capabilities": total_caps,
         "level_distribution": level_dist,
-        "overall_completion": pnode["completion"],
+        "overall_completion": round(completion_sum / len(projects_cfg), 2) if projects_cfg else 0.0,
         "evidence_tier_distribution": tier_dist,
         "verified_coverage": round(tier_dist.get("verified", 0) / total_caps, 2) if total_caps else 0.0,
     }
@@ -957,26 +981,31 @@ def build_next_queue(model: dict, limit: int = 10, lessons: dict | None = None) 
 
 
 def sync_architecture(ledger: dict, model: dict, repo_root: Path, proj_rel: str) -> None:
-    """把嵌套组件树与文档索引写回 architecture，供架构钻取视图使用。"""
+    """把嵌套组件树与文档索引写回 architecture，供架构钻取视图使用。
+
+    v2.0.1：遍历 capability_model.projects；旧单项目形状仍只有一次循环。
+    """
     projects = ledger.setdefault("architecture", {}).setdefault("projects", [])
-    ap = next((p for p in projects if p.get("id") == model["projects"][0]["code"]), None)
-    if ap is None:
-        ap = {
-            "id": model["projects"][0]["code"],
-            "name": model["projects"][0]["name"],
-            "path": proj_rel,
-            "modules": [],
-            "data_flow": [],
-            "controls": [],
-        }
-        projects.append(ap)
-    cm_by_code = {m["code"]: m for m in model["projects"][0]["modules"]}
-    for am in ap["modules"]:
-        cm = cm_by_code.get(f"{ap['id']}.{am['id'].replace('M-', '')}")
-        if cm:
-            am["component_tree"] = cm["component_tree"]
-            am["doc_index"] = cm["doc_index"]
-            am["capability_codes"] = [c["code"] for c in cm["caps"]]
+    for pm in model.get("projects", []):
+        ap = next((p for p in projects if p.get("id") == pm["code"]), None)
+        if ap is None:
+            ap = {
+                "id": pm["code"],
+                "name": pm["name"],
+                "path": pm.get("root", proj_rel),
+                "modules": [],
+                "data_flow": [],
+                "controls": [],
+            }
+            projects.append(ap)
+        cm_by_code = {m["code"]: m for m in pm["modules"]}
+        for am in ap["modules"]:
+            bare = am["id"].replace("M-", "")
+            cm = cm_by_code.get(bare) or cm_by_code.get(f"{pm['code']}.{bare}")
+            if cm:
+                am["component_tree"] = cm["component_tree"]
+                am["doc_index"] = cm["doc_index"]
+                am["capability_codes"] = [c["code"] for c in cm["caps"]]
 
 
 # ------------------------------ 主流程 ------------------------------
@@ -1004,9 +1033,13 @@ def main() -> None:
     board_path = Path(args.board) if args.board else repo_root / "governance" / "index.html"
 
     cfg_all = json.loads(Path(reg_path).read_text())
+    projects_cfg = normalize_projects(cfg_all)
+    if not projects_cfg:
+        raise SystemExit("registry 未提供 project 或 projects[]，无法生成能力模型")
+    first_cfg = projects_cfg[0]
     ledger = json.loads(Path(ledger_path).read_text()) if Path(ledger_path).exists() else {
         "ledger_version": "1.0",
-        "title": f"{cfg_all['project'].get('name', cfg_all['project']['code'])} 决策与能力账本",
+        "title": f"{first_cfg.get('name', first_cfg['code'])} 决策与能力账本",
         "purpose": "单一事实源：决策、裁决、待办及能力索引的唯一写入点。",
         "last_updated": "",
         "owner": "待定",
@@ -1048,9 +1081,11 @@ def main() -> None:
     if test_report is not None:
         binding = test_report.get("evidence_binding") or {}
         bound = bool(binding.get("inputs"))
-        proj_rel = cfg_all["project"]["root"].strip("/")
         if bound:
-            fresh, detail = check_freshness(test_report, repo_root, proj_rel)
+            for pcfg in projects_cfg:
+                fresh, detail = check_freshness(test_report, repo_root, pcfg["root"])
+                if not fresh:
+                    break
             if not fresh:
                 print(f"[WARN] 报告源码摘要已过期（{detail}）：报告生成后源码或测试发生变化；"
                       "本次不予采信，verified 全部回落 declared")
@@ -1069,13 +1104,15 @@ def main() -> None:
     new_event = evolve(ledger, model, ts)
     # evolve 之后重算队列，让任务卡携带最新已确认经验（build 内那次是未接入经验的快照）
     model["next_queue"] = build_next_queue(model, lessons=ledger.get("lessons"))
-    sync_architecture(ledger, model, repo_root, cfg_all["project"]["root"].strip("/"))
+    sync_architecture(ledger, model, repo_root, first_cfg["root"])
 
     print(json.dumps(model["summary"], ensure_ascii=False, indent=2))
     if args.dry_run:
-        for m in model["projects"][0]["modules"]:
-            caps = " ".join(c["level_code"] for c in m["caps"])
-            print(f"  {m['code']:<24} {m['completion']:.2f}  {caps}")
+        for pnode in model["projects"]:
+            print(f"[{pnode['code']}] {pnode['name']}")
+            for m in pnode["modules"]:
+                caps = " ".join(c["level_code"] for c in m["caps"])
+                print(f"  {m['code']:<24} {m['completion']:.2f}  {caps}")
         print(f"\n证据分层：{model['summary']['evidence_tier_distribution']} "
               f"· verified 覆盖 {model['summary']['verified_coverage']:.0%}")
         print(f"历史：{model['history']['event_count']} 事件 · 指纹 {model['history']['current_fingerprint']}"

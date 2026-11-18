@@ -111,6 +111,7 @@ class LayoutDiffTest(unittest.TestCase):
             self.assertEqual(d["phase"], "governed")
             self.assertEqual(d["missing_required"], [])
             self.assertEqual(d["unexpected"], [])
+            self.assertIn("governance/registry_codec.py", d["added_present"])
             self.assertIn("governance/run_tests.py", d["added_present"])
             self.assertEqual(d["target_label"], ".")  # 不泄露绝对路径
             self.assertEqual(tree_hash(proj), before, "--diff 不得写任何文件")
@@ -126,7 +127,7 @@ class LayoutDiffTest(unittest.TestCase):
             self.assertEqual(d["unexpected"], [])
             self.assertEqual(cli("--diff", "--target", str(root), "--strict").returncode, 2)
 
-    def test_greenfield_bootstrap_has_six_files(self):
+    def test_greenfield_bootstrap_has_seven_files(self):
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)
             p = subprocess.run([sys.executable, str(INIT), "--target", str(root),
@@ -136,8 +137,8 @@ class LayoutDiffTest(unittest.TestCase):
             gov = root / "governance"
             self.assertEqual(sorted(f.name for f in gov.iterdir() if f.is_file()),
                              ["DECISION_LEDGER.json", "build_capability_model.py",
-                              "index.html", "registry.json", "run_tests.py",
-                              "verify_ledger.py"])
+                              "index.html", "registry.json", "registry_codec.py",
+                              "run_tests.py", "verify_ledger.py"])
             d = diff(root)
             self.assertEqual(d["phase"], "skeleton")
             self.assertEqual(d["missing_required"], [])

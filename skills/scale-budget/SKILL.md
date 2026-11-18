@@ -30,7 +30,7 @@ metadata:
 ## 第一性原理：什么会增长，什么不会
 
 治理层**文件数固定**：`registry.json` / `DECISION_LEDGER.json` / `index.html` /
-3 个工具副本 / 少量派生报告，不会因为模块多就每模块生成一个文件。
+4 个工具副本 / 少量派生报告，不会因为模块多就每模块生成一个文件。
 `scale_probe.py` 的两次基准（同样 15 个能力、40 与 160 个业务文件）证明
 `governance_files` 完全相同。
 

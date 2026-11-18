@@ -13,7 +13,7 @@
 
 关键边界：本清单描述的是**被治理项目（target）**，不是方法论仓库自身。
 scripts/ / templates/ / tests/ / docs/01-21 等不会复制进目标项目；
-只有 3 个工具脚本副本以 governance/*.py 落地。
+只有 4 个工具脚本副本以 governance/*.py 落地。
 v1.2.0 起例外是专家与技能：由 asset_bundle.py 装成 .workbuddy/ 下的
 **只读部署副本**（权威源仍在方法论仓库，逐文件 sha256 + 账本绑定）。
 账本内的 lifecycle.log / governance_meta / access 等是 **JSON 字段**，
@@ -209,12 +209,19 @@ ENTRIES: list[dict] = [
          purpose="校验器副本：回答「账本内部坏没坏」。",
          note="与 scenario_guard.py 分工：后者回答「现在能不能动它」，未复制进目标项目。",
          expect="verify_ledger.py"),
+    dict(path="governance/registry_codec.py", kind="file", layer="工具层", origin="new",
+         presence="required", owner="init_project.py（复制模板）",
+         producer="scripts/init_project.py", write="bootstrap", commit="yes",
+         guard="唯一 code_namespace / cap_code / normalize_projects / iter_caps",
+         purpose="registry schema/2 唯一编码与容器归一化契约，供生成器和校验器共同消费。",
+         note="禁止在目标项目里改写；code 规则只在本方法的权威模板维护。",
+         expect="registry_codec.py"),
     dict(path="governance/run_tests.py", kind="file", layer="工具层", origin="new",
          presence="required", owner="init_project.py（复制 scripts/）",
          producer="scripts/init_project.py", write="bootstrap", commit="yes",
          guard="报告含源码绑定摘要",
          purpose="测试报告生成器副本，产出 governance/test_report.json。",
-         note="这是特意复制进目标项目的第 3 个工具，让项目脱离本仓库也能独立复算证据。",
+         note="这是特意复制进目标项目的第 4 个工具，让项目脱离本仓库也能独立复算证据。",
          expect="run_tests.py"),
 
     # ---------------- 资产层：专家 / 技能的项目级只读副本 ----------------

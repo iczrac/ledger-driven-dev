@@ -31,6 +31,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 SCHEMA = "scale-probe/1"
 GEN = ROOT / "templates" / "build_capability_model.py"
+CODEC = ROOT / "templates" / "registry_codec.py"
 TEMPLATE = ROOT / "templates" / "index.html.template"
 
 
@@ -87,6 +88,7 @@ def build_project(base: Path, mods: int, caps_per: int, files: int,
         embed_re.sub(lambda _m: "const EMBED = {};\nlet DATA", tpl, count=1),
         encoding="utf-8")
     shutil.copyfile(GEN, gov / "build_capability_model.py")
+    shutil.copyfile(CODEC, gov / "registry_codec.py")
     return {"mods": mods, "caps_per": caps_per, "caps": mods * caps_per,
             "files": files, "entries": entries, "events": events}
 

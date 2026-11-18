@@ -259,7 +259,7 @@ python3 governance/build_capability_model.py --root . \
 
 ### 升级治理骨架 + 让多个 Agent 接入控制开发
 
-规则本身会过期，已交付项目的 3 个工具副本也会落后于模板。升级是一次**有人批准的写入**，不是覆盖文件：
+规则本身会过期，已交付项目的 4 个工具副本也会落后于模板。升级是一次**有人批准的写入**，不是覆盖文件：
 
 ```bash
 python3 scripts/route_expert.py --target P --intent "升级治理骨架" --json  # → platform-steward
