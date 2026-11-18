@@ -26,7 +26,9 @@ r = json.load(open(sys.argv[1]))
 assert r['schema'] == 'ledger-test-report/1', '报告 schema 错误'
 assert r['overall'] == 'pass', '仓库自身测试未全过'
 assert r['summary']['total'] >= 170, '用例数异常'
-assert len(r['evidence_binding']['inputs']) == 21, '测试架构清单与发现口径不一致'
+m = json.load(open('tests/MODULES.json'))
+assert len(r['evidence_binding']['inputs']) == sum(len(x['files']) for x in m['modules']), \
+    '测试架构清单与发现口径不一致'
 print(f"  仓库测试 {r['summary']['passed']}/{r['summary']['total']} passed · "
       f"绑定 {len(r['evidence_binding']['inputs'])} 个模块内测试文件")
 PY
@@ -45,7 +47,7 @@ stage_test_modules(){
     || { rm -rf "$tmp"; return 1; }
   rm -rf "$tmp"
   python3 scripts/test_modules.py --target examples/demo-shop --json >/dev/null || return 1
-  echo '  6 个开发模块、21 个测试文件、映射渲染与目标缺口检查均一致'
+  echo '  6 个开发模块、22 个测试文件、映射渲染与目标缺口检查均一致'
 }
 stage_evidence(){
   note '证据分层：生成实测报告并确认 verified 判定'
@@ -211,6 +213,21 @@ stage_contracts(){
   python3 scripts/scale_probe.py --mods 3 --caps 5 --files 40 --events 2 >/dev/null || return 1
   echo '  资产清单齐备、示例骨架与模板一致、工作台自洽、规模预算 ok、基准可复现'
 }
+stage_feedback(){
+  note '反向回流：观察 / triage / 四产物闭环'
+  python3 scripts/ledger_feedback.py check --file feedback/observations.jsonl --json >/dev/null \
+    || { echo '  观察包闭环校验失败'; return 1; }
+  fc="$(python3 scripts/ledger_feedback.py report --file feedback/observations.jsonl --json \
+        | python3 -c 'import json,sys;print(json.load(sys.stdin)["feedback_closed"])')" \
+    || { echo '  观察包聚合失败'; return 1; }
+  [ "$fc" -ge 1 ] || { echo '  本版没有把任何观察收敛成产物'; return 1; }
+  a="$(python3 scripts/ledger_feedback.py export --target examples/demo-shop --no-probe --json \
+       | python3 -c 'import json,sys;print(json.load(sys.stdin)["sha256"])')"
+  b="$(python3 scripts/ledger_feedback.py export --target examples/demo-shop --no-probe --json \
+       | python3 -c 'import json,sys;print(json.load(sys.stdin)["sha256"])')"
+  [ "$a" = "$b" ] || { echo '  观察导出不幂等'; return 1; }
+  echo "  真实观察包 feedback_closed=${fc}，产物引用存在，导出幂等"
+}
 stage_hygiene(){
   note '脱敏 + 文档内链'
   if grep -rliE 'RacOS|APEX|Tushare|tdx-connector|ClickHouse|Minervini|Keychain' \
@@ -258,6 +275,7 @@ else
   run '资产与版面契约' stage_contracts
   run '幂等' stage_idempotence
   run '同步' stage_sync
+  run '反向回流' stage_feedback
   run '卫生' stage_hygiene
 fi
 
@@ -266,4 +284,4 @@ if [ "$FAILURES" -gt 0 ]; then
   printf '质量门禁失败：%d 个阶段未通过\n' "$FAILURES"
   exit 1
 fi
-printf '质量门禁全绿：测试 / 测试架构 / 证据分层 / 24 条三态不变量 / 场景矩阵 / 文件布局 / 升级与接入 / 资产与工作台契约 / 幂等 / 同步 / 脱敏 / 文档链接\n'
+printf '质量门禁全绿：测试 / 测试架构 / 证据分层 / 24 条三态不变量 / 场景矩阵 / 文件布局 / 升级与接入 / 资产与工作台契约 / 幂等 / 同步 / 反向回流 / 脱敏 / 文档链接\n'

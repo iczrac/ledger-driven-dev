@@ -83,7 +83,7 @@ SOURCE_ROOT = Path(__file__).resolve().parents[1]
 SCHEMA_PLAN = "upgrade-plan/1"
 SCHEMA_APPLY = "upgrade-apply/1"
 SCHEMA_VERIFY = "upgrade-verify/1"
-METHOD_VERSION = "1.3.0"
+METHOD_VERSION = "1.4.0"
 LEDGER_SCHEMA_VERSION = "1.0"
 SUPPORTED_LEDGER_VERSIONS = {"1.0"}
 ACCESS_SCHEMA = "access/1"
@@ -124,6 +124,13 @@ MIGRATIONS: list[dict] = [
          note="只新增空数组与可验证投影；无实测报告时不写 test_results（v1.3.0 起不再永久 pending）"),
 ]
 
+# v1.4.0：基线不可后补。升级动作之前先导出一次观察包，才能 diff 出升级带来的改善。
+# 这条是「反向回流」闭环的入口，不属于升级后流程。
+PRE_UPGRADE: list[str] = [
+    "python3 scripts/ledger_feedback.py export --target P "
+    "--out feedback/baseline.jsonl --phase baseline --apply --approved-by <人>",
+]
+
 POST_UPGRADE: list[str] = [
     # v1.3.0：报告必须在「目标项目」侧生成，方法论仓库自测由仓库 CI 负责。
     # 非 unittest 技术栈改用 work_panel.py import-report 产出同一份规范报告。
@@ -147,6 +154,9 @@ POST_UPGRADE: list[str] = [
     "python3 scripts/work_panel.py --target P nodes --json",
     "python3 scripts/test_modules.py --check",
     "python3 scripts/route_expert.py --target P --check-assets --json",
+    # v1.4.0：第 19 步把本次升级的真实摩擦回流到方法论仓库，供 triage 成四产物。
+    "python3 scripts/ledger_feedback.py export --target P "
+    "--out feedback/observations.jsonl --phase after-upgrade --apply --approved-by <人>",
 ]
 
 
@@ -298,6 +308,7 @@ def plan(target: Path, source_root: Path = SOURCE_ROOT) -> dict:
                              *[r["path"] for r in installed_bundle(source_root)["files"]]],
                    "manifest": "manifest.json"},
         "writes": writes,
+        "pre_upgrade": [] if noop else list(PRE_UPGRADE),
         "post_upgrade": [] if noop else list(POST_UPGRADE),
         "approval_required": True,
     }
@@ -595,10 +606,14 @@ def check_definitions(source_root: Path = SOURCE_ROOT) -> list[str]:
             errs.append(f"工具路径非法：{rel}")
         if not (source_root / src).is_file():
             errs.append(f"权威模板不存在：{src}")
-    for cmd in POST_UPGRADE:
+    if not PRE_UPGRADE or "ledger_feedback.py export" not in PRE_UPGRADE[0]:
+        errs.append("PRE_UPGRADE 首步必须是基线观察导出")
+    for cmd in (*PRE_UPGRADE, *POST_UPGRADE):
         m = re.search(r"scripts/([\w_]+\.py)", cmd)
         if m and not (source_root / "scripts" / m.group(1)).is_file():
-            errs.append(f"升级后流程引用了不存在的脚本：{m.group(1)}")
+            errs.append(f"升级流程引用了不存在的脚本：{m.group(1)}")
+    if "ledger_feedback.py export" not in POST_UPGRADE[-1]:
+        errs.append("POST_UPGRADE 末步必须导出升级后观察包")
     if not (source_root / "templates" / "index.html.template").is_file():
         errs.append("看板权威模板不存在：templates/index.html.template")
     errs.extend(assets_check(source_root)["errors"])
@@ -661,7 +676,7 @@ def main(argv: list[str] | None = None) -> int:
             print("\n".join(errs), file=sys.stderr)
             return 2
         print(f"升级定义自检通过：{len(TOOLING)} 个工具 / {len(MIGRATIONS)} 条迁移 / "
-              f"{len(POST_UPGRADE)} 步升级后流程")
+              f"{len(PRE_UPGRADE)} 步升级前基线 / {len(POST_UPGRADE)} 步升级后流程")
         return 0
 
     target = Path(args.target).expanduser().resolve()

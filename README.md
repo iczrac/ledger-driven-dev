@@ -30,11 +30,11 @@
 7. **专家路由** —— 只读扫描项目状态与任务意图，确定性选出唯一负责人：历史项目走考古专家（草稿优先、绝不覆盖），新项目走架构师（最小骨架、来源可追溯），校验与编码各有边界。冲突时要求澄清，**不让多个 Agent 同时改同一份事实源**。
 8. **可追溯闭环** —— 事实源可重建规范文档，文档可抽目标架构，git 变更可回连模块决策与历史事件；规划图与实际图按编码逐项比对，由专家给出执行顺序，并用全链路编码索引对齐文档/测试/代码/账本。
 9. **场景预检** —— 写入前先判定「现在能不能动」：证据是否过期、有没有并发覆盖、是否冻结/归档、版本是否兼容；60 个场景（10 个轴）的覆盖状态由测试复算，而不是文档自称。
-10. **可升级 + 可授权** —— 治理骨架升级有人批准的 plan/备份/回滚与 18 步升级后 SOP；多 Agent 经唯一写入网关接入，默认拒绝、最小权限、CAS、租约与 append-only 审计。
+10. **可升级 + 可授权** —— 治理骨架升级有人批准的 plan/备份/回滚、1 步升级前基线与 19 步升级后 SOP；多 Agent 经唯一写入网关接入，默认拒绝、最小权限、CAS、租约与 append-only 审计。
 11. **文件架构清单** —— 引入后多出哪些目录、每层归谁写、哪些能改、哪些是账本内字段，由 `file_layout.py` 定义并与产出脚本源码交叉验证；`--diff` 只读检查任意项目的现状。
 12. **资产 / 版面 / 规模契约** —— 专家与技能整包摘要绑定进账本（升级 M5），看板 CSS/DOM/JS 骨架与模板强一致（M6），大规模项目有只读预算、统一分页与可复现基准；治理层文件数不随项目规模增长。
 13. **专家 / 技能真正可用** —— 升级 M7 把 8 份 `EXPERT.md`、20 份 `SKILL.md` 以**只读部署副本**装进项目 `.workbuddy/`，逐文件摘要写进 `ASSET_MANIFEST.json` 与账本 `governance_meta.installed_assets`；路由改为真实读取资产正文，项目内手改即判 drift。权威源仍是方法论仓库，副本不是第二事实源。
-14. **测试按开发模块组织** —— `tests/MODULES.json` 定义 6 个开发模块 / 21 个测试文件，文件内 `MODULE_ID` 自证归属，`rglob` 与 `unittest discover` 双口径交叉验证；`--target P` 能列出目标项目缺单测的能力模块。
+14. **测试按开发模块组织** —— `tests/MODULES.json` 定义 6 个开发模块 / 22 个测试文件，文件内 `MODULE_ID` 自证归属，`rglob` 与 `unittest discover` 双口径交叉验证；`--target P` 能列出目标项目缺单测的能力模块。
 15. **节点工作台** —— 账本内 `work_items` / `test_results` 让每个项目、模块、组件、能力点直接显示 TODO、issue、逐用例测试结果与健康度；看板新增工作台 / 工作项两个视图和节点工作条。
 
 并且这套方法**自身可被验证**：`verify_ledger.py` 把 24 条不变量机器化（含历史链、经验引用与证据分层），`next_queue` 把 SELECT 变成机器可读任务队列——「可信」和「驱动」两个核心承诺都不再停留在文字上。
@@ -262,7 +262,7 @@ python3 governance/build_capability_model.py --root . \
 
 ```bash
 python3 scripts/route_expert.py --target P --intent "升级治理骨架" --json  # → platform-steward
-python3 scripts/upgrade.py --target P plan --json                          # 只读计划 + 18 步 post_upgrade
+python3 scripts/upgrade.py --target P plan --json                          # 只读计划 + 1 步 pre_upgrade / 19 步 post_upgrade
 python3 scripts/upgrade.py --target P apply --approved-by "审批人姓名"     # 先备份再加字段/归一骨架
 # 按 post_upgrade 重跑报告 → 生成器 --strict-evidence → verify/board/budget/assets/guard/layout
 python3 scripts/upgrade.py --target P verify --json
@@ -296,7 +296,8 @@ python3 scripts/agent_gateway.py --target P request --agent ci-agent \
 升级 M7 会把专家 / 技能装成**项目内只读副本**（见 [19](docs/19-专家与技能可用.md)），
 M8 则初始化节点工作台字段。测试是否按模块组织、哪个模块还缺单测，由
 [20](docs/20-测试架构与模块映射.md) 描述；看板上的工作态由
-[21](docs/21-节点工作台与看板视图.md) 描述。
+[21](docs/21-节点工作台与看板视图.md) 描述；真实项目踩到的坑如何回到方法论、并在升级前后被 diff，
+由 [22](docs/22-反向回流.md) 描述。
 
 ```bash
 python3 scripts/asset_bundle.py install --target P --apply \
@@ -337,7 +338,7 @@ bash scripts/check.sh
 - **二十个技能**：`expert-route` / `project-discover` / `project-bootstrap` 覆盖路由、盘点、初始化；`doc-rebuild` / `graph-compare` 覆盖规范文档、编码索引与图比对；`scenario-guard` 覆盖写入前预检；`layout-inspect` 覆盖引入后文件架构；`ledger-upgrade` / `agent-gate` 覆盖升级与多 Agent 接入；`method-assets` / `board-layout` / `scale-budget` 覆盖资产摘要、统一版面与规模预算；`asset-install` / `test-map` / `work-panel` 覆盖只读资产安装、测试模块映射与节点工作台；原有五个技能覆盖扫描、校验、立项、经验与门禁。
 - 纪律不只写在文档里：`route_expert.py` 对冲突 fail-closed，`discover_project.py` 默认不覆盖草稿，`init_project.py` 跳过既有治理文件，`ledger_decide.py` / `ledger_lesson.py` 在代码层拒绝重复立项与缺行动的经验，`agent_gateway.py` 把权限变成默认拒绝的写入执行点。
 
-详见 [12-专家路由](docs/12-专家路由.md)、[13-可追溯性](docs/13-可追溯性.md)、[14-场景矩阵](docs/14-场景矩阵.md)、[15-文件架构](docs/15-文件架构.md)、[16-升级与迁移](docs/16-升级与迁移.md)、[17-多Agent接入控制](docs/17-多Agent接入控制.md)、[18-规模化与版面契约](docs/18-规模化与版面契约.md)、[19-专家与技能可用](docs/19-专家与技能可用.md)、[20-测试架构与模块映射](docs/20-测试架构与模块映射.md)、[21-节点工作台与看板视图](docs/21-节点工作台与看板视图.md) 与 [10-AI集成](docs/10-AI集成.md)。
+详见 [12-专家路由](docs/12-专家路由.md)、[13-可追溯性](docs/13-可追溯性.md)、[14-场景矩阵](docs/14-场景矩阵.md)、[15-文件架构](docs/15-文件架构.md)、[16-升级与迁移](docs/16-升级与迁移.md)、[17-多Agent接入控制](docs/17-多Agent接入控制.md)、[18-规模化与版面契约](docs/18-规模化与版面契约.md)、[19-专家与技能可用](docs/19-专家与技能可用.md)、[20-测试架构与模块映射](docs/20-测试架构与模块映射.md)、[21-节点工作台与看板视图](docs/21-节点工作台与看板视图.md)、[22-反向回流](docs/22-反向回流.md) 与 [10-AI集成](docs/10-AI集成.md)。
 
 ### SELECT 产出：下一轮任务队列
 
@@ -387,8 +388,9 @@ bash scripts/check.sh
 19. [规模化与版面契约](docs/18-规模化与版面契约.md) —— 资产绑定、看板骨架、预算与实测基准
 20. [贡献指南](CONTRIBUTING.md) —— 开发循环、同步规则与发布流程
 21. [专家与技能可用](docs/19-专家与技能可用.md) —— 只读部署副本、清单绑定与路由真实消费
-22. [测试架构与模块映射](docs/20-测试架构与模块映射.md) —— 6 个开发模块 / 21 个测试文件与三方自证
+22. [测试架构与模块映射](docs/20-测试架构与模块映射.md) —— 6 个开发模块 / 22 个测试文件与三方自证
 23. [节点工作台与看板视图](docs/21-节点工作台与看板视图.md) —— TODO / issue / 测试结果与节点健康度
+24. [反向回流](docs/22-反向回流.md) —— 观察包、四产物 triage 与升级前后基线 diff
 
 ## License
 

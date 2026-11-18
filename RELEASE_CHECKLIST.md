@@ -20,7 +20,7 @@
 - [x] 八种专家角色（路由 / 新建 / 考古 / 账本治理 / 审计 / 执行 / 生命周期 / 平台治理），各含权限矩阵与停止条件
 - [x] 二十个技能（route/discover/bootstrap/scan/verify/decide/lesson/guard/doc-rebuild/graph-compare/scenario-guard/layout-inspect/ledger-upgrade/agent-gate/method-assets/board-layout/scale-budget/asset-install/test-map/work-panel），标准 SKILL.md frontmatter
 - [x] 技能脚本：重复立项、缺行动经验、无理由驳回均由代码拒绝
-- [x] 195 个 unittest 用例（含 12 个升级、15 个网关、2 个元层路由、16 个资产/骨架/规模专项、21 个 v1.2.0 资产/测试架构/工作台专项），零第三方依赖，临时目录隔离
+- [x] 211 个 unittest 用例（含 v1.3.0 的 7 个三态/幂等/适配器回归、v1.4.0 的 9 个反向回流专项），零第三方依赖，临时目录隔离
 - [x] CI（Python 3.10-3.13 矩阵）/ CD（tag 触发，先门禁后打包）
 - [x] 示例项目已跑通，产出真实账本与看板
 
@@ -39,7 +39,7 @@
 - [x] 示例：看板 EMBED 与账本完全一致；骨架 sha256 与模板一致；JS 通过 node --check
 - [x] 初始化脚本在临时目录跑通，6 个文件正确生成（含 3 个工具副本）
 - [x] 生成器 dry-run 与正式模式均正常
-- [x] `bash scripts/check.sh` 全绿：195 测试（双发现口径）/ 测试架构 / 24 不变量 / 60 场景 / 31 条目 + 12 字段布局 / 升级与接入端到端 / 资产与工作台契约 / 幂等 / 同步 / 脱敏 / 文档链接
+- [x] `bash scripts/check.sh` 全绿：211 测试（双发现口径）/ 测试架构 / 24 条三态不变量 / 60 场景 / 31 条目 + 12 字段布局 / 升级与接入端到端 / 资产与工作台契约 / 幂等 / 同步 / 反向回流 / 脱敏 / 文档链接
 - [x] 看板 JS 通过 `node --check`；CI 用同一份门禁脚本，口径一致
 - [x] 负向纪律测试：重复立项、缺 action、无理由驳回均被拒绝
 
@@ -80,7 +80,7 @@
 
 ## 升级与多 Agent 接入（1.0.0）
 
-- [x] `upgrade.py` 定义自检：3 个工具来源、8 条迁移、18 步 post_upgrade 均存在
+- [x] `upgrade.py` 定义自检：3 个工具来源、8 条迁移、1 步 pre_upgrade / 19 步 post_upgrade 均存在
 - [x] `plan` 只读且确定性；不兼容版本 / 冻结归档 / 未来版本 / 账本损坏均 fail-closed
 - [x] `apply` 缺 `--approved-by` 被拒绝；有备份清单、相对路径、sha256；重复 apply 为 noop
 - [x] 升级只加字段（M6 归一派生层文件）：`current_fingerprint` 与 `history.events` 不变；24 条不变量仍全绿
@@ -110,14 +110,14 @@
 - [x] 负向证明：项目内手改 `SKILL.md` / 删副本 / 手改账本 `installed_assets` 摘要 → `verify` 报 drift
 - [x] `route_expert.py --check-assets` 通过；路由优先读项目内已安装副本，缺文件报 `incomplete`
 - [x] M7 纳入 `upgrade.py` 的 plan / 备份 / apply / verify / rollback；回滚只移除升级前不存在的副本
-- [x] `tests/MODULES.json`：6 个开发模块 / 21 个测试文件；`MODULE_ID` 自证、`rglob` 与 `unittest discover` 双口径一致
+- [x] `tests/MODULES.json`：6 个开发模块 / 22 个测试文件；`MODULE_ID` 自证、`rglob` 与 `unittest discover` 双口径一致
 - [x] `test_modules.py --check` 与 `docs/generated/TEST_MODULES.md` 渲染同步；`--target examples/demo-shop` 输出模块单测缺口
 - [x] `work_items` / `test_results` 两个账本内字段；`work_panel.py` 写动作全部需人批准；`sync-tests` 绑定报告字节
 - [x] 24 条不变量中的 `work_items_valid` / `work_item_refs_valid` / `test_results_binding_valid` 均有负向证明
 - [x] 看板 10 个 tab：工作台 / 工作项视图与节点工作条；Node DOM stub 证明空账本不崩；骨架归一到 `735bcd09…`
 - [x] `work_panel.py nodes` 与看板 JS 按同一规则复算派生聚合，不落盘、无第三份事实源
 - [x] 规模预算新增 `work_items`（10 项阈值）；场景矩阵 60 / 10 轴、覆盖率 84.2%（47 / 7 / 5 / 1）
-- [x] 版本六轴、8 条迁移、18 步 `post_upgrade`、11 项 `verify`、八项 `upgrade_complete` 判据均由定义自检与测试复算
+- [x] 版本六轴、8 条迁移、1 步 `pre_upgrade` / 19 步 `post_upgrade`、11 项 `verify`、八项 `upgrade_complete` 判据均由定义自检与测试复算
 - [x] 新增 docs/19 / 20 / 21 与技能 `asset-install` / `test-map` / `work-panel`；全仓数量口径同步到 1.2.0
 
 ## 资产检查作用域补丁（1.2.1）
@@ -165,3 +165,17 @@
 - [x] 资产 frontmatter 统一 1.3.0；`METHOD_VERSION` 同步
 - [x] `bash scripts/check.sh` 全绿
 - [ ] 已引入项目重新批准升级（M4 + M5）重绑摘要（由项目负责人决定，不自动执行）
+
+## v1.4.0 发布检查（反向回流闭环 / L0）
+
+> 从本版起，**每个 tag 必须写明 `feedback_closed`**，否则不算完整发布。
+
+- [x] **本版 `feedback_closed = 3`**：`feedback/observations.jsonl` 共 12 条来自真实存量项目的匿名观察，3 条收敛到真实产物，9 条保持 `open` 作为后续版本处方
+- [x] `ledger_feedback.py export` 只读目标项目、重复导出幂等、脱敏数据驱动；写观察包需 `--apply --approved-by`
+- [x] `triage` 四产物协议；`check` 校验内容指纹、**产物引用必须指向真实文件**、关闭理由非空
+- [x] 升级流程变为「升级前 1 步基线 + 升级后 19 步」；`plan()` 输出 `pre_upgrade`；定义自检校验首末步
+- [x] `check.sh` 新增「反向回流」阶段：闭环校验 / `feedback_closed ≥ 1` / 导出幂等
+- [x] 9 个新回归（含「先失败后通过」的闭环证明），测试架构清单纳管 22 个文件
+- [x] `docs/22-反向回流.md`；28 份资产 frontmatter 与 `METHOD_VERSION` 统一 1.4.0
+- [x] `bash scripts/check.sh` 全绿：211 测试 / 24 条三态不变量 / 12 个阶段（含反向回流）
+- [ ] 已引入项目升级到 1.4.0：需项目负责人单独批准写盘；执行顺序必须是「导出基线 → 升级 → 复导 → diff → triage」

@@ -25,7 +25,8 @@ from method_assets import check as assets_check
 from method_assets import manifest as assets_manifest
 from scale_budget import render_limit, report as budget_report
 from scale_probe import probe
-from upgrade import METHOD_VERSION, POST_UPGRADE, apply, plan, verify
+from upgrade import (METHOD_VERSION, POST_UPGRADE, PRE_UPGRADE, apply, plan,  # noqa: E402
+                     verify)
 
 SCRIPTS = ROOT / "scripts"
 
@@ -90,7 +91,8 @@ class AssetsTest(unittest.TestCase):
         joined = " ".join(POST_UPGRADE)
         for name in ("board_contract.py", "scale_budget.py", "method_assets.py"):
             self.assertIn(name, joined)
-        self.assertEqual(len(POST_UPGRADE), 18)
+        self.assertEqual(len(POST_UPGRADE), 19)
+        self.assertEqual(len(PRE_UPGRADE), 1)
 
 
 class BoardTest(unittest.TestCase):

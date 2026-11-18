@@ -2,6 +2,56 @@
 
 本项目版本遵循语义化版本（SemVer）。
 
+## [1.4.0] - 2026-11-18
+
+反向回流闭环（L0 元层）落地。**只改方法论仓库权威源，不触碰任何已引入项目的账本
+数据契约、不自动升级任何项目。**
+
+### 决策依据
+
+升级链原本是单向的：方法论仓库 → M1–M8 → 目标项目。真实试用踩到的坑如果只落在
+目标项目的 `work_items` 里，下一个项目会重踩。两条判据决定顺序：
+
+1. 治理系统的产出不是版本号，而是「下一个项目不再重踩」；测试全绿只证明自洽，
+   不证明有效。
+2. **基线不可后补**：升级后再采集，就永久丢掉了「升级前有哪些摩擦」。
+
+因此「建反馈通道」必须排在「升级某个具体项目」之前，且两者不是二选一。
+
+### 新增：`scripts/ledger_feedback.py`
+
+- `export`：只读采集 `work_items` / `lessons.candidates` / `upgrade_log` /
+  结构字段缺口 / 目标项目校验器的 `fail|na|warn` / 版本落差 / 校验器代际 /
+  `--note` 人工补充，产出 `ledger-observations/1` JSONL。
+- **绝不写目标项目**；写观察包需 `--apply --approved-by <人>`；
+  `obs_id` 由内容派生，重复导出幂等，不含时间戳。
+- 脱敏为数据驱动：项目标识从目标项目自己的 registry / 账本提取，代码里零硬编码
+  项目名词；额外词表由 `--terms` 注入且不进仓库；绝对路径 / 邮箱 / 密钥按形状替换。
+- `triage` 把观察收敛为四产物（`invariant` / `scenario` / `migration` /
+  `regression`）或 `wontfix`；`check` 校验内容指纹、**产物引用必须指向真实文件**、
+  关闭理由非空；`report` 按轴聚合。
+
+### 升级流程变为「前 1 步 + 后 19 步」
+
+- 新增 `PRE_UPGRADE`：升级动作之前导出 `feedback/baseline.jsonl`。
+- `POST_UPGRADE` 末步（第 19 步）导出 `feedback/observations.jsonl`，供 diff 与 triage。
+- `plan()` 输出新增 `pre_upgrade`；`check_definitions()` 校验首步 / 末步均为观察导出。
+
+### 第一个真实观察包
+
+`feedback/observations.jsonl`：12 条来自真实存量项目（多项目 monorepo、混合测试栈）
+的匿名观察，`feedback_closed=3`（三态校验器、激活状态、外部报告适配器各自指向
+真实产物），其余 9 条保持 `open` 作为后续版本处方。契约与协议见
+`docs/22-反向回流.md`。
+
+### 门禁与测试
+
+- `check.sh` 新增 `反向回流` 阶段：闭环校验、`feedback_closed ≥ 1`、导出幂等。
+- 新增 9 个回归（只读与幂等 / 写盘纪律 / 数据驱动脱敏 / 版本落差可观察 /
+  **先失败后通过**的闭环 / 产物引用存在性 / 内容指纹 / 四产物必填 / wontfix），
+  测试架构清单同步纳管 `tests/meta/test_feedback.py`。
+- 28 份专家 / 技能资产 frontmatter 统一 1.4.0；`METHOD_VERSION` 同步。
+
 ## [1.3.0] - 2026-11-18
 
 从「引入试用」反向回流的第一批：修掉假绿灯、永久待办与取证入口错配。

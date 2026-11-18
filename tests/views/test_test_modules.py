@@ -31,7 +31,7 @@ class TestModulesTest(unittest.TestCase):
 
     def test_two_discovery_mechanisms_find_same_files(self):
         disc = discovered(ROOT)
-        self.assertEqual(len(disc), 21)
+        self.assertEqual(len(disc), len(declared(ROOT)), "发现口径必须与清单一致")
         self.assertEqual(len(set(disc)), len(disc))
         self.assertTrue(all(f.startswith("tests/") and f.endswith(".py") for f in disc))
 

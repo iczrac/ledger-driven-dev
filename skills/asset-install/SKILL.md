@@ -7,7 +7,7 @@ description: |
 license: MIT
 metadata:
   author: iczrac
-  version: "1.3.0"
+  version: "1.4.0"
   risk_level: write_with_guard
   related_skills: [method-assets, ledger-upgrade, expert-route, agent-gate]
 ---

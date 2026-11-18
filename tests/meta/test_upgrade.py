@@ -19,7 +19,7 @@ from _base import DEMO, ROOT, run_verify
 from ledger_io import current_fingerprint, load_ledger, write_ledger
 
 sys.path.insert(0, str(ROOT / "scripts"))
-from upgrade import (METHOD_VERSION, POST_UPGRADE, TOOLING, apply,  # noqa: E402
+from upgrade import (METHOD_VERSION, POST_UPGRADE, PRE_UPGRADE, TOOLING, apply,  # noqa: E402
                      check_definitions, plan, rollback, verify)
 
 UPGRADE = ROOT / "scripts" / "upgrade.py"
@@ -50,8 +50,11 @@ class UpgradeTest(unittest.TestCase):
     def test_definitions_selfcheck(self):
         self.assertEqual(check_definitions(), [])
         self.assertEqual(plan.__name__, "plan")
-        self.assertEqual(len(POST_UPGRADE), 18)
+        self.assertEqual(len(POST_UPGRADE), 19)
         self.assertEqual(len(TOOLING), 3)
+        self.assertEqual(len(PRE_UPGRADE), 1)
+        self.assertIn("ledger_feedback.py export", PRE_UPGRADE[0])
+        self.assertIn("ledger_feedback.py export", POST_UPGRADE[-1])
 
     def test_plan_is_read_only_deterministic_and_leak_free(self):
         with project_copy() as (tmp, target):
