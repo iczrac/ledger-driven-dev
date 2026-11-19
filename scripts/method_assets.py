@@ -52,7 +52,7 @@ ASSET_GROUPS: dict[str, str] = {
 
 # 资产齐备性下限：少一个专家/技能都应被 check 拦下，而不是静默算出新摘要。
 MIN_COUNTS = {"experts": 8, "skills": 20, "scripts": 26,
-              "templates": 4, "method_docs": 21, "standard": 1}
+              "templates": 5, "method_docs": 21, "standard": 1}
 EXCLUDED_PARTS = {"__pycache__", ".git"}
 
 

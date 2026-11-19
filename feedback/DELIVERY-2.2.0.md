@@ -51,7 +51,7 @@ MAPPING-REVIEW 给了三选一：补直接单测 / 声明 via / 接受降级。�
   （10 unbound + 3 via1 + 1 no_impl + 4 no_tests）；29 个 verified **全部** bound，
   零新增 verified，cap 总数 47 不变——没有任何东西被做绿；
 - 真实降级 14 个：COVERAGE.04 / BARRA.03 / CC.02（via1）+ 10 个 unbound + LEDGER.04（no_impl）；
-- 报告仍 fresh（绑定集只含 `projects/**`，治理工具改动不影响摘要，无需重跑 APEX 全量测试）；
+- 报告仍 fresh（绑定集只含 `projects/**`，治理工具改动不影响摘要，无需重跑 <P1> 全量测试）；
 - 干净检出 CI 门禁：`OK: 26 pass / 0 fail / 0 na（零放行）` + `OK: 无漂移`，EXIT=0；
   upgrade verify 12 轴全 pass、complete=True；board/work_panel/assets 校验全绿。
 

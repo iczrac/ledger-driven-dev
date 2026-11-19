@@ -1,0 +1,65 @@
+{
+  "_comment": "方法仓自举治理（v2.3.0）：用方法仓自己的工具治理自己。主链脚本作为能力点，tests 声明为真实静态 import 它们的测试文件——绑定门禁会验证「测试真的触达实现」，这是 dogfood 的核心。",
+  "project": {
+    "code": "METHOD",
+    "name": "Ledger-Driven Dev 方法论仓库（自举）",
+    "root": ".",
+    "governance_gate": true,
+    "contracts_dir": "docs",
+    "unit_test_dir": "tests",
+    "test_record_dir": "docs/test_records",
+    "docs_dir": "docs",
+    "governance_dir": "governance"
+  },
+  "modules": [
+    {
+      "code": "GOV",
+      "name": "治理主链工具",
+      "src": ["scripts", "templates"],
+      "caps": [
+        {
+          "name": "反向回流观察通道",
+          "domain": "FEEDBACK",
+          "impl": ["scripts/ledger_feedback.py"],
+          "tests": ["tests/meta/test_feedback.py"]
+        },
+        {
+          "name": "升级与迁移引擎",
+          "domain": "UPGRADE",
+          "impl": ["scripts/upgrade.py"],
+          "tests": ["tests/meta/test_upgrade.py"]
+        },
+        {
+          "name": "节点工作台",
+          "domain": "PANEL",
+          "impl": ["scripts/work_panel.py"],
+          "tests": ["tests/views/test_work_panel.py"]
+        },
+        {
+          "name": "文件布局契约",
+          "domain": "LAYOUT",
+          "impl": ["scripts/file_layout.py"],
+          "tests": ["tests/meta/test_layout.py"]
+        },
+        {
+          "name": "方法资产清单",
+          "domain": "ASSETS",
+          "impl": ["scripts/method_assets.py"],
+          "tests": ["tests/meta/test_platform_contract.py"]
+        },
+        {
+          "name": "测试架构映射",
+          "domain": "TESTMAP",
+          "impl": ["scripts/test_modules.py"],
+          "tests": ["tests/views/test_test_modules.py"]
+        },
+        {
+          "name": "符号绑定判据（dogfood 负向探针：测试用动态加载，绑定判据应抓不到）",
+          "domain": "BINDING",
+          "impl": ["templates/binding_advisory.py"],
+          "tests": ["tests/core/test_binding_advisory.py"]
+        }
+      ]
+    }
+  ]
+}

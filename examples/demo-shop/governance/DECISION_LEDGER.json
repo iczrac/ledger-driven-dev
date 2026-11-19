@@ -2,7 +2,7 @@
   "ledger_version": "1.0",
   "title": "Demo Shop 决策与能力账本",
   "purpose": "单一事实源：决策、裁决、待办及能力索引的唯一写入点。",
-  "last_updated": "2026-11-19 23:16 HKT",
+  "last_updated": "2026-11-20 00:27 HKT",
   "owner": "示例项目",
   "workflow": [
     "所有重大决策/裁决/待办只写入本文件 entries，不再新建独立报告。",
@@ -292,7 +292,7 @@
   },
   "capability_model": {
     "version": "1.0",
-    "generated_at": "2026-11-19 23:16 HKT",
+    "generated_at": "2026-11-20 00:27 HKT",
     "generator": "templates/build_capability_model.py",
     "purpose": "统一能力编码 + 可复算完成度 + 嵌套组件树 + 文档索引，供规划与编码代理消费。",
     "coding_spec": {
@@ -1713,6 +1713,33 @@
           "value": "D-003"
         }
       ]
+    },
+    {
+      "id": "W-BIND-DEMO-API-QUERY-01",
+      "kind": "issue",
+      "scope": "DEMO.API.QUERY.01",
+      "status": "open",
+      "severity": "med",
+      "title": "绑定未达标：DEMO.API.QUERY.01（no_tests）",
+      "detail": "无测试声明",
+      "owner": "",
+      "owner_note": "绑定门禁自动生成，待认领；修复后自动关闭",
+      "refs": [
+        {
+          "kind": "capability",
+          "value": "DEMO.API.QUERY.01"
+        }
+      ],
+      "source": "derived",
+      "derived_from": {
+        "code": "DEMO.API.QUERY.01",
+        "binding_status": "no_tests",
+        "rule": "verified⟺bound (v2.2.0)"
+      },
+      "close_condition": {
+        "kind": "capability_verified",
+        "capability": "DEMO.API.QUERY.01"
+      }
     }
   ]
 }

@@ -2,6 +2,27 @@
 
 本项目版本遵循语义化版本（SemVer）。
 
+## [2.3.0] - 2026-11-20
+
+**派生 issue 闭环 + 方法仓自举**。v2.2.0 让 `verified⟺bound`，14 个能力诚实
+降级——但只报警不闭环的红灯会退化成红灯疲劳。本版把「非 bound 能力」自动
+投影成可认领的 issue，并让方法仓先用这套门禁治理自己（dogfood），验证可靠
+后再推广到真实项目。
+
+- `derived_issues.py`（新增工具副本，工具数 5→6）：`issue_set = h(binding_status)`。
+  每个非 bound 能力恰好一条 `source=derived` 的 issue，固定 id、机器控制
+  status/severity/close_condition，人工 owner/owner_note/detail 一律保留；
+  能力转 bound 自动关单并写依据。`close_condition.kind` 复用 `capability_verified`
+  （v2.2.0 起等价 bound），不新增关单语义。
+- 不变量 #27 `binding_issues_derived`（26→27）：非 bound 缺 issue、或已 bound
+  仍 open，均 fail；旧账本无 binding_status 时 na。
+- 生成器 `--check` 覆盖派生 issue：手删/篡改 issue 报漂移，可复算判据扩展为
+  「账本 = f(registry, 仓库, 报告)」含 issue 投影。
+- **方法仓自举**：`governance/` 落地方法仓自身（6 个主链脚本为能力点），
+  同一套绑定门禁、派生 issue、27 不变量先作用于方法仓自己。
+- 配套：init_project / upgrade TOOLING / scale_probe / check.sh / file_layout /
+  method_assets / 测试清单同步登记第 6 个工具副本；ontology 重建。
+
 ## [2.2.0] - 2026-11-19
 
 **绑定硬门禁：verified ⟺ bound**。v2.1.2 把「声明的测试是否真测到实现」以

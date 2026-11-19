@@ -31,12 +31,12 @@
     {
       "path": "templates/build_capability_model.py",
       "role": "value_domains",
-      "sha256": "a11c76f1666130a5eecdb5c079a42c63b6d5507734cec841a21a8d78617ba8d1"
+      "sha256": "617011f395c0f2c1bc4ae3ec480bdfe563193109757abbee828a2977f073381a"
     },
     {
       "path": "templates/verify_ledger.py",
       "role": "axioms",
-      "sha256": "b18e52ec26d796e4e312ae2c5a403df9e2b3863976a3f709a6652cb482e0d194"
+      "sha256": "9d9800447ca2876f007ded47bf3e1aa291c36338b1e2e1c991e6b71a9c3a8e53"
     }
   ],
   "bounded_contexts": [
@@ -739,6 +739,7 @@
     }
   ],
   "invariant_ids": [
+    "binding_issues_derived",
     "board_embed_synced",
     "completion_matches_level",
     "component_paths_exist",
@@ -772,10 +773,10 @@
     "entity_types": 16,
     "value_domains": 18,
     "relations": 7,
-    "axioms": 33,
+    "axioms": 34,
     "source_files": 7,
     "polyseme_terms": 3,
     "drift_count": 0
   },
-  "ontology_digest": "74fb561d806977d0734dd477b710a2872142b2bfd21df9d895eedfcd51292fbd"
+  "ontology_digest": "fb48a6a67dd9d10256e273b69190474db9363c5ea6fcc617f2b8dc79f0410926"
 }

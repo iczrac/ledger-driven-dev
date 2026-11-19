@@ -12,6 +12,7 @@
     index.html                    可视化看板（EMBED 由生成器同步）
     build_capability_model.py     生成器副本（来自 templates/）
     binding_advisory.py           证据绑定 advisory 副本（来自 templates/，v2.1.2）
+    derived_issues.py             派生 issue 副本（来自 templates/，v2.3.0）
     verify_ledger.py              校验器副本（来自 templates/）
     registry_codec.py             registry schema/2 唯一编码契约副本（来自 templates/）
     run_tests.py                  测试报告生成器副本（来自 scripts/）
@@ -200,7 +201,7 @@ def main() -> int:
 
     if not args.no_generator:
         for name in ("build_capability_model.py", "binding_advisory.py",
-                     "verify_ledger.py", "registry_codec.py"):
+                     "derived_issues.py", "verify_ledger.py", "registry_codec.py"):
             gen = gov / name
             if gen.exists() and not args.force:
                 print(f"跳过（已存在）: {gen}")

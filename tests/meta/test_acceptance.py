@@ -298,7 +298,7 @@ class PreconditionTest(unittest.TestCase):
         self.assertEqual(evaluate_conditional(cmds, 20, skips, False)["status"], "fail")
 
     def test_evaluate_activation_named_failures(self):
-        inv = {"passed": 25, "failed": 0, "na": 1, "all_active": False}
+        inv = {"passed": 26, "failed": 0, "na": 1, "all_active": False}
         self.assertEqual(evaluate_activation({"state": "unbound"}, inv)["status"], "pass")
         self.assertEqual(evaluate_activation(None, inv)["status"], "fail")
         self.assertEqual(evaluate_activation({}, inv)["status"], "fail")

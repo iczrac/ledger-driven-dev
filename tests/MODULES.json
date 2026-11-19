@@ -23,7 +23,8 @@
         "tests/core/test_evidence_adapter.py",
         "tests/core/test_registry2.py",
         "tests/core/test_registry_schema.py",
-        "tests/core/test_binding_advisory.py"
+        "tests/core/test_binding_advisory.py",
+        "tests/core/test_derived_issues.py"
       ]
     },
     {

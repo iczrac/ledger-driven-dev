@@ -499,8 +499,26 @@ E7 `cardinality_contradiction`（`ontology.py check --target P` 仍 `ok=false`�
       verifier 篡改绑定必抓（2 条）
 - [x] **文档与派生**：METHOD_VERSION 2.2.0；EVIDENCE_TIER_SPEC、docs 03/08/11/23、
       CHANGELOG、ontology 派生重建
-- [ ] **主仓重绑**：干净 clone 重跑报告 → upgrade apply；verified 43→29；
+- [x] **主仓重绑**：干净 clone 重跑报告 → upgrade apply；verified 43→29；
       `--check` 无漂移；26 不变量零放行；远端 CI 绿
+
+
+## v2.3.0 发布检查（派生 issue 闭环 + 方法仓自举）
+
+- [x] **派生 issue**：`derived_issues.py` 第 6 个工具副本；非 bound 自动生成
+      `source=derived` issue（固定 id、机器字段 + 人工字段保留）；转 bound
+      自动关单；复用 `capability_verified` 不引入第二关单语义
+- [x] **#27 不变量**：非 bound 缺 issue / bound 仍 open / 重复 / 孤儿均 fail；
+      旧账本 na；负向用例 2 条先红后绿
+- [x] **可复算**：生成器 `--check` 覆盖派生 issue，手删/篡改报漂移
+- [x] **工具登记**：init_project / upgrade TOOLING(6) / scale_probe / check.sh /
+      file_layout(6) / method_assets(templates 5) / test_modules / ontology 全同步
+- [x] **方法仓自举**：`governance/` 6 能力；dogfood bound 6/6 + 第 7 能力
+      unbound 自动生成 issue；330/330 测试；账本 25 pass / 0 fail / #27 ok；
+      `--check` 含 issue 可复算
+- [x] **文档**：METHOD_VERSION 2.3.0；CHANGELOG / docs 21 / docs 23 / DELIVERY
+- [ ] **主仓推广**：干净 clone upgrade；14 个降级能力生成派生 issue；27 不变量
+      零放行；`--check` 无漂移；远端 CI 绿（阶段2，待人批准）
 
 ## v2.1.2 发布检查（证据绑定与资产对账）
 

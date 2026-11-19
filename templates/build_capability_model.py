@@ -68,6 +68,16 @@ except ModuleNotFoundError:  # pragma: no cover - 仅在 spec 加载路径触发
     from binding_advisory import print_binding_advisory as _print_binding_advisory
     from binding_advisory import SymbolIndex as _SymbolIndex
     from binding_advisory import binding_status_of_tests as _binding_status_of_tests
+# 派生 issue（v2.3.0）：issue_set = h(binding_status)，非手工第二事实源。
+try:
+    from derived_issues import sync_derived_issues as _sync_derived_issues
+    from derived_issues import caps_of_model as _caps_of_model
+    from derived_issues import check_issues as _check_issues
+except ModuleNotFoundError:  # pragma: no cover
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    from derived_issues import sync_derived_issues as _sync_derived_issues
+    from derived_issues import caps_of_model as _caps_of_model
+    from derived_issues import check_issues as _check_issues
 
 # 场景预检契约：与 scenario_guard.py 保持一致；跨版本直写会破坏历史语义。
 SUPPORTED_LEDGER_VERSIONS = {"1.0"}
@@ -1392,6 +1402,8 @@ def main() -> None:
             (ledger.get("capability_model") or {}).get("projects") or [],
             model.get("projects") or [],
         )
+        # v2.3.0：issue 也是账本投影，手删/篡改派生 issue 必须被发现
+        drift = drift + _check_issues(ledger, model)
         if drift:
             print("[DRIFT] 账本与「registry + 仓库」重算结果不一致：", file=sys.stderr)
             for line in drift[:20]:
@@ -1399,7 +1411,7 @@ def main() -> None:
             print(f"[DRIFT] 共 {len(drift)} 处；重跑生成器并提交账本是唯一修法。",
                   file=sys.stderr)
             sys.exit(1)
-        print("[OK] 账本 = f(registry, 仓库, 报告)：可复算")
+        print("[OK] 账本 = f(registry, 仓库, 报告)：可复算（含派生 issue）")
         return
     model["summary"]["evidence_bound"] = bool(bound and fresh and test_report is not None)
     model["summary"]["evidence_freshness"] = (
@@ -1449,6 +1461,10 @@ def main() -> None:
         sys.exit(2)
 
     ledger["capability_model"] = model
+    # v2.3.0：把非 bound 能力投影成派生 issue（幂等；保留人工 owner/detail；
+    # 转 bound 自动关单）。issue 是账本视图，不靠手工 add 维护。
+    ledger["work_items"] = _sync_derived_issues(
+        ledger.get("work_items") or [], _caps_of_model(model))
     ledger["last_updated"] = ts
     Path(ledger_path).parent.mkdir(parents=True, exist_ok=True)
     Path(ledger_path).write_text(json.dumps(ledger, ensure_ascii=False, indent=2))

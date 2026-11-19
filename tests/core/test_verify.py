@@ -18,7 +18,7 @@ class VerifyTest(unittest.TestCase):
             self.assertEqual(result.returncode, 0, result.stderr)
             payload = json.loads(result.stdout)
             self.assertEqual(payload["failed"], 0)
-            self.assertEqual(len(payload["checks"]), 26)  # 21 + 3 节点工作台 + 2 v2.1.2
+            self.assertEqual(len(payload["checks"]), 27)  # 21 + 3 工作台 + 2 v2.1.2 + 1 v2.3.0
 
     def _corrupt_and_check(self, mutate, expected_check):
         with demo_copy() as (root, ledger, reg, board):
@@ -64,6 +64,39 @@ class VerifyTest(unittest.TestCase):
                             c.pop("binding_status", None)
                             return
         self._corrupt_and_check(mutate, "verified_tier_traceable")
+
+    def test_detects_non_bound_cap_without_derived_issue(self):
+        """v2.3.0 #27：非 bound 能力却删掉派生 issue → 必须 fail。
+
+        这是 issue 闭环的反伪造：不能靠删 issue 让红灯「消失」。
+        """
+        def mutate(d):
+            # demo 的 DEMO.API.QUERY.01 是 no_tests（非 bound）
+            for p in d["capability_model"]["projects"]:
+                for m in p["modules"]:
+                    for c in m["caps"]:
+                        if c.get("binding_status") in ("unbound", "no_impl", "via1", "no_tests"):
+                            c["binding_status"] = "unbound"
+                            d["work_items"] = [
+                                w for w in d.get("work_items", [])
+                                if w.get("source") != "derived"]
+                            return
+        self._corrupt_and_check(mutate, "binding_issues_derived")
+
+    def test_detects_satisfied_derived_issue_still_open(self):
+        """v2.3.0 #27：能力已 bound 但派生 issue 仍 open → 账本说谎，fail。"""
+        def mutate(d):
+            d["work_items"].append({
+                "id": "W-BIND-DEMO-CORE-ORDER-01", "kind": "issue",
+                "scope": "DEMO.CORE.ORDER.01", "status": "open", "severity": "high",
+                "title": "伪造的未关闭项", "detail": "", "owner": "", "refs": [],
+                "source": "derived",
+                "derived_from": {"code": "DEMO.CORE.ORDER.01",
+                                 "binding_status": "bound"},
+                "close_condition": {"kind": "capability_verified",
+                                    "capability": "DEMO.CORE.ORDER.01"},
+            })
+        self._corrupt_and_check(mutate, "binding_issues_derived")
 
     def test_detects_tampered_event_state(self):
         def mutate(d):
@@ -164,7 +197,7 @@ class TristateTest(unittest.TestCase):
             self.assertEqual(row["status"], "na")
             self.assertFalse(row["ok"])
             self.assertEqual(payload["na"], 2)  # test_results + 资产未安装
-            self.assertEqual(payload["passed"], 24)
+            self.assertEqual(payload["passed"], 25)  # 27 总检查 - 2 na
             self.assertEqual(payload["failed"], 0)
             self.assertFalse(payload["all_active"])
 

@@ -47,7 +47,7 @@ class OntologyTest(unittest.TestCase):
         for d in onto["value_domains"]:
             if d["observed_ref"]:
                 self.assertEqual(d["observed_values"], d["values"], d["id"])
-        self.assertEqual(len(onto["invariant_ids"]), 26)
+        self.assertEqual(len(onto["invariant_ids"]), 27)
 
     def test_polyseme_is_disambiguated_not_unified(self):
         onto = build(ROOT)

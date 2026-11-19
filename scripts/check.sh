@@ -153,6 +153,7 @@ stage_sync(){
   note '模板 / 示例同步 + 看板 EMBED 一致'
   cmp -s templates/build_capability_model.py "$DEMO/build_capability_model.py" || return 1
   cmp -s templates/binding_advisory.py "$DEMO/binding_advisory.py" || return 1
+  cmp -s templates/derived_issues.py "$DEMO/derived_issues.py" || return 1
   cmp -s templates/verify_ledger.py "$DEMO/verify_ledger.py" || return 1
   cmp -s templates/registry_codec.py "$DEMO/registry_codec.py" || return 1
   python3 - "$DEMO" <<'PY' || return 1
@@ -346,4 +347,4 @@ if [ "$FAILURES" -gt 0 ]; then
   printf '质量门禁失败：%d 个阶段未通过\n' "$FAILURES"
   exit 1
 fi
-printf '质量门禁全绿：测试 / 测试架构 / 证据分层 / 26 条三态不变量 / 场景矩阵 / 文件布局 / 升级与接入 / 资产与工作台契约 / 幂等 / 同步 / 反向回流 / 本体层 / 脱敏 / 文档链接 / 验收契约 / 前置条件\n'
+printf '质量门禁全绿：测试 / 测试架构 / 证据分层 / 27 条三态不变量 / 场景矩阵 / 文件布局 / 升级与接入 / 资产与工作台契约 / 幂等 / 同步 / 反向回流 / 本体层 / 脱敏 / 文档链接 / 验收契约 / 前置条件\n'

@@ -137,7 +137,7 @@ class LayoutDiffTest(unittest.TestCase):
             gov = root / "governance"
             self.assertEqual(sorted(f.name for f in gov.iterdir() if f.is_file()),
                              ["DECISION_LEDGER.json", "binding_advisory.py",
-                              "build_capability_model.py",
+                              "build_capability_model.py", "derived_issues.py",
                               "index.html", "registry.json", "registry_codec.py",
                               "run_tests.py", "verify_ledger.py"])
             d = diff(root)

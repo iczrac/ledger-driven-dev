@@ -90,6 +90,7 @@ def build_project(base: Path, mods: int, caps_per: int, files: int,
         encoding="utf-8")
     shutil.copyfile(GEN, gov / "build_capability_model.py")
     shutil.copyfile(ADV, gov / "binding_advisory.py")
+    shutil.copyfile(ROOT / "templates" / "derived_issues.py", gov / "derived_issues.py")
     shutil.copyfile(CODEC, gov / "registry_codec.py")
     return {"mods": mods, "caps_per": caps_per, "caps": mods * caps_per,
             "files": files, "entries": entries, "events": events}

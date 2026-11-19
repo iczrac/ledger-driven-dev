@@ -468,17 +468,23 @@ def conditional_sop(root: Path = ROOT) -> dict:
             "skips": skips, "report_generated": generated}
 
 
-def evaluate_activation(activation: object, invariants: dict) -> dict:
-    """纯函数：G3 判定逻辑，供绿灯自测喂正确/错误输入。"""
+def evaluate_activation(activation: object, invariants: dict,
+                        expected_passed: int | None = None) -> dict:
+    """纯函数：G3 判定逻辑，供绿灯自测喂正确/错误输入。
+
+    expected_passed 由调用方从 verifier 实际检查数推导（总检查 - 1 个 na），
+    不在判定逻辑里写死——新增不变量时无需改这里（v2.3.0 #27 起 27 条）。
+    """
     errors: list[str] = []
     if not isinstance(activation, dict) or not activation.get("state"):
         errors.append("M8 未写入显式 activation 占位（仍为 null）")
-    # 本场景 M7 已把资产装进夹具（#26 pass），唯一 na 是无报告的 #24
+    # 本场景 M7 已把资产装进夹具，唯一 na 是无报告的 #test_results
     if invariants.get("failed") != 0 or invariants.get("na") != 1 \
             or invariants.get("all_active") is not False:
         errors.append("三态语义回归：需要 failed=0 / na=1 / all_active=false")
-    if invariants.get("passed") != 25:
-        errors.append("26 条不变量计数回归：需要 25 pass + 1 na")
+    want = expected_passed if expected_passed is not None else 26
+    if invariants.get("passed") != want:
+        errors.append(f"不变量计数回归：需要 {want} pass + 1 na（实得 {invariants.get('passed')}）")
     return {"status": "pass" if not errors else "fail", "errors": errors}
 
 
@@ -520,9 +526,13 @@ def activation_placeholder(root: Path = ROOT) -> dict:
             v = json.loads(out.stdout)
             invariants = {k: v.get(k) for k in
                           ("passed", "failed", "na", "all_ok", "all_active")}
+            # 期望 pass 数 = 实际检查总数 - 1（本场景唯一 na）；不写死 26/27
+            total_checks = len(v.get("checks") or [])
+            expected_passed = total_checks - 1 if total_checks else None
         except json.JSONDecodeError:
             errors.append("verify_ledger.py --json 输出不可解析：" + out.stderr[:80])
-    verdict = evaluate_activation(activation, invariants)
+            expected_passed = None
+    verdict = evaluate_activation(activation, invariants, expected_passed)
     errors.extend(verdict["errors"])
     return {"status": "pass" if not errors else "fail", "errors": errors,
             "activation_state": activation.get("state") if isinstance(activation, dict) else None,

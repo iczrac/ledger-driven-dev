@@ -37,6 +37,8 @@
 26. installed_assets_binding：.workbuddy 只读副本逐文件 sha256 与
     ASSET_MANIFEST 一致、整包摘要与账本 installed_assets.digest 一致
     （未安装资产时 na）
+27. binding_issues_derived：每个非 bound 能力恰好一条 source=derived 的 open
+    issue；已 bound 的派生 issue 不得仍 open（issue 是账本投影，非手工第二源）
 
 三态语义
 --------
@@ -555,6 +557,44 @@ def verify(repo_root: Path, ledger: dict, registry: dict | None,
         add("installed_assets_binding", not a_errors,
             (f"资产 {len(pairs)} 份 · 摘要 {digest[:12]}" if not a_errors
              else f"错误={a_errors[:5]}"))
+
+    # 27. 绑定问题必须有派生 issue（v2.3.0）：issue_set = h(binding_status)。
+    #     issue 若是手工维护的第二事实源，就能被删、被改状态——「声明权=伪造权」
+    #     原路返回。故要求：每个非 bound 能力恰好一条 source=derived 的 open
+    #     issue；已 bound 能力的派生 issue 不得仍 open（关闭条件已满足却说谎）。
+    #     旧账本无 binding_status 字段视为未启用（na），不误伤未升级项目。
+    from derived_issues import BINDING_TYPES as _BINDING_TYPES
+    status_by_code = {
+        str(c.get("code", "")): c.get("binding_status")
+        for c in caps
+    }
+    has_binding_field = any(
+        c.get("binding_status") is not None for c in caps)
+    derived_items = [x for x in items
+                     if isinstance(x, dict) and x.get("source") == "derived"]
+    derived_codes = [str((x.get("derived_from") or {}).get("code", ""))
+                     for x in derived_items]
+    b_errors: list[str] = []
+    if has_binding_field:
+        for code, bstatus in status_by_code.items():
+            want = bstatus in _BINDING_TYPES
+            open_here = any(
+                x.get("status") != "done"
+                and str((x.get("derived_from") or {}).get("code", "")) == code
+                for x in derived_items)
+            if want and not open_here:
+                b_errors.append(f"{code}:{bstatus}缺issue")
+            if not want and open_here:
+                b_errors.append(f"{code}:{bstatus or 'bound'}仍open")
+        dupes = {c for c in derived_codes if derived_codes.count(c) > 1}
+        if dupes:
+            b_errors.append(f"重复issue={sorted(dupes)[:3]}")
+        add("binding_issues_derived", not b_errors,
+            (f"派生 {len(derived_items)} 条 · 非bound "
+             f"{sum(1 for s in status_by_code.values() if s in _BINDING_TYPES)} 个"
+             if not b_errors else f"错误={b_errors[:5]}"))
+    else:
+        add("binding_issues_derived", True, "未启用绑定门禁（旧账本）", status="na")
 
     return results
 

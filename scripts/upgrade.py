@@ -20,7 +20,7 @@ v0.9.0 只做了 `ledger_version` 的 fail-closed，于是已有项目面临三�
 --------------------
     method_version   方法论/工具链版本（本文件 METHOD_VERSION），写进账本
     ledger_version   账本数据契约版本（1.0）；不兼容时只 fail-closed，不猜迁移
-    tool hashes      5 个工具副本的 sha256，与 templates/ scripts/ 逐一比对
+    tool hashes      6 个工具副本的 sha256，与 templates/ scripts/ 逐一比对
     method_assets    专家/技能/路由/模板/文档整包摘要；资产升级必须重新批准
     board_skeleton   去 EMBED 后的看板骨架 sha256；统一 CSS/DOM/JS，禁止项目改版
     installed_assets 项目级 .workbuddy/ 内已安装副本的逐文件摘要；缺失/手改即判不可用
@@ -96,7 +96,7 @@ SOURCE_ROOT = Path(__file__).resolve().parents[1]
 SCHEMA_PLAN = "upgrade-plan/1"
 SCHEMA_APPLY = "upgrade-apply/1"
 SCHEMA_VERIFY = "upgrade-verify/1"
-METHOD_VERSION = "2.2.0"
+METHOD_VERSION = "2.3.0"
 LEDGER_SCHEMA_VERSION = "1.0"
 SUPPORTED_LEDGER_VERSIONS = {"1.0"}
 ACCESS_SCHEMA = "access/1"
@@ -106,6 +106,7 @@ BACKUP_ROOT = ".ledger-upgrade/backups"
 TOOLING: dict[str, str] = {
     "governance/build_capability_model.py": "templates/build_capability_model.py",
     "governance/binding_advisory.py": "templates/binding_advisory.py",
+    "governance/derived_issues.py": "templates/derived_issues.py",
     "governance/verify_ledger.py": "templates/verify_ledger.py",
     "governance/registry_codec.py": "templates/registry_codec.py",
     "governance/run_tests.py": "scripts/run_tests.py",
@@ -120,7 +121,7 @@ MIGRATIONS: list[dict] = [
          name="建立默认拒绝的 Agent 接入登记", approval=True,
          note="agents=[] / leases=[] / audit=[] / revision=0；升级是接入控制的前置条件"),
     dict(id="M3-tool-sync", field="", kind="tool-sync",
-         name="同步 5 个工具副本到权威模板", approval=False,
+         name="同步 6 个工具副本到权威模板", approval=False,
          note="先备份；副本内容变化会让 evidence_binding 过期，必须重新取证"),
     dict(id="M4-method-version", field="", kind="meta-refresh",
          name="刷新 method_version 与工具摘要", approval=False,

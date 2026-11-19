@@ -13,7 +13,7 @@
 
 关键边界：本清单描述的是**被治理项目（target）**，不是方法论仓库自身。
 scripts/ / templates/ / tests/ / docs/01-21 等不会复制进目标项目；
-只有 5 个工具脚本副本以 governance/*.py 落地。
+只有 6 个工具脚本副本以 governance/*.py 落地。
 v1.2.0 起例外是专家与技能：由 asset_bundle.py 装成 .workbuddy/ 下的
 **只读部署副本**（权威源仍在方法论仓库，逐文件 sha256 + 账本绑定）。
 账本内的 lifecycle.log / governance_meta / access 等是 **JSON 字段**，
@@ -221,7 +221,7 @@ ENTRIES: list[dict] = [
          producer="scripts/init_project.py", write="bootstrap", commit="yes",
          guard="报告含源码绑定摘要",
          purpose="测试报告生成器副本，产出 governance/test_report.json。",
-         note="工具副本之一：让项目脱离本仓库也能独立复算证据（v2.1.2 起共 5 个）。",
+         note="工具副本之一：让项目脱离本仓库也能独立复算证据（v2.1.2 起共 5 个，v2.3.0 增至 6 个）。",
          expect="run_tests.py"),
     dict(path="governance/binding_advisory.py", kind="file", layer="工具层", origin="new",
          presence="required", owner="init_project.py（复制模板）",
@@ -230,6 +230,13 @@ ENTRIES: list[dict] = [
          purpose="证据绑定 advisory 副本：查「声明的测试」与「声明的实现」之间有无调用关系。",
          note="shadow 门禁：只晒 [UNBOUND] 不否决；由生成器在重算时调用，独立成模块是让生成器主体保持在模块大小硬限之下。",
          expect="binding_advisory.py"),
+    dict(path="governance/derived_issues.py", kind="file", layer="工具层", origin="new",
+         presence="required", owner="init_project.py（复制模板）",
+         producer="scripts/init_project.py", write="bootstrap", commit="yes",
+         guard="派生 issue / 生成器调用",
+         purpose="把非 bound 能力投影成可认领 issue（issue_set = h(binding_status)）。",
+         note="v2.3.0 起共 6 个工具副本；issue 是账本视图而非手工第二事实源，独立成模块让生成器主体保持在模块大小硬限之下。",
+         expect="derived_issues.py"),
 
     # ---------------- 资产层：专家 / 技能的项目级只读副本 ----------------
     dict(path=".workbuddy/", kind="dir", layer="资产层", origin="new",
