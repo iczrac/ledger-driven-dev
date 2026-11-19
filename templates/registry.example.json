@@ -1,6 +1,5 @@
 {
   "_comment": "能力注册表 —— 每个项目唯一需要手工维护的清单。生成器据此扫描真实文件系统证据，自动判定完成度并生成组件树/文档索引。复制本文件到 <项目根>/governance/registry.json 后按实际情况修改。",
-
   "project": {
     "code": "DEMO",
     "name": "Demo Shop 示例电商",
@@ -12,7 +11,6 @@
     "docs_dir": "docs",
     "governance_dir": "governance"
   },
-
   "_field_guide": {
     "project.code": "项目短代码，用于能力编码前缀（如 DEMO.DATA.READY.01）。一经分配不复用。",
     "project.name": "项目展示名。",
@@ -26,46 +24,73 @@
     "modules[].src": "组件树的扫描入口目录，相对项目根；可多个。",
     "modules[].caps[].domain": "能力域代码，用于编码第三段（READY/CORE/...）。",
     "modules[].caps[].impl": "实现证据 glob，相对项目根；命中即算有代码/契约。",
-    "modules[].caps[].hints": "关键字，用于匹配单测文件名、测试记录名、文档名。建议小写英文。"
+    "modules[].caps[].hints": "关键词回退（可选）：未声明 tests/test_records 时匹配文件名；扫描限定在本项目子树内。",
+    "modules[].caps[].tests": "精确测试文件路径列表（相对项目根）。声明后即为 L3 证据的权威来源，缺失即降级，不再按 hints 猜测。",
+    "modules[].caps[].test_records": "精确测试记录路径列表。L4 证据的权威来源，缺失即降级。"
   },
-
   "modules": [
     {
       "code": "DATA",
       "name": "数据准备",
-      "src": ["src/domain/"],
+      "src": [
+        "src/domain/"
+      ],
       "caps": [
         {
           "name": "数据就绪契约",
           "domain": "READY",
-          "impl": ["src/contracts/data_ready.py"],
-          "hints": ["data_ready", "ready"]
+          "impl": [
+            "src/contracts/data_ready.py"
+          ],
+          "hints": [
+            "data_ready",
+            "ready"
+          ],
+          "tests": [
+            "tests/unit/test_data_ready.py"
+          ],
+          "test_records": [
+            "docs/test_records/DATA_READY_TEST_RECORD.md"
+          ]
         }
       ]
     },
     {
       "code": "CORE",
       "name": "核心领域",
-      "src": ["src/domain/"],
+      "src": [
+        "src/domain/"
+      ],
       "caps": [
         {
           "name": "订单领域模型",
           "domain": "ORDER",
-          "impl": ["src/domain/order.py"],
-          "hints": ["order"]
+          "impl": [
+            "src/domain/order.py"
+          ],
+          "hints": [
+            "order"
+          ]
         }
       ]
     },
     {
       "code": "API",
       "name": "接口层",
-      "src": ["src/api/"],
+      "src": [
+        "src/api/"
+      ],
       "caps": [
         {
           "name": "订单查询接口",
           "domain": "QUERY",
-          "impl": ["src/api/order_api.py"],
-          "hints": ["order_api", "query"]
+          "impl": [
+            "src/api/order_api.py"
+          ],
+          "hints": [
+            "order_api",
+            "query"
+          ]
         }
       ]
     }

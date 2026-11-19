@@ -41,12 +41,27 @@ def _source_label(path: Path, target: Path) -> str:
         return path.name
 
 
+def _strip_declarations(registry: dict) -> dict:
+    """greenfield 初始化时去掉示例里的 tests/test_records 声明。
+
+    示例声明是为了教写法（精确路径 > 关键词）。但新项目还没有这些文件，
+    原样带过去会让生成器每次打印「声明的测试不存在」——那不是教学，是噪声。
+    hints 保留，等真实测试落地后再改成显式声明。
+    """
+    out = json.loads(json.dumps(registry))
+    for module in out.get("modules") or []:
+        for cap in module.get("caps") or []:
+            cap.pop("tests", None)
+            cap.pop("test_records", None)
+    return out
+
+
 def load_registry_source(target: Path, gov: Path, mode: str,
                          from_draft: str | None) -> tuple[dict, dict]:
     """返回 (registry, provenance)。adopt 优先草稿，绝不覆盖草稿本身。"""
     template = json.loads((TEMPLATES / "registry.example.json").read_text())
     if not from_draft and mode == "greenfield":
-        return template, {"source": "template", "discovery": {}}
+        return _strip_declarations(template), {"source": "template", "discovery": {}}
 
     if from_draft:
         src = Path(from_draft).expanduser().resolve()

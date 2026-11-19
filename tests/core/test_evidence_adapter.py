@@ -1,5 +1,7 @@
-"""v1.8.0 证据适配专项：证明布局探测 / classname 映射 / hints 派生 / 不降级门禁的判定逻辑。
+"""v1.8.0 起：证据适配专项（布局探测 / classname 映射 / 声明解析 / 不降级门禁）。
 
+v2.1.0 起 hints 不再从账本派生，改由 registry 声明解析，故此处断言
+「声明缺失必须被报告」与「生成器不得回读账本」。
 纪律：全部是绿灯自测（合成输入验证判定），不断言主仓当前红绿。
 """
 from __future__ import annotations
@@ -61,23 +63,32 @@ class ClassnameToFileTest(unittest.TestCase):
         self.assertEqual(wp.classname_to_file("", {}), "")
 
 
-class EvidenceHintsTest(unittest.TestCase):
+class DeclaredEvidenceTest(unittest.TestCase):
+    """v2.1.0：证据只从 registry 声明解析，账本不得再充当 hints 来源。"""
 
-    def test_derives_from_capability_evidence(self):
-        ledger = {"capability_model": {"projects": [{
-            "modules": [{"caps": [{
-                "code": "APP.DATA.READY.01",
-                "evidence": {
-                    "unit_test": ["projects/app/tests/unit/test_ready.py"],
-                    "test_record": ["projects/app/docs/test_records/READY.md"],
-                },
-            }]}]}]}}
-        hints = gen.evidence_hints(ledger, "APP.DATA.READY.01")
-        self.assertIn("test_ready", hints)
-        self.assertIn("READY", hints)
+    def setUp(self):
+        self.td = tempfile.mkdtemp()
+        self.root = Path(self.td)
+        (self.root / "projects/app/tests/unit").mkdir(parents=True)
+        self.test_file = self.root / "projects/app/tests/unit/test_ready.py"
+        self.test_file.write_text("def test_x():\n    assert True\n")
 
-    def test_missing_cap_returns_empty(self):
-        self.assertEqual(gen.evidence_hints({}, "NOPE"), [])
+    def test_resolves_existing_declared_path(self):
+        hit, miss = gen.resolve_declared(
+            self.root, ["projects/app/tests/unit/test_ready.py"], None)
+        self.assertEqual(hit, ["projects/app/tests/unit/test_ready.py"])
+        self.assertEqual(miss, [])
+
+    def test_missing_declared_path_is_reported_not_dropped(self):
+        hit, miss = gen.resolve_declared(self.root, ["projects/app/tests/unit/test_gone.py"], None)
+        self.assertEqual(hit, [])
+        self.assertEqual(miss, ["projects/app/tests/unit/test_gone.py"])
+
+    def test_generator_no_longer_derives_hints_from_ledger(self):
+        """防回归：生成器源码不得再出现「账本 → hints」这条自证回路。"""
+        src = (ROOT / "templates/build_capability_model.py").read_text()
+        self.assertNotIn("def evidence_hints(", src)
+        self.assertNotIn("evidence_hints(ledger", src)
 
 
 class NoRegressTest(unittest.TestCase):

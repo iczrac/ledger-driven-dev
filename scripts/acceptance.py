@@ -561,13 +561,19 @@ def evidence_adapter(root: Path = ROOT) -> dict:
 
 
 def no_regression_guard(root: Path = ROOT) -> dict:
-    """H3：生成器必须有账本证据派生 hints 与 level 不降级门禁。"""
+    """H3：生成器必须有「证据解析入口」与 level 不降级门禁。
+
+    v2.1.0：证据解析入口从 `evidence_hints`（回读账本）改为 `resolve_declared`
+    （解析 registry 声明）。判据只要求二者其一存在，这样历史验收文档不必改写，
+    而新版本仍会被检查到有解析入口。
+    """
     text = _source_text(root / GENERATOR_TPL)
     syms = _source_symbols(root / GENERATOR_TPL)
     errors = []
-    for name in ("evidence_hints", "no_regress"):
-        if name not in syms:
-            errors.append(f"{GENERATOR_TPL} 缺少函数/门禁 {name}()")
+    if not ({"resolve_declared", "evidence_hints"} & set(syms)):
+        errors.append(f"{GENERATOR_TPL} 缺少证据解析入口 resolve_declared()/evidence_hints()")
+    if "no_regress" not in syms:
+        errors.append(f"{GENERATOR_TPL} 缺少门禁 no_regress()")
     if "降级" not in text and "regress" not in text:
         errors.append(f"{GENERATOR_TPL} 未见 level 不降级判据")
     return {"status": "pass" if not errors else "fail", "errors": errors,

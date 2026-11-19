@@ -16,6 +16,7 @@
       "files": [
         "tests/core/test_generation.py",
         "tests/core/test_path_scope.py",
+        "tests/core/test_declared_evidence.py",
         "tests/core/test_history.py",
         "tests/core/test_evidence_tier.py",
         "tests/core/test_verify.py",

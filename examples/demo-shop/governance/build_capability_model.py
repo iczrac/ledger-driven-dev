@@ -310,40 +310,70 @@ def glob_files(root: Path, patterns: list[str],
     return sorted(found)
 
 
-def evidence_hints(ledger: dict, cap_code: str) -> list[str]:
-    """从账本既有证据派生单测/测试记录的文件名 hints（v1.8.0 缺口 D）。
+def resolve_declared(
+    repo_root: Path, values: list, scope: "RepoScope | None", proj_rel: str = "",
+) -> tuple[list[str], list[str]]:
+    """把 registry 声明的路径解析为「存在且已入库」的仓库相对路径。
 
-    第一性原理：hints 的唯一用途是把能力匹配到它自己的证据文件；账本
-    capability_model 里已有的 evidence.unit_test / evidence.test_record 就是
-    这份映射的权威记录。以文件名（stem）作为 hint 复用，避免 registry 里
-    填能力代码而永远匹配不到文件。账本无该能力证据时返回空列表（不猜）。
+    返回 (命中, 缺失)。缺失项不静默丢弃——调用方必须打印告警，因为一条
+    声明失效意味着该能力的证据链断了，等级应当如实回落。
     """
-    model = ledger.get("capability_model") or {}
-    for proj in model.get("projects") or []:
-        for mod in proj.get("modules") or []:
-            for cap in mod.get("caps") or []:
-                if cap.get("code") != cap_code:
-                    continue
-                ev = cap.get("evidence") or {}
-                names: list[str] = []
-                for key in ("unit_test", "test_record"):
-                    for item in ev.get(key) or []:
-                        stem = Path(str(item)).stem
-                        if stem and stem not in names:
-                            names.append(stem)
-                return names[:8]
-    return []
+    hit: list[str] = []
+    missing: list[str] = []
+    for raw in values or []:
+        s = str(raw).strip()
+        if not s:
+            continue
+        cands = [repo_root / s]
+        if proj_rel:
+            cands.append(repo_root / proj_rel / s)
+        p = next((c for c in cands if c.is_file()), None)
+        if p is None or (scope is not None and not scope.allows(p)):
+            missing.append(s)
+            continue
+        r = rel_path(repo_root, p)
+        if r not in hit:
+            hit.append(r)
+    return hit, missing
+
+
+def _project_trees(repo_root: Path, impl_globs: list[str] | None) -> list[Path]:
+    """从 impl 声明前缀推导项目子树（``projects/<x>`` 或 ``examples/<x>``）。
+
+    v2.1.0：项目根写 "." 时（多项目共仓），测试扫描必须限制在能力自己
+    所属的项目里；否则 A 项目的关键词会匹配到 B 项目的同名测试。
+    """
+    trees: list[Path] = []
+    for g in impl_globs or []:
+        parts = Path(str(g)).parts
+        if len(parts) >= 3 and parts[0] in {"projects", "examples"}:
+            t = repo_root / parts[0] / parts[1]
+            if t.is_dir() and t not in trees:
+                trees.append(t)
+    return trees
 
 
 def _monorepo_dirs(repo_root: Path, configured: str,
-                   scope: "RepoScope | None" = None) -> list[Path]:
-    """把配置的单一目录扩展为 monorepo 下的同名目录（v1.8.0 缺口 C）。"""
+                   scope: "RepoScope | None" = None,
+                   impl_globs: list[str] | None = None) -> list[Path]:
+    """把配置的单一目录展开为实际存在的扫描根。
+
+    顺序：仓库根 → 项目子树（由 impl 声明推导）→ 旧的 monorepo 兜底。
+    兜底仍保留，但只在无法从声明推导项目时使用；调用方会打印告警，
+    避免「跨项目证据」在无声中发生。
+    """
     primary = repo_root / configured
-    if primary.exists() and (scope is None or scope.allows(primary)):
+    if primary.is_dir() and (scope is None or scope.allows(primary)):
         return [primary]
-    found = []
-    # v2.0.0：monorepo 容器目录不止 projects/，示例/多项目仓也常见 examples/。
-    # 扫描两者下的同名目录，保留 projects/ 优先语义。
+    found: list[Path] = []
+    for tree in _project_trees(repo_root, impl_globs):
+        candidate = tree / configured
+        if candidate.is_dir() and candidate not in found:
+            if scope is not None and not scope.allows(candidate):
+                continue
+            found.append(candidate)
+    if found:
+        return found
     for container in ("projects", "examples"):
         base = repo_root / container
         if not base.is_dir():
@@ -356,6 +386,44 @@ def _monorepo_dirs(repo_root: Path, configured: str,
                         continue
                     found.append(candidate)
     return found
+
+
+def diff_projects(old_projects: list, new_projects: list) -> list[str]:
+    """比较「已写账本」与「重新派生」的能力字段，返回差异描述。
+
+    v2.1.0 的 --check 用它回答一个问题：账本还是不是 registry+仓库的函数？
+    如果是，重算必须完全一致；如果不然，说明有人手改过账本，或者声明/证据
+    在账本写完之后变了——两种都必须当场暴露。
+    """
+    def index(projects: list) -> dict[str, tuple]:
+        out: dict[str, tuple] = {}
+        for p in projects or []:
+            for m in p.get("modules") or []:
+                out["|module|" + str(m.get("code"))] = (
+                    json.dumps(m.get("component_tree"), sort_keys=True, ensure_ascii=False),
+                    json.dumps(m.get("doc_index"), sort_keys=True, ensure_ascii=False),
+                )
+                for c in m.get("caps") or []:
+                    ev = c.get("evidence") or {}
+                    out[str(c.get("code"))] = (
+                        c.get("level"),
+                        c.get("evidence_tier"),
+                        tuple(ev.get("impl") or []),
+                        tuple(ev.get("unit_test") or []),
+                        tuple(ev.get("test_record") or []),
+                    )
+        return out
+
+    a, b = index(old_projects), index(new_projects)
+    drift: list[str] = []
+    for code in sorted(set(a) - set(b)):
+        drift.append(f"{code}: 账本有、重算无（声明已删除？）")
+    for code in sorted(set(b) - set(a)):
+        drift.append(f"{code}: 重算有、账本无（未提交生成结果）")
+    for code in sorted(set(a) & set(b)):
+        if a[code] != b[code]:
+            drift.append(f"{code}: 账本 {a[code]} ≠ 重算 {b[code]}")
+    return drift
 
 
 def no_regress(old_ledger: dict, new_model: dict) -> list[str]:
@@ -408,8 +476,15 @@ def judge_level(
     repo_root: Path, proj_root: Path, proj_rel: str, cfg: dict,
     impl_globs: list[str], hints: list[str],
     scope: "RepoScope | None" = None,
+    declared_tests: list[str] | None = None,
+    declared_records: list[str] | None = None,
 ) -> tuple[int, dict]:
-    """按证据判定 L0-L5，返回 (level, 证据明细)。逐级判定，缺证据即停。"""
+    """按证据判定 L0-L5，返回 (level, 证据明细)。逐级判定，缺证据即停。
+
+    v2.1.0：``declared_tests`` / ``declared_records`` 非 None 时即权威名单
+    （已在调用方校验过「存在且已入库」），不再做关键词扫描。这一条把证据
+    来源从「账本自证」改成「registry 声明」，是账本可复算的前提。
+    """
     cfg = cfg.get("project", cfg)  # 兼容传整个配置或仅 project 段
     ev: dict = {"impl": [], "contract": [], "unit_test": [], "test_record": [], "governance": []}
 
@@ -428,25 +503,33 @@ def judge_level(
             if v not in ev["contract"]:
                 ev["contract"].append(v)
 
-    # L3 单测：按 hint 匹配 tests/ 下文件名（v1.8.0：monorepo 多项目目录）
-    test_roots = _monorepo_dirs(repo_root, cfg.get("unit_test_dir", "tests/unit"), scope)
-    ut_hits: list[Path] = []
-    for test_root in test_roots:
-        ut_hits.extend(f for f in test_root.rglob("*")
-                       if f.is_file() and f.suffix in CODE_EXT
-                       and any(h.lower() in f.stem.lower() for h in hints)
-                       and (scope is None or scope.allows(f)))
-    ev["unit_test"] = [rel_path(repo_root, x) for x in ut_hits[:4]]
+    # L3 单测：声明优先；未声明才按 hint 匹配（限制在项目自身测试树内）
+    if declared_tests is not None:
+        ev["unit_test"] = list(declared_tests)
+    else:
+        test_roots = _monorepo_dirs(
+            repo_root, cfg.get("unit_test_dir", "tests/unit"), scope, impl_globs)
+        ut_hits: list[Path] = []
+        for test_root in test_roots:
+            ut_hits.extend(f for f in test_root.rglob("*")
+                           if f.is_file() and f.suffix in CODE_EXT
+                           and any(h.lower() in f.stem.lower() for h in hints)
+                           and (scope is None or scope.allows(f)))
+        ev["unit_test"] = [rel_path(repo_root, x) for x in ut_hits[:4]]
 
-    # L4 测试记录（v1.8.0：同样覆盖 monorepo 多项目）
-    tr_roots = _monorepo_dirs(repo_root, cfg.get("test_record_dir", "docs/test_records"), scope)
-    tr_hits: list[Path] = []
-    for tr in tr_roots:
-        tr_hits.extend(f for f in tr.glob("*.md")
-                       if f.is_file()
-                       and any(h.lower() in f.stem.lower() for h in hints)
-                       and (scope is None or scope.allows(f)))
-    ev["test_record"] = [rel_path(repo_root, x) for x in tr_hits[:4]]
+    # L4 测试记录：同样声明优先
+    if declared_records is not None:
+        ev["test_record"] = list(declared_records)
+    else:
+        tr_roots = _monorepo_dirs(
+            repo_root, cfg.get("test_record_dir", "docs/test_records"), scope, impl_globs)
+        tr_hits: list[Path] = []
+        for tr in tr_roots:
+            tr_hits.extend(f for f in tr.glob("*.md")
+                           if f.is_file()
+                           and any(h.lower() in f.stem.lower() for h in hints)
+                           and (scope is None or scope.allows(f)))
+        ev["test_record"] = [rel_path(repo_root, x) for x in tr_hits[:4]]
 
     # L5 治理门禁
     gov_dir = cfg.get("governance_dir", "governance")
@@ -752,13 +835,29 @@ def build(repo_root: Path, cfg_all: dict, ledger: dict, test_report: dict | None
                 domain = str(cap["domain"]).strip().upper()
                 impl_globs = cap.get("impl", [])
                 cap_code_src = cap.get("code", "")
-                # v1.8.0：以账本既有证据派生 hints，与 registry hints 合并（去重保序）。
-                registry_hints = list(cap.get("hints", []))
-                ledger_hints = evidence_hints(ledger, cap_code_src)
-                hints = registry_hints + [h for h in ledger_hints if h not in registry_hints]
+                # v2.1.0：证据只来自 registry 声明，绝不回读账本。
+                # 回读会让账本变成自身的函数——抹掉证据就再也算不回来。
+                hints = [str(h) for h in (cap.get("hints") or [])]
+                declared_tests = declared_records = None
+                if isinstance(cap.get("tests"), list):
+                    declared_tests, miss_t = resolve_declared(
+                        repo_root, cap["tests"], scope, proj_rel)
+                    if miss_t:
+                        print(f"[WARN] {cap_code_src}: 声明的测试不存在或未入库 "
+                              f"{miss_t}（该能力证据按缺失处理）")
+                if isinstance(cap.get("test_records"), list):
+                    declared_records, miss_r = resolve_declared(
+                        repo_root, cap["test_records"], scope, proj_rel)
+                    if miss_r:
+                        print(f"[WARN] {cap_code_src}: 声明的测试记录不存在或未入库 "
+                              f"{miss_r}（该能力证据按缺失处理）")
+                if declared_tests is None and not hints:
+                    print(f"[WARN] {cap_code_src}: 既未声明 tests 也无 hints，"
+                          "单测证据无法派生（等级不会超过 L2）")
                 level, ev = judge_level(
                     repo_root, proj_root, proj_rel, project_cfg, impl_globs, hints,
-                    scope=scope)
+                    scope=scope, declared_tests=declared_tests,
+                    declared_records=declared_records)
                 tier, tier_detail = judge_tier(ev.get("unit_test", []), test_report)
                 # v2.0.1 stable_code：显式 code 合法时优先，迁移前后身份不变。
                 cap_code = codec_cap_code(code, mcode, domain, cidx, cap_code_src)
@@ -1142,6 +1241,8 @@ def main() -> None:
                     help="人批准的数据迁移专用：允许能力 level 下降（默认拒绝，v1.8.0 门禁）")
     ap.add_argument("--strict-evidence", action="store_true",
                     help="拒绝未绑定源码摘要的测试报告（CI / 发布门禁建议开启）")
+    ap.add_argument("--check", action="store_true",
+                    help="漂移门禁：重算结果与已写账本不一致即 exit 1（不写盘）")
     args = ap.parse_args()
 
     repo_root = Path(args.root).resolve()
@@ -1191,7 +1292,7 @@ def main() -> None:
                   "期间有人改过账本，请重新读取并合并变更后再试。", file=sys.stderr)
             sys.exit(2)
 
-    # v2.0.3：路径全集取自 git index。仓库里没有的文件一律不进账本，
+    # v2.1.0：路径全集取自 git index。仓库里没有的文件一律不进账本，
     # 这样「本机绿、干净检出红」的差异在生成阶段就不存在了。
     scope = RepoScope(repo_root)
     if scope.verified:
@@ -1222,6 +1323,20 @@ def main() -> None:
         else:
             print("[WARN] 报告未绑定源码摘要；建议用 v0.8.0+ 的 run_tests.py 重跑")
     model = build(repo_root, cfg_all, ledger, test_report=test_report, scope=scope)
+    if args.check:
+        drift = diff_projects(
+            (ledger.get("capability_model") or {}).get("projects") or [],
+            model.get("projects") or [],
+        )
+        if drift:
+            print("[DRIFT] 账本与「registry + 仓库」重算结果不一致：", file=sys.stderr)
+            for line in drift[:20]:
+                print("  - " + line, file=sys.stderr)
+            print(f"[DRIFT] 共 {len(drift)} 处；重跑生成器并提交账本是唯一修法。",
+                  file=sys.stderr)
+            sys.exit(1)
+        print("[OK] 账本 = f(registry, 仓库, 报告)：可复算")
+        return
     model["summary"]["evidence_bound"] = bool(bound and fresh and test_report is not None)
     model["summary"]["evidence_freshness"] = (
         "fresh" if bound and fresh else "stale" if bound else "unbound")

@@ -363,7 +363,7 @@ class L5DetectorTest(unittest.TestCase):
         root = self._tree()
         r = no_regression_guard(root)
         self.assertEqual(r["status"], "fail")
-        self.assertIn("evidence_hints", " ".join(r["errors"]))
+        self.assertIn("resolve_declared", " ".join(r["errors"]))
         self.assertIn("no_regress", " ".join(r["errors"]))
 
     def test_l5_contract_doc_requires_all_anchors(self):

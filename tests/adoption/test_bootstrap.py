@@ -55,6 +55,18 @@ class BootstrapTest(unittest.TestCase):
         self.assertEqual(ledger["provenance"]["source"], "template")
         self.assertEqual(ledger["entries"][0]["id"], "D-001")
 
+    def test_greenfield_drops_example_declarations(self):
+        """示例里的 tests/test_records 指向 demo 文件，新项目没有——不能原样带过去。"""
+        root = make_dir()
+        proc = run(INIT, "--target", root, "--code", "NEW", "--name", "新项目")
+        self.assertEqual(proc.returncode, 0, proc.stderr)
+        reg = json.loads((root / "governance/registry.json").read_text())
+        for module in reg["modules"]:
+            for cap in module["caps"]:
+                self.assertNotIn("tests", cap)
+                self.assertNotIn("test_records", cap)
+                self.assertIn("hints", cap)
+
     def test_adopt_consumes_draft_without_touching_it(self):
         root = make_dir({
             "src/domain/order.py": "class Order: pass\n",
