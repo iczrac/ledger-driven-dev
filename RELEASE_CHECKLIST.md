@@ -398,6 +398,25 @@ E7 `cardinality_contradiction`（`ontology.py check --target P` 仍 `ok=false`�
 - `scale_budget` 告警与 6 条 open 观察保留；
 - 目标项目根仓库不整体提交，只留下治理文件与备份链。
 
+## v2.0.3 发布检查（路径全集补丁）
+
+> 由来：v2.0.2 把强制点搬上机器后，第一条真话就是「本机 24 绿、干净检出 2 红」。
+> 根因是生成器把本机文件系统当仓库事实，账本里混进了 gitignore 的运行产物与未入库测试。
+
+- [ ] **实现**：`RepoScope`（git index 取路径全集）+ 五处扫描收窄 + `norm_existing_path` 收紧
+- [ ] **负向证明**：`tests/core/test_path_scope.py` 6 条（先造噪声，再断言不可见）
+- [ ] **删除许可**：主仓 `ci_governance_gate.py` 去掉 `doc_paths_exist` / `component_paths_exist` 放行名单
+- [ ] **干净检出**：`git archive HEAD` 后 24 条不变量 24 pass / 0 fail / 0 na
+- [ ] **方法仓门禁**：`scripts/check.sh` EXIT=0；acceptance 目标版本 2.0.3 全 PASS
+- [ ] **重绑**：目标项目 `upgrade verify` 12 pass / 0 warn，`method_assets.digest` 与目标账本一致
+- [ ] **发版**：`tag v2.0.3` + push；远端 `Governance invariants` 无 warning
+
+### 本版边界（不掩盖）
+
+- 只保证「不引用仓库外路径」，未扩大证据覆盖（verified 仍 20/47）；
+- `manual` 型关闭条件仍需人主动关闭；
+- 多副本同步税未处理：模板一改，主仓与示例仍需手工同步（由 `check.sh` 字节比对兜底）。
+
 ## v2.0.2 发布检查（业务诚信补丁）
 
 > 由来：真实价值评估发现「24 条不变量全绿 + 3 条工作项全部完成却仍 open」并存，

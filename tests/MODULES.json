@@ -7,7 +7,7 @@
     {
       "id": "core",
       "name": "账本与生成器",
-      "scope": "capability_model / history / evidence_tier / verify_ledger",
+      "scope": "capability_model / history / evidence_tier / verify_ledger / path_scope",
       "owner_scripts": [
         "templates/build_capability_model.py",
         "templates/verify_ledger.py",
@@ -15,13 +15,14 @@
       ],
       "files": [
         "tests/core/test_generation.py",
+        "tests/core/test_path_scope.py",
         "tests/core/test_history.py",
         "tests/core/test_evidence_tier.py",
-    "tests/core/test_verify.py",
-    "tests/core/test_evidence_adapter.py",
-    "tests/core/test_registry2.py",
-    "tests/core/test_registry_schema.py"
-   ]
+        "tests/core/test_verify.py",
+        "tests/core/test_evidence_adapter.py",
+        "tests/core/test_registry2.py",
+        "tests/core/test_registry_schema.py"
+      ]
     },
     {
       "id": "adoption",

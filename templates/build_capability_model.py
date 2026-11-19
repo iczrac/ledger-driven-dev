@@ -12,6 +12,8 @@
 3. 可复算：重跑即刷新；证据消失则等级自动回落。
 4. 单一事实源：结果写入 DECISION_LEDGER.json 的 capability_model + architecture。
 5. 索引可见：能力/规划都能点开对应文档，组件以真实嵌套树呈现。
+6. 路径全集取自仓库：只引用 git 已跟踪的路径（见 RepoScope）。账本描述的是
+   「仓库里有什么」，不是「这台机器上有什么」——否则干净检出必红、本机常绿。
 
 用法
 ----
@@ -33,6 +35,7 @@ import argparse
 import hashlib
 import json
 import re
+import subprocess
 import sys
 from datetime import datetime
 from pathlib import Path
@@ -118,23 +121,102 @@ def rel_path(repo_root: Path, p: Path) -> str:
         return str(p)
 
 
-def norm_existing_path(repo_root: Path, value: str, proj_rel: str) -> str:
-    """证据路径可能是仓库根相对或项目根相对；归一到仓库根相对，并校验存在。"""
-    if (repo_root / value).exists():
+class RepoScope:
+    """路径全集：账本只允许引用「仓库里有的东西」。
+
+    为什么需要它
+    ------------
+    生成器原先直接遍历文件系统，于是本机被 .gitignore 的运行产物（``data/``、
+    ``logs/``、``*.egg-info``）和还没入库的临时测试也会被写进账本。结果是账本
+    记录「这台机器上有什么」而不是「仓库里有什么」：本机永远绿，干净检出必红。
+    这是最坏的一类绿灯——它只在作者机器上成立，别人一 clone 就是假的。
+
+    做法
+    ----
+    文件全集取自 git index（``git ls-files``）。不在 index 里的路径一律看不见，
+    因此本机与干净检出产出同一份结果，差异不再有藏身之处。
+
+    降级
+    ----
+    非 git 环境（导出的 tarball、示例的临时副本）无法读 index，退回文件系统
+    全集，并由 ``verified`` 标为 False——此时调用方必须打印警告，绝不假装
+    「已核对过仓库」。
+    """
+
+    def __init__(self, root: Path):
+        self.root = Path(root)
+        self.files: set[str] | None = None
+        self.dirs: set[str] = set()
+        self.why = ""
+        self._load()
+
+    def _load(self) -> None:
+        try:
+            proc = subprocess.run(
+                ["git", "-C", str(self.root), "ls-files", "-z"],
+                capture_output=True, check=True,
+            )
+        except (OSError, subprocess.SubprocessError) as exc:
+            self.why = f"读不到 git index（{type(exc).__name__}），退回文件系统全集"
+            return
+        names = [n for n in proc.stdout.decode("utf-8", "replace").split("\0") if n]
+        if not names:
+            self.why = "git index 为空，退回文件系统全集"
+            return
+        self.files = set(names)
+        for name in names:
+            parent = name
+            while "/" in parent:
+                parent = parent.rsplit("/", 1)[0]
+                self.dirs.add(parent)
+
+    @property
+    def verified(self) -> bool:
+        """是否真的按仓库 index 收窄过（False 表示降级为文件系统全集）。"""
+        return self.files is not None
+
+    def has_file(self, rel: str) -> bool:
+        return True if self.files is None else rel in self.files
+
+    def has_dir(self, rel: str) -> bool:
+        """目录里有已跟踪文件才算存在；空目录/纯产物目录不算。"""
+        return True if self.files is None else rel.strip("/") in self.dirs
+
+    def allows(self, p: Path) -> bool:
+        """p 是文件或目录时，分别按 file/dir 判定。"""
+        rel = rel_path(self.root, p).replace("\\", "/")
+        return self.has_dir(rel) if p.is_dir() else self.has_file(rel)
+
+
+def norm_existing_path(repo_root: Path, value: str, proj_rel: str,
+                       scope: "RepoScope | None" = None) -> str:
+    """证据路径可能是仓库根相对或项目根相对；归一到仓库根相对，并校验存在。
+
+    scope 存在时，「存在但未入库」视同不存在：返回原值，让校验阶段把
+    「registry 指向仓库外文件」这件事暴露出来，而不是悄悄写进账本。
+    """
+    def ok(p: Path) -> bool:
+        return p.exists() and (scope is None or scope.allows(p))
+
+    if ok(repo_root / value):
         return value
     cand = repo_root / proj_rel / value
-    if cand.exists():
+    if ok(cand):
         return rel_path(repo_root, cand)
     return value  # 保留原值，让缺失在校验阶段暴露
 
 
 # ------------------------------ 证据分层 ------------------------------
 
-def check_freshness(report: dict, repo_root: Path, proj_rel: str = "") -> tuple[bool, str]:
+def check_freshness(report: dict, repo_root: Path, proj_rel: str = "",
+                    scope: "RepoScope | None" = None) -> tuple[bool, str]:
     """校验报告的源码绑定摘要是否仍对应当前文件。
 
     防止「测试跑过之后又改了源码，却继续挂着 verified」的过期证据假绿灯。
     内容摘要而非时间戳：跨时区、同分钟重跑都不会误判。
+
+    scope 存在时额外要求被绑定文件已入库：一份报告若绑定了仓库里没有的测试，
+    它在别人机器上永远无法复现——那不是证据，只是一句本地断言。
     """
     binding = report.get("evidence_binding") or {}
     inputs = binding.get("inputs") or []
@@ -150,11 +232,14 @@ def check_freshness(report: dict, repo_root: Path, proj_rel: str = "") -> tuple[
             cands.append(repo_root / proj_rel / rel)
         hit = next((p for p in cands if p.is_file()), None)
         if hit is None:
-            same_name = [p for p in repo_root.rglob(Path(rel).name) if p.is_file()]
+            same_name = [p for p in repo_root.rglob(Path(rel).name)
+                         if p.is_file() and (scope is None or scope.allows(p))]
             if len(same_name) == 1:
                 hit = same_name[0]
         if hit is None:
             return False, "missing:" + Path(rel).name
+        if scope is not None and not scope.allows(hit):
+            return False, "untracked:" + Path(rel).name
         if hashlib.sha256(hit.read_bytes()).hexdigest() != want:
             return False, "changed:" + Path(rel).name
     return True, "fresh"
@@ -209,7 +294,9 @@ def judge_tier(unit_tests: list[str], report: dict | None) -> tuple[str, dict]:
 
 # ------------------------------ 证据扫描 ------------------------------
 
-def glob_files(root: Path, patterns: list[str]) -> list[Path]:
+def glob_files(root: Path, patterns: list[str],
+               scope: "RepoScope | None" = None) -> list[Path]:
+    """按 glob 收集源码文件；scope 存在时只保留已入库路径。"""
     found: set[Path] = set()
     for pat in patterns:
         p = root / pat
@@ -218,6 +305,8 @@ def glob_files(root: Path, patterns: list[str]) -> list[Path]:
         if p.is_dir():
             found.update(x for x in p.glob("*") if x.is_file() and x.suffix in CODE_EXT)
         found.update(x for x in root.glob(pat) if x.is_file())
+    if scope is not None:
+        found = {x for x in found if scope.allows(x)}
     return sorted(found)
 
 
@@ -246,10 +335,11 @@ def evidence_hints(ledger: dict, cap_code: str) -> list[str]:
     return []
 
 
-def _monorepo_dirs(repo_root: Path, configured: str) -> list[Path]:
+def _monorepo_dirs(repo_root: Path, configured: str,
+                   scope: "RepoScope | None" = None) -> list[Path]:
     """把配置的单一目录扩展为 monorepo 下的同名目录（v1.8.0 缺口 C）。"""
     primary = repo_root / configured
-    if primary.exists():
+    if primary.exists() and (scope is None or scope.allows(primary)):
         return [primary]
     found = []
     # v2.0.0：monorepo 容器目录不止 projects/，示例/多项目仓也常见 examples/。
@@ -262,6 +352,8 @@ def _monorepo_dirs(repo_root: Path, configured: str) -> list[Path]:
             if child.is_dir():
                 candidate = child / configured
                 if candidate.exists() and candidate not in found:
+                    if scope is not None and not scope.allows(candidate):
+                        continue
                     found.append(candidate)
     return found
 
@@ -315,12 +407,13 @@ def code_namespace(project_code: str, module_code: str) -> str:
 def judge_level(
     repo_root: Path, proj_root: Path, proj_rel: str, cfg: dict,
     impl_globs: list[str], hints: list[str],
+    scope: "RepoScope | None" = None,
 ) -> tuple[int, dict]:
     """按证据判定 L0-L5，返回 (level, 证据明细)。逐级判定，缺证据即停。"""
     cfg = cfg.get("project", cfg)  # 兼容传整个配置或仅 project 段
     ev: dict = {"impl": [], "contract": [], "unit_test": [], "test_record": [], "governance": []}
 
-    impl_files = glob_files(proj_root, impl_globs)
+    impl_files = glob_files(proj_root, impl_globs, scope)
     ev["impl"] = [rel_path(repo_root, x) for x in impl_files[:6]]
 
     # L1 契约：impl 命中契约目录，或 impl_globs 直接指向契约文件
@@ -329,25 +422,30 @@ def judge_level(
     ev["contract"] = [rel_path(repo_root, x) for x in contracts[:4]]
     for g in impl_globs:
         if contract_dir.strip("/") in g and (proj_root / g).exists():
-            v = norm_existing_path(repo_root, g, proj_rel)
+            if scope is not None and not scope.allows(proj_root / g):
+                continue
+            v = norm_existing_path(repo_root, g, proj_rel, scope)
             if v not in ev["contract"]:
                 ev["contract"].append(v)
 
     # L3 单测：按 hint 匹配 tests/ 下文件名（v1.8.0：monorepo 多项目目录）
-    test_roots = _monorepo_dirs(repo_root, cfg.get("unit_test_dir", "tests/unit"))
+    test_roots = _monorepo_dirs(repo_root, cfg.get("unit_test_dir", "tests/unit"), scope)
     ut_hits: list[Path] = []
     for test_root in test_roots:
         ut_hits.extend(f for f in test_root.rglob("*")
                        if f.is_file() and f.suffix in CODE_EXT
-                       and any(h.lower() in f.stem.lower() for h in hints))
+                       and any(h.lower() in f.stem.lower() for h in hints)
+                       and (scope is None or scope.allows(f)))
     ev["unit_test"] = [rel_path(repo_root, x) for x in ut_hits[:4]]
 
     # L4 测试记录（v1.8.0：同样覆盖 monorepo 多项目）
-    tr_roots = _monorepo_dirs(repo_root, cfg.get("test_record_dir", "docs/test_records"))
+    tr_roots = _monorepo_dirs(repo_root, cfg.get("test_record_dir", "docs/test_records"), scope)
     tr_hits: list[Path] = []
     for tr in tr_roots:
         tr_hits.extend(f for f in tr.glob("*.md")
-                       if any(h.lower() in f.stem.lower() for h in hints))
+                       if f.is_file()
+                       and any(h.lower() in f.stem.lower() for h in hints)
+                       and (scope is None or scope.allows(f)))
     ev["test_record"] = [rel_path(repo_root, x) for x in tr_hits[:4]]
 
     # L5 治理门禁
@@ -377,14 +475,21 @@ def judge_level(
 def build_component_tree(
     repo_root: Path, root: Path, src_globs: list[str],
     cfg: dict, max_depth: int = 3, max_entries: int = 12,
+    scope: "RepoScope | None" = None,
 ) -> list[dict]:
     """从真实目录生成嵌套组件树：目录 → 子目录 → 文件。
 
     每层最多 max_entries 项，深度最多 max_depth；关键模块名优先展示。
     这是一份「活」的结构——源码变了，重跑即更新，无需手工维护架构图。
+
+    scope 存在时只收已入库路径：``data/``、``logs/``、``*.egg-info`` 这类被
+    .gitignore 的产物目录不会出现在架构树里（它们不是仓库的结构）。
     """
     seen: set[Path] = set()
     nodes: list[dict] = []
+
+    def keep(p: Path) -> bool:
+        return scope is None or scope.allows(p)
 
     def make_node(p: Path, depth: int) -> dict | None:
         rel = rel_path(repo_root, p)
@@ -392,11 +497,13 @@ def build_component_tree(
             subs = sorted(
                 (x for x in p.iterdir()
                  if x.is_dir() and not x.name.startswith((".", "__"))
-                 and x.name not in {"node_modules", ".git", "__pycache__", "venv", ".venv"}),
+                 and x.name not in {"node_modules", ".git", "__pycache__", "venv", ".venv"}
+                 and keep(x)),
                 key=lambda x: x.name,
             )
             files = sorted(
-                (x for x in p.iterdir() if x.is_file() and x.suffix in CODE_EXT),
+                (x for x in p.iterdir()
+                 if x.is_file() and x.suffix in CODE_EXT and keep(x)),
                 key=lambda x: x.name,
             )
             key = [f for f in files if KEY_RE.search(f.stem)]
@@ -425,7 +532,7 @@ def build_component_tree(
         p = root / g
         targets = [p] if p.is_dir() else list(root.glob(g))[:3]
         for t in targets:
-            if t in seen:
+            if t in seen or not keep(t):
                 continue
             seen.add(t)
             node = make_node(t, 0)
@@ -437,7 +544,8 @@ def build_component_tree(
 # ------------------------------ 文档索引 ------------------------------
 
 def doc_hits(repo_root: Path, proj_root: Path, proj_rel: str,
-             hints: list[str], domain: str, cfg: dict) -> list[dict]:
+             hints: list[str], domain: str, cfg: dict,
+             scope: "RepoScope | None" = None) -> list[dict]:
     """按能力域/关键字匹配项目文档，区分规划类与说明类。"""
     docs = proj_root / cfg.get("docs_dir", "docs")
     if not docs.exists():
@@ -446,6 +554,8 @@ def doc_hits(repo_root: Path, proj_root: Path, proj_rel: str,
     out: list[dict] = []
     for f in docs.rglob("*"):
         if not f.is_file() or f.suffix not in CODE_EXT:
+            continue
+        if scope is not None and not scope.allows(f):
             continue
         stem = f.stem.lower()
         if any(k in stem for k in keys):
@@ -482,18 +592,19 @@ def build_doc_index(
     repo_root: Path, proj_root: Path, proj_rel: str, cfg: dict,
     domain: str, name: str, hints: list[str], ev: dict,
     module_map_mod: dict | None, entries: list[dict], project_code: str,
+    scope: "RepoScope | None" = None,
 ) -> dict:
     """能力点 → 文档索引：规划/相关/模块文档/契约/实现/单测/测试记录/决策/控制入口。"""
     cfg = cfg.get("project", cfg)
     def paths(key: str, kind: str) -> list[dict]:
         return [
-            {"path": norm_existing_path(repo_root, p, proj_rel),
+            {"path": norm_existing_path(repo_root, p, proj_rel, scope),
              "title": Path(p).name, "kind": kind}
             for p in ev.get(key, [])
         ]
 
     module_docs = [
-        {"path": norm_existing_path(repo_root, d, proj_rel),
+        {"path": norm_existing_path(repo_root, d, proj_rel, scope),
          "title": Path(d).name, "kind": "module_doc"}
         for d in (module_map_mod or {}).get("docs", [])
     ]
@@ -501,7 +612,7 @@ def build_doc_index(
         entries, project_code, domain, name,
         (module_map_mod or {}).get("decisions", []),
     )
-    all_docs = doc_hits(repo_root, proj_root, proj_rel, hints, domain, cfg)
+    all_docs = doc_hits(repo_root, proj_root, proj_rel, hints, domain, cfg, scope)
     plans = [d for d in all_docs if d["kind"] == "plan"]
     # 模块级规划文档天然覆盖其下所有能力点
     for d in module_docs:
@@ -529,8 +640,13 @@ def build_doc_index(
 
 # ------------------------------ 模型构建 ------------------------------
 
-def build(repo_root: Path, cfg_all: dict, ledger: dict, test_report: dict | None = None) -> dict:
-    """构建 capability_model 与 architecture.component_tree。"""
+def build(repo_root: Path, cfg_all: dict, ledger: dict, test_report: dict | None = None,
+          scope: "RepoScope | None" = None) -> dict:
+    """构建 capability_model 与 architecture.component_tree。
+
+    scope 为 None 时按文件系统全集工作（仅供测试/非 git 场景）；正常入口
+    main() 会传入按 git index 收窄的 RepoScope，保证账本只描述仓库内路径。
+    """
     projects_cfg = normalize_projects(cfg_all)
     if not projects_cfg:
         raise SystemExit("registry 未提供 project 或 projects[]，无法生成能力模型")
@@ -620,10 +736,10 @@ def build(repo_root: Path, cfg_all: dict, ledger: dict, test_report: dict | None
                 s for c in mod["caps"] for s in c.get("impl", []) if s.endswith("/")
             ]
             mnode["component_tree"] = build_component_tree(
-                repo_root, proj_root, src_globs, project_cfg)
+                repo_root, proj_root, src_globs, project_cfg, scope=scope)
             mnode["doc_index"] = {
                 "docs": [
-                    {"path": norm_existing_path(repo_root, d, proj_rel),
+                    {"path": norm_existing_path(repo_root, d, proj_rel, scope),
                      "title": Path(d).name, "kind": "module_doc"}
                     for d in (mm_mod or {}).get("docs", [])
                 ],
@@ -641,7 +757,8 @@ def build(repo_root: Path, cfg_all: dict, ledger: dict, test_report: dict | None
                 ledger_hints = evidence_hints(ledger, cap_code_src)
                 hints = registry_hints + [h for h in ledger_hints if h not in registry_hints]
                 level, ev = judge_level(
-                    repo_root, proj_root, proj_rel, project_cfg, impl_globs, hints)
+                    repo_root, proj_root, proj_rel, project_cfg, impl_globs, hints,
+                    scope=scope)
                 tier, tier_detail = judge_tier(ev.get("unit_test", []), test_report)
                 # v2.0.1 stable_code：显式 code 合法时优先，迁移前后身份不变。
                 cap_code = codec_cap_code(code, mcode, domain, cidx, cap_code_src)
@@ -667,7 +784,7 @@ def build(repo_root: Path, cfg_all: dict, ledger: dict, test_report: dict | None
                     ),
                     "doc_index": build_doc_index(
                         repo_root, proj_root, proj_rel, project_cfg, domain, cap_name,
-                        hints, ev, mm_mod, entries, code,
+                        hints, ev, mm_mod, entries, code, scope,
                     ),
                 }
                 mnode["caps"].append(cnode)
@@ -1074,6 +1191,15 @@ def main() -> None:
                   "期间有人改过账本，请重新读取并合并变更后再试。", file=sys.stderr)
             sys.exit(2)
 
+    # v2.0.3：路径全集取自 git index。仓库里没有的文件一律不进账本，
+    # 这样「本机绿、干净检出红」的差异在生成阶段就不存在了。
+    scope = RepoScope(repo_root)
+    if scope.verified:
+        print(f"[SCOPE] 路径全集取自 git index：{len(scope.files)} 个已跟踪文件")
+    else:
+        print(f"[WARN] {scope.why}：账本可能引用仓库外路径，"
+              "干净检出会暴露差异（建议在 git 仓库内重跑）")
+
     test_report = load_test_report(args.test_report, repo_root)
     if args.test_report and test_report is None:
         print(f"[WARN] 测试报告不可用或整体未通过（{args.test_report}）；所有证据保持 declared")
@@ -1083,19 +1209,19 @@ def main() -> None:
         bound = bool(binding.get("inputs"))
         if bound:
             for pcfg in projects_cfg:
-                fresh, detail = check_freshness(test_report, repo_root, pcfg["root"])
+                fresh, detail = check_freshness(test_report, repo_root, pcfg["root"], scope)
                 if not fresh:
                     break
             if not fresh:
-                print(f"[WARN] 报告源码摘要已过期（{detail}）：报告生成后源码或测试发生变化；"
-                      "本次不予采信，verified 全部回落 declared")
+                print(f"[WARN] 报告源码摘要不可复现（{detail}）：报告生成后源码/测试已变化，"
+                      "或报告引用了未入库的文件；本次不予采信，verified 全部回落 declared")
                 test_report = None
         elif args.strict_evidence:
             print("[WARN] 报告未绑定源码摘要，--strict-evidence 下不予采信")
             test_report = None
         else:
             print("[WARN] 报告未绑定源码摘要；建议用 v0.8.0+ 的 run_tests.py 重跑")
-    model = build(repo_root, cfg_all, ledger, test_report=test_report)
+    model = build(repo_root, cfg_all, ledger, test_report=test_report, scope=scope)
     model["summary"]["evidence_bound"] = bool(bound and fresh and test_report is not None)
     model["summary"]["evidence_freshness"] = (
         "fresh" if bound and fresh else "stale" if bound else "unbound")
