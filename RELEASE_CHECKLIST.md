@@ -403,13 +403,13 @@ E7 `cardinality_contradiction`（`ontology.py check --target P` 仍 `ok=false`�
 > 由来：v2.0.2 把强制点搬上机器后，第一条真话就是「本机 24 绿、干净检出 2 红」。
 > 根因是生成器把本机文件系统当仓库事实，账本里混进了 gitignore 的运行产物与未入库测试。
 
-- [ ] **实现**：`RepoScope`（git index 取路径全集）+ 五处扫描收窄 + `norm_existing_path` 收紧
-- [ ] **负向证明**：`tests/core/test_path_scope.py` 6 条（先造噪声，再断言不可见）
-- [ ] **删除许可**：主仓 `ci_governance_gate.py` 去掉 `doc_paths_exist` / `component_paths_exist` 放行名单
-- [ ] **干净检出**：`git archive HEAD` 后 24 条不变量 24 pass / 0 fail / 0 na
-- [ ] **方法仓门禁**：`scripts/check.sh` EXIT=0；acceptance 目标版本 2.0.3 全 PASS
-- [ ] **重绑**：目标项目 `upgrade verify` 12 pass / 0 warn，`method_assets.digest` 与目标账本一致
-- [ ] **发版**：`tag v2.0.3` + push；远端 `Governance invariants` 无 warning
+- [x] **实现**：`RepoScope`（git index 取路径全集）+ 五处扫描收窄 + `norm_existing_path` 收紧
+- [x] **负向证明**：`tests/core/test_path_scope.py` 7 条（先造噪声，再断言不可见；含报告绑定未入库文件）
+- [x] **删除许可**：主仓 `ci_governance_gate.py` 去掉 `doc_paths_exist` / `component_paths_exist` 放行名单
+- [x] **干净检出**：仅导出 tracked 文件、无 `.git` 的沙箱里 24 pass / 0 fail / 0 na，且重跑生成器与提交账本逐字段一致
+- [x] **方法仓门禁**：`scripts/check.sh` EXIT=0；acceptance 目标版本 2.0.3 全 PASS
+- [x] **重绑**：目标项目 `upgrade verify` 12 pass / 0 warn，`method_assets.digest` 与目标账本一致
+- [x] **发版**：`tag v2.0.3` + push；远端 `Governance invariants` 打印 `OK: 24 pass / 0 fail / 0 na（零放行）`，无 warning
 
 ### 本版边界（不掩盖）
 
@@ -428,8 +428,8 @@ E7 `cardinality_contradiction`（`ontology.py check --target P` 仍 `ok=false`�
 - [x] **目标项目**：3 条过期工作项关闭并写 resolution；24 不变量 24 pass/0 fail/0 na；upgrade verify 12 pass/0 warn，complete=true
 - [x] **证据刷新**：重跑 24 个能力引用文件 182 passed，报告重绑，freshness=fresh，verified 仍 20/47
 - [x] **强制点**：目标仓 `.github/workflows/governance.yml` + `git-hooks/pre-commit` 第 11 步
-- [ ] **发版**：`tag v2.0.2` + push
-- [ ] **主仓提交**：被既有 `apex-data-ops-health-observer` 技能树漂移阻塞，待人工裁决（不绕过钩子）
+- [x] **发版**：`tag v2.0.2` + push（已完成）
+- [x] **主仓提交**：技能树漂移按批准重算 manifest 后通过（未用 `--no-verify`），已推 origin/main
 
 ### 本版边界（不掩盖）
 
