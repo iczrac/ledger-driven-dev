@@ -2,7 +2,7 @@
 
 - 版本：v2.3.0
 - 日期：2026-11-20
-- 状态：方法仓 dogfood 通过；待推广到 <主项目>主仓
+- 状态：方法仓 dogfood 通过 + 主项目推广完成（v2.3.0 全链发布）
 
 ## 一、为什么做这一版
 
@@ -65,5 +65,15 @@ issue 不可静默删除（#27 + --check 双门禁）。
 2. 派生 issue 的自动关单依赖 binding_status 转 bound；「声明 via 承认间接覆盖」
    或「显式豁免」需人批准并写进 append-only 决策，本次未实现豁免通道——目前
    via1 也会生成 issue（severity=med），需人认领后按既有 work_panel close 处理。
-3. 阶段2（推广到 <主项目>主仓）尚未执行：14 个降级能力将生成派生 issue，需干净
-   clone 重绑 + 27 不变量零放行 + CI 门禁复验，按规矩人批准、备份、append-only。
+## 五、阶段2 推广到目标项目（用户批准后完成）
+
+- 干净浅 clone → upgrade apply（2.2.0→2.3.0，无阻塞）→ 重绑（报告仍 fresh，
+  绑定集只含 `projects/**`，治理工具更新不影响摘要）。
+- **18 个**非 bound 能力生成派生 issue（不是 14：14 是从 verified 降下来的，
+  另 4 个是原本就 declared 的 no_tests）：11 high（10 unbound + 1 no_impl）、
+  7 med（3 via1 + 4 no_tests）。
+- 复验：27/27 不变量零放行（#27 对齐 18 条、#25 的 18 个 open 都有 owner_note）、
+  `--check` 含 issue 无漂移、upgrade 12/12 pass、完整 CI 门禁
+  `27 pass / 0 fail / 0 na（零放行）` + 无漂移 EXIT=0。
+- 提交 `79e87e6e`；备份 `/tmp/racos-v230-backup-20261120-052418`；用户工作区
+  100 个既有改动全程未碰（干净 clone 操作）。
