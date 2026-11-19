@@ -90,3 +90,47 @@ python3 scripts/work_panel.py --target <项目> close \
 # 任何一次提交/PR 都会自动检查
 python3 governance/verify_ledger.py --root . --strict
 ```
+
+---
+
+## 附录（晚于 tag v2.0.2，仅文档，不改代码与摘要）
+
+把 CI 门禁真正接到远端后，干净检出又暴露两个本机看不见的问题。记在这里，不掩饰。
+
+### A1. 治理层有 4 个文件从未入库
+
+`git archive HEAD` 出来的树里只有 `DECISION_LEDGER.json / index.html / build_capability_model.py / verify_ledger.py / test_report.json`，
+缺 `registry.json`、`registry_codec.py`、`run_tests.py`、`ASSET_MANIFEST.json`。
+后果不是「少个文件」，而是干净树直接崩：
+
+```
+ModuleNotFoundError: No module named 'registry_codec'
+```
+
+即：本机 24 绿是「工作区绿」，不是「仓库绿」。已按原样入库，未改内容。
+
+### A2. 账本引用了仓库外的东西
+
+补入后干净树仍有 2 项失败：
+
+| 不变量 | 失败内容 | 性质 |
+|---|---|---|
+| `doc_paths_exist` | 1 个未入库的测试文件 | 账本记录了本机新写、尚未提交的文件 |
+| `component_paths_exist` | 10 个 `projects/*/data` 路径 | 这些目录被 `.gitignore` 排除，属运行产物 |
+
+根因是生成器把「本机存在的路径」当成「仓库事实」。这不是 CI 配置问题，是**账本边界问题**。
+
+处理方式（本轮）：`scripts/ci_governance_gate.py` 只对这两项做**显式放行**，
+并且必须逐条打印 `::warning` 与缺口清单；其余任一不变量失败仍然 exit 1。
+不放行、不静默、不改判定。
+
+根治（下一轮）：生成器只引用仓库内可复算的路径（tracked-only），
+修好后删掉这份白名单。这是 P2 债，不是「已解决」。
+
+### A3. 主仓提交与审批记录
+
+- 技能清单重算：经用户批准，`generate_skill_manifest.py` 只改了 1 个 entry，
+  技能数 17→17、`source_repo_head` 未变；未重算前未绕过钩子。
+- 主仓提交：`140ab60`（关闭 3 条工作项 + CI + 钩子）、`b0f5b80`（补 4 个治理文件）、
+  `4f65122`（生成器对齐模板）、`bfcfafd`（CI 门禁脚本）。
+- 每次提交都真实跑过 `pre-commit`，包含新增的第 11 步；没有使用 `--no-verify`。
