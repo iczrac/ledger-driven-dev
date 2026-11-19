@@ -60,6 +60,13 @@ v2.1.0 之后账本可复算（`--check` 无漂移），但两个「写了就信
 - **本体投影 / FILE_LAYOUT / SCENARIO_MATRIX / TEST_MODULES 派生文件过期**：
   scripts 摘要变化导致 `check` 报「与权威源不一致」，全部用 `--apply`/
   `--emit-md` 重建，复验可复算。
+- **主仓 pre-commit 模块大小硬限拦下重绑**：生成器 1665 行 ≥ 1500。
+  grandfathered 上限「只减不增、上调需用户明确批准」——不走豁免，按
+  门禁自己给的正道重构：advisory 拆为独立模板模块 `binding_advisory.py`
+  （生成器回落 1439 行）。工具数 4→5 的登记在四处同步（TOOLING /
+  init_project / scale_probe / file_layout），greenfield 断言七文件改八文件。
+  tag v2.1.2 因此从初版提交移到重构后的最终提交（推送后数分钟内移动，
+  未被任何消费方引用）。
 
 ## 四、复验清单
 

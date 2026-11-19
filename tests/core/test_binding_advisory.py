@@ -24,6 +24,17 @@ _spec = importlib.util.spec_from_file_location(
     "_v212_generator", ROOT / "templates" / "build_capability_model.py")
 gen = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(gen)
+_spec2 = importlib.util.spec_from_file_location(
+    "_v212_advisory", ROOT / "templates" / "binding_advisory.py")
+adv_mod = importlib.util.module_from_spec(_spec2)
+_spec2.loader.exec_module(adv_mod)
+
+
+def _advisory(root, cfg):
+    """用生成器同款注入跑 advisory：与 main() 的调用口径一致。"""
+    return adv_mod.binding_advisory(
+        root, cfg, scope=None,
+        resolve_declared=gen.resolve_declared, glob_files=gen.glob_files)
 
 
 class BindingAdvisoryTest(unittest.TestCase):
@@ -57,7 +68,7 @@ class BindingAdvisoryTest(unittest.TestCase):
         (self.tmp / "tests/unit/test_order.py").write_text(
             "from src.domain.order import place_order\n\ndef test_p():\n"
             "    assert place_order(1)\n")
-        adv = gen.binding_advisory(self.tmp, self._cfg([
+        adv = _advisory(self.tmp, self._cfg([
             {"name": "下单", "domain": "ORDER", "impl": ["src/domain/order.py"],
              "tests": ["tests/unit/test_order.py"]},
         ]))
@@ -75,7 +86,7 @@ class BindingAdvisoryTest(unittest.TestCase):
         (self.tmp / "tests/unit/test_api.py").write_text(
             "from src.domain import place_order\n\ndef test_p():\n"
             "    assert place_order(2)\n")
-        adv = gen.binding_advisory(self.tmp, self._cfg([
+        adv = _advisory(self.tmp, self._cfg([
             {"name": "下单", "domain": "ORDER", "impl": ["src/domain/order.py"],
              "tests": ["tests/unit/test_api.py"]},
         ]))
@@ -89,7 +100,7 @@ class BindingAdvisoryTest(unittest.TestCase):
         (self.tmp / "tests/unit").mkdir(parents=True)
         (self.tmp / "tests/unit/test_job.py").write_text(
             "from jobs.run import JOB\n\ndef test_p():\n    assert JOB\n")
-        adv = gen.binding_advisory(self.tmp, self._cfg([
+        adv = _advisory(self.tmp, self._cfg([
             {"name": "下单", "domain": "ORDER", "impl": ["src/domain/order.py"],
              "tests": ["tests/unit/test_job.py"]},
         ]))
@@ -110,7 +121,7 @@ class BindingAdvisoryTest(unittest.TestCase):
             {"name": "下单", "domain": "ORDER", "impl": ["src/domain/order.py"],
              "tests": ["tests/unit/test_order_registry.py"]},
         ])
-        adv = gen.binding_advisory(self.tmp, cfg)
+        adv = _advisory(self.tmp, cfg)
         self.assertEqual(adv["rows"][0]["status"], "unbound")
         # shadow 门禁的纪律：advisory 不参与判定，账本仍是 f(registry, 仓库, 报告)
         model = gen.build(self.tmp, cfg, {}, test_report=None, scope=None)
@@ -124,7 +135,7 @@ class BindingAdvisoryTest(unittest.TestCase):
         (self.tmp / "tests/unit/test_only.py").write_text("def test_p():\n    assert 1\n")
         (self.tmp / "src").mkdir()
         (self.tmp / "src/only.py").write_text("X = 1\n")
-        adv = gen.binding_advisory(self.tmp, self._cfg([
+        adv = _advisory(self.tmp, self._cfg([
             {"name": "无实现", "domain": "A", "impl": [],
              "tests": ["tests/unit/test_only.py"]},
             {"name": "无测试", "domain": "B", "impl": ["src/only.py"], "tests": []},

@@ -11,6 +11,7 @@
     DECISION_LEDGER.json          账本骨架（含接入来源 provenance）
     index.html                    可视化看板（EMBED 由生成器同步）
     build_capability_model.py     生成器副本（来自 templates/）
+    binding_advisory.py           证据绑定 advisory 副本（来自 templates/，v2.1.2）
     verify_ledger.py              校验器副本（来自 templates/）
     registry_codec.py             registry schema/2 唯一编码契约副本（来自 templates/）
     run_tests.py                  测试报告生成器副本（来自 scripts/）
@@ -198,7 +199,8 @@ def main() -> int:
         print(f"写入: {path}")
 
     if not args.no_generator:
-        for name in ("build_capability_model.py", "verify_ledger.py", "registry_codec.py"):
+        for name in ("build_capability_model.py", "binding_advisory.py",
+                     "verify_ledger.py", "registry_codec.py"):
             gen = gov / name
             if gen.exists() and not args.force:
                 print(f"跳过（已存在）: {gen}")

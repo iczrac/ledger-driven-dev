@@ -152,6 +152,7 @@ stage_idempotence(){
 stage_sync(){
   note '模板 / 示例同步 + 看板 EMBED 一致'
   cmp -s templates/build_capability_model.py "$DEMO/build_capability_model.py" || return 1
+  cmp -s templates/binding_advisory.py "$DEMO/binding_advisory.py" || return 1
   cmp -s templates/verify_ledger.py "$DEMO/verify_ledger.py" || return 1
   cmp -s templates/registry_codec.py "$DEMO/registry_codec.py" || return 1
   python3 - "$DEMO" <<'PY' || return 1

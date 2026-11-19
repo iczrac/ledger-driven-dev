@@ -509,6 +509,9 @@ E7 `cardinality_contradiction`（`ontology.py check --target P` 仍 `ok=false`�
       FILE_LAYOUT.md、SCENARIO_MATRIX.md、TEST_MODULES.md
 - [x] **文档同步**：docs/03 声明的测试是否真测该能力（advisory 说明）；
       docs/08 不变量表 + 第 25/26 行；docs/23 版本表补 v2.1.2 行
+- [x] **模块拆分**：advisory 独立为 `templates/binding_advisory.py`（生成器
+      1665 → 1439 行，低于主仓 1500 模块大小硬限，不动 grandfathered 上限）；
+      部署登记四处跟进（TOOLING / init_project / scale_probe / file_layout）
 - [x] **全量门禁**：`bash scripts/check.sh` EXIT=0（acceptance 目标版本 2.1.2）
 
 ### 本版边界（不掩盖）

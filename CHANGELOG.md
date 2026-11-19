@@ -11,7 +11,9 @@
 
 ### 符号级证据绑定 advisory（shadow 门禁）
 
-- 生成器新增 `SymbolIndex`：测试 import 的名字沿 `__init__.py` 再导出链
+- 新增独立模块 `binding_advisory.py`（生成器保持 1439 行，低于 1500
+  模块大小硬限；`resolve_declared`/`glob_files` 由生成器注入，避免循环
+  import）；`SymbolIndex` 让测试 import 的名字沿 `__init__.py` 再导出链
   解析到定义文件，按项目就近消歧（`projects/<x>` 内不串味）；
 - 每次重算输出 `[BIND]` 摘要与逐条 `[UNBOUND]` 告警：bound（直接绑定）/
   via1（经一跳编排层触达，附桥接文件）/ unbound / no_impl / no_tests；

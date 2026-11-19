@@ -113,6 +113,7 @@ ledger-driven-dev/
 │   └── work-panel/                    节点工作项与测试结果投影
 ├── templates/                        可复用模板（复制到你的项目）
 │   ├── build_capability_model.py     核心生成器（含证据分层/历史/经验/任务队列）
+│   ├── binding_advisory.py            证据绑定 advisory（v2.1.2 shadow 门禁）
 │   ├── verify_ledger.py              26 条不变量校验器（可信的基础设施）
 │   ├── index.html.template           可视化看板
 │   └── registry.example.json         能力注册表样板
@@ -259,7 +260,7 @@ python3 governance/build_capability_model.py --root . \
 
 ### 升级治理骨架 + 让多个 Agent 接入控制开发
 
-规则本身会过期，已交付项目的 4 个工具副本也会落后于模板。升级是一次**有人批准的写入**，不是覆盖文件：
+规则本身会过期，已交付项目的 5 个工具副本也会落后于模板。升级是一次**有人批准的写入**，不是覆盖文件：
 
 ```bash
 python3 scripts/route_expert.py --target P --intent "升级治理骨架" --json  # → platform-steward

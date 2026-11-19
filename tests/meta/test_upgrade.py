@@ -51,7 +51,7 @@ class UpgradeTest(unittest.TestCase):
         self.assertEqual(check_definitions(), [])
         self.assertEqual(plan.__name__, "plan")
         self.assertEqual(len(POST_UPGRADE), 19)
-        self.assertEqual(len(TOOLING), 4)
+        self.assertEqual(len(TOOLING), 5)
         self.assertEqual(len(PRE_UPGRADE), 1)
         self.assertIn("ledger_feedback.py export", PRE_UPGRADE[0])
         self.assertIn("ledger_feedback.py export", POST_UPGRADE[-1])

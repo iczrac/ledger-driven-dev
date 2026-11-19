@@ -127,7 +127,7 @@ class LayoutDiffTest(unittest.TestCase):
             self.assertEqual(d["unexpected"], [])
             self.assertEqual(cli("--diff", "--target", str(root), "--strict").returncode, 2)
 
-    def test_greenfield_bootstrap_has_seven_files(self):
+    def test_greenfield_bootstrap_has_eight_files(self):
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)
             p = subprocess.run([sys.executable, str(INIT), "--target", str(root),
@@ -136,7 +136,8 @@ class LayoutDiffTest(unittest.TestCase):
             self.assertEqual(p.returncode, 0, p.stderr)
             gov = root / "governance"
             self.assertEqual(sorted(f.name for f in gov.iterdir() if f.is_file()),
-                             ["DECISION_LEDGER.json", "build_capability_model.py",
+                             ["DECISION_LEDGER.json", "binding_advisory.py",
+                              "build_capability_model.py",
                               "index.html", "registry.json", "registry_codec.py",
                               "run_tests.py", "verify_ledger.py"])
             d = diff(root)
