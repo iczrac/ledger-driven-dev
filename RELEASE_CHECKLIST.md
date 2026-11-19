@@ -389,11 +389,32 @@ E7 `cardinality_contradiction`（`ontology.py check --target P` 仍 `ok=false`�
 - [x] **S3**：`feedback/S3-2.0.1-GREEN.md`；唯一 codec、双读、4 工具副本、18 项 acceptance、282/282 单测
 - [x] **S4**：`feedback/S4-2.0.1-REBIND.md`；备份后迁移为 4 个 `projects[]`，47 code 逐项全等，M4/M5/M7 重绑，24 不变量全 pass
 - [x] **语义契约**：registry 与 capability_model 同为 4 项目，本体 A4 真正一致（不再靠单项目掩盖）
-- [ ] **发版**：附注 `tag v2.0.1` + push；发版报告见 `feedback/RELEASE-2.0.1.md`
-- [ ] **独立复放**：`feedback/DELIVERY-VERIFY-2.0.1.md`
+- [x] **发版**：`tag v2.0.1` + push；发版报告见 `feedback/RELEASE-2.0.1.md`
+- [x] **独立复放**：`feedback/DELIVERY-VERIFY-2.0.1.md`
 
 ### 本版边界（不掩盖）
 
 - 语义图 R4 仍顺延；本版只做 registry 容器与 codec 契约；
 - `scale_budget` 告警与 6 条 open 观察保留；
 - 目标项目根仓库不整体提交，只留下治理文件与备份链。
+
+## v2.0.2 发布检查（业务诚信补丁）
+
+> 由来：真实价值评估发现「24 条不变量全绿 + 3 条工作项全部完成却仍 open」并存，
+> 结构自洽掩盖了业务说谎。本版只补这一件事与强制点。
+
+- [x] **评估**：`feedback/DELIVERY-2.0.2.md` 记录结论、改动清单与负向证明
+- [x] **实现**：`work_items.close_condition` + 不变量 #22 扩展；`work_panel close` 支持 `--resolution/--close-condition`
+- [x] **方法仓门禁**：`scripts/check.sh` EXIT=0；acceptance 18 项 PASS；单测全绿
+- [x] **目标项目**：3 条过期工作项关闭并写 resolution；24 不变量 24 pass/0 fail/0 na；upgrade verify 12 pass/0 warn，complete=true
+- [x] **证据刷新**：重跑 24 个能力引用文件 182 passed，报告重绑，freshness=fresh，verified 仍 20/47
+- [x] **强制点**：目标仓 `.github/workflows/governance.yml` + `git-hooks/pre-commit` 第 11 步
+- [ ] **发版**：`tag v2.0.2` + push
+- [ ] **主仓提交**：被既有 `apex-data-ops-health-observer` 技能树漂移阻塞，待人工裁决（不绕过钩子）
+
+### 本版边界（不掩盖）
+
+- `manual` 型关闭条件无法机器判定，仍需人主动关闭；
+- 只补业务诚信与强制点，未做语义图 R4、未扩大证据覆盖（仍 20/47 verified）；
+- 目标项目根仓库本次只提交治理文件、CI 与钩子，其余既有改动不动。
+
