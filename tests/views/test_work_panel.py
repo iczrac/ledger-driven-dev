@@ -241,5 +241,63 @@ class ImportReportTest(unittest.TestCase):
         self.assertTrue(r["load_errors"])
 
 
+class CloseConditionTest(unittest.TestCase):
+    """关闭条件：证据已满足就不许继续挂 open，否则下一个执行者会被指挥重做。"""
+
+    def _with(self, **cond):
+        d = copy.deepcopy(synthetic_ledger())
+        d["work_items"][0]["close_condition"] = cond
+        return d
+
+    def test_verified_capability_blocks_open(self):
+        errs = validate(self._with(kind="capability_verified",
+                                   capability="DEMO.CORE.ORDER.01"))
+        self.assertTrue(any("关闭条件已满足" in e for e in errs), errs)
+
+    def test_declared_capability_allows_open(self):
+        self.assertEqual(validate(self._with(
+            kind="capability_verified", capability="DEMO.CORE.PRICE.02")), [])
+
+    def test_manual_never_auto_satisfied(self):
+        self.assertEqual(validate(self._with(kind="manual")), [])
+
+    def test_unknown_kind_is_rejected(self):
+        errs = validate(self._with(kind="whenever"))
+        self.assertTrue(any("close_condition.kind" in e for e in errs), errs)
+
+    def test_file_exists_uses_project_root(self):
+        with tempfile.TemporaryDirectory() as td:
+            tmp = Path(td)
+            gov = tmp / "governance"
+            gov.mkdir()
+            (tmp / "artifact.json").write_text("{}")
+            d = self._with(kind="file_exists", path="artifact.json")
+            self.assertTrue(any("关闭条件已满足" in e for e in validate(d, gov)))
+            d2 = self._with(kind="file_exists", path="missing.json")
+            self.assertEqual(validate(d2, gov), [])
+
+    def test_close_requires_resolution_when_condition_present(self):
+        with demo_copy() as (tmp, ledger_path, _reg, _board):
+            target = ledger_path.parent.parent
+            gov = ledger_path.parent
+            d = load_ledger(gov)
+            d.setdefault("work_items", []).append({
+                "id": "W-TODO-900", "kind": "todo", "scope": "PROJECT",
+                "status": "open", "severity": "low", "title": "待关项",
+                "detail": "", "owner": "", "refs": [],
+                "close_condition": {"kind": "manual"}})
+            write_ledger(gov, d)
+            with self.assertRaises(ValueError):
+                close_item(target, item_id="W-TODO-900", approved_by="tester", apply=True)
+            out = close_item(target, item_id="W-TODO-900", approved_by="tester",
+                             resolution="人工确认完成", apply=True)
+            self.assertEqual(out["item"]["status"], "done")
+            again = load_ledger(gov)
+            item = next(x for x in again["work_items"] if x["id"] == "W-TODO-900")
+            self.assertEqual(item["resolution"], "人工确认完成")
+            self.assertIn("closed_at", item)
+            self.assertEqual(check(target)["ok"], True)
+
+
 if __name__ == "__main__":
     unittest.main()

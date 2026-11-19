@@ -2,6 +2,27 @@
 
 本项目版本遵循语义化版本（SemVer）。
 
+## [2.0.2] - 2026-11-19
+
+**业务诚信补丁**。v2.0.1 之后做了一次真实价值评估，暴露一个比任何功能都严重的问题：
+24 条不变量全绿的同时，目标项目 3 条 `work_items` 全部已经完成却仍挂 `open`
+（registry 已拆分、test_report.json 已存在、目标能力已 verified）。
+结构自洽掩盖了业务说谎——看板与 `next_queue` 会指挥下一个执行者去做已完成的事。
+
+### 本版内容
+
+- 工作项新增 `close_condition`：`capability_verified` / `file_exists` / `manual`；
+- 不变量 #22 `work_items_valid` 扩展语义：关闭条件已被证据满足却仍 `open/doing` 判失败
+  （不新增第 25 条，避免契约膨胀）；判定不了的条件一律视为未满足，宁可漏关不可误关；
+- `work_panel.py close` 支持 `--resolution` / `--close-condition`；声明了关闭条件的
+  工作项关闭时必须写明依据，并记录 `closed_by` / `closed_at`；
+- 修 README 两处漂移：测试文件数不再写死（以 `tests/MODULES.json` 为准）、
+  删掉「不做 `registry/2` 数据迁移」这句与 v2.0.1 事实相反的话。
+
+### 边界
+
+`manual` 条件无法机器判定，此类工作项仍需人主动关闭；本版只保证「能判定的不许说谎」。
+
 ## [2.0.1] - 2026-11-19
 
 **registry schema/2 容器版**。v2.0.0 修好了四段码生成，但 registry 仍是

@@ -28,7 +28,8 @@
 19. lessons_valid：经验条目合法（confirmed 必含洞察与行动）
 20. lesson_candidates_dedup：候选去重且不与已确认条目冲突
 21. queue_lessons_confirmed：任务卡只引用已确认经验
-22. work_items_valid：节点 TODO / issue 的 id、kind、status、severity、scope 合法
+22. work_items_valid：节点 TODO / issue 的 id、kind、status、severity、scope 合法；
+    且 close_condition 一旦被证据满足，就不允许仍停留在 open/doing（账本不许说谎）
 23. work_item_refs_valid：工作项引用的决策 / 能力 / 路径可解析
 24. test_results_binding_valid：节点测试结果投影绑定当前测试报告且用例状态合法
 
@@ -112,6 +113,41 @@ def snapshot_state(cm: dict) -> dict[str, dict]:
 def fingerprint_state(snap: dict) -> str:
     payload = json.dumps(snap, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
     return hashlib.sha256(payload.encode("utf-8")).hexdigest()[:16]
+
+
+CLOSE_KINDS = ("manual", "capability_verified", "file_exists")
+
+
+def close_condition_met(cond: dict, caps_by_code: dict, repo_root: Path) -> tuple[bool, str]:
+    """判定工作项的关闭条件是否已被证据满足，返回 (满足?, 说明)。
+
+    第一性原理：结构不变量再全绿，也挡不住「事情做完了但工作项还挂着 open」。
+    工作项会被看板与 next_queue 喂给下一个执行者，挂着未关等于指挥它去重做。
+    因此每条工作项可以声明机器可判定的关闭条件：
+
+      - capability_verified：指定能力已升为 verified；
+      - file_exists：指定路径真实存在；
+      - manual：只能人工判定（永远不自动满足）。
+
+    无法判定的条件一律视为未满足——宁可漏关，不可误关。
+    """
+    if not isinstance(cond, dict):
+        return False, "close_condition 必须是对象"
+    kind = cond.get("kind")
+    if kind == "manual":
+        return False, "人工判定"
+    if kind == "capability_verified":
+        code = str(cond.get("capability", "")).strip()
+        cap = caps_by_code.get(code)
+        if cap is None:
+            return False, f"能力不存在 {code}"
+        tier = cap.get("evidence_tier", "declared")
+        return tier == "verified", f"{code} tier={tier}"
+    if kind == "file_exists":
+        rel = str(cond.get("path", "")).strip().strip("/")
+        exists = bool(rel) and (repo_root / rel).exists()
+        return exists, f"{rel} 存在={exists}"
+    return False, f"未知 close_condition.kind={kind}"
 
 
 def verify(repo_root: Path, ledger: dict, registry: dict | None,
@@ -391,6 +427,13 @@ def verify(repo_root: Path, ledger: dict, registry: dict | None,
             w_errors.append(f"{x.get('id')}: 缺 title")
         if x.get("scope") not in scopes:
             w_errors.append(f"{x.get('id')}: scope 无法解析")
+        cond = x.get("close_condition")
+        if cond is not None and x.get("status") in ("open", "doing"):
+            met, why = close_condition_met(cond, {c.get("code"): c for c in caps}, repo_root)
+            if met:
+                w_errors.append(
+                    f"{x.get('id')}: 关闭条件已满足（{why}）但仍 {x.get('status')}"
+                    "——事件已完成，账本不许继续挂账")
     add("work_items_valid", not w_errors, f"工作项 {len(items)} 条 · 错误={w_errors[:5]}")
 
     # 23. 工作项引用：决策 id / 能力编码必须真实存在，否则看板会给出死链

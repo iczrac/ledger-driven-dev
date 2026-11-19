@@ -45,6 +45,27 @@ class VerifyTest(unittest.TestCase):
             ev["state_digest"][first]["l"] = 0
         self._corrupt_and_check(mutate, "history_event_fingerprints")
 
+    def test_detects_open_item_with_satisfied_close_condition(self):
+        """工作项已完成却仍 open：结构合法但业务说谎，必须被第 22 条抓住。"""
+        def mutate(d):
+            d["work_items"][0]["status"] = "open"
+            d["work_items"][0]["close_condition"] = {
+                "kind": "file_exists",
+                "path": "examples/demo-shop/governance/registry.json"}
+        self._corrupt_and_check(mutate, "work_items_valid")
+
+    def test_open_item_with_unmet_condition_still_passes(self):
+        """条件未满足的 open 是诚实的，不能被误判。"""
+        with demo_copy() as (root, ledger, reg, board):
+            d = json.loads(ledger.read_text())
+            d["work_items"][0]["status"] = "open"
+            d["work_items"][0]["close_condition"] = {
+                "kind": "file_exists",
+                "path": "examples/demo-shop/governance/not-there.json"}
+            write_ledger(ledger.parent, d)
+            payload = json.loads(run_verify(root, ledger, reg, board).stdout)
+            self.assertEqual(payload["failed"], 0, payload["checks"])
+
     def test_detects_lesson_without_action(self):
         def mutate(d):
             d["lessons"]["items"][0]["action"] = ""

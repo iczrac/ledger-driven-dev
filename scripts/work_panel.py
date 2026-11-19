@@ -129,6 +129,37 @@ def scope_applies(scope: str, code: str) -> bool:
     return bool(code.startswith(scope + "."))
 
 
+CLOSE_KINDS = ("manual", "capability_verified", "file_exists")
+
+
+def close_condition_met(cond: dict, caps: dict[str, dict],
+                        repo_root: Path | None) -> tuple[bool, str]:
+    """工作项关闭条件是否已被证据满足 → (满足?, 说明)。
+
+    结构自洽不等于业务真实：事情做完了、工作项还挂 open，看板与 next_queue
+    会指挥下一个执行者重做。让每条工作项声明机器可判定的关闭条件，
+    条件一旦被证据满足就禁止继续 open。无法判定的条件视为未满足（宁可漏关）。
+    """
+    if not isinstance(cond, dict):
+        return False, "close_condition 必须是对象"
+    kind = cond.get("kind")
+    if kind == "manual":
+        return False, "人工判定"
+    if kind == "capability_verified":
+        code = str(cond.get("capability", "")).strip()
+        info = caps.get(code)
+        if info is None:
+            return False, f"能力不存在 {code}"
+        return info.get("tier") == "verified", f"{code} tier={info.get('tier')}"
+    if kind == "file_exists":
+        rel = str(cond.get("path", "")).strip().strip("/")
+        if repo_root is None:
+            return False, "缺少项目根，无法判定"
+        exists = bool(rel) and (Path(repo_root) / rel).exists()
+        return exists, f"{rel} 存在={exists}"
+    return False, f"未知 close_condition.kind={kind}"
+
+
 def _norm_path(p: str) -> str:
     return str(p).replace("\\", "/").lstrip("./")
 
@@ -157,7 +188,8 @@ def validate(ledger: dict, governance_dir: Path | None = None) -> list[str]:
     if len(ids) != len(set(ids)) or any(not x for x in ids):
         errs.append("work_items 的 id 必须唯一且非空")
     decisions = {e.get("id") for e in ledger.get("entries", [])}
-    caps = set(cap_index(ledger))
+    cap_idx = cap_index(ledger)
+    caps = set(cap_idx)
     for x in items:
         if not isinstance(x, dict):
             errs.append("work_items 含非对象元素")
@@ -173,6 +205,16 @@ def validate(ledger: dict, governance_dir: Path | None = None) -> list[str]:
             errs.append(f"{wid}: 缺少 title")
         if x.get("scope") not in scopes:
             errs.append(f"{wid}: scope 无法解析（{x.get('scope')}）")
+        cond = x.get("close_condition")
+        if cond is not None:
+            if not isinstance(cond, dict) or cond.get("kind") not in CLOSE_KINDS:
+                errs.append(f"{wid}: close_condition.kind 必须是 {'/'.join(CLOSE_KINDS)}")
+            elif x.get("status") in ("open", "doing"):
+                met, why = close_condition_met(
+                    cond, cap_idx, Path(governance_dir).parent if governance_dir else None)
+                if met:
+                    errs.append(f"{wid}: 关闭条件已满足（{why}）但仍 {x.get('status')}"
+                                "——事件已完成，账本不许继续挂账")
         for r in (x.get("refs") or []):
             if not isinstance(r, dict):
                 errs.append(f"{wid}: refs 元素必须是对象")
@@ -636,6 +678,7 @@ def add_item(target: Path, *, kind: str, scope: str, title: str, detail: str = "
 
 
 def close_item(target: Path, *, item_id: str, approved_by: str = "",
+               resolution: str = "", close_condition: dict | None = None,
                apply: bool = False) -> dict:
     target = Path(target)
     gov = target / "governance"
@@ -649,8 +692,18 @@ def close_item(target: Path, *, item_id: str, approved_by: str = "",
                 "item": item, "message": "只读预演；写盘需 --apply --approved-by <人>"}
     if not approved_by:
         raise ValueError("关闭工作项必须提供 --approved-by（人工批准）")
+    if close_condition is not None:
+        if close_condition.get("kind") not in CLOSE_KINDS:
+            raise ValueError(f"close_condition.kind 必须是 {'/'.join(CLOSE_KINDS)}")
+        item["close_condition"] = close_condition
+    # 声明了机器可判定关闭条件的工作项，关闭时必须写清依据，杜绝「无理由关闭」。
+    if item.get("close_condition") and not resolution.strip():
+        raise ValueError("该工作项声明了 close_condition，关闭必须提供 --resolution 说明证据")
     item["status"] = "done"
     item["closed_by"] = approved_by
+    item["closed_at"] = datetime.now().astimezone().isoformat(timespec="seconds")
+    if resolution.strip():
+        item["resolution"] = resolution.strip()
     write_ledger(gov, ledger)
     return {"schema": SCHEMA_ACTION, "action": "close", "mode": "apply",
             "approved_by": approved_by, "item": item,
@@ -683,6 +736,9 @@ def main(argv: list[str] | None = None) -> int:
     a.add_argument("--refs", default="", help="逗号分隔：D-001 / capability:CODE / path:xxx")
     c = common(sub.add_parser("close", help="关闭工作项"))
     c.add_argument("--id", required=True)
+    c.add_argument("--resolution", default="", help="关闭依据（声明了 close_condition 时必填）")
+    c.add_argument("--close-condition", dest="close_condition", default="",
+                   help='机器可判定关闭条件 JSON，如 {"kind":"file_exists","path":"a/b.json"}')
     ir = common(sub.add_parser("import-report", help="导入外部 CI 测试报告"))
     ir.add_argument("--from", dest="source", required=True, help="外部报告路径")
     ir.add_argument("--adapter", choices=sorted(ADAPTERS), default="auto")
@@ -715,7 +771,9 @@ def main(argv: list[str] | None = None) -> int:
                               approved_by=args.approved_by, apply=args.apply)
             rc = 0
         else:
-            result = close_item(target, item_id=args.id,
+            cond = json.loads(args.close_condition) if args.close_condition else None
+            result = close_item(target, item_id=args.id, resolution=args.resolution,
+                                close_condition=cond,
                                 approved_by=args.approved_by, apply=args.apply)
             rc = 0
     except ValueError as exc:

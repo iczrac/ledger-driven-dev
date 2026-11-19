@@ -11,7 +11,7 @@
     {
       "path": "scripts/work_panel.py",
       "role": "value_domains",
-      "sha256": "586b3245b16ba8e6f7f535c1945039e041abefe04192a453b11318673fa3295f"
+      "sha256": "106a91b55b35abb83efec79af356579865a1fdf50a79f61ef24d22802e50e4e4"
     },
     {
       "path": "scripts/scenario_matrix.py",
@@ -36,7 +36,7 @@
     {
       "path": "templates/verify_ledger.py",
       "role": "axioms",
-      "sha256": "02c1907f69306a08bd2cff8c773f5f9244fc609e73899919b328cd75a3e0ccdd"
+      "sha256": "6260594033d76b1ee0130f00794c80fdd1f2b5d61e4ec1a187e5569436906716"
     }
   ],
   "bounded_contexts": [
@@ -775,5 +775,5 @@
     "polyseme_terms": 3,
     "drift_count": 0
   },
-  "ontology_digest": "b15889efe5cb2c4b95c4973503df1e4b6a5af5603be1fd670ef0e469c914699a"
+  "ontology_digest": "1dada5e265cef7486d14485c4d379143ae0f5c14fb24107b2299635caeb62805"
 }
