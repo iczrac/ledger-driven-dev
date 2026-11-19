@@ -65,7 +65,7 @@ EXPERT.md     ──散文──>  Agent  （靠"记得遵守"）
 `revision` 每次写入 +1，让「只改 access、不改能力模型」这类不改变
 `current_fingerprint` 的写入也可数、可检测。
 `audit` 是 append-only：**许可与拒绝都留痕**，事件带前后指纹、registry 摘要、
-批准人与理由。看板 EMBED 由 `ledger_io.write_ledger()` 同步，24 条不变量不破。
+批准人与理由。看板 EMBED 由 `ledger_io.write_ledger()` 同步，26 条不变量不破。
 
 ### 并发三重锁，各管一件事
 

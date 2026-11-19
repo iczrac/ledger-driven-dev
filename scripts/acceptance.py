@@ -473,11 +473,12 @@ def evaluate_activation(activation: object, invariants: dict) -> dict:
     errors: list[str] = []
     if not isinstance(activation, dict) or not activation.get("state"):
         errors.append("M8 未写入显式 activation 占位（仍为 null）")
+    # 本场景 M7 已把资产装进夹具（#26 pass），唯一 na 是无报告的 #24
     if invariants.get("failed") != 0 or invariants.get("na") != 1 \
             or invariants.get("all_active") is not False:
         errors.append("三态语义回归：需要 failed=0 / na=1 / all_active=false")
-    if invariants.get("passed") != 23:
-        errors.append("24 条不变量计数回归：需要 23 pass + 1 na")
+    if invariants.get("passed") != 25:
+        errors.append("26 条不变量计数回归：需要 25 pass + 1 na")
     return {"status": "pass" if not errors else "fail", "errors": errors}
 
 

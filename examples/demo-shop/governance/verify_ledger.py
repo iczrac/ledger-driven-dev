@@ -32,6 +32,11 @@
     且 close_condition 一旦被证据满足，就不允许仍停留在 open/doing（账本不许说谎）
 23. work_item_refs_valid：工作项引用的决策 / 能力 / 路径可解析
 24. test_results_binding_valid：节点测试结果投影绑定当前测试报告且用例状态合法
+25. work_items_owned：未完结（open/doing/blocked）的工作项必须写 owner（人或
+    专家名），写不出必须写 owner_note 说明缺口——专家路由不能只当装饰
+26. installed_assets_binding：.workbuddy 只读副本逐文件 sha256 与
+    ASSET_MANIFEST 一致、整包摘要与账本 installed_assets.digest 一致
+    （未安装资产时 na）
 
 三态语义
 --------
@@ -479,6 +484,72 @@ def verify(repo_root: Path, ledger: dict, registry: dict | None,
             if tr.get("source_sha256") != want:
                 t_errors.append("source_sha256 与当前测试报告不一致，需 sync-tests")
         add("test_results_binding_valid", not t_errors, f"错误={t_errors[:5]}")
+
+    # 25. 工作项负责人（v2.1.2）：专家层不能只当装饰。
+    # 账本纪律是「AI 不凭空指派 owner，需用户提供」——所以规矩不是让谁去填，
+    # 而是让缺口可见：未完结的工作必须有 owner，或以 owner_note 说明为何空。
+    # done 条目不追溯：给已完成的工作补负责人既不改变事实也不产生证据。
+    if not items:
+        add("work_items_owned", True, "未启用工作项", status="na")
+    else:
+        o_errors = []
+        open_n = 0
+        for x in items:
+            if not isinstance(x, dict) or x.get("status") == "done":
+                continue
+            open_n += 1
+            if (not str(x.get("owner") or "").strip()
+                    and not str(x.get("owner_note") or "").strip()):
+                o_errors.append(f"{x.get('id')}: 未完结但无 owner 也无 owner_note")
+        add("work_items_owned", not o_errors,
+            f"未完结 {open_n} 条 · 错误={o_errors[:5]}")
+
+    # 26. 安装资产绑定（v2.1.2）：.workbuddy 的专家/技能副本是仓库里
+    # 「看起来最没有后果、最容易被随手改」的角落。清单存在时逐文件比对
+    # sha256、整包摘要、账本 installed_assets.digest——任一不符即 fail。
+    # 摘要算法与 asset_bundle.py 的 sha256-files-v1 同规范：每行
+    # "{path}:{sha256}\n"（path 含 .workbuddy/ 前缀），按 path 排序后拼接。
+    # 只查清单登记的路径；清单外的 .workbuddy 文件（用户自有技能）不在此列。
+    gov_dir = governance_dir or (board_path.parent if board_path else repo_root / "governance")
+    mf_path = Path(gov_dir) / "ASSET_MANIFEST.json"
+    if not mf_path.is_file():
+        add("installed_assets_binding", True, "未安装专家/技能资产", status="na")
+    else:
+        # 清单里的 path 相对项目根（.workbuddy 所在目录），不是 --root；
+        # demo 夹具的 root 是示例仓库上一层，用 --root 会把路径指错。
+        proj_root = Path(gov_dir).parent
+        a_errors: list[str] = []
+        pairs: list[tuple[str, str]] = []
+        mf = None
+        try:
+            mf = json.loads(mf_path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            a_errors.append("ASSET_MANIFEST 不可解析")
+        if isinstance(mf, dict):
+            for r in mf.get("files") or []:
+                if not isinstance(r, dict):
+                    continue
+                rel = str(r.get("path", ""))
+                p = proj_root / rel
+                if not p.is_file():
+                    a_errors.append(f"{rel}: 副本缺失")
+                    continue
+                got = hashlib.sha256(p.read_bytes()).hexdigest()
+                if got != str(r.get("sha256", "")):
+                    a_errors.append(f"{rel}: sha256 与清单不符（副本被改或清单过期）")
+                pairs.append((rel, got))
+            digest = hashlib.sha256(
+                "".join(f"{p}:{s}\n" for p, s in sorted(pairs)).encode("utf-8")
+            ).hexdigest()
+            if mf.get("digest") != digest:
+                a_errors.append("清单整包摘要与实测不符")
+            bound = ((ledger.get("governance_meta") or {})
+                     .get("installed_assets") or {}).get("digest")
+            if bound != digest:
+                a_errors.append("账本 installed_assets.digest 与实测摘要不一致")
+        add("installed_assets_binding", not a_errors,
+            (f"资产 {len(pairs)} 份 · 摘要 {digest[:12]}" if not a_errors
+             else f"错误={a_errors[:5]}"))
 
     return results
 

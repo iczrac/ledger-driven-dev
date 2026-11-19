@@ -118,7 +118,7 @@ class WorkPanelTest(unittest.TestCase):
                                capture_output=True, text=True)
             payload = json.loads(p.stdout)
             self.assertEqual(payload["failed"], 0, payload["checks"])
-            self.assertEqual(len(payload["checks"]), 24)
+            self.assertEqual(len(payload["checks"]), 26)
             self.assertTrue(any(c["id"] == "test_results_binding_valid"
                                 for c in payload["checks"]))
 

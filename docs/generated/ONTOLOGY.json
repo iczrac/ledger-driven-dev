@@ -16,7 +16,7 @@
     {
       "path": "scripts/scenario_matrix.py",
       "role": "value_domains",
-      "sha256": "651dcbe75cb71dfe16bb644f0fdd1fd274b59e6d9bda920c6525964bda291e17"
+      "sha256": "7ecc9c5a058eaf4f20319df79bc670fe7c99387596bad6eaf259e59384454ef8"
     },
     {
       "path": "scripts/ledger_feedback.py",
@@ -26,17 +26,17 @@
     {
       "path": "scripts/agent_gateway.py",
       "role": "value_domains",
-      "sha256": "efa78204bdbe89b6fe7e3e44fe0c9e05038d4593871a9399b33102e86d85b5dd"
+      "sha256": "83d1b63a3e7bd8501f9cfc804687ed1564c25958ee3798ab1e011e67aaade51d"
     },
     {
       "path": "templates/build_capability_model.py",
       "role": "value_domains",
-      "sha256": "0dfa71e60aaf400756fe91b57dbb1a5d64ea66db2a6ec7322d62376e9e4a96d6"
+      "sha256": "2ceeb724799799bc20e7e06c99e770cfad038c4451369d3659bf0a2ff4eb5b83"
     },
     {
       "path": "templates/verify_ledger.py",
       "role": "axioms",
-      "sha256": "6260594033d76b1ee0130f00794c80fdd1f2b5d61e4ec1a187e5569436906716"
+      "sha256": "ade9e65884dc9ab5eee47f71c68a50b714ea06211d3242e6ea9926bca06bdc0a"
     }
   ],
   "bounded_contexts": [
@@ -752,6 +752,7 @@
     "history_current_matches",
     "history_event_fingerprints",
     "history_state_encoding",
+    "installed_assets_binding",
     "lesson_candidates_dedup",
     "lessons_valid",
     "next_action_present",
@@ -762,6 +763,7 @@
     "verified_tier_not_premature",
     "verified_tier_traceable",
     "work_item_refs_valid",
+    "work_items_owned",
     "work_items_valid"
   ],
   "drift": [],
@@ -770,10 +772,10 @@
     "entity_types": 16,
     "value_domains": 18,
     "relations": 7,
-    "axioms": 31,
+    "axioms": 33,
     "source_files": 7,
     "polyseme_terms": 3,
     "drift_count": 0
   },
-  "ontology_digest": "ad8d4419b19d445ff479cdbe1ff5c89734662c99615a3abc8243a42502dff6fa"
+  "ontology_digest": "df4cb37fdc3f6b8fd38f4766a49b5825689d7ac5e24ec09b76eec78c9f9cea1d"
 }

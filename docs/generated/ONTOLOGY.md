@@ -1,6 +1,6 @@
 # 本体投影（generated，只读）
 
-schema `ledger-ontology/1` · digest `ad8d4419b19d445ff479cdbe1ff5c89734662c99615a3abc8243a42502dff6fa`
+schema `ledger-ontology/1` · digest `df4cb37fdc3f6b8fd38f4766a49b5825689d7ac5e24ec09b76eec78c9f9cea1d`
 
 由 `python3 scripts/ontology.py build --apply --approved-by <人>` 从事实源渲染。
 **不是人工文档，也不是第二事实源**：删掉本文件后 build 可逐字节复原。
@@ -100,9 +100,9 @@ schema `ledger-ontology/1` · digest `ad8d4419b19d445ff479cdbe1ff5c89734662c9961
 | G3 | Kleene K3：含 Unknown 不得派生 pass | `three_valued` |
 | G4 | append-only：只取代不删除 | `append_only` |
 
-账本不变量 24 条：
+账本不变量 26 条：
 
-`board_embed_synced` `completion_matches_level` `component_paths_exist` `decision_refs_valid` `doc_paths_exist` `encoding_format` `encoding_unique` `entry_ids_unique` `evidence_tier_valid` `history_chain_consistent` `history_current_matches` `history_event_fingerprints` `history_state_encoding` `lesson_candidates_dedup` `lessons_valid` `next_action_present` `queue_lessons_confirmed` `registry_impls_exist` `supersede_chain_consistent` `test_results_binding_valid` `verified_tier_not_premature` `verified_tier_traceable` `work_item_refs_valid` `work_items_valid`
+`board_embed_synced` `completion_matches_level` `component_paths_exist` `decision_refs_valid` `doc_paths_exist` `encoding_format` `encoding_unique` `entry_ids_unique` `evidence_tier_valid` `history_chain_consistent` `history_current_matches` `history_event_fingerprints` `history_state_encoding` `installed_assets_binding` `lesson_candidates_dedup` `lessons_valid` `next_action_present` `queue_lessons_confirmed` `registry_impls_exist` `supersede_chain_consistent` `test_results_binding_valid` `verified_tier_not_premature` `verified_tier_traceable` `work_item_refs_valid` `work_items_owned` `work_items_valid`
 
 ## 来源绑定
 
@@ -110,10 +110,10 @@ schema `ledger-ontology/1` · digest `ad8d4419b19d445ff479cdbe1ff5c89734662c9961
 |---|---|---|
 | `docs/STANDARD.md` | ubiquitous_language | `c4177d34f5472cc8…` |
 | `scripts/work_panel.py` | value_domains | `106a91b55b35abb8…` |
-| `scripts/scenario_matrix.py` | value_domains | `651dcbe75cb71dfe…` |
+| `scripts/scenario_matrix.py` | value_domains | `7ecc9c5a058eaf4f…` |
 | `scripts/ledger_feedback.py` | value_domains | `ee3d577f0a600e05…` |
-| `scripts/agent_gateway.py` | value_domains | `efa78204bdbe89b6…` |
-| `templates/build_capability_model.py` | value_domains | `0dfa71e60aaf4007…` |
-| `templates/verify_ledger.py` | axioms | `6260594033d76b1e…` |
+| `scripts/agent_gateway.py` | value_domains | `83d1b63a3e7bd850…` |
+| `templates/build_capability_model.py` | value_domains | `2ceeb724799799bc…` |
+| `templates/verify_ledger.py` | axioms | `ade9e65884dc9ab5…` |
 
 漂移条目：0

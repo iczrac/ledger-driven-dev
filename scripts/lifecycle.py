@@ -55,7 +55,7 @@ def _load(gov: Path) -> tuple[dict, Path]:
 
 
 def _sync_board(gov: Path, ledger: dict) -> None:
-    """状态变更后同步看板 EMBED，维持 24 条不变量中的 board_embed_synced。"""
+    """状态变更后同步看板 EMBED，维持 26 条不变量中的 board_embed_synced。"""
     board = gov / "index.html"
     if not board.exists():
         return

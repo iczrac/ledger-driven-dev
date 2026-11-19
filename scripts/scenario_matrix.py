@@ -346,7 +346,7 @@ SCENARIOS: list[dict] = [
     dict(id="V2", axis="视图", name="手填测试结果投影伪造全绿", axiom="A2",
          status="covered",
          expected="test_results.source_sha256 必须等于当前 test_report.json 的 sha256；"
-                  "24 条不变量里 test_results_binding_valid 会拦下",
+                  "26 条不变量里 test_results_binding_valid 会拦下",
          probe="tests.views.test_work_panel.WorkPanelTest.test_tampered_projection_fails_verifier",
          flow=["work_panel.py --target P sync-tests --apply --approved-by <人>",
                "verify_ledger.py --root P --strict --json"],

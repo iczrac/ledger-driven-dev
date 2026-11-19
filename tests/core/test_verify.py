@@ -7,6 +7,7 @@ import sys
 import unittest
 
 from _base import ROOT, VERIFIER, demo_copy, load_ledger, run_verify
+from asset_bundle import install  # v2.1.2：资产对账负向证明
 from ledger_io import write_ledger
 
 
@@ -17,7 +18,7 @@ class VerifyTest(unittest.TestCase):
             self.assertEqual(result.returncode, 0, result.stderr)
             payload = json.loads(result.stdout)
             self.assertEqual(payload["failed"], 0)
-            self.assertEqual(len(payload["checks"]), 24)  # 21 + 3 节点工作台
+            self.assertEqual(len(payload["checks"]), 26)  # 21 + 3 节点工作台 + 2 v2.1.2
 
     def _corrupt_and_check(self, mutate, expected_check):
         with demo_copy() as (root, ledger, reg, board):
@@ -77,6 +78,43 @@ class VerifyTest(unittest.TestCase):
             c["doc_index"]["impl"] = [{"path": "examples/demo-shop/docs/GHOST.md"}]
         self._corrupt_and_check(mutate, "doc_paths_exist")
 
+    def test_detects_unowned_open_work_item(self):
+        """未完结工作没有 owner 也没有说明：专家层只剩装饰，必须抓到。"""
+        def mutate(d):
+            for x in d["work_items"]:
+                x.pop("owner", None)
+        self._corrupt_and_check(mutate, "work_items_owned")
+
+    def test_owner_note_satisfies_ownership_rule(self):
+        """写不出负责人时，owner_note 说明缺口是诚实的，不得误判。"""
+        with demo_copy() as (root, ledger, reg, board):
+            d = json.loads(ledger.read_text())
+            for x in d["work_items"]:
+                x.pop("owner", None)
+                x["owner_note"] = "等用户指派负责专家（AI 不凭空指派）"
+            write_ledger(ledger.parent, d)
+            payload = json.loads(run_verify(root, ledger, reg, board).stdout)
+            row = next(c for c in payload["checks"] if c["id"] == "work_items_owned")
+            self.assertTrue(row["ok"], row)
+
+    def test_detects_tampered_installed_asset(self):
+        """安装副本被改一个字节：三方对账（副本↔清单↔账本）必须红。"""
+        with demo_copy() as (root, ledger, reg, board):
+            target = board.parent.parent
+            install(target, approved_by="gate-bot", apply=True, bind_ledger=True)
+            payload = json.loads(run_verify(root, ledger, reg, board).stdout)
+            row = next(c for c in payload["checks"]
+                       if c["id"] == "installed_assets_binding")
+            self.assertTrue(row["ok"], row)  # 安装后必须先绿
+            victim = next(target.glob(".workbuddy/skills/*/SKILL.md"))
+            victim.write_text(victim.read_text(encoding="utf-8") + "\n# 改动\n",
+                              encoding="utf-8")
+            payload = json.loads(run_verify(root, ledger, reg, board).stdout)
+            row = next(c for c in payload["checks"]
+                       if c["id"] == "installed_assets_binding")
+            self.assertFalse(row["ok"], row)
+            self.assertIn("sha256 与清单不符", row["detail"], row)
+
 
 class TristateTest(unittest.TestCase):
     """v1.3.0：能力未启用（na）绝不能被记成 pass。"""
@@ -99,8 +137,8 @@ class TristateTest(unittest.TestCase):
                        if c["id"] == "test_results_binding_valid")
             self.assertEqual(row["status"], "na")
             self.assertFalse(row["ok"])
-            self.assertEqual(payload["na"], 1)
-            self.assertEqual(payload["passed"], 23)
+            self.assertEqual(payload["na"], 2)  # test_results + 资产未安装
+            self.assertEqual(payload["passed"], 24)
             self.assertEqual(payload["failed"], 0)
             self.assertFalse(payload["all_active"])
 
@@ -114,7 +152,7 @@ class TristateTest(unittest.TestCase):
             hard = self._run(root, ledger, reg, board,
                              "--strict", "--require-active")
             self.assertEqual(hard.returncode, 1)
-            self.assertEqual(json.loads(hard.stdout)["na"], 1)
+            self.assertEqual(json.loads(hard.stdout)["na"], 2)  # 投影 + 资产未安装
 
 
 if __name__ == "__main__":

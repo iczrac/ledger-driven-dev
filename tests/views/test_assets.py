@@ -145,6 +145,46 @@ class AssetsTest(unittest.TestCase):
             install(target, approved_by="gate-bot", apply=True, bind_ledger=False)
             self.assertTrue(p.is_file())  # 被人改过的文件绝不删除
 
+    def test_check_assets_digest_equals_bundle_digest(self):
+        """同一个包只该有一个摘要：路由自检算出来的，必须等于安装器算出来的。"""
+        with demo_copy() as (_tmp, _ledger, _reg, board):
+            target = board.parent.parent
+            install(target, approved_by="gate-bot", apply=True, bind_ledger=False)
+            root = asset_root(target)
+            self.assertEqual(root.name, ".workbuddy")
+            res = check_assets(root)
+            self.assertTrue(res["manifest_checked"])
+            self.assertEqual(res["digest_algorithm"], "sha256-files-v1")
+            self.assertEqual(res["digest"], bundle()["digest"])
+            self.assertTrue(res["digest_match"], res["errors"])
+
+    def test_check_assets_detects_byte_drift_against_manifest(self):
+        """形态合法但字节变了，必须红：frontmatter 检查回答不了「还是不是那份」。"""
+        with demo_copy() as (_tmp, _ledger, _reg, board):
+            target = board.parent.parent
+            install(target, approved_by="gate-bot", apply=True, bind_ledger=False)
+            root = asset_root(target)
+            self.assertTrue(check_assets(root)["ok"])
+            p = root / "skills" / "ledger-verify" / "SKILL.md"
+            p.write_text(p.read_text(encoding="utf-8") + "\n# tampered\n",
+                         encoding="utf-8")
+            res = check_assets(root)
+            self.assertFalse(res["ok"])
+            self.assertFalse(res["digest_match"])
+            self.assertIn("manifest:skills/ledger-verify/SKILL.md: sha256 与清单不符（副本被改或清单过期）",
+                          res["errors"])
+
+    def test_check_assets_without_manifest_stays_form_only(self):
+        """没有清单就没有账：只查形态，并显式标注未对账，不假装验过。"""
+        with demo_copy() as (_tmp, _ledger, _reg, board):
+            target = board.parent.parent
+            install(target, approved_by="gate-bot", apply=True, bind_ledger=False)
+            (target / "governance" / "ASSET_MANIFEST.json").unlink()
+            res = check_assets(asset_root(target))
+            self.assertFalse(res["manifest_checked"])
+            self.assertIsNone(res["digest_match"])
+            self.assertTrue(res["ok"])
+
     def test_upgrade_m7_installs_and_rollback_removes_created(self):
         with demo_copy() as (_tmp, _ledger, _reg, board):
             target = board.parent.parent

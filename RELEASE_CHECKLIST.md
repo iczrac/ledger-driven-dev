@@ -485,3 +485,40 @@ E7 `cardinality_contradiction`（`ontology.py check --target P` 仍 `ok=false`�
 - 只补业务诚信与强制点，未做语义图 R4、未扩大证据覆盖（仍 20/47 verified）；
 - 目标项目根仓库本次只提交治理文件、CI 与钩子，其余既有改动不动。
 
+
+## v2.1.2 发布检查（证据绑定与资产对账）
+
+- [x] **符号级绑定 advisory**：`SymbolIndex`（再导出链 + 项目就近消歧）进生成器；
+      `[BIND]`/`[UNBOUND]` 在 --check / dry-run / 写盘三路径都输出；
+      `--binding-report` 机器可读；**不改 tier、不影响退出码**（shadow 门禁）
+- [x] **advisory 测试**：直接绑定 / 相对导入再导出链 / via1 桥接 / 词面碰撞
+      unbound 且 tier 不动 / no_impl·no_tests 分类，5 个用例（含
+      `__init__.py` 相对导入多剥一层的回归钉）
+- [x] **资产摘要统一**：`route_expert` 摘要规范化 = `asset_bundle` 的
+      `sha256-files-v1`；`--check-assets` 逐文件 + 整包与清单对账，fail-closed；
+      无清单 `manifest_checked=false`；篡改一字节必红（3 个用例）
+- [x] **不变量 25**：`work_items_owned`——未完结工作必须有 owner 或 owner_note；
+      done 不追溯；demo 夹具正反向覆盖
+- [x] **不变量 26**：`installed_assets_binding`——副本↔清单↔账本三方对账，
+      安装后绿、篡改后红；未安装 na；随 verify_ledger 部署，主仓 CI/pre-commit
+      零新增步骤
+- [x] **计数跟进**：24 → 26 不变量（docs/08/10/13/14/15/17/18/23、README、
+      scripts 五处、acceptance 三态断言 `24 pass + 2 na`、ontology 断言、
+      work_panel / tristate 用例）；MODULES.json 注册 `test_binding_advisory`
+- [x] **派生文档重建**：ONTOLOGY.json/md（route_expert 摘要变化）、
+      FILE_LAYOUT.md、SCENARIO_MATRIX.md、TEST_MODULES.md
+- [x] **文档同步**：docs/03 声明的测试是否真测该能力（advisory 说明）；
+      docs/08 不变量表 + 第 25/26 行；docs/23 版本表补 v2.1.2 行
+- [x] **全量门禁**：`bash scripts/check.sh` EXIT=0（acceptance 目标版本 2.1.2）
+
+### 本版边界（不掩盖）
+
+- advisory 判得对不对尚未被人审验证：主仓实测 unbound 10 个能力有待逐条
+  人工核对后修映射（机械推荐报告另行生成供人审），修完才谈硬门禁；
+- 绑定是必要条件不是充分条件：测试 import 了 impl 只说明有调用关系，
+  不证明测的就是该能力的语义；
+- via1 桥接只追一跳；`from x import *` 星号导入不解析（记 failure 不猜）；
+- 不变量 26 只查清单登记的路径：清单外新增的 `.workbuddy` 文件（如旧版本
+  残留）由方法仓侧 `asset_bundle verify` 才能发现；
+- no_impl 能力（声明了测试但 impl 为空）只告警不阻断——映射修正属人批准
+  迁移，本版不动 registry 数据。

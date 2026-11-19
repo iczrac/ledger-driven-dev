@@ -2,6 +2,43 @@
 
 本项目版本遵循语义化版本（SemVer）。
 
+## [2.1.2] - 2026-11-19
+
+**证据绑定与资产对账**。v2.1.0 把证据来源钉死在 registry 声明，但留下两个
+「写了就信」的死角：声明的测试与声明的实现之间**配对**是否成立，靠文件名
+关键词猜；同一份专家/技能资产，安装器与路由器各算各的摘要，后者算完只打印
+不对账。本版把两个死角都放到灯下。
+
+### 符号级证据绑定 advisory（shadow 门禁）
+
+- 生成器新增 `SymbolIndex`：测试 import 的名字沿 `__init__.py` 再导出链
+  解析到定义文件，按项目就近消歧（`projects/<x>` 内不串味）；
+- 每次重算输出 `[BIND]` 摘要与逐条 `[UNBOUND]` 告警：bound（直接绑定）/
+  via1（经一跳编排层触达，附桥接文件）/ unbound / no_impl / no_tests；
+- `--binding-report <path>` 输出机器可读 JSON，供映射修正的人审消费；
+- **不改 level / tier、不影响退出码**——判据先在 CI 晒出问题、被证明
+  判得对，之后才升级为硬门禁。实测主仓 47 能力：bound 29 / via1 3 /
+  unbound 10 / no_impl 1 / no_tests 4。
+
+### 资产摘要统一与对账
+
+- `route_expert.py` 的摘要规范化与 `asset_bundle.py` 的 `sha256-files-v1`
+  完全一致（安装前缀 + 按路径排序 + 尾换行）：同一份资产从权威源算与从
+  安装副本算得到同一个值；
+- `--check-assets` 不再只打印摘要：清单存在时逐文件比对 sha256 + 整包
+  摘要对账，任一不符即 fail-closed；无清单时显式 `manifest_checked=false`；
+- 负向证明：篡改任一副本一个字节，逐文件与整包同时报警（3 个新用例）。
+
+### 两条新不变量（24 → 26）
+
+- **#25 `work_items_owned`**：未完结（open/doing/blocked）的工作项必须写
+  owner（人或专家名），写不出必须写 `owner_note` 说明缺口。AI 不凭空指派
+  owner——规矩不是替谁填，而是让缺口可见；
+- **#26 `installed_assets_binding`**：`.workbuddy` 只读副本逐文件 sha256
+  与 `ASSET_MANIFEST` 一致、整包摘要与账本 `installed_assets.digest` 一致
+  （未安装资产时 na）。副本被改、清单过期、账本漂移三者任一即 fail。
+  该不变量随 verify_ledger 部署，主仓 CI 与 pre-commit 无需新增步骤。
+
 ## [2.1.1] - 2026-11-19
 
 **术语与实现视图**。看板此前有十个视图，全部回答「账本里有什么」；

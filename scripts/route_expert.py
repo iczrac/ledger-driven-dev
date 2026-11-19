@@ -28,6 +28,10 @@ from pathlib import Path
 SCHEMA = "expert-route/1"
 SOURCE_ROOT = Path(__file__).resolve().parents[1]
 ASSET_SCHEMA = "expert-assets/1"
+# 与 asset_bundle.py 的 sha256-files-v1 对齐：同一份资产，无论从权威源算还是从
+# 安装副本算，都必须得到同一个摘要。此前两边各用一套规范化（有无安装前缀、
+# 有无尾换行），同一件事产出两个值，且后者无人对账。
+INSTALL_PREFIX = ".workbuddy/"
 FM_NAME = re.compile(r"^name:\s*([A-Za-z0-9._-]+)\s*$", re.M)
 FM_DESC = re.compile(r"^description:\s*\|?\s*(.*)$", re.M)
 
@@ -97,6 +101,7 @@ def load_assets(root: Path, scope: set[str] | None = None) -> dict:
     experts: dict[str, dict] = {}
     skills: dict[str, dict] = {}
     rows: list[str] = []
+    files: dict[str, str] = {}
     for group, pattern, out in (("experts", "experts/*/EXPERT.md", experts),
                                 ("skills", "skills/*/SKILL.md", skills)):
         for p in sorted(root.glob(pattern)):
@@ -110,7 +115,8 @@ def load_assets(root: Path, scope: set[str] | None = None) -> dict:
             sha = hashlib.sha256(p.read_bytes()).hexdigest()
             out[p.parent.name] = {"name": name, "description": desc,
                                   "triggers": triggers, "sha256": sha}
-            rows.append(f"{rel}:{sha}")
+            files[rel] = sha
+            rows.append(f"{INSTALL_PREFIX}{rel}:{sha}\n")
     missing_experts = sorted(set(EXPERT_CARDS) - set(experts))
     referenced = {s for c in EXPERT_CARDS.values() for s in c["skills"]}
     missing_skills = sorted(referenced - set(skills))
@@ -118,7 +124,9 @@ def load_assets(root: Path, scope: set[str] | None = None) -> dict:
         "schema": ASSET_SCHEMA,
         "root_kind": "installed" if root.name == ".workbuddy" else "source",
         "expert_count": len(experts), "skill_count": len(skills),
-        "digest": hashlib.sha256("\n".join(rows).encode("utf-8")).hexdigest(),
+        "digest": hashlib.sha256("".join(rows).encode("utf-8")).hexdigest(),
+        "digest_algorithm": "sha256-files-v1",
+        "files": files,
         "missing_experts": missing_experts, "missing_skills": missing_skills,
         "status": "ok" if not (missing_experts or missing_skills) else "incomplete",
         "experts": experts, "skills": skills,
@@ -127,7 +135,42 @@ def load_assets(root: Path, scope: set[str] | None = None) -> dict:
     }
 
 
+def _manifest_expectation(root: Path) -> dict | None:
+    """账面对资产的期望：清单登记了哪些副本、每个副本的 sha256、整包摘要。
+
+    只在项目级 `.workbuddy/` 且有 `governance/ASSET_MANIFEST.json` 时成立。
+    没有清单就没有「账」，返回 None，由调用方标 manifest_checked=False。
+    """
+    root = Path(root)
+    if root.name != ".workbuddy":
+        return None
+    mf = root.parent / "governance" / "ASSET_MANIFEST.json"
+    if not mf.is_file():
+        return None
+    try:
+        data = json.loads(mf.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return None
+    prefix = str(data.get("install_root", ".workbuddy")).rstrip("/") + "/"
+    entries: dict[str, str] = {}
+    for row in data.get("files") or []:
+        if not isinstance(row, dict):
+            continue
+        path = str(row.get("path", ""))
+        if not path.startswith(prefix):
+            continue
+        entries[path[len(prefix):]] = str(row.get("sha256", ""))
+    return {"entries": entries, "digest": str(data.get("digest", "")),
+            "manifest": str(mf.relative_to(root.parent).as_posix())}
+
+
 def check_assets(root: Path) -> dict:
+    """资产自检：既有「形态合法」，也有「字节等于账面」。
+
+    只查 frontmatter 的回答是「这个名字写没写全」，回答不了「装进来的东西
+    还是不是发出去的那份」。所以清单存在时必须逐文件对账 + 整包摘要对账，
+    任一不符即 ok=False（fail-closed），而不是把摘要当装饰打印出来。
+    """
     scope = installed_manifest_paths(root)
     a = load_assets(root, scope)
     errors = list(a["missing_experts"])
@@ -138,8 +181,30 @@ def check_assets(root: Path) -> dict:
                 errors.append(f"{group}/{dirname}: frontmatter name={meta['name']} 与目录名不一致")
             if not meta["description"]:
                 errors.append(f"{group}/{dirname}: 缺少 description")
+
+    exp = _manifest_expectation(root)
+    digest_match: bool | None = None
+    if exp:
+        for rel, want in sorted(exp["entries"].items()):
+            got = a["files"].get(rel)
+            if got is None:
+                errors.append(f"manifest:{rel}: 清单登记的副本不存在")
+            elif got != want:
+                errors.append(f"manifest:{rel}: sha256 与清单不符（副本被改或清单过期）")
+        for rel in sorted(set(a["files"]) - set(exp["entries"])):
+            errors.append(f"manifest:{rel}: 安装副本未登记在清单内")
+        if exp["digest"]:
+            digest_match = a["digest"] == exp["digest"]
+            if not digest_match:
+                errors.append("manifest:整包摘要不一致（账面 %s… vs 实测 %s…）"
+                              % (exp["digest"][:12], a["digest"][:12]))
+
     return {"schema": "expert-assets-check/1", "ok": not errors,
             "errors": errors, "digest": a["digest"],
+            "digest_algorithm": a["digest_algorithm"],
+            "manifest_checked": exp is not None,
+            "manifest": (exp or {}).get("manifest", ""),
+            "digest_match": digest_match,
             "expert_count": a["expert_count"], "skill_count": a["skill_count"],
             "scoped": a["scoped"], "asset_count": a["asset_count"]}
 
