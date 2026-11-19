@@ -7,9 +7,12 @@
 bound（直接）或 via1（经一跳编排层触达）；判不出来 → unbound，多半是
 词面配对错挂了测试。
 
-定位是 shadow 门禁：只打印 [UNBOUND] 告警、可产出报告，不改 tier、
-不影响退出码。判据必须先在 CI 里晒出问题、被证明「判得对」，才有资格
-当硬门禁。绑定是必要条件不是充分条件：有调用关系 ≠ 测的是该能力语义。
+v2.1.2 定位是 shadow 门禁（只晒不否决），先在 CI 里被证明判得对；v2.2.0
+起升级为硬门禁：``binding_status_of_tests()`` 被生成器在 build() 内调用，
+unbound/via1/no_impl 的能力即使测试 pass 也只能拿 declared（verified ⟺ bound）。
+本模块的 ``binding_advisory()`` 仍是旁路观察报告（读 registry 声明），不改
+tier；真正改 tier 的硬门禁走 ``binding_status_of_tests()``（读实际证据）。
+绑定是必要条件不是充分条件：有调用关系 ≠ 测的是该能力语义。
 
 架构说明
 --------
@@ -202,6 +205,38 @@ class SymbolIndex:
         return got, failures
 
 
+def binding_status_of_tests(idx: SymbolIndex, tests: list[str],
+                            impls: set[str]) -> dict:
+    """对一组「实际参与证据判定的测试文件」与实现文件做符号级绑定判定。
+
+    v2.2.0 起被生成器在 build() 内直接调用：硬门禁必须基于**实际派生的
+    unit_test 证据**，而不是 registry 声明的原始 tests（demo 用 hints
+    派生，两者会不一致）。返回 ``{status, tests_bound|bridges}``。
+    """
+    impls = set(impls)
+    if not tests:
+        return {"status": "no_tests"}
+    if not impls:
+        return {"status": "no_impl"}
+    hit = 0
+    for t in tests:
+        got, _f = idx.bindings_of_test(t) or (set(), [])
+        if got and (got & impls):
+            hit += 1
+    if hit:
+        return {"status": "bound", "tests_bound": hit}
+    bridges: set[str] = set()
+    for t in tests:
+        lvl1, _f = idx.bindings_of_test(t) or (set(), [])
+        for f1 in lvl1:
+            lvl2, _g = idx.bindings_of_test(f1) or (set(), [])
+            if lvl2 & impls:
+                bridges.add(f1)
+    if bridges:
+        return {"status": "via1", "bridges": sorted(bridges)[:4]}
+    return {"status": "unbound"}
+
+
 def binding_advisory(repo_root: Path, cfg_all: dict, scope=None, *,
                      resolve_declared=None, glob_files=None) -> dict:
     """对每个「有测试也有实现」的能力做符号级绑定检查（advisory）。
@@ -237,29 +272,7 @@ def binding_advisory(repo_root: Path, cfg_all: dict, scope=None, *,
                              for x in glob_files(proj_root, cap.get("impl") or [], scope)}
                 row: dict = {"code": code, "tests": len(declared_tests),
                              "impl_files": len(impls)}
-                if not declared_tests:
-                    row["status"] = "no_tests"
-                elif not impls:
-                    row["status"] = "no_impl"
-                else:
-                    hit = 0
-                    for t in declared_tests:
-                        got, _f = idx.bindings_of_test(t) or (set(), [])
-                        if got and (got & impls):
-                            hit += 1
-                    if hit:
-                        row["status"] = "bound"
-                        row["tests_bound"] = hit
-                    else:
-                        bridges: set[str] = set()
-                        for t in declared_tests:
-                            lvl1, _f = idx.bindings_of_test(t) or (set(), [])
-                            for f1 in lvl1:
-                                lvl2, _g = idx.bindings_of_test(f1) or (set(), [])
-                                if lvl2 & impls:
-                                    bridges.add(f1)
-                        row["status"] = "via1" if bridges else "unbound"
-                        row["bridges"] = sorted(bridges)[:4]
+                row.update(binding_status_of_tests(idx, declared_tests, impls))
                 rows.append(row)
     counts: dict[str, int] = {}
     for r in rows:
@@ -277,7 +290,7 @@ def print_binding_advisory(advisory: dict) -> None:
     for r in advisory.get("rows", []):
         if r["status"] == "unbound":
             print(f"[UNBOUND] {r['code']}: 声明的 {r['tests']} 个测试与声明的实现之间"
-                  "无机器可查的调用关系（疑似词面配对错挂；不影响 tier，先晒出）")
+                  "无机器可查的调用关系（疑似词面配对错挂；旁路报告，硬门禁见 binding_status）")
         elif r["status"] == "no_impl":
             print(f"[UNBOUND] {r['code']}: 声明了 {r['tests']} 个测试但 impl 为空"
-                  "（证据挂不上实现；不影响 tier，先晒出）")
+                  "（证据挂不上实现；旁路报告，硬门禁见 binding_status）")

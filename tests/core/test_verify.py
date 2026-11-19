@@ -39,6 +39,32 @@ class VerifyTest(unittest.TestCase):
             d["history"]["events"][-1]["fingerprint_before"] = "bogus"
         self._corrupt_and_check(mutate, "history_chain_consistent")
 
+    def test_detects_verified_without_bound_binding(self):
+        """v2.2.0：verified 却把 binding_status 篡成非 bound → 第 7 条必须抓住。
+
+        这是「声明权=伪造权」的负向证明：即便 tier_detail/tier 都还是
+        verified，只要绑定依据不成立，账本就是伪造的绿灯。
+        """
+        def mutate(d):
+            for p in d["capability_model"]["projects"]:
+                for m in p["modules"]:
+                    for c in m["caps"]:
+                        if c.get("evidence_tier") == "verified":
+                            c["binding_status"] = "unbound"
+                            return
+        self._corrupt_and_check(mutate, "verified_tier_traceable")
+
+    def test_detects_verified_with_missing_binding_field(self):
+        """旧账本（无 binding_status 字段）不得凭空挂 verified。"""
+        def mutate(d):
+            for p in d["capability_model"]["projects"]:
+                for m in p["modules"]:
+                    for c in m["caps"]:
+                        if c.get("evidence_tier") == "verified":
+                            c.pop("binding_status", None)
+                            return
+        self._corrupt_and_check(mutate, "verified_tier_traceable")
+
     def test_detects_tampered_event_state(self):
         def mutate(d):
             ev = d["history"]["events"][-1]

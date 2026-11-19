@@ -486,6 +486,22 @@ E7 `cardinality_contradiction`（`ontology.py check --target P` 仍 `ok=false`�
 - 目标项目根仓库本次只提交治理文件、CI 与钩子，其余既有改动不动。
 
 
+## v2.2.0 发布检查（绑定硬门禁 verified ⟺ bound）
+
+- [x] **硬门禁**：`judge_tier(..., binding_status)` verified 改双条件（报告 pass +
+      binding=bound）；via1/unbound/no_impl/no_tests 一律 declared；规则单一，
+      verified 数必等于 bound 数
+- [x] **同源绑定**：`binding_status_of_tests()` 在 `build()` 内基于实际证据
+      (`ev["unit_test"]`/`ev["impl"]`) 计算并写入 cnode，与 `--check` 可复算同源
+- [x] **防篡改**：第 7 条不变量校验 verified 必带 `binding_status=bound`；
+      手改 tier / 抹字段 / 旧账本无字段必红（2 条负向用例）
+- [x] **双向负向证明**：judge_tier unbound/no_impl/via1 拒绝 + bound 放行（4 条）；
+      verifier 篡改绑定必抓（2 条）
+- [x] **文档与派生**：METHOD_VERSION 2.2.0；EVIDENCE_TIER_SPEC、docs 03/08/11/23、
+      CHANGELOG、ontology 派生重建
+- [ ] **主仓重绑**：干净 clone 重跑报告 → upgrade apply；verified 43→29；
+      `--check` 无漂移；26 不变量零放行；远端 CI 绿
+
 ## v2.1.2 发布检查（证据绑定与资产对账）
 
 - [x] **符号级绑定 advisory**：`SymbolIndex`（再导出链 + 项目就近消歧）进生成器；

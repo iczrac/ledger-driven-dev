@@ -102,6 +102,52 @@ class EvidenceTierTest(unittest.TestCase):
             self.assertEqual(caps["DEMO.API.QUERY.01"]["evidence_tier"], "declared")
             self.assertEqual(d["capability_model"]["summary"]["verified_coverage"], 0.75)
 
+    # ---- v2.2.0 硬门禁：verified ⟺ 符号绑定 bound ----
+    # 负向证明：v2.1.2 及之前，只要往 caps[].tests 塞一条 pass 的测试路径，
+    # 能力就能刷成 verified——即便测试 import 的实现与本能力毫无关系。
+    # 这是「声明权 = 伪造权」漏洞。硬门禁要求 judge_tier 同时看绑定状态。
+    def test_binding_unbound_denies_verified_even_with_pass_report(self):
+        """核心负向：报告 pass 但绑定 unbound → 必须 declared（伪造被拦）。"""
+        report = _report([
+            {"id": "x", "file": "examples/demo-shop/tests/unit/test_order.py", "status": "pass"}
+        ])
+        tier, detail = judge_tier(
+            ["examples/demo-shop/tests/unit/test_order.py"], report,
+            binding_status="unbound")
+        self.assertEqual(tier, "declared")
+        self.assertEqual(detail["basis"], "binding_not_bound")
+
+    def test_binding_no_impl_denies_verified(self):
+        report = _report([
+            {"id": "x", "file": "examples/demo-shop/tests/unit/test_order.py", "status": "pass"}
+        ])
+        tier, detail = judge_tier(
+            ["examples/demo-shop/tests/unit/test_order.py"], report,
+            binding_status="no_impl")
+        self.assertEqual(tier, "declared")
+        self.assertEqual(detail["basis"], "binding_not_bound")
+
+    def test_binding_via1_denies_verified(self):
+        """via1 隔一层编排，不算直接证明 → declared。"""
+        report = _report([
+            {"id": "x", "file": "examples/demo-shop/tests/unit/test_order.py", "status": "pass"}
+        ])
+        tier, _ = judge_tier(
+            ["examples/demo-shop/tests/unit/test_order.py"], report,
+            binding_status="via1")
+        self.assertEqual(tier, "declared")
+
+    def test_binding_bound_allows_verified(self):
+        """正向：报告 pass + 绑定 bound → verified 保留。"""
+        report = _report([
+            {"id": "x", "file": "examples/demo-shop/tests/unit/test_order.py", "status": "pass"}
+        ])
+        tier, detail = judge_tier(
+            ["examples/demo-shop/tests/unit/test_order.py"], report,
+            binding_status="bound")
+        self.assertEqual(tier, "verified")
+        self.assertEqual(detail["basis"], "test_report_pass")
+
     def test_tier_corruption_caught_by_verifier(self):
         with demo_copy() as (root, ledger, reg, board):
             # 先生成带 verified 的稳态

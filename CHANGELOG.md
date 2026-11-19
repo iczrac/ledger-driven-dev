@@ -2,6 +2,29 @@
 
 本项目版本遵循语义化版本（SemVer）。
 
+## [2.2.0] - 2026-11-19
+
+**绑定硬门禁：verified ⟺ bound**。v2.1.2 把「声明的测试是否真测到实现」以
+shadow advisory 晒了半个月，证明判据判得对（10 个 unbound 能力全库零测试
+触达实现）；本版把它升为硬门禁，堵死**「声明权 = 伪造权」**——v2.1.x 只要
+往 `caps[].tests` 塞任意一条 pass 测试路径就能把能力刷成 verified。
+
+- `judge_tier(unit_tests, report, binding_status)`：`verified` 改双条件，
+  必须有报告 pass **且** 符号绑定 `bound`；via1/unbound/no_impl/no_tests
+  一律降 declared（via1 隔一层编排不算直接证明）；
+- 新 `binding_status_of_tests()` 从 `binding_advisory.py` 抽出，生成器在
+  `build()` 内基于**实际证据**（`ev["unit_test"]` + `ev["impl"]`）计算，
+  不是 registry 原始声明（demo 用 hints 派生，两者不同源）；`binding_status`
+  写进账本 cnode；
+- 第 7 条不变量 `verified_tier_traceable` 扩展：verified 必须带
+  `binding_status=bound`，手改 tier 或抹字段都会被抓（2 条负向用例）；
+- 4 条 judge_tier 负向用例（unbound/no_impl/via1 拒绝、bound 放行）+ 2 条
+  防篡改用例，构成「伪造通道被堵」的双向证明；
+- `EVIDENCE_TIER_SPEC` / docs 03、08、11、23 同步；ontology 派生重建。
+
+主仓预期：verified 43 → 29（恰好等于 bound 数），14 个存疑能力诚实回落
+declared。registry 数据未动——不靠改声明把数字做绿，靠机制让数字不可伪造。
+
 ## [2.1.2] - 2026-11-19
 
 **证据绑定与资产对账**。v2.1.0 把证据来源钉死在 registry 声明，但留下两个

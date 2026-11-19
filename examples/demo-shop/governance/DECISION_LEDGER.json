@@ -2,7 +2,7 @@
   "ledger_version": "1.0",
   "title": "Demo Shop 决策与能力账本",
   "purpose": "单一事实源：决策、裁决、待办及能力索引的唯一写入点。",
-  "last_updated": "2026-11-17 23:03 HKT",
+  "last_updated": "2026-11-19 23:16 HKT",
   "owner": "示例项目",
   "workflow": [
     "所有重大决策/裁决/待办只写入本文件 entries，不再新建独立报告。",
@@ -292,14 +292,14 @@
   },
   "capability_model": {
     "version": "1.0",
-    "generated_at": "2026-11-17 23:03 HKT",
+    "generated_at": "2026-11-19 23:16 HKT",
     "generator": "templates/build_capability_model.py",
     "purpose": "统一能力编码 + 可复算完成度 + 嵌套组件树 + 文档索引，供规划与编码代理消费。",
     "coding_spec": {
       "format": "{项目}.{模块}.{能力域}.{序号}",
       "example": "DEMO.DATA.READY.01",
       "segments": {
-        "项目": "项目代码，来自 registry.json project.code",
+        "项目": "项目代码，来自 registry.json 的 project.code 或 projects[].code",
         "模块": "项目内一级能力域代码（DATA/CORE/...）",
         "能力域": "能力点域代码（READY/CORE/...）",
         "序号": "两位序号，01 起；废弃标 retired 不复用"
@@ -350,15 +350,16 @@
       "caveat": "L5 授予配置了 governance_gate=true 的项目；其他项目最高 L4。"
     },
     "evidence_tier_spec": {
-      "purpose": "区分『写了测试文件』与『测试真实通过』，消除只看存在性造成的假绿灯。",
+      "purpose": "区分『写了测试文件』『测试真实通过』『测试测的就是本能力』，消除假绿灯。",
       "tiers": {
-        "declared": "仅证据文件存在，未找到可核对的通过测试报告（默认，向后兼容）。",
-        "verified": "存在 ledger-test-report 报告，且该能力的单测文件在报告中有 pass 记录。"
+        "declared": "证据文件存在，但缺通过报告、或符号绑定非 bound（默认，向后兼容）。",
+        "verified": "双条件：测试报告有 pass 记录，且符号级绑定证明该测试测的是本能力实现（binding_status=bound）。"
       },
       "source": "测试报告由 scripts/run_tests.py 生成（标准库 unittest），经 --test-report 传入。",
       "matching": "报告 cases[].file 与能力 unit_test 证据路径的 basename 匹配，且 status=pass、overall=pass。",
-      "rule": "tier 只升不假：无报告或缺 pass 记录一律 declared；报告 fail/error 不得升级任何能力。",
-      "invariant": "verified 必须指向真实存在的通过用例；测试记录被删则回落 declared。"
+      "binding": "v2.2.0 硬门禁：测试 import 沿 __init__ 再导出链解析到 impl 文件即 bound；via1/unbound/no_impl/no_tests 一律不升级。绑定是必要条件非充分条件。",
+      "rule": "tier 只升不假：无报告、缺 pass 记录、或绑定非 bound 一律 declared；报告 fail/error 不得升级任何能力。",
+      "invariant": "verified 必须同时有真实通过用例与 bound 绑定；任一消失则回落 declared。"
     },
     "doc_index_spec": {
       "purpose": "让每个能力点/规划都能索引到对应文档，且索引可见、可点开。",
@@ -415,12 +416,14 @@
                 "evidence_tier": "verified",
                 "tier_detail": {
                   "basis": "test_report_pass",
+                  "binding_status": "bound",
                   "matched_tests": [
                     "test_data_ready.py"
                   ],
                   "report_at": "2026-11-17 23:03 HKT",
                   "report_label": "demo-unit"
                 },
+                "binding_status": "bound",
                 "next_level": 5,
                 "next_action": "保持生产闭环，持续监控",
                 "status": "operational",
@@ -553,12 +556,14 @@
                 "evidence_tier": "verified",
                 "tier_detail": {
                   "basis": "test_report_pass",
+                  "binding_status": "bound",
                   "matched_tests": [
                     "test_order.py"
                   ],
                   "report_at": "2026-11-17 23:03 HKT",
                   "report_label": "demo-unit"
                 },
+                "binding_status": "bound",
                 "next_level": 5,
                 "next_action": "保持生产闭环，持续监控",
                 "status": "operational",
@@ -657,12 +662,14 @@
                 "evidence_tier": "verified",
                 "tier_detail": {
                   "basis": "test_report_pass",
+                  "binding_status": "bound",
                   "matched_tests": [
                     "test_pricing.py"
                   ],
                   "report_at": "2026-11-17 23:03 HKT",
                   "report_label": "demo-unit"
                 },
+                "binding_status": "bound",
                 "next_level": 5,
                 "next_action": "保持生产闭环，持续监控",
                 "status": "operational",
@@ -796,6 +803,7 @@
                 "tier_detail": {
                   "basis": "no_unit_test"
                 },
+                "binding_status": "no_tests",
                 "next_level": 3,
                 "next_action": "tests/unit/ 有对应测试",
                 "status": "active",

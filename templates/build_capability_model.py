@@ -54,15 +54,20 @@ except ModuleNotFoundError:  # pragma: no cover - 仅在 spec 加载路径触发
     from registry_codec import code_namespace as _codec_code_namespace
     from registry_codec import normalize_projects
 
-# v2.1.2：符号级证据绑定 advisory（shadow 门禁）。独立模块：生成器主体
-# 必须保持在模块大小硬限之下，且该检查本就是账本派生函数之外的旁路观察。
+# 符号级证据绑定（v2.1.2 advisory → v2.2.0 硬门禁）。独立模块：生成器主体
+# 必须保持在模块大小硬限之下。硬门禁在 build() 内基于实际证据执行；
+# binding_advisory() 仍是旁路观察（读 registry 声明，供人审报告）。
 try:
     from binding_advisory import binding_advisory as _binding_advisory
     from binding_advisory import print_binding_advisory as _print_binding_advisory
+    from binding_advisory import SymbolIndex as _SymbolIndex
+    from binding_advisory import binding_status_of_tests as _binding_status_of_tests
 except ModuleNotFoundError:  # pragma: no cover - 仅在 spec 加载路径触发
     sys.path.insert(0, str(Path(__file__).resolve().parent))
     from binding_advisory import binding_advisory as _binding_advisory
     from binding_advisory import print_binding_advisory as _print_binding_advisory
+    from binding_advisory import SymbolIndex as _SymbolIndex
+    from binding_advisory import binding_status_of_tests as _binding_status_of_tests
 
 # 场景预检契约：与 scenario_guard.py 保持一致；跨版本直写会破坏历史语义。
 SUPPORTED_LEDGER_VERSIONS = {"1.0"}
@@ -82,15 +87,16 @@ LEVELS_CAVEAT = "L5 授予配置了 governance_gate=true 的项目；其他项�
 # 与成熟度正交：level 回答"做到哪一级"，tier 回答"这一级的证据是声明还是实测"。
 # declared = 证据文件存在（生成器扫描可见）；verified = 有通过的测试报告证明其真跑过。
 EVIDENCE_TIER_SPEC = {
-    "purpose": "区分『写了测试文件』与『测试真实通过』，消除只看存在性造成的假绿灯。",
+    "purpose": "区分『写了测试文件』『测试真实通过』『测试测的就是本能力』，消除假绿灯。",
     "tiers": {
-        "declared": "仅证据文件存在，未找到可核对的通过测试报告（默认，向后兼容）。",
-        "verified": "存在 ledger-test-report 报告，且该能力的单测文件在报告中有 pass 记录。",
+        "declared": "证据文件存在，但缺通过报告、或符号绑定非 bound（默认，向后兼容）。",
+        "verified": "双条件：测试报告有 pass 记录，且符号级绑定证明该测试测的是本能力实现（binding_status=bound）。",
     },
     "source": "测试报告由 scripts/run_tests.py 生成（标准库 unittest），经 --test-report 传入。",
     "matching": "报告 cases[].file 与能力 unit_test 证据路径的 basename 匹配，且 status=pass、overall=pass。",
-    "rule": "tier 只升不假：无报告或缺 pass 记录一律 declared；报告 fail/error 不得升级任何能力。",
-    "invariant": "verified 必须指向真实存在的通过用例；测试记录被删则回落 declared。",
+    "binding": "v2.2.0 硬门禁：测试 import 沿 __init__ 再导出链解析到 impl 文件即 bound；via1/unbound/no_impl/no_tests 一律不升级。绑定是必要条件非充分条件。",
+    "rule": "tier 只升不假：无报告、缺 pass 记录、或绑定非 bound 一律 declared；报告 fail/error 不得升级任何能力。",
+    "invariant": "verified 必须同时有真实通过用例与 bound 绑定；任一消失则回落 declared。",
 }
 
 # ---- 历史层 / 经验层规范（写入账本，供人、AI、校验器共同消费）----
@@ -279,11 +285,18 @@ def load_test_report(path: str | None, repo_root: Path) -> dict | None:
     return report
 
 
-def judge_tier(unit_tests: list[str], report: dict | None) -> tuple[str, dict]:
+def judge_tier(unit_tests: list[str], report: dict | None,
+               binding_status: str | None = None) -> tuple[str, dict]:
     """判定能力点的证据分层，返回 (tier, 明细)。
 
-    没有报告、或该能力的任一单测文件都没有 pass 记录 → declared。
-    只要有一个单测文件在报告里 status=pass 即 verified（保守但可解释）。
+    v2.2.0 硬门禁：verified 是**双条件**——测试报告有 pass 记录，且该测试
+    经符号级绑定证明测的就是本能力的实现（binding_status == "bound"）。
+    v2.1.x 只看报告 pass，导致「声明权 = 伪造权」：往 registry 塞一条 pass
+    的测试路径即可刷 verified。绑定是必要条件：via1（隔一跳编排层）/
+    unbound / no_impl 一律不升级，即使报告全绿。
+
+    binding_status=None 是向后兼容的旧调用口径（v2.1.x 纯函数测试）；生成
+    器 build() 总是传入从实际 unit_test 证据算出的真实状态。
     """
     if report is None or not unit_tests:
         return "declared", {"basis": "no_report" if report is None else "no_unit_test"}
@@ -294,14 +307,24 @@ def judge_tier(unit_tests: list[str], report: dict | None) -> tuple[str, dict]:
         if c.get("status") == "pass" and c.get("file")
     }
     matched = [Path(u).name for u in unit_tests if Path(u).name in passed_files]
-    if matched:
-        return "verified", {
-            "basis": "test_report_pass",
+    if not matched:
+        return "declared", {"basis": "no_matching_pass", "passed_files": sorted(passed_files)[:10]}
+    # v2.2.0：绑定硬门禁。只有显式传了绑定状态且为 bound 才允许升级。
+    if binding_status is not None and binding_status != "bound":
+        return "declared", {
+            "basis": "binding_not_bound",
+            "binding_status": binding_status,
             "matched_tests": sorted(matched),
             "report_at": report.get("generated_at", ""),
             "report_label": report.get("label", ""),
         }
-    return "declared", {"basis": "no_matching_pass", "passed_files": sorted(passed_files)[:10]}
+    return "verified", {
+        "basis": "test_report_pass",
+        "binding_status": binding_status or "unbound",
+        "matched_tests": sorted(matched),
+        "report_at": report.get("generated_at", ""),
+        "report_label": report.get("label", ""),
+    }
 
 
 # ------------------------------ 证据扫描 ------------------------------
@@ -747,6 +770,9 @@ def build(repo_root: Path, cfg_all: dict, ledger: dict, test_report: dict | None
         raise SystemExit("registry 未提供 project 或 projects[]，无法生成能力模型")
     first_cfg = projects_cfg[0]
     code = first_cfg["code"]
+    # v2.2.0：符号级绑定硬门禁。索引构建一次，all caps 复用；只在有测试报告
+    # 时才需要（无报告时 tier 全 declared，绑定不影响结果，省去全树扫描）。
+    sym_idx = _SymbolIndex(repo_root, scope) if test_report is not None else None
 
     model = {
         "version": "1.0",
@@ -870,7 +896,15 @@ def build(repo_root: Path, cfg_all: dict, ledger: dict, test_report: dict | None
                     repo_root, proj_root, proj_rel, project_cfg, impl_globs, hints,
                     scope=scope, declared_tests=declared_tests,
                     declared_records=declared_records)
-                tier, tier_detail = judge_tier(ev.get("unit_test", []), test_report)
+                # v2.2.0 硬门禁：绑定判定基于**实际证据**（ev 中的 unit_test /
+                # impl），不是 registry 原始声明。无报告时不算（tier 必 declared）。
+                binding_status = None
+                if sym_idx is not None:
+                    b = _binding_status_of_tests(
+                        sym_idx, ev.get("unit_test", []), set(ev.get("impl", [])))
+                    binding_status = b["status"]
+                tier, tier_detail = judge_tier(
+                    ev.get("unit_test", []), test_report, binding_status=binding_status)
                 # v2.0.1 stable_code：显式 code 合法时优先，迁移前后身份不变。
                 cap_code = codec_cap_code(code, mcode, domain, cidx, cap_code_src)
                 cnode = {
@@ -883,6 +917,7 @@ def build(repo_root: Path, cfg_all: dict, ledger: dict, test_report: dict | None
                     "evidence": ev,
                     "evidence_tier": tier,
                     "tier_detail": tier_detail,
+                    "binding_status": binding_status,
                     "next_level": min(level + 1, 5),
                     "next_action": (
                         LEVELS[min(level + 1, 5)]["rule"]
@@ -1337,8 +1372,10 @@ def main() -> None:
         else:
             print("[WARN] 报告未绑定源码摘要；建议用 v0.8.0+ 的 run_tests.py 重跑")
     model = build(repo_root, cfg_all, ledger, test_report=test_report, scope=scope)
-    # v2.1.2：符号级证据绑定 advisory（shadow 门禁：只晒不否决，不改 tier）。
-    # 在 --check / dry-run / 写盘三条路径上都运行，让 CI 持续晒出 [UNBOUND]。
+    # 符号级绑定旁路报告：读 registry 声明做独立观察，供 --binding-report 人审。
+    # 真正改 tier 的硬门禁在 build() 内，基于实际证据（ev）计算 binding_status。
+    # 两条路径数据源不同：主仓 registry 声明了 tests 故一致；demo 用 hints，
+    # 故 advisory 仍报 no_tests 而硬门禁按实际 unit_test 判 bound。
     advisory = _binding_advisory(repo_root, cfg_all, scope,
                                   resolve_declared=resolve_declared,
                                   glob_files=glob_files)

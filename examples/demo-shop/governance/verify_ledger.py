@@ -13,7 +13,7 @@
 4. completion_matches_level：完成度与等级一致（completion == level/5）
 5. next_action_present：未达 L5 的能力都有下一步动作
 6. evidence_tier_valid：证据分层取值合法（declared | verified）
-7. verified_tier_traceable：verified 有 test_report_pass 依据且匹配真实单测
+7. verified_tier_traceable：verified 有 test_report_pass 依据、匹配真实单测且绑定为 bound（v2.2.0）
 8. verified_tier_not_premature：低于 L3 或无单测的能力不得标 verified
 9. doc_paths_exist：文档索引路径指向真实文件
 10. component_paths_exist：组件树路径指向真实文件
@@ -207,7 +207,8 @@ def verify(repo_root: Path, ledger: dict, registry: dict | None,
     bad_tiers = [c["code"] for c in caps if c.get("evidence_tier", "declared") not in valid_tiers]
     add("evidence_tier_valid", not bad_tiers, f"非法={bad_tiers[:5]}")
 
-    # 4c. verified 必须有可追溯依据：tier_detail 标记来自测试报告，且匹配的单测文件真实存在
+    # 4c. verified 必须有可追溯依据：tier_detail 标记来自测试报告，匹配的单测真实存在，
+    #     且 v2.2.0 符号级绑定为 bound（声明权≠伪造权）。
     bad_verified: list[str] = []
     for c in caps:
         if c.get("evidence_tier") != "verified":
@@ -221,6 +222,10 @@ def verify(repo_root: Path, ledger: dict, registry: dict | None,
         unit_names = {Path(x).name for x in _path_list(c.get("evidence", {}).get("unit_test"))}
         if not set(matched) & unit_names:
             bad_verified.append(f"{c['code']}:orphan_match")
+            continue
+        # v2.2.0：verified 必须带绑定依据且为 bound；缺字段或伪造均拦截
+        if c.get("binding_status") != "bound":
+            bad_verified.append(f"{c['code']}:unbound_verified")
     add("verified_tier_traceable", not bad_verified, f"不可追溯={bad_verified[:5]}")
 
     # 4d. 低于 L3 的能力不得标 verified（没有单测却声称实测通过）
