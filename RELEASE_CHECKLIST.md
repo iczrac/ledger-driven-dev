@@ -409,9 +409,9 @@ E7 `cardinality_contradiction`（`ontology.py check --target P` 仍 `ok=false`�
 - [x] **项目内扫描**：测试/记录扫描限制在 `impl` 前缀推导出的项目子树，消除跨项目串味
 - [x] **漂移门禁**：`--check` 重算与账本不一致即 exit 1，逐条打印差异
 - [x] **负向证明**：`tests/core/test_declared_evidence.py` 5 条（账本不影响派生、缺失降级、不跨项目、差异可检出）
-- [x] **可复算实测**：抹空全部 evidence 后重算，47 个能力逐字段差异 0，verified 仍 42
+- [x] **可复算实测**：抹空全部 evidence 后重算，47 个能力逐字段差异 0，verified 仍 43
 - [x] **纠错审计**：移除 5 条跨项目证据、3 条同形异义（security=证券池）、若干宽词噪声；补 24 个真实测试文件
-- [x] **证据重建**：按声明跑 133 个测试文件（1281 用例进入报告，9 个文件在本机不绿如实排除）
+- [x] **证据重建**：在干净 clone 里按声明跑 133 个测试文件（1290 用例进入报告，6 个文件不绿如实排除）
 - [x] **方法仓门禁**：`scripts/check.sh` EXIT=0；acceptance 目标版本 2.1.0 全 PASS
 - [x] **重绑**：目标项目 `upgrade verify` 12 pass / 0 warn，`method_assets.digest` 与目标账本一致
 - [x] **发版**：`tag v2.1.0` + push；远端 `Governance invariants` 全绿且 `--check` 无漂移
@@ -419,8 +419,8 @@ E7 `cardinality_contradiction`（`ontology.py check --target P` 仍 `ok=false`�
 ### 本版边界（不掩盖）
 
 - 声明只校验**存在与归属**，不校验语义相关性——「这个测试是否真在测这个能力」仍需人审；
-- 9 个声明文件在本机跑不绿（依赖缺失 / 集成环境），相关能力保持原状，未计入 verified；
-- 4 个能力本来没有测试（RSCOV.04 / ARES.DECIDE.02 / HELM×2），1 个唯一测试有失败（ARES.PUB.REVIEW.02）；
+- 6 个声明文件在干净检出里跑不绿（集成测试需外部服务、RSS/浏览器需网络与凭据），相关能力保持原状；
+- 4 个能力本来没有测试（RSCOV.04 / ARES.DECIDE.02 / HELM×2）；
 - `manual` 型关闭条件仍需人主动关闭；多副本同步税未处理。
 
 ## v2.0.3 发布检查（路径全集补丁）
