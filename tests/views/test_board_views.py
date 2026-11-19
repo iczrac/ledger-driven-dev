@@ -45,7 +45,10 @@ class BoardViewsTest(unittest.TestCase):
                        "function workStripHtml(", "function nodeWork(",
                        "function bindWorkLinks(", "DATA.work_items",
                        "DATA.test_results", "workStripHtml(c.code)",
-                       "workStripHtml(m.code)", "workStripHtml(scope)"):
+                       "workStripHtml(m.code)", "workStripHtml(scope)",
+                       'data-v="glossary"', "function renderGlossary(",
+                       "const GLOSSARY=[", "const CODING_IDEAS=[",
+                       "const IMPL_NOTES=["):
             self.assertIn(needle, html, needle)
         facts = _layout_facts(html)
         self.assertEqual(facts["missing_ids"], [])

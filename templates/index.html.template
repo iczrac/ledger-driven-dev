@@ -159,7 +159,8 @@ input.search:focus{border-color:var(--purple)}
 <div class="tab" data-v="capability">能力地图</div>
 <div class="tab" data-v="history">演进历史</div>
 <div class="tab" data-v="lessons">经验库</div>
-<input class="search" id="q" placeholder="搜索标题 / 决策 / 分类 / id / 模块 / 能力 / TODO / issue / 测试…">
+<div class="tab" data-v="glossary">术语与实现</div>
+<input class="search" id="q" placeholder="搜索标题 / 决策 / 分类 / id / 模块 / 能力 / TODO / issue / 测试 / 术语…">
 </div>
 <div class="legend" id="legend"></div>
 <div id="list"></div>
@@ -434,6 +435,7 @@ function render(){
   if(view==='capability'){ renderCapability(box); return; }
   if(view==='history'){ renderHistory(box); return; }
   if(view==='lessons'){ renderLessons(box); return; }
+  if(view==='glossary'){ renderGlossary(box); return; }
   if(view==='arch'){
     document.getElementById('legend').innerHTML='<span>点击项目展开 → 模块 → 嵌套组件树（目录/文件逐层展开）→ 文档索引 → 能力编码 → 决策控制。组件由源码目录真实提取。</span>';
     let ps=DATA.architecture.projects;
@@ -631,6 +633,69 @@ function lessonCard(x, confirmed){
       '<div class="row"><span class="k">行动</span><span class="v">'+esc(x.action)+'</span></div>'
       :'<div class="cmeta">'+esc(x.reason||'')+'</div>')+
     '<div class="cmeta">适用范围 '+(chips||'<span style="color:var(--mut)">全局</span>')+' · 来源事件 '+ev+'</div></div>';
+}
+// ===== 术语与实现视图（v2.1.1）：内容与仓库实现同源；改实现必须改模板并发版，禁止项目内手改 =====
+const GLOSSARY=[
+ {t:'决策账本',s:'DECISION_LEDGER.json',d:'单一事实源：所有重大决策、裁决、待办的唯一写入点。看板与能力模型由它派生；结论迁入账本后，旧报告仅作历史证据，不再维护。'},
+ {t:'决策标识 / 取代链',s:'D-NNN · supersedes',d:'决策 id 永不复用。旧决策被推翻时不删除，标 superseded 并与新条目互相引用（supersedes / superseded_by），用链表达演进，不堆叠新报告。'},
+ {t:'能力注册表',s:'registry.json',d:'每个项目唯一需要手工维护的清单：声明项目、模块、能力，以及实现的实现路径（impl）、单元测试（caps[].tests）、测试记录（caps[].test_records）。其余一切机器派生。'},
+ {t:'能力点',s:'capability',d:'编码形如 DEMO.CORE.ORDER.01（项目.模块.领域.序号）。完成度与等级只由证据重算，禁止手填。'},
+ {t:'三类声明',s:'impl / tests / test_records',d:'能力的实现路径、单元测试路径、测试记录目录。生成器逐条校验「存在且已入库」，缺失即告警并按缺失处理，不猜。'},
+ {t:'完成度等级',s:'L2 / L3 / L5',d:'由证据机器判定：L2=实现已入库；L3=实现+单元测试；L5=再加测试记录。不满足即降级，与口头描述无关。'},
+ {t:'证据等级',s:'verified / declared',d:'verified=证据存在且绑定当前源码摘要；declared=仅声明、未验证。诚实优先于绿灯：宁要真实的 declared，不要伪造的 verified。'},
+ {t:'证据报告',s:'test_report.json',d:'标准库 unittest 实跑产物：逐用例状态、耗时，以及测试文件的 sha256 摘要。生成器据此判断证据对当前源码是否仍然有效。'},
+ {t:'漂移',s:'drift · --check',d:'重算结果 ≠ 已写账本即漂移。生成器 --check 逐字段比对，发现差异逐条打印并 exit 1；本地工作区脏时钩子显式跳过，以远端干净检出为准。'},
+ {t:'可复算',s:'ledger = f(registry, 仓库, 报告)',d:'把账本里全部 evidence 抹空再重算，应逐字段复原。做不到，说明账本不是仓库的函数，不可信。'},
+ {t:'干净检出',s:'clean checkout',d:'无未提交改动的工作副本。证据报告必须在干净检出里生成，否则源码摘要绑定的是作者的工作区字节，报告只对作者有效。'},
+ {t:'账本不变量',s:'verify_ledger.py',d:'三态校验（pass / fail / na）覆盖取代链闭合、经验库去重、工作项引用、报告绑定等；CI 以 --strict 零放行。'},
+ {t:'方法仓',s:'ledger-driven-dev',d:'方法论的权威源：模板、脚本、方法文档、专家、技能，按 tag 发版。目标项目只持只读副本，禁止在项目内改方法论文件。'},
+ {t:'三副本同步',s:'templates → 项目 → examples',d:'模板脚本与项目 governance/*、示例项目副本字节级一致，由方法仓门禁逐字节校验。'},
+ {t:'方法资产摘要',s:'method_assets',d:'方法仓关键文件的逐文件 sha256 清单，绑定进账本 governance_meta。方法内容一变，重绑后立刻可见。'},
+ {t:'安装副本',s:'.workbuddy + ASSET_MANIFEST',d:'专家 EXPERT.md 与技能 SKILL.md 以只读方式部署到项目 .workbuddy/；逐文件摘要与整包 digest 写入 ASSET_MANIFEST 并绑定账本 installed_assets。项目内禁改。'},
+ {t:'看板骨架',s:'board_skeleton',d:'看板 HTML 去掉内嵌数据段后的字节摘要，写入账本。要改样式只能改权威模板并发版，由 upgrade 归一化推送，禁止在项目里改版面。'},
+ {t:'迁移',s:'upgrade.py M1–M8',d:'升级按编号迁移执行：默认 dry-run，--apply 必须带 --approved-by 人批准，写盘前自动备份到 .ledger-upgrade/backups。'},
+ {t:'只增不改',s:'append-only',d:'历史事件只追加、不修改、不删除。要推翻结论就写新决策并挂取代链；要重来就冻结/归档旧账本另起新账本。'},
+ {t:'失败即关闭',s:'fail-closed',d:'校验器在账本损坏、状态不明、资产缺失时先停下审计，绝不带病进入编码或放行流水线。'},
+ {t:'专家路由',s:'expert-router',d:'把「项目状态 + 任务意图」确定性映射到唯一负责专家（8 张路由卡）；冲突不猜，要求澄清；缺资产即拒绝路由。'}
+];
+const CODING_IDEAS=[
+ {t:'单一事实源',d:'一份账本取代散落的报告与日志。页面、索引、能力模型全部从账本或仓库派生——手改派生物没有意义，下次重算就会消失。'},
+ {t:'派生优先，改源头不改产物',d:'所有视图由生成器从 registry + 仓库 + 报告重算。要改结果，就改声明或生成器，然后重算；绝不手改生成出来的文件。'},
+ {t:'证据先于权威',d:'完成度、等级、verified 全部机器判定，人只做声明与裁决，不填数字。账本可以难看，但不可以说谎。'},
+ {t:'两级门禁各司其职',d:'本地钩子快、容忍脏工作区，但显式告警跳过项；远端 CI 在干净检出一票否决。本地绿灯不是放行，远端绿灯才是。'},
+ {t:'破坏性操作必经人批准',d:'迁移、看板归一化、资产安装全部默认 dry-run；--apply 必须留 --approved-by 审计与备份。机器不做不可逆的事。'},
+ {t:'摘要绑定一切',d:'方法资产、安装副本、看板骨架、测试报告四层指纹互相锚定。任何一层被手改，重算或对账都会当场现形——不靠自觉，靠对不上。'}
+];
+const IMPL_NOTES=[
+ {t:'build_capability_model.py',d:'resolve_declared 把声明解析为「存在且已入库」的仓库相对路径，缺失即告警并按缺失处理；judge_level 只看声明名单，不做关键词扫描；--check 用 diff_projects 重算并与已写账本逐字段比对，共 N 处差异即 exit 1。'},
+ {t:'verify_ledger.py',d:'账本不变量的三态校验器：pass / fail / na，覆盖取代链闭合、经验库去重、工作项引用、测试结果绑定源码摘要等；--strict 供 CI 零放行。'},
+ {t:'run_tests.py',d:'标准库 unittest 全量实跑，输出机器可读 JSON：逐用例状态与耗时，外加测试文件内容摘要。报告绑定源码字节，杜绝「拿旧报告说新话」。'},
+ {t:'upgrade.py',d:'M1–M8 编号迁移：方法版本、文档定稿、方法资产重绑、看板骨架归一化、只读资产安装、多 Agent 接入登记。先 plan 后 apply，apply 前整体快照。'},
+ {t:'board_contract.py',d:'看板骨架摘要 = 把 EMBED 数据段替换为占位符后对剩余全部字节取 sha256。normalize 用权威模板 + 当前账本重建看板，默认 dry-run，写盘自动备份。'},
+ {t:'asset_bundle.py / route_expert.py',d:'安装器写 ASSET_MANIFEST（逐文件 sha256 + 整包 digest）并绑定账本 installed_assets；路由器读真实资产正文而不是硬编码卡片，缺文件 fail-closed。'},
+ {t:'check.sh / governance.yml',d:'方法仓门禁：单测、测试架构、不变量、场景矩阵、文件布局、升级与接入、资产契约、幂等、同步、回流、本体、脱敏、文档链接、验收契约逐阶段全绿；目标项目 CI 跑账本不变量 + 生成器 --check，干净检出一票否决。'}
+];
+function glossCard(x,tag){
+  return '<div class="card"><div class="chead"><span class="ctitle">'+esc(x.t)+'</span>'+
+    (x.s?'<span class="cid">'+esc(x.s)+'</span>':'')+
+    (tag?'<span class="pill p-deferred">'+esc(tag)+'</span>':'')+'</div>'+
+    '<div class="cmeta" style="margin-top:8px">'+esc(x.d)+'</div></div>';
+}
+function renderGlossary(box){
+  document.getElementById('legend').innerHTML='<span>专有词汇 · 编码思路 · 关键实现解说 —— 内容与仓库实现同源：改实现必须改权威模板并发版，禁止在项目内手改本页</span>';
+  const f=x=>!query||(x.t+' '+(x.s||'')+' '+x.d).toLowerCase().includes(query);
+  const G=GLOSSARY.filter(f),C=CODING_IDEAS.filter(f),N=IMPL_NOTES.filter(f);
+  const total=G.length+C.length+N.length;
+  const gs=G.slice(0,pageLimit),cs=C.slice(0,pageLimit),ns=N.slice(0,pageLimit);
+  let html='<div class="specbox"><b>词汇</b> '+G.length+' 条 · <b>思路</b> '+C.length+' 条 · <b>实现</b> '+N.length+' 条 · 可用右上搜索框过滤</div>';
+  html+='<div class="day">专有词汇表 · 术语释义</div>';
+  html+=gs.length?gs.map(x=>glossCard(x,'术语')).join(''):'<div class="empty">无匹配术语</div>';
+  html+='<div class="day">编码思路</div>';
+  html+=cs.length?cs.map(x=>glossCard(x,'思路')).join(''):'<div class="empty">无匹配</div>';
+  html+='<div class="day">关键实现解说</div>';
+  html+=ns.length?ns.map(x=>glossCard(x,'实现')).join(''):'<div class="empty">无匹配</div>';
+  html+=moreHtml(total,gs.length+cs.length+ns.length,' 条内容');
+  box.innerHTML=html;bindMore(box);
 }
 function capHistoryHtml(code){
   const evs=(DATA.history||{}).events||[];
