@@ -1,7 +1,7 @@
 # DELIVERY 2.2.0 — 绑定硬门禁（verified ⟺ bound）
 
 - 日期：2026-11-19
-- 状态：开发中（tag 待发）
+- 状态：已发布（tag v2.2.0；方法仓 53eaff8，主仓 1fc2412b8）
 - 批准：用户选「机制治本」——把符号绑定从 shadow advisory 升级为 verified 硬门禁
 
 ## 一、从第一性原理定位的病
@@ -43,12 +43,17 @@ MAPPING-REVIEW 给了三选一：补直接单测 / 声明 via / 接受降级。�
 5. **版本与文档**：METHOD_VERSION 2.2.0；EVIDENCE_TIER_SPEC、docs 03/08/11/23、
    CHANGELOG、ontology 派生同步。
 
-## 四、复验（待主仓重绑后填）
+## 四、复验（终态）
 
-- 方法仓 check.sh EXIT=0（待跑）
-- 全量单测待跑（新增 6 条）
-- 主仓预期：verified 43 → 29，14 个存疑能力 declared
-- `--check` 无漂移、26 不变量、远端 CI 零放行（待填）
+- 方法仓 `check.sh all` EXIT=0；321 单测全绿（原 315 + 新增 6）；acceptance 目标版本 2.2.0；
+  generator 1476 行 < 1500 硬限；
+- 主仓干净 clone 重绑：verified 43 → **29**（恰好 = bound 数），18 declared
+  （10 unbound + 3 via1 + 1 no_impl + 4 no_tests）；29 个 verified **全部** bound，
+  零新增 verified，cap 总数 47 不变——没有任何东西被做绿；
+- 真实降级 14 个：COVERAGE.04 / BARRA.03 / CC.02（via1）+ 10 个 unbound + LEDGER.04（no_impl）；
+- 报告仍 fresh（绑定集只含 `projects/**`，治理工具改动不影响摘要，无需重跑 APEX 全量测试）；
+- 干净检出 CI 门禁：`OK: 26 pass / 0 fail / 0 na（零放行）` + `OK: 无漂移`，EXIT=0；
+  upgrade verify 12 轴全 pass、complete=True；board/work_panel/assets 校验全绿。
 
 ## 五、边界（不掩盖）
 
