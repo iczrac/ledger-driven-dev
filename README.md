@@ -337,7 +337,7 @@ bash scripts/check.sh
 ### AI 接手：专家路由与技能
 
 - **八个专家**：`expert-router`（调度）、`greenfield-architect`（新建）、`project-archaeologist`（存量）、`ledger-steward`（账本治理）、`evidence-auditor`（只读审计）、`loop-executor`（一条任务卡的编码）、`release-steward`（冻结/归档/退役与批准门）、`platform-steward`（升级与接入的规划协调）。每个都有权限矩阵、停止条件与交接模板。
-- **二十一个技能**：`intent-restate` / `expert-route` / `project-discover` / `project-bootstrap` 覆盖复述门、路由、盘点、初始化；`doc-rebuild` / `graph-compare` 覆盖规范文档、编码索引与图比对；`scenario-guard` 覆盖写入前预检；`layout-inspect` 覆盖引入后文件架构；`ledger-upgrade` / `agent-gate` 覆盖升级与多 Agent 接入；`method-assets` / `board-layout` / `scale-budget` 覆盖资产摘要、统一版面与规模预算；`asset-install` / `test-map` / `work-panel` 覆盖只读资产安装、测试模块映射与节点工作台；原有五个技能覆盖扫描、校验、立项、经验与门禁。
+- **二十二个技能**：`intent-restate` / `expert-route` / `expert-run` / `project-discover` / `project-bootstrap` 覆盖复述门、路由、自动编排、盘点、初始化；`doc-rebuild` / `graph-compare` 覆盖规范文档、编码索引与图比对；`scenario-guard` 覆盖写入前预检；`layout-inspect` 覆盖引入后文件架构；`ledger-upgrade` / `agent-gate` 覆盖升级与多 Agent 接入；`method-assets` / `board-layout` / `scale-budget` 覆盖资产摘要、统一版面与规模预算；`asset-install` / `test-map` / `work-panel` 覆盖只读资产安装、测试模块映射与节点工作台；原有五个技能覆盖扫描、校验、立项、经验与门禁。
 - 纪律不只写在文档里：`route_expert.py` 对冲突 fail-closed，`discover_project.py` 默认不覆盖草稿，`init_project.py` 跳过既有治理文件，`ledger_decide.py` / `ledger_lesson.py` 在代码层拒绝重复立项与缺行动的经验，`agent_gateway.py` 把权限变成默认拒绝的写入执行点。
 
 详见 [12-专家路由](docs/12-专家路由.md)、[13-可追溯性](docs/13-可追溯性.md)、[14-场景矩阵](docs/14-场景矩阵.md)、[15-文件架构](docs/15-文件架构.md)、[16-升级与迁移](docs/16-升级与迁移.md)、[17-多Agent接入控制](docs/17-多Agent接入控制.md)、[18-规模化与版面契约](docs/18-规模化与版面契约.md)、[19-专家与技能可用](docs/19-专家与技能可用.md)、[20-测试架构与模块映射](docs/20-测试架构与模块映射.md)、[21-节点工作台与看板视图](docs/21-节点工作台与看板视图.md)、[22-反向回流](docs/22-反向回流.md) 与 [10-AI集成](docs/10-AI集成.md)。
@@ -379,7 +379,7 @@ bash scripts/check.sh
 8. [可信性校验](docs/08-可信性校验.md) —— 26 条不变量，让「可信」可被验证
 9. [历史与经验](docs/09-历史与经验.md) —— 状态指纹驱动的演进历史，以及可被任务卡消费的经验层
 10. [文档规范](docs/STANDARD.md) —— 命名、章节、状态词与更新触发点
-11. [AI 集成](docs/10-AI集成.md) —— 专家、二十一个技能与平台无关的最小消费路径
+11. [AI 集成](docs/10-AI集成.md) —— 专家、二十二个技能与平台无关的最小消费路径
 12. [证据分层](docs/11-证据分层.md) —— 区分声明级与验证级证据，消除假绿灯
 13. [专家路由](docs/12-专家路由.md) —— 多专家协作、历史/新建双路径与交接协议
 14. [可追溯性](docs/13-可追溯性.md) —— 五项反问、文档/架构/git/图比对闭环

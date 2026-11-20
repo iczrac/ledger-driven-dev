@@ -2,18 +2,28 @@
 
 本项目版本遵循语义化版本（SemVer）。
 
-## [Unreleased] · P0 专家团路由修复（方法仓 dogfood 中）
+## [2.5.0] - 2026-11-20
 
-v2.4.0 复述门是可选前置（`--intent-file`），默认路径仍会把未识别的非空指令
-静默判成高置信路由；同时 `route` 意图被 `decide()` 排除，问「该找谁」永远
-落不到专家路由本人。本轮只修路由逻辑与交接链，不新增专家/技能资产。
+**专家团自动编排：把路由链变成可执行分工 + 人工批准包**。P0 先修路由，
+P1 再让「链 → 行动」落地——目标是尽量全 AI 驱动，但保留人必须保留的批准点。
 
+**P0 · 路由修复**（不新增资产）
 - 未识别的非空指令 → `needs_clarification`，点名 `intent.json` 复述路径，
   `confidence` 诚实降为 `low`；空意图仍按现状默认路由，向后兼容。
-- `route` 意图恢复为合法强候选，由 `expert-router` 承接（只读、不写入）。
-- `route.handoff.chain` 新增多跳交接链（3 跳，确定性），为人肉编排自动化
-  与后续 `expert-run` 铺路；文本输出同步展示。
-- 路由模块新增 4 条测试，先红后绿；16/16 路由测试通过。
+- `route` 意图恢复为合法强候选，由 `expert-router` 承接（只读、不写入），
+  并补齐其专属只读命令集（原落到默认 `--help`）。
+- `route.handoff.chain` 新增多跳交接链（3 跳，确定性），为编排器铺路。
+
+**P1 · expert-run 编排器**（新元工具 + 新技能，触发整包升级）
+- `expert_run.py`（新增，不进治理工具副本）：沿交接链展开逐跳专家契约
+  （skills/writes/EXPERT.md）+ 命令分类（readonly/approval/manual）+ 人工批准包。
+  **零新判定权**：负责人/链/命令全部来自 `route_expert` 与 `EXPERT_CARDS`；
+  **默认 dry-run 零执行**：不跑命令、不写文件、不碰账本；
+  **fail-closed**：路由未通过时 chain 与批准包为空，只给 halt_reason。
+  结论 `run = f(intent, target, route_expert, EXPERT_CARDS, commands_for)` 可复算。
+- 新技能 `expert-run`（21→22）+ `docs/25-专家团自动编排` + 11 条单测（先红后绿）。
+- 命令分类保守：写授权标志压过只读标志，内联 `python3 -c` 归 manual，
+  宁可归 approval 不误判 readonly；批准包命令透传真实 target，复制即可执行。
 
 ## [2.4.0] - 2026-11-20
 

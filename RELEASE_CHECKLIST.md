@@ -18,8 +18,9 @@
 - [x] 经验层：自动识别候选 + 人工确认 + 任务卡消费，看板两视图可见可点
 - [x] 一键初始化脚本可用（含校验器），支持 greenfield / adopt 双模式与 provenance 记录
 - [x] 八种专家角色（路由 / 新建 / 考古 / 账本治理 / 审计 / 执行 / 生命周期 / 平台治理），各含权限矩阵与停止条件
-- [x] 二十一个技能（intent-restate/route/discover/bootstrap/scan/verify/decide/lesson/guard/doc-rebuild/graph-compare/scenario-guard/layout-inspect/ledger-upgrade/agent-gate/method-assets/board-layout/scale-budget/asset-install/test-map/work-panel），标准 SKILL.md frontmatter
+- [x] 二十二个技能（intent-restate/expert-run/route/discover/bootstrap/scan/verify/decide/lesson/guard/doc-rebuild/graph-compare/scenario-guard/layout-inspect/ledger-upgrade/agent-gate/method-assets/board-layout/scale-budget/asset-install/test-map/work-panel），标准 SKILL.md frontmatter
 - [x] 复述门：结构化意图声明 + 8 道机器校验（防幻觉能力码/只读越权/意图竞争/元指令披露），可复算、只读、三态退出码；接入 route_expert 前置，不传 --intent-file 时向后兼容
+- [x] 专家团自动编排：expert_run 沿交接链展开逐跳契约 + 命令分类（readonly/approval/manual）+ 人工批准包；零新判定权、默认 dry-run 零执行、fail-closed、可复算；批准点仍由人 --approved-by
 - [x] 技能脚本：重复立项、缺行动经验、无理由驳回均由代码拒绝
 - [x] 243 个 unittest 用例（含 v1.3.0 的 7 个三态/幂等/适配器回归、v1.4.0 的 9 个反向回流专项、v1.5.0 的 12 个本体投影专项、v1.6.0 的 16 个验收契约专项 + 4 个 append-only 回归），零第三方依赖，临时目录隔离
 - [x] CI（Python 3.10-3.13 矩阵）/ CD（tag 触发，先门禁后打包）
@@ -138,7 +139,7 @@
 ## 文档
 
 - [x] README（价值主张、快速开始、目录结构、视图说明）
-- [x] 二十一篇编号方法论文档 + STANDARD.md + CONTRIBUTING.md
+- [x] 二十二篇编号方法论文档 + STANDARD.md + CONTRIBUTING.md
 - [x] LICENSE（MIT）
 - [x] CHANGELOG
 - [x] registry.example.json 含字段说明注释

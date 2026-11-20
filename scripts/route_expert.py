@@ -616,6 +616,12 @@ def decide(facts: dict, scores: dict[str, int], explicit_mode: str) -> dict:
 def commands_for(expert: str, target_display: str) -> list[str]:
     t = target_display
     return {
+        "expert-router": [
+            # P0 让 route 意图归位到本人；补齐专属只读命令，避免落到默认 --help。
+            f"python3 scripts/route_expert.py --target {t} --check-assets --json",
+            f"python3 scripts/route_expert.py --target {t} --intent \"<本轮意图>\" --json",
+            f"python3 scripts/expert_run.py --target {t} --intent \"<本轮意图>\" --json",
+        ],
         "greenfield-architect": [
             f"python3 scripts/init_project.py --target {t} --code YOURCODE --name \"项目名\"",
             f"cd {t} && python3 governance/build_capability_model.py --root . --dry-run",
