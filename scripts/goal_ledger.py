@@ -65,8 +65,38 @@ def find_goal(ledger: dict, goal_id: str) -> dict | None:
     return next((g for g in items_of(ledger) if g.get("goal_id") == goal_id), None)
 
 
+# 判据指标全表：新增指标必须同时进这里、validate_criteria 与 evaluate_criteria。
+SUPPORTED_METRICS = ("cap_level", "queue_empty", "invariant_all",
+                     "method_version", "level_progress")
+VERSION_OPS = ("gte", "gt", "eq", "ne", "lte", "lt", ">=", ">", "==", "!=", "<=", "<")
+
+
+def version_tuple(value) -> tuple[int, ...]:
+    """语义版本转可比较元组；与 upgrade._version_tuple 语义一致（标准库、纯函数）。
+
+    非数字段按 0 处理，保证 2.9.0 < 2.10.0（v2.10 踩过字符串比较的坑）。
+    """
+    parts: list[int] = []
+    for piece in str(value or "").strip().split("."):
+        digits = "".join(ch for ch in piece if ch.isdigit())
+        parts.append(int(digits) if digits else 0)
+    while parts and parts[-1] == 0:
+        parts.pop()
+    return tuple(parts)
+
+
+def compare_version(current, target, op: str) -> bool:
+    """按语义版本比较；未知 op 一律 False（fail-closed）。"""
+    a, b = version_tuple(current), version_tuple(target)
+    return {
+        "gte": a >= b, ">=": a >= b, "gt": a > b, ">": a > b,
+        "eq": a == b, "==": a == b, "ne": a != b, "!=": a != b,
+        "lte": a <= b, "<=": a <= b, "lt": a < b, "<": a < b,
+    }.get(op, False)
+
+
 def validate_criteria(criteria) -> list[str]:
-    """机读成功判据必须是非空列表，每项含 id/metric/target/op。返回错误列表。"""
+    """机读成功判据必须是非空列表，每项含 id/metric/target/op；指标参数需自洽。"""
     errors: list[str] = []
     if not isinstance(criteria, list) or not criteria:
         return ["success_criteria 必须是非空数组"]
@@ -79,8 +109,28 @@ def validate_criteria(criteria) -> list[str]:
         if not cid or cid in seen:
             errors.append(f"判据[{i}] id 缺失或重复：{cid}")
         seen.add(cid)
-        if not str(c.get("metric", "")) or "target" not in c or not str(c.get("op", "")):
+        metric, op = str(c.get("metric", "")), str(c.get("op", ""))
+        if not metric or "target" not in c or not op:
             errors.append(f"判据[{i}] 缺 metric/target/op")
+            continue
+        if metric not in SUPPORTED_METRICS:
+            errors.append(f"判据[{i}] 未知 metric={metric}")
+        elif metric == "method_version":
+            if not version_tuple(c.get("target")):
+                errors.append(f"判据[{i}] method_version.target 非法：{c.get('target')}")
+            if op not in VERSION_OPS:
+                errors.append(f"判据[{i}] method_version.op 非法：{op}")
+        elif metric == "level_progress":
+            if not str(c.get("target", "")):
+                errors.append(f"判据[{i}] level_progress 缺能力 code")
+            if "baseline" not in c or not isinstance(c.get("baseline"), int) \
+                    or isinstance(c.get("baseline"), bool) or c["baseline"] < 0:
+                errors.append(f"判据[{i}] level_progress.baseline 须为非负整数")
+            try:
+                if int(c.get("value", 1)) < 1:
+                    errors.append(f"判据[{i}] level_progress.value 须 >= 1")
+            except (TypeError, ValueError):
+                errors.append(f"判据[{i}] level_progress.value 非法")
     return errors
 
 
@@ -301,11 +351,13 @@ def reject_change(ledger: dict, goal_id: str, proposal_id: str, *,
 
 
 def evaluate_criteria(ledger: dict, goal: dict) -> dict:
-    """只读评估机读判据。当前支持 3 类通用 metric；未知 metric 判 false。
+    """只读评估机读判据；未知 metric / 非法 op 一律 false（fail-closed）。
 
-    - cap_level:       capability_model 中 code 的 level >= target
-    - invariant_all:   verify 结果全部非 fail（由循环注入 verify_detail）
+    - cap_level:       capability_model 中 code 的 level 与 value 比较
     - queue_empty:     next_queue 为空
+    - invariant_all:   verify 结果全部非 fail（由循环注入 verify_detail）
+    - method_version:  governance_meta.method_version 与 target 语义版本比较
+    - level_progress:  code 的 level 相对 baseline 的提升量 >= value
     判据与 verify_ledger 相互独立：verify 是门禁，evaluate 是达成判定。
     """
     cm = ledger.get("capability_model", {})
@@ -339,6 +391,21 @@ def evaluate_criteria(ledger: dict, goal: dict) -> dict:
                      if isinstance(r, dict) and r.get("status") == "fail"]
             met = not fails and bool(verify)
             reason = f"verify fail={fails[:3]}" if fails else "verify 未提供或全通过"
+        elif metric == "method_version":
+            current = (ledger.get("governance_meta") or {}).get("method_version", "0")
+            met = compare_version(current, c.get("target"), op)
+            reason = f"method_version={current} op={op} target={c.get('target')}"
+        elif metric == "level_progress":
+            cap = by_code.get(str(target))
+            lv = cap.get("level") if cap else None
+            try:
+                base, need = int(c.get("baseline", 0)), int(c.get("value", 1))
+                delta = (int(lv) if lv is not None else 0) - base
+                met = delta >= need if op in (">=", "gte") else delta == need
+                reason = (f"{target} level={lv} baseline={base} "
+                          f"delta={delta} op={op} value={need}")
+            except (TypeError, ValueError):
+                reason = f"{target} level 非法：{lv}"
         results.append({"id": str(c.get("id", "")), "met": bool(met), "reason": reason})
     all_met = bool(results) and all(r["met"] for r in results)
     return {"all_met": all_met, "criteria": results,

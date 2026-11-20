@@ -2,6 +2,15 @@
 
 本项目版本遵循语义化版本（SemVer）。
 
+## [2.14.0] - 2026-11-21
+
+**推广探路驱动的目标编排加固**：让循环能表达治理目标、能识别空转、能在验证门 fail-closed。
+
+- `goal_ledger` 新增 `method_version`（语义版本比较）与 `level_progress`（能力等级相对基线提升）两个判据指标，含参数校验与未知 op 一律 false 的 fail-closed 语义。
+- `goal_loop` 新增进展指纹（任务 + 相关能力等级 + 方法版本）与 `stall_limit`（默认 2）：连续无进展即 `stagnated` 暂停并给四要素结构化提议，不再烧满 `max_loops` 后才失活；新增 `--stall-limit` CLI。
+- 第 30 条不变量扩展：账本侧拒绝非法新判据（未知 metric / 非法版本 / 缺 baseline）；单测新增 9 例。
+- 取证报告 `feedback/GOAL-PROMOTE-DRYRUN.md`：在干净 clone 上以 v2.13 验证器复跑推广目标，发现旧账本 43 处 `unbound_verified` 脏数据在验证门被正确拦下（报告初写 5 处系验证器只打印前 5 个）——推广的第一道门是账本合规，不是目标循环。人批准后按可复算路径在 clone 修复全部 43 处（bound 29 保 verified / 其余 14 降 declared + 派生 issue），验证门升至 30/30 全绿，复跑正确触发 `stagnated`。
+
 ## [2.13.0] - 2026-11-20
 
 **目标编排监督者**：在授权预算内对单一目标做受控自动循环，方向锁定、人批准调整。

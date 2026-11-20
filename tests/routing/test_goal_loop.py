@@ -212,6 +212,79 @@ class RoutingTest(unittest.TestCase):
         self.assertIn("goal-orchestrate", card["skills"])
 
 
+class CriteriaMetricsTest(unittest.TestCase):
+    def test_semver_ordering_not_string_ordering(self):
+        self.assertFalse(gl.compare_version("2.9.0", "2.10.0", "gte"))
+        self.assertTrue(gl.compare_version("2.13.0", "2.10.0", "gte"))
+        self.assertTrue(gl.compare_version("2.13.0", "2.13.0", "eq"))
+        self.assertFalse(gl.compare_version("2.13.0", "2.13.0", "ne"))
+
+    def test_unknown_op_is_fail_closed(self):
+        self.assertFalse(gl.compare_version("2.13.0", "2.10.0", "bogus"))
+
+    def test_method_version_and_level_progress_evaluation(self):
+        crit = [
+            {"id": "v", "metric": "method_version", "target": "2.13.0", "op": "gte"},
+            {"id": "l", "metric": "level_progress", "target": "M.GOV.TEST.01",
+             "baseline": 2, "value": 2, "op": "gte"},
+        ]
+        self.assertEqual(gl.validate_criteria(crit), [])
+        led = {
+            "governance_meta": {"method_version": "2.13.0"},
+            "capability_model": {"projects": [{"modules": [{"caps": [
+                {"code": "M.GOV.TEST.01", "level": 3}]}]}]},
+        }
+        ev = gl.evaluate_criteria(led, {"success_criteria": crit})
+        self.assertEqual(ev["met_count"], 1)
+        self.assertTrue(ev["criteria"][0]["met"])
+        self.assertFalse(ev["criteria"][1]["met"])
+        led["capability_model"]["projects"][0]["modules"][0]["caps"][0]["level"] = 4
+        self.assertTrue(gl.evaluate_criteria(led, {"success_criteria": crit})["all_met"])
+
+    def test_new_metric_params_validated(self):
+        bad = [{"id": "v", "metric": "method_version", "target": "abc", "op": "gte"}]
+        self.assertTrue(gl.validate_criteria(bad))
+        bad = [{"id": "l", "metric": "level_progress", "target": "M.A.B.01",
+                "op": "gte"}]
+        self.assertTrue(gl.validate_criteria(bad))
+
+    def test_unknown_metric_rejected(self):
+        bad = [{"id": "x", "metric": "evil", "target": "a", "op": "eq"}]
+        self.assertIn("未知 metric", "".join(gl.validate_criteria(bad)))
+
+
+class StagnationTest(unittest.TestCase):
+    def test_fingerprint_tracks_task_level_and_version(self):
+        goal = {"success_criteria": [
+            {"id": "l", "metric": "level_progress", "target": "M.A.B.01",
+             "baseline": 1, "value": 1, "op": "gte"}]}
+        led = {"governance_meta": {"method_version": "2.1.2"},
+               "capability_model": {"projects": [{"modules": [{"caps": [
+                   {"code": "M.A.B.01", "level": 2}]}]}]}}
+        task = {"code": "M.A.B.01"}
+        fp = goal_loop.progress_fingerprint(led, goal, task)
+        self.assertEqual(fp, goal_loop.progress_fingerprint(led, goal, task))
+        led["capability_model"]["projects"][0]["modules"][0]["caps"][0]["level"] = 3
+        self.assertNotEqual(fp, goal_loop.progress_fingerprint(led, goal, task))
+        led["governance_meta"]["method_version"] = "2.13.0"
+        self.assertNotEqual(fp, goal_loop.progress_fingerprint(led, goal, task))
+
+    def test_invalid_stall_limit_is_rejected(self):
+        with tempfile.TemporaryDirectory() as td:
+            target = Path(td)
+            gov = target / "governance"
+            gov.mkdir()
+            led = _base_ledger()
+            gl.create_goal(led, goal_id="G-S1", description="停滞测试",
+                           success_criteria=CRIT, max_loops=3,
+                           authorized_by="a", approved_by="b")
+            (gov / "DECISION_LEDGER.json").write_text(
+                json.dumps(led, ensure_ascii=False), encoding="utf-8")
+            out = goal_loop.run(target, "G-S1", stall_limit=0)
+            self.assertEqual(out["verdict"], "invalid")
+            self.assertIn("stall_limit", out["stop_reason"])
+
+
 class LoopScriptTest(unittest.TestCase):
     def test_gateway_command_has_apply_and_agent(self):
         cmd = goal_loop.gateway_command("goal-advance", "G-A1",
@@ -261,6 +334,19 @@ class InvariantTest(unittest.TestCase):
         g["current_loop"] = 3  # 越界
         row = next(r for r in self._verify(led) if r["id"] == "goal_loop_valid")
         self.assertEqual(row["status"], "fail")
+
+    def test_illegal_new_metric_fails_invariant(self):
+        led = _base_ledger()
+        gl.create_goal(led, goal_id="G-A1", description="x",
+                       success_criteria=CRIT, max_loops=2,
+                       authorized_by="a", approved_by="b")
+        # 绕过网关直接篡改账本判据（方向锁一并失效，但判据本身也应被抓）
+        g = gl.find_goal(led, "G-A1")
+        g["success_criteria"] = [{"id": "v", "metric": "method_version",
+                                  "target": "abc", "op": "gte"}]
+        row = next(r for r in self._verify(led) if r["id"] == "goal_loop_valid")
+        self.assertEqual(row["status"], "fail")
+        self.assertIn("method_version.target", row["detail"])
 
 
 if __name__ == "__main__":

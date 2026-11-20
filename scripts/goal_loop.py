@@ -116,10 +116,41 @@ def gateway_command(action: str, goal_id: str, *, agent: str,
     return " ".join(parts)
 
 
+def progress_fingerprint(ledger: dict, goal: dict, task: dict) -> str:
+    """进展指纹 = 任务 + 判据相关能力等级 + 方法版本。
+
+    dry-run 不写盘，真实工作完成前这三者不会变；连续相同即判定循环空转，
+    不能靠烧完 max_loops 才失活。用 json 稳定序列化保证可复算。
+    """
+    import hashlib as _hl
+
+    cm = ledger.get("capability_model") or {}
+    caps = [c for p in cm.get("projects", []) for m in p.get("modules", [])
+            for c in m.get("caps", []) if isinstance(c, dict)]
+    by_code = {c.get("code"): c for c in caps}
+    codes = sorted({str(c.get("target", "")) for c in goal.get("success_criteria", [])
+                    if isinstance(c, dict)
+                    and c.get("metric") in ("cap_level", "level_progress")})
+    state = {
+        "task": str(task.get("code", "")),
+        "levels": {code: (by_code.get(code) or {}).get("level") for code in codes},
+        "method_version": (ledger.get("governance_meta") or {}).get("method_version"),
+    }
+    blob = json.dumps(state, ensure_ascii=False, sort_keys=True,
+                      separators=(",", ":"))
+    return _hl.sha256(blob.encode("utf-8")).hexdigest()
+
+
 def run(target: Path, goal_id: str, *, intent: str = "",
-        max_loops: int | None = None, emit_apply: bool = False) -> dict:
+        max_loops: int | None = None, emit_apply: bool = False,
+        stall_limit: int = 2) -> dict:
     """只读预演：在账本内存副本上模拟循环，不改盘、不跑专家命令。"""
     display = str(target)
+    if not isinstance(stall_limit, int) or isinstance(stall_limit, bool) \
+            or not 1 <= stall_limit <= 20:
+        return _halt({"schema": SCHEMA, "target": display, "goal_id": goal_id,
+                      "rounds": [], "commands": [], "mode": "dry-run"},
+                     f"stall_limit 必须 1..20（当前 {stall_limit}）", "invalid")
     gov = target / "governance"
     ledger_path = gov / "DECISION_LEDGER.json"
     if not ledger_path.is_file():
@@ -166,6 +197,10 @@ def run(target: Path, goal_id: str, *, intent: str = "",
     queue = list(cm.get("next_queue") or [])
     if not queue:
         return _halt(result, "next_queue 为空：无可推进任务，等待补队列", "no_queue")
+
+    first_task = next((t for t in queue if str(t.get("code", "")) in base_intent), queue[0])
+    last_fp = progress_fingerprint(sim, goal, first_task)
+    stalled = 0
 
     for step in range(budget):
         cur = goal_ledger.find_goal(sim, goal_id)
@@ -236,6 +271,35 @@ def run(target: Path, goal_id: str, *, intent: str = "",
             result["goal"]["final_loop"] = cur2["current_loop"]
             return _halt(result, "目标达成", "achieved")
 
+        # 8) 停滞检测：任务/相关能力等级/版本连续不变 → 空转，暂停而非烧预算
+        fp = progress_fingerprint(sim, goal, task)
+        rec["progress"] = {"fingerprint": fp, "stalled_rounds": stalled + 1}
+        if fp == last_fp:
+            stalled += 1
+        else:
+            stalled = 0
+        last_fp = fp
+        rec["progress"]["stalled_rounds"] = stalled
+        if stalled >= stall_limit:
+            goal_ledger.pause_goal(sim, goal_id, actor="goal-orchestrator(dry-run)",
+                                   reason="连续无进展")
+            result["commands"].append(
+                gateway_command("goal-pause", goal_id, agent="goal-orchestrator",
+                                reason=f"连续 {stalled} 轮任务/能力等级/版本无变化"))
+            result["proposal"] = {
+                "original_goal": goal.get("description", ""),
+                "proposed_change": "先完成 next_queue 中的队列任务并重算能力模型/绑定实测证据，"
+                                   "再 resume 本目标",
+                "rationale": f"连续 {stalled} 轮进展指纹相同，循环空转；"
+                             "预算推进不等于真实工作推进",
+                "impact": "目标暂停（可 resume）；不消耗剩余预算、不改方向锁、不写事实源",
+            }
+            result["goal"]["final_status"] = "paused"
+            result["goal"]["final_loop"] = cur2["current_loop"]
+            return _halt(result,
+                         f"连续 {stalled} 轮无进展，已暂停待真实工作推进（stagnated）",
+                         "stagnated")
+
     # 预算用尽仍未达成 → 失活
     final = goal_ledger.find_goal(sim, goal_id)
     result["commands"].append(
@@ -273,17 +337,19 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--goal-id", required=True, help="目标 ID")
     ap.add_argument("--intent", default="", help="覆盖本轮意图（默认用目标描述）")
     ap.add_argument("--max-loops", type=int, default=0, help="本次模拟预算上限（不超过目标预算）")
+    ap.add_argument("--stall-limit", type=int, default=2,
+                    help="连续无进展轮数阈值 1-20（默认 2，达到即 stagnated 暂停）")
     ap.add_argument("--emit-apply", action="store_true", help="输出待批准网关命令清单")
     ap.add_argument("--json", action="store_true", help="输出 JSON")
     args = ap.parse_args(argv)
     out = run(Path(args.target).expanduser().resolve(), args.goal_id,
               intent=args.intent, max_loops=args.max_loops,
-              emit_apply=args.emit_apply)
+              emit_apply=args.emit_apply, stall_limit=args.stall_limit)
     if args.json:
         print(json.dumps(out, ensure_ascii=False, indent=2, sort_keys=True))
     else:
         print(render(out))
-    return 0 if out["verdict"] in ("achieved", "halted") else 1
+    return 0 if out["verdict"] in ("achieved", "halted", "stagnated") else 1
 
 
 if __name__ == "__main__":

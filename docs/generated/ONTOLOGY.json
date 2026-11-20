@@ -36,7 +36,7 @@
     {
       "path": "templates/verify_ledger.py",
       "role": "axioms",
-      "sha256": "094744cd1f7814be03b48a4ba70682088b238ce1189e0e454a9c5d92a440a7fe"
+      "sha256": "24a44d4e1fde36a34af358e30263acfe34b2b050d49fa9001e4140a3f22c4ba9"
     }
   ],
   "bounded_contexts": [
@@ -785,5 +785,5 @@
     "polyseme_terms": 3,
     "drift_count": 0
   },
-  "ontology_digest": "636d26c3fe292dfb1a4aff9452d50d8d1980cd7b2e7a614028b4b48447c04f07"
+  "ontology_digest": "c614cbda859e18dd5d4f68a8ee7bcf6150aa0910766ac5db854fc6e6bf48ee47"
 }

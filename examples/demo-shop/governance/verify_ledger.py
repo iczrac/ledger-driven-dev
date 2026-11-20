@@ -795,6 +795,29 @@ def verify(repo_root: Path, ledger: dict, registry: dict | None,
                 cids = [str(c.get("id", "")) for c in crit if isinstance(c, dict)]
                 if len(cids) != len(crit) or any(not x for x in cids):
                     g_errors.append(f"{gid}:判据 id 缺失/重复")
+                # v2.14.0：判据指标必须可机读且参数自洽，未知 metric 一律 fail。
+                allowed = ("cap_level", "queue_empty", "invariant_all",
+                           "method_version", "level_progress")
+                for c in crit:
+                    if not isinstance(c, dict):
+                        g_errors.append(f"{gid}:判据非对象")
+                        continue
+                    m, op = str(c.get("metric", "")), str(c.get("op", ""))
+                    if m not in allowed:
+                        g_errors.append(f"{gid}:未知 metric={m}")
+                    if m == "method_version":
+                        if not str(c.get("target", "")) or not all(
+                                p.isdigit() for p in str(c["target"]).split(".")):
+                            g_errors.append(f"{gid}:method_version.target 非法")
+                        if op not in ("gte", "gt", "eq", "ne", "lte", "lt",
+                                      ">=", ">", "==", "!=", "<=", "<"):
+                            g_errors.append(f"{gid}:method_version.op 非法")
+                    if m == "level_progress":
+                        if not str(c.get("target", "")):
+                            g_errors.append(f"{gid}:level_progress 缺 code")
+                        base = c.get("baseline")
+                        if not isinstance(base, int) or isinstance(base, bool) or base < 0:
+                            g_errors.append(f"{gid}:level_progress.baseline 非法")
             # 调整提议字段完整；已批准的提议才允许方向锁变化（锁已在上面核对）
             for p in goal.get("proposals", []):
                 if not isinstance(p, dict):
