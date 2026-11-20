@@ -131,7 +131,7 @@ LEDGER_TOP_FIELDS = (
     "fields", "entries", "module_map", "architecture", "capability_model",
     "history", "lessons", "test_results", "work_items", "access",
     "governance_meta", "lifecycle", "next_queue", "doc_index", "coding_spec",
-    "observations", "registry",
+    "observations", "registry", "goals", "provenance",
 )
 
 RELATIONS = (

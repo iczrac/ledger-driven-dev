@@ -61,6 +61,7 @@ from ledger_io import (current_fingerprint, load_ledger, registry_sha,  # noqa: 
                        write_ledger)
 from scenario_guard import (SUPPORTED_LEDGER_VERSIONS, collect as guard_collect,  # noqa: E402
                             evaluate as guard_evaluate)
+import goal_ledger  # noqa: E402
 import ledger_decide  # noqa: E402
 import ledger_lesson  # noqa: E402
 import lifecycle  # noqa: E402
@@ -86,6 +87,12 @@ ROLE_POLICIES: dict[str, list[str]] = {
     "loop-executor": ["code", "generate", "claim", "release", "status", "verify"],
     "release-steward": ["freeze", "unfreeze", "archive", "status", "verify"],
     "platform-steward": ["upgrade-plan", "status", "verify"],
+    # 目标编排监督者：只在预算内推进/失活，创建与调整批准必须人批准。
+    # 自己没有任何 ledger-write 的解释权，goal-create / goal-approve 的
+    # approval=True 由 evaluate 的 human_approval 保证 approver != agent。
+    "goal-orchestrator": ["goal-advance", "goal-achieve", "goal-deactivate",
+                          "goal-pause", "goal-resume", "goal-propose",
+                          "status", "verify"],
 }
 
 # kind: ledger-write = 网关亲自写；permit-only = 只签许可，由底层工具带 CAS 执行
@@ -110,6 +117,20 @@ ACTIONS: dict[str, dict] = {
     "status": dict(kind="permit-only", guard="status", code=False, registry=False),
     "verify": dict(kind="permit-only", guard="verify", code=False, registry=False),
     "route": dict(kind="permit-only", guard="status", code=False, registry=False),
+    # 目标编排（v2.13.0）：除 create/approve/reject 外均为预算内自动推进。
+    # guard 复用 status：冻结/归档期 READ 也受限，目标不得在冻结期写。
+    "goal-create": dict(kind="ledger-write", guard="status", code=False, registry=False,
+                        approval=True),
+    "goal-approve": dict(kind="ledger-write", guard="status", code=False, registry=False,
+                         approval=True),
+    "goal-reject": dict(kind="ledger-write", guard="status", code=False, registry=False,
+                        approval=True),
+    "goal-advance": dict(kind="ledger-write", guard="status", code=False, registry=False),
+    "goal-achieve": dict(kind="ledger-write", guard="status", code=False, registry=False),
+    "goal-deactivate": dict(kind="ledger-write", guard="status", code=False, registry=False),
+    "goal-pause": dict(kind="ledger-write", guard="status", code=False, registry=False),
+    "goal-resume": dict(kind="ledger-write", guard="status", code=False, registry=False),
+    "goal-propose": dict(kind="ledger-write", guard="status", code=False, registry=False),
 }
 
 LIFECYCLE_ACTIONS = {"freeze", "unfreeze", "archive", "retire", "restore",
@@ -326,6 +347,51 @@ def dispatch(ledger: dict, req: dict) -> tuple[dict, str]:
         cand = ledger_lesson.dismiss_lesson(ledger, req.get("candidate", ""),
                                             req.get("reason", ""))
         return ledger, f"驳回候选 {cand['id']}"
+
+    # 目标编排：全部委托给纯函数层，网关只提供身份/CAS/审计/落盘。
+    gid = req.get("goal_id", "")
+    if a == "goal-create":
+        g = goal_ledger.create_goal(
+            ledger, goal_id=gid, description=req.get("title", ""),
+            success_criteria=req.get("criteria", []),
+            max_loops=int(req.get("max_loops", 0)),
+            authorized_by=req.get("authorized_by", ""),
+            approved_by=req.get("approved_by", ""))
+        return ledger, f"创建目标 {g['goal_id']}（预算 {g['max_loops']} 轮）"
+    if a == "goal-approve":
+        p = goal_ledger.approve_change(ledger, gid, req.get("proposal_id", ""),
+                                       approved_by=req.get("approved_by", ""))
+        return ledger, f"人批准目标调整 {p['id']}，方向锁重算"
+    if a == "goal-reject":
+        p = goal_ledger.reject_change(ledger, gid, req.get("proposal_id", ""),
+                                      approved_by=req.get("approved_by", ""),
+                                      reason=req.get("reason", ""))
+        return ledger, f"人驳回目标调整 {p['id']}"
+    if a == "goal-advance":
+        g = goal_ledger.advance_goal(ledger, gid, actor=actor)
+        return ledger, f"推进 {gid} 至 {g['current_loop']}/{g['max_loops']}"
+    if a == "goal-achieve":
+        goal_ledger.achieve_goal(ledger, gid, actor=actor)
+        return ledger, f"目标 {gid} 标记达成"
+    if a == "goal-deactivate":
+        goal_ledger.deactivate_goal(ledger, gid, actor=actor,
+                                    reason=req.get("reason", "超预算未达成"))
+        return ledger, f"目标 {gid} 失活：{req.get('reason', '超预算未达成')}"
+    if a == "goal-pause":
+        goal_ledger.pause_goal(ledger, gid, actor=actor, reason=req.get("reason", "人工暂停"))
+        return ledger, f"目标 {gid} 暂停"
+    if a == "goal-resume":
+        goal_ledger.resume_goal(ledger, gid, actor=actor)
+        return ledger, f"目标 {gid} 恢复"
+    if a == "goal-propose":
+        p = goal_ledger.propose_change(
+            ledger, gid, actor=actor,
+            original_goal=req.get("original_goal", ""),
+            proposed_change=req.get("proposed_change", ""),
+            rationale=req.get("rationale", ""), impact=req.get("impact", ""),
+            proposed_description=req.get("proposed_description") or None,
+            proposed_criteria=req.get("proposed_criteria") or None)
+        return ledger, f"提出目标调整 {p['id']}（未改目标本身）"
     raise ValueError(f"动作 {a} 不是网关写入动作")
 
 
@@ -364,6 +430,17 @@ def status(ledger: dict, gov: Path) -> dict:
             "actions": {k: v["kind"] for k, v in ACTIONS.items()}}
 
 
+def _load_json_arg(value: str):
+    """CLI 的 JSON 参数：空串返回空列表；支持内联 JSON 或 @文件路径。"""
+    if not value:
+        return []
+    raw = Path(value[1:]).read_text(encoding="utf-8") if value.startswith("@") else value
+    try:
+        return json.loads(raw)
+    except json.JSONDecodeError as exc:
+        raise ValueError(f"JSON 参数非法：{exc}") from exc
+
+
 def request(target: Path, args: argparse.Namespace) -> dict:
     gov = target / "governance"
     ledger = load_ledger(gov)
@@ -376,6 +453,17 @@ def request(target: Path, args: argparse.Namespace) -> dict:
         "title": args.title or "", "rationale": args.rationale or "",
         "candidate": args.candidate or "", "insight": args.insight or "",
         "action_text": args.action_text or "", "superseded_by": args.superseded_by or "",
+        # 目标编排字段（v2.13.0）：argparse 对未注册属性用 getattr 兜底，兼容旧调用方。
+        "goal_id": getattr(args, "goal_id", "") or "",
+        "criteria": _load_json_arg(getattr(args, "criteria", "") or "[]"),
+        "max_loops": getattr(args, "max_loops", 0) or 0,
+        "authorized_by": getattr(args, "authorized_by", "") or "",
+        "proposal_id": getattr(args, "proposal_id", "") or "",
+        "original_goal": getattr(args, "original_goal", "") or "",
+        "proposed_change": getattr(args, "proposed_change", "") or "",
+        "impact": getattr(args, "impact", "") or "",
+        "proposed_description": getattr(args, "proposed_description", "") or "",
+        "proposed_criteria": _load_json_arg(getattr(args, "proposed_criteria", "") or ""),
         "apply": bool(args.apply),
     }
     digest = registry_sha(gov)
@@ -446,7 +534,7 @@ def check_definitions() -> list[str]:
         if spec["kind"] not in ("ledger-write", "permit-only"):
             errs.append(f"{name} 的 kind 非法")
         if spec["kind"] == "ledger-write" and spec["guard"] not in (
-                "decide", "lesson", "lifecycle", "claim", "release"):
+                "decide", "lesson", "lifecycle", "claim", "release", "status"):
             errs.append(f"{name} 的 guard 映射不在写入动作集合")
     for role, actions in ROLE_POLICIES.items():
         for a in actions:
@@ -519,6 +607,17 @@ def main(argv: list[str] | None = None) -> int:
     p_req.add_argument("--insight", default="")
     p_req.add_argument("--action-text", default="")
     p_req.add_argument("--superseded-by", default="")
+    # 目标编排字段（v2.13.0）
+    p_req.add_argument("--goal-id", default="", help="目标 ID（G- 开头）")
+    p_req.add_argument("--criteria", default="", help="成功判据 JSON 数组或 @文件")
+    p_req.add_argument("--max-loops", type=int, default=0, help="最大循环预算 1-100")
+    p_req.add_argument("--authorized-by", default="", help="目标授权的批准人")
+    p_req.add_argument("--proposal-id", default="", help="调整提议 ID（P- 开头）")
+    p_req.add_argument("--original-goal", default="", help="提议：原目标")
+    p_req.add_argument("--proposed-change", default="", help="提议：建议变更")
+    p_req.add_argument("--impact", default="", help="提议：影响")
+    p_req.add_argument("--proposed-description", default="", help="提议：新描述（仅人批准后生效）")
+    p_req.add_argument("--proposed-criteria", default="", help="提议：新判据 JSON")
     p_req.add_argument("--apply", action="store_true")
     p_req.add_argument("--json", action="store_true")
     args = ap.parse_args(argv)

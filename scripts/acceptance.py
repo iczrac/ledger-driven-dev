@@ -478,13 +478,16 @@ def evaluate_activation(activation: object, invariants: dict,
     errors: list[str] = []
     if not isinstance(activation, dict) or not activation.get("state"):
         errors.append("M8 未写入显式 activation 占位（仍为 null）")
-    # 本场景 M7 已把资产装进夹具，唯一 na 是无报告的 #test_results
-    if invariants.get("failed") != 0 or invariants.get("na") != 1 \
+    # 本场景 M7 已把资产装进夹具；na 来自无报告的 #test_results，
+    # 以及 v2.13.0 起空 goals 未启用的 #goal_loop_valid。na 数随版本增长，
+    # 因此按「passed + na == 总检查数」自证，而不写死某个具体 na。
+    na = invariants.get("na")
+    if invariants.get("failed") != 0 or not isinstance(na, int) or na < 1 \
             or invariants.get("all_active") is not False:
-        errors.append("三态语义回归：需要 failed=0 / na=1 / all_active=false")
+        errors.append("三态语义回归：需要 failed=0 / na>=1 / all_active=false")
     want = expected_passed if expected_passed is not None else 26
     if invariants.get("passed") != want:
-        errors.append(f"不变量计数回归：需要 {want} pass + 1 na（实得 {invariants.get('passed')}）")
+        errors.append(f"不变量计数回归：需要 {want} pass（实得 {invariants.get('passed')}）")
     return {"status": "pass" if not errors else "fail", "errors": errors}
 
 
@@ -526,9 +529,10 @@ def activation_placeholder(root: Path = ROOT) -> dict:
             v = json.loads(out.stdout)
             invariants = {k: v.get(k) for k in
                           ("passed", "failed", "na", "all_ok", "all_active")}
-            # 期望 pass 数 = 实际检查总数 - 1（本场景唯一 na）；不写死 26/27
+            # 期望 pass 数 = 实际检查总数 - 实际 na 数；不写死 26/27/29。
             total_checks = len(v.get("checks") or [])
-            expected_passed = total_checks - 1 if total_checks else None
+            expected_passed = (total_checks - int(v.get("na", 0))
+                               if total_checks else None)
         except json.JSONDecodeError:
             errors.append("verify_ledger.py --json 输出不可解析：" + out.stderr[:80])
             expected_passed = None

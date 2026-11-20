@@ -39,7 +39,7 @@
 16. **本体投影** —— 18 个 `<Type>.field` 分型取值域、6 个有界上下文、7 条关系与 31 条公理从事实源确定性抽取；`ontology.py check` 抓三类漂移（同形异义 / 基数违例 / 未声明实体），`governance_meta.ontology_digest` 作为第七轴由升级 M5 绑定。派生只读、删光可复算，**不是第二事实源**；不做词表归一。`registry/2` 容器与 code 契约已由 v2.0.1 落地。
 17. **本地 D3 离线交互** —— D3 v7 作为本地 vendor 随方法版本下发，看板用追溯树、热力图与趋势图做点击/展开/筛选；缺失时回退原生 SVG / DOM。数据仍由 Python 预计算并内嵌，`file://` 断网可用，无 CDN、无后端。
 
-并且这套方法**自身可被验证**：`verify_ledger.py` 把 29 条不变量机器化（含历史链、经验引用与证据分层），`next_queue` 把 SELECT 变成机器可读任务队列——「可信」和「驱动」两个核心承诺都不再停留在文字上。
+并且这套方法**自身可被验证**：`verify_ledger.py` 把 30 条不变量机器化（含历史链、经验引用与证据分层），`next_queue` 把 SELECT 变成机器可读任务队列——「可信」和「驱动」两个核心承诺都不再停留在文字上。
 
 **证据分层**进一步区分「写了测试文件」与「测试真实通过」：`declared`（文件存在）与 `verified`（有通过的测试报告）。一个 L5 能力若从没跑过测试，会显示 `declared`——假绿灯从此可见。详见 [11-证据分层](docs/11-证据分层.md)。
 
@@ -96,7 +96,7 @@ ledger-driven-dev/
 │   ├── project-discover/              存量项目只读发现
 │   ├── project-bootstrap/             新建 / 接入初始化
 │   ├── ledger-scan/                   重跑生成器
-│   ├── ledger-verify/                 29 条不变量 + 修复表
+│   ├── ledger-verify/                 30 条不变量 + 修复表
 │   ├── ledger-decide/                 任务卡 → proposed 决策
 │   ├── ledger-lesson/                 候选 → 已确认经验
 │   ├── ledger-guard/                  统一质量门禁
@@ -115,7 +115,7 @@ ledger-driven-dev/
 ├── templates/                        可复用模板（复制到你的项目）
 │   ├── build_capability_model.py     核心生成器（含证据分层/历史/经验/任务队列）
 │   ├── binding_advisory.py            证据绑定 advisory（v2.1.2 shadow 门禁）
-│   ├── verify_ledger.py              29 条不变量校验器（可信的基础设施）
+│   ├── verify_ledger.py              30 条不变量校验器（可信的基础设施）
 │   ├── index.html.template           可视化看板
 │   ├── vendor/d3.v7.min.js           本地 D3 v7（离线交互，无 CDN）
 │   └── registry.example.json         能力注册表样板
@@ -317,7 +317,7 @@ python3 scripts/work_panel.py --target P add --kind todo \
 
 `work_items` 的 `scope` 可为 `PROJECT` / 项目 / 模块 / 四段式能力编码，上级作用域自动向下覆盖；
 `test_results` 用 `source_sha256` 绑定 `test_report.json` 原始字节，手填哈希会被
-29 条不变量中的 `test_results_binding_valid` 拦下。派生聚合由 `nodes` 与看板 JS 按同一规则复算，
+30 条不变量中的 `test_results_binding_valid` 拦下。派生聚合由 `nodes` 与看板 JS 按同一规则复算，
 不落盘、不产生第三份事实源。
 
 ### 验证账本可信
@@ -326,7 +326,7 @@ python3 scripts/work_panel.py --target P add --kind todo \
 python3 governance/verify_ledger.py --root . --strict
 ```
 
-它会检查 29 条不变量：编码唯一且格式正确、完成度与等级一致、文档/组件路径全部存在、决策引用与取代链一致、看板与账本同步；**历史链连续且前后指纹衔接、事件指纹自证、末事件与当前状态一致；经验条目合法、候选去重、任务卡只引用已确认经验；证据分层取值合法、verified 可追溯且不越级**。任何一条失败说明账本已腐化，不能作为决策依据。`--json` 输出机器可读结果，可直接接入 CI。
+它会检查 30 条不变量：编码唯一且格式正确、完成度与等级一致、文档/组件路径全部存在、决策引用与取代链一致、看板与账本同步；**历史链连续且前后指纹衔接、事件指纹自证、末事件与当前状态一致；经验条目合法、候选去重、任务卡只引用已确认经验；证据分层取值合法、verified 可追溯且不越级**。任何一条失败说明账本已腐化，不能作为决策依据。`--json` 输出机器可读结果，可直接接入 CI。
 
 ### 统一质量门禁（提交前 / CI / 发布前）
 
@@ -334,7 +334,7 @@ python3 governance/verify_ledger.py --root . --strict
 bash scripts/check.sh
 ```
 
-一条命令跑完：标准库单元测试（双发现口径）→ 测试架构映射 → 证据分层（生成实测报告并确认 verified 判定）→ 29 条不变量 → 场景矩阵 → 文件布局清单与只读 diff → 升级与多 Agent 接入端到端 → 资产/骨架/规模/节点工作台契约 → 生成器幂等 → 模板/示例同步与看板 EMBED → 脱敏与文档内链。本地与 CI 用同一份脚本，口径一致。单个能力校验用 `verify_ledger.py`，完整交付用 `check.sh`。
+一条命令跑完：标准库单元测试（双发现口径）→ 测试架构映射 → 证据分层（生成实测报告并确认 verified 判定）→ 30 条不变量 → 场景矩阵 → 文件布局清单与只读 diff → 升级与多 Agent 接入端到端 → 资产/骨架/规模/节点工作台契约 → 生成器幂等 → 模板/示例同步与看板 EMBED → 脱敏与文档内链。本地与 CI 用同一份脚本，口径一致。单个能力校验用 `verify_ledger.py`，完整交付用 `check.sh`。
 
 ### AI 接手：专家路由与技能
 
@@ -383,7 +383,7 @@ bash scripts/check.sh
 5. [循环协议](docs/05-循环协议.md) —— 如何驱动 AI 迭代与自动编程
 6. [落地指南](docs/06-落地指南.md) —— 从零接入的分步清单
 7. [反模式与边界](docs/07-反模式与边界.md) —— 常见误区与不适用情形
-8. [可信性校验](docs/08-可信性校验.md) —— 29 条不变量，让「可信」可被验证
+8. [可信性校验](docs/08-可信性校验.md) —— 30 条不变量，让「可信」可被验证
 9. [历史与经验](docs/09-历史与经验.md) —— 状态指纹驱动的演进历史，以及可被任务卡消费的经验层
 10. [文档规范](docs/STANDARD.md) —— 命名、章节、状态词与更新触发点
 11. [AI 集成](docs/10-AI集成.md) —— 专家、二十二个技能与平台无关的最小消费路径
@@ -404,6 +404,7 @@ bash scripts/check.sh
 26. [工作台视角](docs/30-工作台视角.md) —— 从列表到工作台的默认落点重构
 27. [可视化分析层](docs/31-可视化分析层.md) —— 热力图、趋势、证据链、健康度与 What-if
 28. [本地 D3 可视化](docs/32-本地D3可视化.md) —— vendor 文件维护、追溯树/热力图/趋势图的 D3 用法与离线降级
+29. [目标编排监督者](docs/33-目标编排监督者.md) —— goals/1 目标对象、方向锁、max_loops 预算、受控循环与人批准调整
 
 ## License
 

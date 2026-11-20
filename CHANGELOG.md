@@ -2,6 +2,16 @@
 
 本项目版本遵循语义化版本（SemVer）。
 
+## [2.13.0] - 2026-11-20
+
+**目标编排监督者**：在授权预算内对单一目标做受控自动循环，方向锁定、人批准调整。
+
+- 账本新增 `goals/1`：目标对象、方向锁 `sha256(description+success_criteria)`、机读成功判据、`max_loops/current_loop` 预算、状态机与逐动作审计。
+- 新增 `goal-orchestrator` 专家与 `goal-orchestrate` 技能：只读监督者，不直接写事实源。
+- `agent_gateway` 新增 `goal-create/propose/approve/reject/advance/achieve/deactivate/pause/resume`；create/approve/reject 必须人 `--approved-by`，其余由预算授权但仍走统一审计。
+- 新增 `scripts/goal_loop.py`：默认 dry-run，每轮重路由 → 队列 → expert-run 计划 → verify_ledger → 方向检查 → 推进 → 判据评估；超预算 `deactivated`，达标 `achieved`，输出结构化轨迹与待批准命令。
+- 路由新增 `goal` 意图高置信指向 goal-orchestrator；第 30 条不变量 `goal_loop_valid` 守护方向锁与终态纪律；升级 M9 初始化 goals 字段。
+
 ## [2.12.0] - 2026-11-20
 
 **本地 D3 离线交互**：在不联网、不引后端、不改事实源的前提下，让看板能追、能试。

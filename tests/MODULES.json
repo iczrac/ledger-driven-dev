@@ -52,7 +52,9 @@
         "scripts/provenance_view.py",
         "scripts/scenario_matrix.py",
         "scripts/ledger_decide.py",
-        "scripts/ledger_lesson.py"
+        "scripts/ledger_lesson.py",
+        "scripts/goal_ledger.py",
+        "scripts/goal_loop.py"
       ],
       "files": [
         "tests/routing/test_routing.py",
@@ -60,7 +62,8 @@
         "tests/routing/test_scenarios.py",
         "tests/routing/test_intent_restate.py",
         "tests/routing/test_expert_run.py",
-        "tests/routing/test_provenance_view.py"
+        "tests/routing/test_provenance_view.py",
+        "tests/routing/test_goal_loop.py"
       ]
     },
     {

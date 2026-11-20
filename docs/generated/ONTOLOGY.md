@@ -1,6 +1,6 @@
 # 本体投影（generated，只读）
 
-schema `ledger-ontology/1` · digest `3285f883cdafebc9ec05dd33bc4613300da46ffc1ab7d96ec8e6865d2dc65d83`
+schema `ledger-ontology/1` · digest `636d26c3fe292dfb1a4aff9452d50d8d1980cd7b2e7a614028b4b48447c04f07`
 
 由 `python3 scripts/ontology.py build --apply --approved-by <人>` 从事实源渲染。
 **不是人工文档，也不是第二事实源**：删掉本文件后 build 可逐字节复原。
@@ -36,7 +36,7 @@ schema `ledger-ontology/1` · digest `3285f883cdafebc9ec05dd33bc4613300da46ffc1a
 
 | 域 id | 声明取值 | 代码来源 | 一致 |
 |---|---|---|---|
-| `Agent.role` | evidence-auditor · expert-router · greenfield-architect · ledger-steward · loop-executor · platform-steward · project-archaeologist · release-steward | `scripts/agent_gateway.py#ROLE_POLICIES` | 是 |
+| `Agent.role` | evidence-auditor · expert-router · goal-orchestrator · greenfield-architect · ledger-steward · loop-executor · platform-steward · project-archaeologist · release-steward | `scripts/agent_gateway.py#ROLE_POLICIES` | 是 |
 | `Capability.evidence_tier` | declared · verified | `templates/build_capability_model.py#EVIDENCE_TIER_SPEC` | 是 |
 | `Capability.level` | L0 · L1 · L2 · L3 · L4 · L5 | `templates/build_capability_model.py#LEVELS` | 是 |
 | `Check.status` | fail · na · pass | `仅文档声明` | — |
@@ -100,20 +100,20 @@ schema `ledger-ontology/1` · digest `3285f883cdafebc9ec05dd33bc4613300da46ffc1a
 | G3 | Kleene K3：含 Unknown 不得派生 pass | `three_valued` |
 | G4 | append-only：只取代不删除 | `append_only` |
 
-账本不变量 29 条：
+账本不变量 30 条：
 
-`analytics_d3_projection_valid` `analytics_maturity_valid` `binding_issues_derived` `board_embed_synced` `completion_matches_level` `component_paths_exist` `decision_refs_valid` `doc_paths_exist` `encoding_format` `encoding_unique` `entry_ids_unique` `evidence_tier_valid` `history_chain_consistent` `history_current_matches` `history_event_fingerprints` `history_state_encoding` `installed_assets_binding` `lesson_candidates_dedup` `lessons_valid` `next_action_present` `queue_lessons_confirmed` `registry_impls_exist` `supersede_chain_consistent` `test_results_binding_valid` `verified_tier_not_premature` `verified_tier_traceable` `work_item_refs_valid` `work_items_owned` `work_items_valid`
+`analytics_d3_projection_valid` `analytics_maturity_valid` `binding_issues_derived` `board_embed_synced` `completion_matches_level` `component_paths_exist` `decision_refs_valid` `doc_paths_exist` `encoding_format` `encoding_unique` `entry_ids_unique` `evidence_tier_valid` `goal_loop_valid` `history_chain_consistent` `history_current_matches` `history_event_fingerprints` `history_state_encoding` `installed_assets_binding` `lesson_candidates_dedup` `lessons_valid` `next_action_present` `queue_lessons_confirmed` `registry_impls_exist` `supersede_chain_consistent` `test_results_binding_valid` `verified_tier_not_premature` `verified_tier_traceable` `work_item_refs_valid` `work_items_owned` `work_items_valid`
 
 ## 来源绑定
 
 | 文件 | 角色 | sha256 |
 |---|---|---|
-| `docs/STANDARD.md` | ubiquitous_language | `c4177d34f5472cc8…` |
+| `docs/STANDARD.md` | ubiquitous_language | `3a47b1872dc491da…` |
 | `scripts/work_panel.py` | value_domains | `106a91b55b35abb8…` |
 | `scripts/scenario_matrix.py` | value_domains | `7ecc9c5a058eaf4f…` |
 | `scripts/ledger_feedback.py` | value_domains | `ee3d577f0a600e05…` |
-| `scripts/agent_gateway.py` | value_domains | `83d1b63a3e7bd850…` |
+| `scripts/agent_gateway.py` | value_domains | `2feb4818bc21bb7e…` |
 | `templates/build_capability_model.py` | value_domains | `ebdd83b4caf91707…` |
-| `templates/verify_ledger.py` | axioms | `18eacfaf5be3d40a…` |
+| `templates/verify_ledger.py` | axioms | `094744cd1f7814be…` |
 
 漂移条目：0

@@ -59,7 +59,7 @@
 
 | 实体 | 字段 | 取值域 | 实现来源 |
 |---|---|---|---|
-| Agent | role | evidence-auditor · expert-router · greenfield-architect · ledger-steward · loop-executor · platform-steward · project-archaeologist · release-steward | scripts/agent_gateway.py#ROLE_POLICIES |
+| Agent | role | evidence-auditor · expert-router · goal-orchestrator · greenfield-architect · ledger-steward · loop-executor · platform-steward · project-archaeologist · release-steward | scripts/agent_gateway.py#ROLE_POLICIES |
 | Capability | evidence_tier | declared · verified | templates/build_capability_model.py#EVIDENCE_TIER_SPEC |
 | Capability | level | L0 · L1 · L2 · L3 · L4 · L5 | templates/build_capability_model.py#LEVELS |
 | Check | status | fail · na · pass | templates/verify_ledger.py#三态语义 |

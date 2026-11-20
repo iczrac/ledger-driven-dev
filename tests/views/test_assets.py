@@ -26,7 +26,7 @@ class AssetsTest(unittest.TestCase):
         a, b = bundle(), bundle()
         self.assertEqual(a, b)
         self.assertEqual(len(a["digest"]), 64)
-        self.assertEqual(a["counts"]["experts"], 8)
+        self.assertEqual(a["counts"]["experts"], 9)  # v2.13.0 + goal-orchestrator
         self.assertGreaterEqual(a["counts"]["skills"], 20)
         self.assertEqual(a["file_count"], len(a["files"]))
         self.assertEqual(check_definitions(), [])

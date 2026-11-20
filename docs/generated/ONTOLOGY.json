@@ -6,7 +6,7 @@
     {
       "path": "docs/STANDARD.md",
       "role": "ubiquitous_language",
-      "sha256": "c4177d34f5472cc86a0eb3b0af7df42e9f0a4f2a1e9080b4e29c16326f428c57"
+      "sha256": "3a47b1872dc491dae66b67eb7a99b585e17d5997a7b28e703b8ea76b88adad5b"
     },
     {
       "path": "scripts/work_panel.py",
@@ -26,7 +26,7 @@
     {
       "path": "scripts/agent_gateway.py",
       "role": "value_domains",
-      "sha256": "83d1b63a3e7bd8501f9cfc804687ed1564c25958ee3798ab1e011e67aaade51d"
+      "sha256": "2feb4818bc21bb7e2a4b584f4c600db336a6a753e6554a92840d886d08a831cd"
     },
     {
       "path": "templates/build_capability_model.py",
@@ -36,7 +36,7 @@
     {
       "path": "templates/verify_ledger.py",
       "role": "axioms",
-      "sha256": "18eacfaf5be3d40afd25b8a236416b5755a1667aa419c7361a510b62ba710f41"
+      "sha256": "094744cd1f7814be03b48a4ba70682088b238ce1189e0e454a9c5d92a440a7fe"
     }
   ],
   "bounded_contexts": [
@@ -167,6 +167,7 @@
     "doc_index",
     "entries",
     "fields",
+    "goals",
     "governance_meta",
     "history",
     "last_updated",
@@ -177,6 +178,7 @@
     "next_queue",
     "observations",
     "owner",
+    "provenance",
     "purpose",
     "registry",
     "test_results",
@@ -299,6 +301,7 @@
       "values": [
         "evidence-auditor",
         "expert-router",
+        "goal-orchestrator",
         "greenfield-architect",
         "ledger-steward",
         "loop-executor",
@@ -311,6 +314,7 @@
       "observed_values": [
         "evidence-auditor",
         "expert-router",
+        "goal-orchestrator",
         "greenfield-architect",
         "ledger-steward",
         "loop-executor",
@@ -751,6 +755,7 @@
     "encoding_unique",
     "entry_ids_unique",
     "evidence_tier_valid",
+    "goal_loop_valid",
     "history_chain_consistent",
     "history_current_matches",
     "history_event_fingerprints",
@@ -775,10 +780,10 @@
     "entity_types": 16,
     "value_domains": 18,
     "relations": 7,
-    "axioms": 36,
+    "axioms": 37,
     "source_files": 7,
     "polyseme_terms": 3,
     "drift_count": 0
   },
-  "ontology_digest": "3285f883cdafebc9ec05dd33bc4613300da46ffc1ab7d96ec8e6865d2dc65d83"
+  "ontology_digest": "636d26c3fe292dfb1a4aff9452d50d8d1980cd7b2e7a614028b4b48447c04f07"
 }

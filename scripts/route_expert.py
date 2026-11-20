@@ -263,6 +263,14 @@ EXPERT_CARDS = {
                    "test-map", "work-panel"],
         "writes": ["governance_meta", "access（均需人批准，由脚本执行）"],
     },
+    "goal-orchestrator": {
+        "title": "目标编排监督者",
+        "duty": "在授权预算内围绕单一目标做受控自动循环：每轮重路由、强验证、方向检查、推进计数；"
+                "超预算或偏移即停并提议，绝不自改目标。只读监督者。",
+        "skills": ["goal-orchestrate", "expert-route", "expert-run", "ledger-scan",
+                   "ledger-verify", "scenario-guard", "agent-gate", "work-panel"],
+        "writes": [],
+    },
 }
 
 INTENT_PATTERNS = {
@@ -296,6 +304,10 @@ INTENT_PATTERNS = {
                "retire", "deprecate"),
     "resume": ("中断", "续跑", "接着做", "断点", "恢复执行", "任务锁",
                "resume", "continue", "claim"),
+    "goal": ("目标循环", "自动迭代", "迭代达成", "监督循环", "编排目标", "目标预算",
+             "达成目标", "目标推进", "调整目标", "受控循环", "自动跑到达成",
+             "goal loop", "goal orchestrat", "orchestrate goal", "auto iterate",
+             "propose goal change", "target loop"),
 }
 
 FOLLOW_UP = {
@@ -310,6 +322,7 @@ FOLLOW_UP = {
     "access": "platform-steward",
     "retire": "release-steward",
     "resume": "loop-executor",
+    "goal": "goal-orchestrator",
 }
 
 HANDOFF_CHAIN = {
@@ -323,6 +336,7 @@ HANDOFF_CHAIN = {
     "evidence-auditor": ["evidence-auditor", "ledger-steward", "loop-executor"],
     "release-steward": ["release-steward", "evidence-auditor", "ledger-steward"],
     "platform-steward": ["platform-steward", "evidence-auditor", "loop-executor"],
+    "goal-orchestrator": ["goal-orchestrator", "evidence-auditor", "ledger-steward"],
 }
 
 EXCLUDE_DIRS = {
@@ -501,6 +515,18 @@ def decide(facts: dict, scores: dict[str, int], explicit_mode: str) -> dict:
             "question": "项目处于冻结/归档态，是否需要经批准解冻？",
             "options": ["保持只读", "经批准解冻", "复制出新项目"],
         }
+    elif primary == "goal":
+        # 目标编排是跨轮监督意图：不能由单条任务卡的 loop-executor 顺手做，
+        # 必须由只读监督者在预算内驱动，创建/调整仍回到人批准。
+        route = _card("goal-orchestrator", "high",
+                      "本轮目标是围绕单一目标做受控自动循环：每轮重路由、强验证、"
+                      "方向检查、预算计数；创建与调整目标必须人批准。", facts,
+                      preconditions=["goal_loop.py 默认 dry-run，先看轨迹再批准推进",
+                                     "goal-orchestrator 角色须由人 register"],
+                      stop_if=["verify fail / 方向漂移 / next_queue 空：立即停",
+                               "max_loops 用尽未达成：deactivated",
+                               "未经 --approved-by 不得 goal-create / goal-approve"],
+                      next_expert="evidence-auditor")
     elif primary in ("migrate", "access"):
         # 元层意图优先于项目状态：规则本身变了、或要授予写入权限时，
         # 不能由考古/执行专家顺手完成——批准门与版本七轴需要独立负责人。
@@ -674,6 +700,12 @@ def commands_for(expert: str, target_display: str) -> list[str]:
             f"python3 scripts/work_panel.py --target {t} nodes --json",
             f"python3 scripts/test_modules.py --check",
             f"python3 scripts/route_expert.py --target {t} --check-assets --json",
+        ],
+        "goal-orchestrator": [
+            f"python3 scripts/goal_loop.py --target {t} --goal-id G-001 --json",
+            f"python3 scripts/goal_loop.py --target {t} --goal-id G-001 --emit-apply",
+            f"python3 scripts/agent_gateway.py --target {t} status --json",
+            f"cd {t} && python3 governance/verify_ledger.py --root . --strict --json",
         ],
     }.get(expert, ["python3 scripts/route_expert.py --help"])
 

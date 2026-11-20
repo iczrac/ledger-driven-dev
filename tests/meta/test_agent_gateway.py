@@ -69,8 +69,9 @@ class GatewayTest(unittest.TestCase):
     # ---------- 定义 ----------
     def test_definitions_selfcheck(self):
         self.assertEqual(check_definitions(), [])
-        self.assertEqual(len(ROLE_POLICIES), 8)
+        self.assertEqual(len(ROLE_POLICIES), 9)  # v2.13.0 + goal-orchestrator
         self.assertIn("platform-steward", ROLE_POLICIES)
+        self.assertIn("goal-orchestrator", ROLE_POLICIES)
         for a in ("decide", "lesson-confirm", "freeze", "claim"):
             self.assertEqual(ACTIONS[a]["kind"], "ledger-write")
 

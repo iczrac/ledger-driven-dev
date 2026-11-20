@@ -96,7 +96,7 @@ SOURCE_ROOT = Path(__file__).resolve().parents[1]
 SCHEMA_PLAN = "upgrade-plan/1"
 SCHEMA_APPLY = "upgrade-apply/1"
 SCHEMA_VERIFY = "upgrade-verify/1"
-METHOD_VERSION = "2.12.0"
+METHOD_VERSION = "2.13.0"
 
 
 def _version_tuple(value) -> tuple[int, ...]:
@@ -147,6 +147,10 @@ MIGRATIONS: list[dict] = [
          name="初始化节点工作台字段（TODO / issue / 测试结果投影）", approval=False,
          note="只新增空数组与可验证投影；无实测报告时不写 test_results（v1.3.0 起不再永久 pending）；"
               "v1.7.0 起同时写 governance_meta.activation 占位，明示证据能力未激活"),
+    dict(id="M9-goals", field="goals", kind="ledger-field",
+         name="初始化目标编排字段（goals/1：目标对象 + 方向锁 + 预算）", approval=False,
+         note="只新增空 items 数组；目标由人经 agent_gateway goal-create 创建，"
+              "AI 不得自批准；第 30 条不变量 goal_loop_valid 负责方向锁与预算纪律"),
 ]
 
 # v1.4.0：基线不可后补。升级动作之前先导出一次观察包，才能 diff 出升级带来的改善。
@@ -304,6 +308,9 @@ def plan(target: Path, source_root: Path = SOURCE_ROOT) -> dict:
         if ("work_items" not in ledger or _projection_stale(gov, ledger)
                 or not isinstance(activation, dict)):
             needed.append(MIGRATIONS[7])
+        goals = ledger.get("goals")
+        if not isinstance(goals, dict) or goals.get("schema") != "goals/1":
+            needed.append(MIGRATIONS[8])
 
     noop = bool(ledger) and not needed and not blocks
     risk = ("blocked" if blocks else
@@ -441,6 +448,14 @@ def apply(target: Path, approved_by: str, *,
                 "reason": "目标项目无 governance/test_report.json，证据能力未激活",
                 "all_active": False,
             }
+    if "M9-goals" in ids:
+        # 只建空容器；目标由人经网关 goal-create 创建，升级本身不替人定目标。
+        goals = ledger.get("goals")
+        if not isinstance(goals, dict):
+            goals = {}
+        goals["schema"] = "goals/1"
+        goals.setdefault("items", [])
+        ledger["goals"] = goals
 
     assets = assets_manifest(source_root)
     meta["method_version"] = METHOD_VERSION

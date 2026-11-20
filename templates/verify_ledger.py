@@ -743,6 +743,74 @@ def verify(repo_root: Path, ledger: dict, registry: dict | None,
             (f"追溯树 {len(trees)} 棵 / 节点 {node_count} 个 / 时间轴 "
              f"{len(timeline or [])} 点" if not d_errors else f"错误={d_errors[:5]}"))
 
+    # 30. 目标编排（v2.13.0）：目标是新的事实源一等公民，必须自证方向锁、
+    #     预算单调与终态纪律。旧账本无 goals 判 na；一旦启用逐条校验，
+    #     专家私自改 description/criteria 会因方向锁不匹配被抓到。
+    goals = ledger.get("goals")
+    if not isinstance(goals, dict) or not goals.get("items"):
+        add("goal_loop_valid", True, "未启用目标编排（旧账本）", status="na")
+    else:
+        import hashlib as _hl
+        import json as _json
+
+        def _lock(desc, crit):
+            blob = _json.dumps({"description": desc, "success_criteria": crit},
+                               ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+            return _hl.sha256(blob.encode("utf-8")).hexdigest()
+
+        g_errors: list[str] = []
+        if goals.get("schema") != "goals/1":
+            g_errors.append(f"goals.schema={goals.get('schema')}")
+        seen_ids: set[str] = set()
+        for goal in goals.get("items", []):
+            if not isinstance(goal, dict):
+                g_errors.append("goal 非对象")
+                continue
+            gid = str(goal.get("goal_id", ""))
+            if not gid or gid in seen_ids:
+                g_errors.append(f"goal_id 缺失或重复：{gid}")
+            seen_ids.add(gid)
+            status = goal.get("status")
+            if status not in ("active", "paused", "achieved", "deactivated"):
+                g_errors.append(f"{gid}:状态非法 {status}")
+            mx, cur = goal.get("max_loops"), goal.get("current_loop")
+            if not isinstance(mx, int) or isinstance(mx, bool) or not 1 <= mx <= 100:
+                g_errors.append(f"{gid}:max_loops 非法 {mx}")
+                continue
+            if not isinstance(cur, int) or isinstance(cur, bool) or not 0 <= cur <= mx:
+                g_errors.append(f"{gid}:current_loop 越界 {cur}/{mx}")
+            # 终态纪律：已达成的必须停在合法轮次；失活的可未用尽预算（方向/验证失败）
+            if status == "achieved" and cur < 1:
+                g_errors.append(f"{gid}:achieved 但 current_loop=0")
+            if status in ("achieved", "deactivated") and not goal.get("stop_reason"):
+                g_errors.append(f"{gid}:终态缺 stop_reason")
+            # 方向锁：当前描述/判据的摘要必须与创建时一致（唯一解入口是 goal-approve）
+            expected = _lock(goal.get("description", ""), goal.get("success_criteria", []))
+            if expected != goal.get("direction_lock"):
+                g_errors.append(f"{gid}:方向锁不匹配（疑似专家改目标）")
+            crit = goal.get("success_criteria")
+            if not isinstance(crit, list) or not crit:
+                g_errors.append(f"{gid}:success_criteria 为空")
+            else:
+                cids = [str(c.get("id", "")) for c in crit if isinstance(c, dict)]
+                if len(cids) != len(crit) or any(not x for x in cids):
+                    g_errors.append(f"{gid}:判据 id 缺失/重复")
+            # 调整提议字段完整；已批准的提议才允许方向锁变化（锁已在上面核对）
+            for p in goal.get("proposals", []):
+                if not isinstance(p, dict):
+                    g_errors.append(f"{gid}:提议非对象")
+                    continue
+                if p.get("status") not in ("pending", "approved", "rejected"):
+                    g_errors.append(f"{gid}:{p.get('id')} 提议状态非法")
+                for key in ("original_goal", "proposed_change", "rationale", "impact"):
+                    if not str(p.get(key, "")):
+                        g_errors.append(f"{gid}:{p.get('id')} 提议缺 {key}")
+                if p.get("status") == "approved" and not p.get("approved_by"):
+                    g_errors.append(f"{gid}:{p.get('id')} 已批准但无批准人")
+        add("goal_loop_valid", not g_errors,
+            (f"目标 {len(seen_ids)} 个 · 均锁方向" if not g_errors
+             else f"错误={g_errors[:5]}"))
+
     return results
 
 

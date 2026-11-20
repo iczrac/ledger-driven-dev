@@ -109,7 +109,7 @@ PY
   return $rc
 }
 stage_verify(){
-  note '账本不变量（29 条 · pass / fail / na 三态）'
+  note '账本不变量（30 条 · pass / fail / na 三态）'
   python3 "$DEMO/verify_ledger.py" --root . \
     --registry "$DEMO/registry.json" \
     --ledger "$DEMO/DECISION_LEDGER.json" \
@@ -250,7 +250,7 @@ stage_upgrade_access(){
     --board "$gov/index.html" --strict >/dev/null \
     || { rm -rf "$tmp"; return 1; }
   rm -rf "$tmp"
-  echo '  升级计划/备份/复验、第七轴本体绑定、可用资产、节点工作台、注册批准、写入审计、默认拒绝、29 条三态不变量均通过'
+  echo '  升级计划/备份/复验、第七轴本体绑定、可用资产、节点工作台、注册批准、写入审计、默认拒绝、30 条三态不变量均通过'
 }
 stage_contracts(){
   note '资产 / 看板骨架 / 规模预算 / 节点工作台契约'
@@ -351,4 +351,4 @@ if [ "$FAILURES" -gt 0 ]; then
   printf '质量门禁失败：%d 个阶段未通过\n' "$FAILURES"
   exit 1
 fi
-printf '质量门禁全绿：测试 / 测试架构 / 证据分层 / 29 条三态不变量 / 场景矩阵 / 文件布局 / 升级与接入 / 资产与工作台契约 / 幂等 / 同步 / 反向回流 / 本体层 / 脱敏 / 文档链接 / 验收契约 / 前置条件\n'
+printf '质量门禁全绿：测试 / 测试架构 / 证据分层 / 30 条三态不变量 / 场景矩阵 / 文件布局 / 升级与接入 / 资产与工作台契约 / 幂等 / 同步 / 反向回流 / 本体层 / 脱敏 / 文档链接 / 验收契约 / 前置条件\n'
