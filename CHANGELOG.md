@@ -2,6 +2,24 @@
 
 本项目版本遵循语义化版本（SemVer）。
 
+## [2.6.0] - 2026-11-20
+
+**来源投影与完成定义**：借鉴外部方法论「让 AI 产出与人确认可区分」的思路，
+但**不往账本加字段**——issue 早有 `source=derived`/`derived_from`（机器控制）与
+`owner`/`owner_note`/`detail`（人补、重算保留），decision 早有 `status: proposed→done`。
+再加 `origin` 字段就是同一事实两处表达，违背单一事实源。
+
+- `provenance_view.py`（新增只读投影脚本，进 scripts 摘要但不进治理工具副本）：
+  `projection = f(账本)`，把 issue/decision 既有字段按 `[AI推断]`（勿手改）/
+  `[人确认]`（人补）白名单分组；从任务卡 `target_level`+`missing_evidence`
+  派生 `definition_of_done`（含 `verified⟺bound` 达标条件与可运行复验命令）。
+  不写回账本、不改 27 不变量、不参与写入链——P2「不改治理规则」由此保证。
+- 黄金范例 `examples/golden-walkthrough/`（可运行、可复算、零写盘）：六步串起
+  复述门→路由→编排→批准包→来源投影→完成定义；演示 fail-closed 对照。
+  放在 examples 不进资产摘要，不触发额外整包安装。
+- 新文档 `docs/26-来源投影与完成定义`；10 条单测（先红后绿）；版本 2.5.0→2.6.0。
+- 七模型 YAML / 8 段硬暂停 / code-paas 一律不引入。
+
 ## [2.5.0] - 2026-11-20
 
 **专家团自动编排：把路由链变成可执行分工 + 人工批准包**。P0 先修路由，

@@ -1,0 +1,15 @@
+{
+  "schema": "intent-restate/0",
+  "raw_intent": "实现 DEMO.API.QUERY.01 的测试代码",
+  "restatement": "对能力 DEMO.API.QUERY.01 补齐测试代码，使其证据达标；仅写入测试代码相关路径，不改账本 level/completion/history 字段。",
+  "intents": [
+    "code"
+  ],
+  "capabilities": [
+    "DEMO.API.QUERY.01"
+  ],
+  "write_scope": [
+    "src/**"
+  ],
+  "open_questions": []
+}

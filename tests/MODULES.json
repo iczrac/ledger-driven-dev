@@ -43,11 +43,12 @@
     {
       "id": "routing",
       "name": "专家路由与纪律",
-      "scope": "route_expert / intent_restate / expert_run / skills / scenario_matrix",
+      "scope": "route_expert / intent_restate / expert_run / provenance_view / skills / scenario_matrix",
       "owner_scripts": [
         "scripts/route_expert.py",
         "scripts/intent_restate.py",
         "scripts/expert_run.py",
+        "scripts/provenance_view.py",
         "scripts/scenario_matrix.py",
         "scripts/ledger_decide.py",
         "scripts/ledger_lesson.py"
@@ -57,7 +58,8 @@
         "tests/routing/test_skills.py",
         "tests/routing/test_scenarios.py",
         "tests/routing/test_intent_restate.py",
-        "tests/routing/test_expert_run.py"
+        "tests/routing/test_expert_run.py",
+        "tests/routing/test_provenance_view.py"
       ]
     },
     {
