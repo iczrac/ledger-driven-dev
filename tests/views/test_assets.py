@@ -17,6 +17,7 @@ from asset_bundle import (bundle, check_definitions, install, install_plan,  # n
 from route_expert import (asset_root, build as route_build, check_assets,  # noqa: E402
                           installed_manifest_paths, load_assets)
 from upgrade import apply as upgrade_apply, plan as upgrade_plan, verify as upgrade_verify
+from method_assets import manifest as assets_manifest  # noqa: E402
 
 
 class AssetsTest(unittest.TestCase):
@@ -103,17 +104,21 @@ class AssetsTest(unittest.TestCase):
             own.write_text("---\nname: my-own-skill\n---\n# 项目自有技能，没有 description\n",
                            encoding="utf-8")
             root = asset_root(target)
+            # 期望值从权威清单动态推导，避免新增技能/专家后硬编码计数再次漂移。
+            counts = assets_manifest()["counts"]
+            expect_skills = counts["skills"]
+            expect_installed = counts["experts"] + counts["skills"]
             scope = installed_manifest_paths(root)
-            self.assertEqual(len(scope), 28)
+            self.assertEqual(len(scope), expect_installed)
             a = load_assets(root, scope)
-            self.assertEqual(a["skill_count"], 20)
-            self.assertEqual(a["asset_count"], 28)
+            self.assertEqual(a["skill_count"], expect_skills)
+            self.assertEqual(a["asset_count"], expect_installed)
             self.assertTrue(a["scoped"])
             res = check_assets(root)
             self.assertTrue(res["scoped"])
             self.assertTrue(res["ok"], res["errors"])
             out = route_build(target, "升级治理骨架", "auto", "P")
-            self.assertEqual(out["assets"]["skill_count"], 20)
+            self.assertEqual(out["assets"]["skill_count"], expect_skills)
             self.assertEqual(out["route"]["asset_binding"]["status"], "ok")
 
     def test_scoped_check_still_detects_missing_installed_asset(self):

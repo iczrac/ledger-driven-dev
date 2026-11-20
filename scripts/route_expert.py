@@ -212,7 +212,7 @@ EXPERT_CARDS = {
     "expert-router": {
         "title": "专家路由",
         "duty": "识别状态与意图，选唯一负责人；冲突时要求澄清。",
-        "skills": ["expert-route"],
+        "skills": ["intent-restate", "expert-route"],
         "writes": [],
     },
     "greenfield-architect": {
@@ -650,7 +650,8 @@ def commands_for(expert: str, target_display: str) -> list[str]:
 
 def build(target: Path, intent: str, explicit_mode: str,
           target_display: str, max_files: int = 2000,
-          assets_root: Path | None = None) -> dict:
+          assets_root: Path | None = None,
+          restate_file: Path | str | None = None) -> dict:
     facts = inspect(target, max_files=max_files)
     scores = classify_intent(intent)
     decision = decide(facts, scores, explicit_mode)
@@ -666,30 +667,62 @@ def build(target: Path, intent: str, explicit_mode: str,
     if assets["status"] != "ok":
         route["preconditions"] = list(route.get("preconditions", [])) + [
             "专家/技能资产不完整：先跑 asset_bundle.py install --apply --approved-by <人>"]
-    return {
+
+    clarification = decision["clarification"]
+    restate_result = None
+    if restate_file is not None:
+        # 复述门前置：意图未被结构化确认前，不让模糊意图静默进入路由。
+        # 延迟 import 保持独立工具可单跑；默认 None 时完全兼容既有调用。
+        try:
+            import intent_restate
+        except ImportError:  # pragma: no cover - 与 route_expert 同目录时必可导入
+            sys.path.insert(0, str(Path(__file__).resolve().parent))
+            import intent_restate
+        restate_result = intent_restate.gate(target, Path(restate_file))
+        if restate_result["verdict"] != "allow":
+            fixes = [c.get("fix") for c in restate_result["checks"]
+                     if c.get("fix")]
+            question = "复述门未放行（" + restate_result["verdict"] + "）：" + "；".join(fixes)
+            if clarification is None:
+                clarification = {"question": question, "options": []}
+            else:
+                clarification = dict(clarification)
+                clarification["question"] = clarification["question"] + "；" + question
+            route["blocked"] = True
+            route["preconditions"] = list(route.get("preconditions", [])) + [
+                "复述门未放行：补齐 intent.json 后重新路由"]
+
+    result = {
         "schema": SCHEMA,
         "target": target_display,
         "mode": explicit_mode if explicit_mode != "auto" else facts["mode"],
         "detected_mode": facts["mode"],
         "facts": facts,
         "intents": decision["intents"],
-        "needs_clarification": decision["clarification"],
+        "needs_clarification": clarification,
         "route": route,
         "assets": {k: v for k, v in assets.items()
                    if k not in ("experts", "skills")},
     }
+    if restate_result is not None:
+        result["restate_gate"] = restate_result
+    return result
 
 
 def render(result: dict) -> str:
     r = result["route"]
     f = result["facts"]
-    lines = [
+    lines = []
+    if result.get("restate_gate") is not None:
+        g = result["restate_gate"]
+        lines.append(f"复述门：{g['verdict']}（{len(g['checks'])} 项校验）")
+    lines.extend([
         f"路由 → {r['expert']}（{r['title']}，置信度 {r['confidence']}）",
         f"项目状态：{result['detected_mode']} | ledger={f['ledger']} | "
         f"registry={f['registry']} | 源码/测试/文档="
         f"{f['counts']['source']}/{f['counts']['test']}/{f['counts']['doc']}",
         f"理由：{r['reason']}",
-    ]
+    ])
     if r["preconditions"]:
         lines.append("前置条件：" + "；".join(r["preconditions"]))
     if r["handoff"]["open_questions"]:
@@ -711,6 +744,7 @@ def main(argv: list[str] | None = None) -> int:
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--target", default=".", help="目标项目根目录（默认当前目录）")
     ap.add_argument("--intent", default="", help="本轮任务意图的自然语言描述")
+    ap.add_argument("--intent-file", default="", help="复述门 intent.json 路径；提供时先跑复述门，未放行则阻断路由")
     ap.add_argument("--mode", choices=("auto", "greenfield", "brownfield"),
                     default="auto", help="显式指定项目模式；与事实冲突时会要求澄清")
     ap.add_argument("--max-files", type=int, default=2000, help="只读扫描的文件数上限")
@@ -734,7 +768,8 @@ def main(argv: list[str] | None = None) -> int:
               ("\n" + "\n".join(result["errors"]) if result["errors"] else ""))
         return 0 if result["ok"] else 1
     result = build(target, args.intent, args.mode, args.target, args.max_files,
-                   Path(args.assets_root) if args.assets_root else None)
+                   Path(args.assets_root) if args.assets_root else None,
+                   Path(args.intent_file) if args.intent_file else None)
     if args.json:
         print(json.dumps(result, ensure_ascii=False, indent=2, sort_keys=True))
     else:
