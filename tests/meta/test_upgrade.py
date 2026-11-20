@@ -50,13 +50,16 @@ class UpgradeTest(unittest.TestCase):
     def test_two_digit_minor_is_semver_not_string(self):
         """2.10.0 必须大于 2.9.0，否则旧账本会被误判为「来自未来」。"""
         self.assertGreater(_version_tuple("2.10.0"), _version_tuple("2.9.0"))
-        self.assertEqual(_version_tuple(METHOD_VERSION), (2, 10, 0))
+        self.assertGreaterEqual(_version_tuple(METHOD_VERSION), (2, 10, 0),
+                                "当前方法版本不得退回 2.10.0 之前")
 
     def test_definitions_selfcheck(self):
         self.assertEqual(check_definitions(), [])
         self.assertEqual(plan.__name__, "plan")
         self.assertEqual(len(POST_UPGRADE), 19)
-        self.assertEqual(len(TOOLING), 6)
+        self.assertEqual(len(TOOLING), 7)
+        self.assertEqual(TOOLING["governance/vendor/d3.v7.min.js"],
+                         "templates/vendor/d3.v7.min.js")
         self.assertEqual(len(PRE_UPGRADE), 1)
         self.assertIn("ledger_feedback.py export", PRE_UPGRADE[0])
         self.assertIn("ledger_feedback.py export", POST_UPGRADE[-1])
@@ -151,13 +154,16 @@ class UpgradeTest(unittest.TestCase):
         with project_copy() as (tmp, target):
             first = apply(target, "张三")
             before = tree_hash(target)
+            backups_after_first = {p.name for p in
+                                   (target / ".ledger-upgrade" / "backups").iterdir()}
             second = apply(target, "张三")
             self.assertTrue(second["noop"])
             self.assertEqual(tree_hash(target), before)
             self.assertEqual(len(ledger_of(target)["governance_meta"]["upgrade_log"]), 1)
             backups = list((target / ".ledger-upgrade" / "backups").iterdir())
-            self.assertEqual(len(backups), 1)
-            self.assertEqual(first["backup"], backups[0].name)
+            # M6 骨架归一可能另存一份 board-*.html；关键是第二次 apply 不再新增备份。
+            self.assertEqual({p.name for p in backups}, backups_after_first)
+            self.assertIn(first["backup"], backups_after_first)
 
     def test_verify_flags_stale_evidence(self):
         """U2 探针：升级后改了测试源码，verify 必须拒绝宣布完成。"""

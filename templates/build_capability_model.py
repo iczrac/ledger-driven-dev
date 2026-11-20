@@ -93,6 +93,27 @@ LEVELS = {
 }
 LEVELS_CAVEAT = "L5 授予配置了 governance_gate=true 的项目；其他项目最高 L4。"
 
+# ---- 分析层（v2.11.0）----
+# 健康度不是新事实，而是把已有账本字段按固定权重投影成一个可读分数。
+# 权重固定、可复算；前端 What-if 必须用同一组权重，否则预览会变成第二套判定。
+HEALTH_DIMENSION_WEIGHTS = {
+    "evidence_freshness": 0.20,
+    "test_pass_rate": 0.25,
+    "decision_backlog": 0.15,
+    "verified_coverage": 0.20,
+    "work_health": 0.20,
+}
+HEALTH_METHOD = (
+    "加权投影：证据新鲜度20% + 测试通过率25% + 决策积压15% + "
+    "verified 覆盖20% + 工作健康20%；各项 0-100，全部来自账本现有字段。"
+)
+ANALYTICS_SCHEMA = "maturity-analytics/1"
+# v2.12.0：D3 消费的追溯树投影。保持 ANALYTICS_SCHEMA 不变（老看板仍能读
+# maturity/health），新字段带自己的子 schema；缺失即为旧账本，由前端降级。
+LINEAGE_SCHEMA = "trace-lineage/1"
+LINEAGE_GROUP_LIMIT = 6
+FRESHNESS_SCORE = {"fresh": 100.0, "stale": 50.0, "unbound": 20.0}
+
 # ---- 证据分层（evidence tier）----
 # 与成熟度正交：level 回答"做到哪一级"，tier 回答"这一级的证据是声明还是实测"。
 # declared = 证据文件存在（生成器扫描可见）；verified = 有通过的测试报告证明其真跑过。
@@ -987,8 +1008,9 @@ def build(repo_root: Path, cfg_all: dict, ledger: dict, test_report: dict | None
         "evidence_tier_distribution": tier_dist,
         "verified_coverage": round(tier_dist.get("verified", 0) / total_caps, 2) if total_caps else 0.0,
     }
-    # SELECT 步骤的机器可读产出：每次重跑自动刷新，供规划/编码代理直接消费
-    model["next_queue"] = build_next_queue(model)
+    # SELECT 步骤的机器可读产出 + 分析层：每次重跑自动刷新，
+    # 供规划/编码代理与离线看板直接消费。
+    apply_analytics(model, ledger)
     return model
 
 
@@ -1185,7 +1207,8 @@ def lesson_matches(item: dict, task: dict, domain: str) -> bool:
             or domain in doms or task["level"] in lvls)
 
 
-def build_next_queue(model: dict, limit: int = 10, lessons: dict | None = None) -> list[dict]:
+def build_next_queue(model: dict, limit: int = 10, lessons: dict | None = None,
+                     health_gain: dict[str, float] | None = None) -> list[dict]:
     """把循环协议的 SELECT 步骤机器化：输出可直接消费的任务队列。
 
     排序规则（可机读、可复算，免除每次重新解释）：
@@ -1238,6 +1261,8 @@ def build_next_queue(model: dict, limit: int = 10, lessons: dict | None = None) 
                                   "impl", "unit_tests", "test_records")
                     },
                     "decisions": [d["id"] for d in di.get("decisions", [])],
+                    # 健康增益由 apply_analytics 注入；旧账本缺字段时前端按 0 处理。
+                    "health_impact": float((health_gain or {}).get(c["code"], 0.0)),
                 }
                 # 经验层接入：任务卡自带相关已确认经验，执行者无需另行检索
                 items = (lessons or {}).get("items", []) or model.get("lessons", {}).get("items", [])
@@ -1251,6 +1276,350 @@ def build_next_queue(model: dict, limit: int = 10, lessons: dict | None = None) 
     for i, t in enumerate(tasks, 1):
         t["rank"] = i
     return tasks[:limit]
+
+
+def _iter_caps(model: dict):
+    for p in model.get("projects", []):
+        for m in p.get("modules", []):
+            for c in m.get("caps", []):
+                yield p, m, c
+
+
+def compute_health_dimensions(model: dict, ledger: dict | None = None,
+                              overrides: dict[str, dict] | None = None) -> dict:
+    """把账本现有字段投影成五个 0-100 子维度。
+
+    overrides 只供推荐行动模拟：形如 {code: {"level": 3, "tier": "verified"}}，
+    绝不写回 model/ledger，也不改变任何判定规则。
+    """
+    ledger = ledger or {}
+    raw_caps = [c for _, _, c in _iter_caps(model)]
+    caps = []
+    for c in raw_caps:
+        ov = (overrides or {}).get(c.get("code"), {}) or {}
+        caps.append({
+            "code": c.get("code"),
+            "level": ov.get("level", c.get("level", 0)),
+            "tier": ov.get("tier", c.get("evidence_tier", "declared")),
+            "completion": ov.get(
+                "completion",
+                round(float(ov.get("level", c.get("level", 0))) / 5, 2)),
+        })
+    total = len(caps)
+
+    fresh = ((model.get("summary") or {}).get("evidence_freshness")
+             or "unbound")
+    fresh_score = FRESHNESS_SCORE.get(str(fresh), FRESHNESS_SCORE["unbound"])
+
+    cases = (ledger.get("test_results") or {}).get("cases") or []
+    passed = sum(1 for x in cases if isinstance(x, dict) and x.get("status") == "pass")
+    test_score = round(100 * passed / len(cases), 1) if cases else 0.0
+
+    entries = ledger.get("entries") or []
+    backlog = sum(1 for e in entries
+                  if isinstance(e, dict) and e.get("status") in ("proposed", "deferred"))
+    backlog_score = max(0.0, 100.0 - min(100.0, backlog * 10.0))
+
+    verified = sum(1 for c in caps if c["tier"] == "verified")
+    verified_score = round(100 * verified / total, 1) if total else 0.0
+
+    work_items = ledger.get("work_items") or []
+    issues = [x for x in work_items
+              if isinstance(x, dict) and x.get("kind") == "issue"
+              and x.get("status") != "done"]
+    blocked = sum(1 for x in issues if x.get("status") == "blocked")
+    failed = sum(1 for x in cases
+                 if isinstance(x, dict) and x.get("status") in ("fail", "error"))
+    work_score = max(
+        0.0,
+        100.0 - min(100.0, blocked * 20.0 + (len(issues) - blocked) * 8.0
+                    + failed * 15.0),
+    )
+
+    dims = {
+        "evidence_freshness": {
+            "score": fresh_score, "weight": HEALTH_DIMENSION_WEIGHTS["evidence_freshness"],
+            "detail": str(fresh),
+        },
+        "test_pass_rate": {
+            "score": test_score, "weight": HEALTH_DIMENSION_WEIGHTS["test_pass_rate"],
+            "detail": f"{passed}/{len(cases)}",
+        },
+        "decision_backlog": {
+            "score": backlog_score, "weight": HEALTH_DIMENSION_WEIGHTS["decision_backlog"],
+            "detail": f"open={backlog}",
+        },
+        "verified_coverage": {
+            "score": verified_score, "weight": HEALTH_DIMENSION_WEIGHTS["verified_coverage"],
+            "detail": f"{verified}/{total}",
+        },
+        "work_health": {
+            "score": work_score, "weight": HEALTH_DIMENSION_WEIGHTS["work_health"],
+            "detail": f"blocked={blocked} issues={len(issues)} failed={failed}",
+        },
+    }
+    overall = round(sum(row["score"] * row["weight"] for row in dims.values()), 1)
+    return {"dimensions": dims, "overall": overall, "method": HEALTH_METHOD}
+
+
+def _missing_evidence(c) -> list[str]:
+    di = c.get("doc_index", {}) or {}
+    ev = c.get("evidence", {}) or {}
+    pairs = (
+        ("契约(L1)", "contract", "contracts"),
+        ("实现(L2)", "impl", "impl"),
+        ("单测(L3)", "unit_test", "unit_tests"),
+        ("测试记录(L4)", "test_record", "test_records"),
+    )
+    return [label for label, ekey, dkey in pairs
+            if not ev.get(ekey) and not di.get(dkey)]
+
+
+def recommended_actions(model: dict, ledger: dict, health: dict) -> list[dict]:
+    """按健康度边际增益排序的推荐行动，增益由同一套公式模拟得出。"""
+    base = health["overall"]
+    actions: list[dict] = []
+    for _, _, c in _iter_caps(model):
+        code = c.get("code")
+        if c.get("level", 0) >= 5 and c.get("evidence_tier") == "verified":
+            continue
+        target_level = min(c.get("level", 0) + 1, 5)
+        target_tier = "verified" if c.get("evidence_tier") != "verified" else "declared"
+        if c.get("evidence_tier") == "verified":
+            target_tier = "verified"
+        sim = compute_health_dimensions(
+            model, ledger, {code: {"level": target_level, "tier": target_tier}})
+        gain = round(sim["overall"] - base, 1)
+        if gain <= 0:
+            continue
+        missing = _missing_evidence(c)
+        actions.append({
+            "code": code,
+            "name": c.get("name", ""),
+            "action": (
+                f"补齐 {missing[0]} 并升到 L{target_level}"
+                if missing else f"补齐实测证据，升到 L{target_level}"
+            ),
+            "health_gain": gain,
+            "evidence": missing[0] if missing else "unit_tests",
+        })
+    actions.sort(key=lambda x: (-x["health_gain"], x["code"]))
+    return actions
+
+
+def _lineage_evidence_nodes(parent_id: str, values, category: str) -> list[dict]:
+    """把文档索引/决策证据归一为 D3 hierarchy 可直接消费的叶节点。"""
+    nodes: list[dict] = []
+    seen: set[str] = set()
+    for value in values or []:
+        path = value.get("path") if isinstance(value, dict) else value
+        if not path:
+            continue
+        path = str(path)
+        if path in seen:
+            continue
+        seen.add(path)
+        nodes.append({
+            "id": f"{parent_id}/ev:{category}:{path}",
+            "kind": "evidence",
+            "label": Path(path).name or path,
+            "category": category,
+            "path": path,
+            "children": [],
+        })
+        if len(nodes) >= LINEAGE_GROUP_LIMIT:
+            break
+    return nodes
+
+
+def build_lineage_projection(model: dict, ledger: dict) -> dict:
+    """能力 → 决策 → 证据 → 当前状态的只读树；不复制事实，只做导航索引。
+
+    D3 的 d3.hierarchy() 可直接吃每个 tree；前端展开/收合只改 DOM，不改账本。
+    """
+    entries = {e.get("id"): e for e in ledger.get("entries", [])
+               if isinstance(e, dict) and e.get("id")}
+    trees: dict[str, dict] = {}
+    for _, _, c in _iter_caps(model):
+        code = c.get("code")
+        if not code:
+            continue
+        root_id = f"cap:{code}"
+        di = c.get("doc_index") or {}
+        level = int(c.get("level", 0) or 0)
+        children: list[dict] = []
+
+        for ref in di.get("decisions") or []:
+            did = ref.get("id") if isinstance(ref, dict) else None
+            if not did:
+                continue
+            dec_id = f"{root_id}/dec:{did}"
+            entry = entries.get(did) or {}
+            children.append({
+                "id": dec_id,
+                "kind": "decision",
+                "label": (ref.get("title") if isinstance(ref, dict) else None) or did,
+                "decision_id": did,
+                "status": (ref.get("status") if isinstance(ref, dict) else "")
+                          or entry.get("status", ""),
+                "children": _lineage_evidence_nodes(
+                    dec_id, entry.get("evidence"), "decision"),
+            })
+
+        for key in ("plans", "contracts", "impl", "unit_tests", "test_records"):
+            children.extend(_lineage_evidence_nodes(root_id, di.get(key), key))
+
+        children.append({
+            "id": f"{root_id}/state",
+            "kind": "state",
+            "label": (f"L{level} · {c.get('evidence_tier', 'declared')} · "
+                      f"{c.get('completion', 0)}"),
+            "level": level,
+            "tier": c.get("evidence_tier", "declared"),
+            "completion": c.get("completion", 0),
+            "children": [],
+        })
+        trees[code] = {
+            "id": root_id,
+            "kind": "capability",
+            "code": code,
+            "label": c.get("name") or code,
+            "status": {
+                "level": level,
+                "tier": c.get("evidence_tier", "declared"),
+                "completion": c.get("completion", 0),
+            },
+            "children": children,
+        }
+    return {
+        "schema": LINEAGE_SCHEMA,
+        "purpose": "规划→决策→证据→当前状态的导航树；与账本同源，前端只读不写回。",
+        "node_kinds": ["capability", "decision", "evidence", "state"],
+        "group_limit": LINEAGE_GROUP_LIMIT,
+        "trees": trees,
+    }
+
+
+def build_event_timeline(events: list[dict]) -> list[dict]:
+    """把 append-only 事件压成趋势图横轴摘要，不复制 state_digest。"""
+    out: list[dict] = []
+    for ev in events or []:
+        change = ev.get("changes") or {}
+        codes = sorted({
+            *(t.get("code") for t in change.get("level_transitions") or []
+              if isinstance(t, dict) and t.get("code")),
+            *(change.get("added") or []),
+            *(change.get("removed") or []),
+            *(d.get("code") for d in change.get("completion_delta") or []
+              if isinstance(d, dict) and d.get("code")),
+            *(d.get("code") for d in change.get("evidence_changes") or []
+              if isinstance(d, dict) and d.get("code")),
+        })
+        count = sum(len(change.get(k) or []) for k in
+                    ("level_transitions", "added", "removed",
+                     "completion_delta", "evidence_changes"))
+        out.append({
+            "seq": ev.get("seq"),
+            "ts": ev.get("ts", ""),
+            "type": ev.get("type", ""),
+            "note": ev.get("note", ""),
+            "fingerprint": ev.get("fingerprint_after"),
+            "change_count": count,
+            "codes": codes[:LINEAGE_GROUP_LIMIT],
+        })
+    return out
+
+
+def build_analytics(model: dict, ledger: dict, health: dict) -> dict:
+    """从历史快照派生时间序列与差异摘要；不新增事实，只做只读投影。"""
+    caps = {c["code"]: c for _, _, c in _iter_caps(model)}
+    events = (ledger.get("history") or {}).get("events") or []
+
+    maturity: dict[str, dict] = {}
+    for ev in events:
+        sd = ev.get("state_digest") or {}
+        for code in sorted(sd):
+            st = sd[code] or {}
+            level = int(st.get("l", 0) or 0)
+            point = {
+                "seq": ev.get("seq"),
+                "ts": ev.get("ts", ""),
+                "level": level,
+                "level_code": LEVELS.get(level, {}).get("code", f"L{level}"),
+                "completion": round(float(st.get("c", 0) or 0), 2),
+                "tier": st.get("t", "declared"),
+            }
+            row = maturity.setdefault(code, {"series": []})
+            last = row["series"][-1] if row["series"] else None
+            if last is None or (last["level"], last["tier"], last["completion"]) != (
+                    point["level"], point["tier"], point["completion"]):
+                row["series"].append(point)
+
+    # 当前状态必须在序列末尾；旧账本缺快照时也能画出单点。
+    for code, c in caps.items():
+        row = maturity.setdefault(code, {"series": []})
+        level = int(c.get("level", 0) or 0)
+        point = {
+            "seq": len(events),
+            "ts": (events[-1].get("ts", "") if events else ""),
+            "level": level,
+            "level_code": c.get("level_code", LEVELS.get(level, {}).get("code", f"L{level}")),
+            "completion": round(float(c.get("completion", 0) or 0), 2),
+            "tier": c.get("evidence_tier", "declared"),
+        }
+        last = row["series"][-1] if row["series"] else None
+        if last is None:
+            row["series"].append(point)
+        elif (last["level"], last["tier"], last["completion"]) != (
+                point["level"], point["tier"], point["completion"]):
+            row["series"].append(point)
+        row["current_level"] = level
+        row["current_tier"] = point["tier"]
+
+    if events:
+        last_event = events[-1]
+        prev_sd = events[-2].get("state_digest") if len(events) >= 2 else {}
+        change = diff_state(prev_sd or {}, last_event.get("state_digest") or {})
+        change.update({
+            "event_seq": last_event.get("seq"),
+            "ts": last_event.get("ts", ""),
+            "from_fingerprint": last_event.get("fingerprint_before"),
+            "to_fingerprint": last_event.get("fingerprint_after"),
+        })
+    else:
+        change = {
+            "event_seq": 0, "ts": "", "from_fingerprint": None,
+            "to_fingerprint": None, "level_transitions": [], "added": [],
+            "removed": [], "completion_delta": [], "evidence_changes": [],
+        }
+
+    return {
+        "schema": ANALYTICS_SCHEMA,
+        "purpose": "能力成熟度与健康度的只读投影；前端不得写回账本。",
+        "levels": [LEVELS[i]["code"] for i in range(6)],
+        "maturity": maturity,
+        "change_summary": change,
+        "health": health,
+        "recommended_actions": recommended_actions(model, ledger, health),
+        "timeline": build_event_timeline(events),
+        "lineage": build_lineage_projection(model, ledger),
+    }
+
+
+def apply_analytics(model: dict, ledger: dict) -> dict:
+    """统一重算分析摘要、队列健康增益与看板摘要字段。"""
+    health = compute_health_dimensions(model, ledger)
+    model["summary"]["health_dimensions"] = {
+        k: v["score"] for k, v in health["dimensions"].items()}
+    model["summary"]["health_overall"] = health["overall"]
+    model["summary"]["health_method"] = HEALTH_METHOD
+    analytics = build_analytics(model, ledger, health)
+    model["analytics"] = analytics
+    gain = {a["code"]: a["health_gain"]
+            for a in analytics["recommended_actions"]}
+    model["next_queue"] = build_next_queue(
+        model, lessons=ledger.get("lessons"), health_gain=gain)
+    return health
 
 
 def sync_architecture(ledger: dict, model: dict, repo_root: Path, proj_rel: str) -> None:
@@ -1419,8 +1788,9 @@ def main() -> None:
     ts = datetime.now().strftime("%Y-%m-%d %H:%M HKT")
     # 历史/经验只依赖派生状态与既有事件；dry-run 也计算，以便预览将产生的事件（不落盘）
     new_event = evolve(ledger, model, ts)
-    # evolve 之后重算队列，让任务卡携带最新已确认经验（build 内那次是未接入经验的快照）
-    model["next_queue"] = build_next_queue(model, lessons=ledger.get("lessons"))
+    # evolve 之后重算分析层与队列：趋势必须包含本次新事件，
+    # 任务卡则携带最新已确认经验与健康增益（build 内那次只是未接入经验的快照）。
+    apply_analytics(model, ledger)
     sync_architecture(ledger, model, repo_root, first_cfg["root"])
 
     print(json.dumps(model["summary"], ensure_ascii=False, indent=2))

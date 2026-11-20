@@ -182,6 +182,59 @@ input.search:focus{border-color:var(--purple);box-shadow:0 0 0 3px var(--pp)}
 .dnode .dc{font-size:13px;font-weight:700;fill:var(--purple)}
 .dedge{fill:none;stroke:#b9b7d8;stroke-width:1.5;marker-end:url(#arrow)}
 .dcount{font-size:10px;fill:var(--mut)}
+/* v2.11.0：分析层——热力图 / 趋势 / 健康度 / 卡片墙 / What-if */
+.heat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:12px;margin:12px 0 18px}
+.heat-panel{border:1px solid var(--line);border-radius:12px;padding:14px 16px;background:var(--bg)}
+.heat-panel h3{margin:0 0 4px;font-size:14px}
+.heat-scale{display:flex;gap:4px;align-items:center;font-size:10px;color:var(--mut);margin:6px 0 10px}
+.heat-scale i{width:22px;height:9px;border-radius:2px;display:inline-block}
+.heat-grid .lv0{background:#F1EFE8}.heat-grid .lv1{background:#E6F1FB}.heat-grid .lv2{background:#EEEDFE}
+.heat-grid .lv3{background:#FAEEDA}.heat-grid .lv4{background:#E1F5EE}.heat-grid .lv5{background:#0F6E56;color:#fff}
+.heat-cells{display:grid;grid-template-columns:repeat(auto-fill,minmax(132px,1fr));gap:6px}
+.heat-cell{font-family:inherit;text-align:left;border:1px solid var(--line);border-radius:8px;padding:7px 9px;cursor:pointer;font-size:11px}
+.heat-cell:hover,.heat-cell.sel{outline:2px solid var(--purple);outline-offset:1px}
+.heat-cell .hc-code{font-weight:600;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.heat-cell .hc-meta{opacity:.75;font-size:10px}
+.trend-wrap{border:1px solid var(--line);border-radius:12px;padding:12px 16px;background:var(--bg);overflow-x:auto}
+.trend-wrap svg{min-width:720px;width:100%}
+.trend-line{fill:none;stroke-width:2.5}.trend-dot{stroke:#fff;stroke-width:1.5}
+.trend-axis{stroke:var(--line);stroke-width:1}.trend-label{font-size:10px;fill:var(--mut)}
+.health-dim{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin:12px 0 16px}
+.hdim{border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:var(--soft)}
+.hdim .hk{font-size:11px;color:var(--mut);display:flex;justify-content:space-between}
+.hdim .hv{font-size:17px;font-weight:600;margin-bottom:5px}
+.hbar{height:6px;border-radius:4px;background:var(--line);overflow:hidden}.hbar i{display:block;height:100%;border-radius:4px;background:var(--purple)}
+.queue-wall{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px;margin:12px 0 18px}
+.qcard{border:1px solid var(--line);border-top:3px solid var(--purple);border-radius:12px;padding:14px 16px;background:var(--bg)}
+.qcard .qtop{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:6px}
+.qcard .qrank{font-size:11px;color:var(--mut)}.qcard .qtitle{font-size:13px;font-weight:600;margin:4px 0}
+.qcard .qmeta{font-size:11px;color:var(--mut);line-height:1.7}
+.qcard .qimpact{font-size:12px;color:var(--green);font-weight:600;margin-top:6px}
+.qcard .chip{margin:2px 3px 0 0}
+.changed{position:relative}.changed::before{content:'变更';position:absolute;right:6px;top:6px;font-size:10px;color:var(--amber)}
+.changed{border-left:3px solid var(--amber)}
+.whatif-banner{display:flex;gap:10px;align-items:center;flex-wrap:wrap;border:1px dashed var(--purple);border-radius:10px;padding:9px 12px;background:var(--pp);margin-bottom:12px;font-size:12px}
+.whatif-banner .wi-btn{font-family:inherit;font-size:11px;border:1px solid var(--purple);background:var(--bg);color:var(--purple);border-radius:7px;padding:3px 8px;cursor:pointer}
+.evidence-chain{border:1px solid var(--line);border-radius:12px;padding:14px 16px;background:var(--soft);margin:12px 0 18px}
+.evidence-chain h3{margin:0 0 8px;font-size:14px}
+/* v2.12.0：本地 D3 视图——沿用同一套浅色变量，不引入第三方外观主题 */
+.d3-axis text{font-size:10px;fill:var(--mut)}
+.d3-axis path,.d3-axis line{stroke:var(--line)}
+.d3-heat-cell{cursor:pointer;stroke:var(--line);stroke-width:1}
+.d3-heat-cell:hover,.d3-heat-cell:focus{stroke:var(--purple);stroke-width:2;outline:none}
+.d3-heat-title{font-size:12px;font-weight:600;fill:var(--ink)}
+.d3-heat-axis{font-size:10px;fill:var(--mut)}
+.d3-heat-label{font-size:10px;font-weight:600;fill:var(--ink);pointer-events:none}
+.d3-heat-sub{font-size:10px;fill:var(--mut);pointer-events:none}
+.lineage-tree{border:1px solid var(--line);border-radius:12px;padding:12px 16px;background:var(--bg);overflow-x:auto;margin:10px 0 16px}
+.lineage-tree svg{min-width:720px;width:100%}
+.lineage-node{cursor:pointer}.lineage-node circle{stroke:#fff;stroke-width:2}
+.lineage-node text{font-size:11px;fill:var(--ink)}
+.lineage-link{fill:none;stroke:var(--line);stroke-width:1.5}
+.lineage-detail{border:1px dashed var(--purple);border-radius:9px;padding:8px 11px;background:var(--pp);font-size:11px;line-height:1.7;margin:10px 0}
+.lineage-detail code{word-break:break-all}
+.lineage-tree details summary{cursor:pointer;font-size:12px;padding:3px 0}
+.lineage-children{margin-left:18px;border-left:1px solid var(--line);padding-left:10px}
 /* v2.10.0：工作台视角——先给结论和入口，再给明细 */
 .focus-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px;margin-bottom:14px}
 .focus-card{border:1px solid var(--line);border-top:3px solid var(--amber);border-radius:12px;padding:14px 16px;background:var(--bg)}
@@ -216,6 +269,7 @@ input.search:focus{border-color:var(--purple);box-shadow:0 0 0 3px var(--pp)}
   .principle-grid{grid-template-columns:1fr}
   .diagram-card{padding:10px}
   .focus-grid,.launchpad{grid-template-columns:1fr}
+  .heat-grid,.queue-wall,.health-dim{grid-template-columns:1fr}
   .trustbar .src{margin-left:0}
 }
 @media (prefers-reduced-motion: reduce){
@@ -242,17 +296,21 @@ input.search:focus{border-color:var(--purple);box-shadow:0 0 0 3px var(--pp)}
 <div class="navgroup primary">
 <button class="tab on" type="button" data-v="workbench" aria-current="page">工作台</button>
 <button class="tab" type="button" data-v="work">工作项</button>
-<button class="tab" type="button" data-v="pending">待裁决</button>
-<button class="tab" type="button" data-v="diagram">架构图</button>
-<button class="tab" type="button" data-v="flow">数据流</button>
+<button class="tab" type="button" data-v="heatmap">能力热力图</button>
+<button class="tab" type="button" data-v="trend">成熟度趋势</button>
+<button class="tab" type="button" data-v="lineage">追溯链</button>
+<button class="tab" type="button" data-v="queue">任务卡片墙</button>
 <button class="tab" type="button" data-v="capability">能力地图</button>
-<button class="tab" type="button" data-v="design">设计理念</button>
+<button class="tab" type="button" data-v="pending">待裁决</button>
 </div>
 <div class="navgroup more" id="navmore">
 <button class="tab" type="button" data-v="all">全部条目</button>
 <button class="tab" type="button" data-v="timeline">时间线</button>
 <button class="tab" type="button" data-v="modules">模块地图</button>
 <button class="tab" type="button" data-v="arch">架构钻取</button>
+<button class="tab" type="button" data-v="diagram">架构图</button>
+<button class="tab" type="button" data-v="flow">数据流</button>
+<button class="tab" type="button" data-v="design">设计理念</button>
 <button class="tab" type="button" data-v="history">演进历史</button>
 <button class="tab" type="button" data-v="lessons">经验库</button>
 <button class="tab" type="button" data-v="glossary">术语与实现</button>
@@ -272,9 +330,13 @@ input.search:focus{border-color:var(--purple);box-shadow:0 0 0 3px var(--pp)}
 <footer class="foot" id="foot"></footer>
 <button class="backtop" id="backtop" type="button" title="回到顶部" hidden>↑ 顶部</button>
 
+<!-- v2.12.0：D3 只做本地交互渲染；缺文件时各视图回退到原生 SVG / DOM。 -->
+<script src="vendor/d3.v7.min.js"></script>
 <script>
 const EMBED = {"ledger_version":"1.0","title":"项目决策与能力账本","purpose":"单一事实源：决策、裁决、待办及能力索引的唯一写入点。","last_updated":"","owner":"待定","workflow":["所有重大决策/裁决/待办只写入本文件 entries，不再新建独立报告。","新增条目分配稳定 id，状态初始 proposed/decided，填齐字段。","旧决策被取代时设 superseded/supersedes，用取代链表达演进。","能力等级与完成度由 build_capability_model.py 从证据重算，禁止手填。"],"fields":{"id":"稳定标识，永不复用","status":"proposed | decided | done | superseded | deferred","evidence":"证据/文档路径","confidence":"high | medium | low"},"entries":[],"history":{"spec":{},"events":[]},"lessons":{"spec":{},"items":[],"candidates":[]},"module_map":{"modules":[],"pages_path":"artifacts/control_center/pages/"},"architecture":{"projects":[]},"capability_model":{"version":"1.0","generated_at":"","summary":{"projects":0,"modules":0,"capabilities":0,"overall_completion":0},"levels":{},"scoring":{},"coding_spec":{},"doc_index_spec":{},"projects":[],"loop_protocol":{}}};
 let DATA = EMBED;
+// What-if 只修改这份视图副本；BASE(DATA) 永远保持账本原样，不写回文件。
+let VIEW_DATA = DATA;
 
 const ONTO_TERMS = [];
 let ONTO_DATA = ONTO_TERMS;
@@ -306,6 +368,10 @@ const VIEW_META={
   modules:{name:'模块地图',hint:'源码 → 文档 → 控制中心 → 页面 → 决策，一屏对应',ph:'搜索模块名 / id / 源码 / 文档 / 页面…'},
   arch:{name:'架构钻取',hint:'项目 → 模块 → 嵌套组件树 → 文档索引 → 能力编码',ph:'搜索项目 / 模块 / 组件…'},
   capability:{name:'能力地图',hint:'完成度由证据自动判定；展开能力点看文档索引与规划',ph:'搜索能力编码 / 名称 / 项目 / 模块…'},
+  heatmap:{name:'能力热力图',hint:'模块 / 组件树 × L0–L5 颜色梯度；可在 declared / verified 两层间切换',ph:'搜索模块 / 能力编码 / 名称…'},
+  trend:{name:'成熟度趋势',hint:'从 history.events 回放能力等级的时间序列；点能力点看证据链',ph:'搜索能力编码 / 名称（命中序列加粗）…'},
+  lineage:{name:'追溯链',hint:'能力 → 决策 → 证据 → 当前状态；展开节点看来源，不新增账本事实',ph:'搜索能力编码 / 决策 / 证据路径…'},
+  queue:{name:'任务卡片墙',hint:'SELECT 产出的下一轮任务；显示缺失证据、关联经验与健康增益',ph:'搜索任务编码 / 动作 / 证据 / 经验…'},
   history:{name:'演进历史',hint:'append-only 事件链；状态快照可回放，不修改历史',ph:'搜索事件指纹 / 类型 / 变更说明…'},
   lessons:{name:'经验库',hint:'已确认经验自动附到任务卡；候选需人或 AI 下结论',ph:'搜索经验标题 / 洞察 / 行动 / 来源事件…'},
   glossary:{name:'术语与实现',hint:'本体投影词表 + 人读概念解说并列；搜索可跨四段过滤',ph:'搜索术语 / 英文标识 / 概念 / 实现解说…'},
@@ -335,8 +401,508 @@ const W_STATUS={open:'待处理',doing:'进行中',done:'已完成',blocked:'阻
 
 function allCaps(){
   const out=[];
-  ((DATA.capability_model||{}).projects||[]).forEach(p=>(p.modules||[]).forEach(m=>(m.caps||[]).forEach(c=>out.push(c))));
+  ((VIEW_DATA.capability_model||{}).projects||[]).forEach(p=>(p.modules||[]).forEach(m=>(m.caps||[]).forEach(c=>out.push(c))));
   return out;
+}
+/* ---- v2.11.0 分析层：所有数字都从 VIEW_DATA 派生，不写回账本 ---- */
+const ANALYTICS_SCHEMA='maturity-analytics/1';
+const HEALTH_WEIGHTS={evidence_freshness:.20,test_pass_rate:.25,decision_backlog:.15,
+  verified_coverage:.20,work_health:.20};
+let selectedCap='', tierFilter='all';
+let whatIf={active:false,overrides:{}};
+function cloneData(d){return JSON.parse(JSON.stringify(d));}
+function capByCode(code){return allCaps().find(c=>c.code===code)||null;}
+function round1(n){return Math.round(n*10)/10;}
+/* ---- v2.12.0 本地 D3：只增强渲染；hasD3() 为 false 时全部走原生降级 ---- */
+const LINEAGE_SCHEMA='trace-lineage/1';
+const LEVEL_COLORS=['#F1EFE8','#E6F1FB','#EEEDFE','#FAEEDA','#E1F5EE','#0F6E56'];
+const D3_KIND_COLORS={capability:'#534AB7',decision:'#185FA5',evidence:'#5F5E5A',state:'#0F6E56'};
+const TREND_COLORS=['#534AB7','#185FA5','#0F6E56','#854F0B','#A32D2D','#5F5E5A','#6f42c1','#0b7285'];
+function hasD3(){return typeof d3!=='undefined'&&!!d3.select&&!!d3.scaleLinear&&!!d3.hierarchy;}
+function d3Color(level){return LEVEL_COLORS[Math.max(0,Math.min(5,Number(level)||0))];}
+function shortLabel(s,n){s=String(s||'');return s.length>n?s.slice(0,n-1)+'…':s;}
+// 旧账本没有 lineage 字段时，按同一路径规则在内存派生，仍不写回文件。
+function deriveLineage(d,caps){
+  const entries={};((d.entries||[]).forEach(e=>{if(e.id)entries[e.id]=e;}));
+  const trees={};
+  caps.forEach(c=>{
+    const code=c.code,rootId='cap:'+code,di=c.doc_index||{},children=[];
+    (di.decisions||[]).forEach(ref=>{
+      const did=ref.id;if(!did)return;
+      const e=entries[did]||{},decId=rootId+'/dec:'+did;
+      children.push({id:decId,kind:'decision',label:ref.title||did,decision_id:did,
+        status:ref.status||e.status||'',children:(e.evidence||[]).slice(0,6).map(p=>({
+          id:decId+'/ev:decision:'+p,kind:'evidence',label:p.split('/').pop()||p,
+          category:'decision',path:p,children:[]}))});
+    });
+    ['plans','contracts','impl','unit_tests','test_records'].forEach(key=>{
+      (di[key]||[]).slice(0,6).forEach(x=>{
+        const p=typeof x==='string'?x:(x.path||'');if(!p)return;
+        children.push({id:rootId+'/ev:'+key+':'+p,kind:'evidence',
+          label:p.split('/').pop()||p,category:key,path:p,children:[]});
+      });
+    });
+    children.push({id:rootId+'/state',kind:'state',
+      label:'L'+c.level+' · '+(c.evidence_tier||'declared')+' · '+(c.completion||0),
+      level:c.level,tier:c.evidence_tier||'declared',completion:c.completion||0,children:[]});
+    trees[code]={id:rootId,kind:'capability',code:code,label:c.name||code,
+      status:{level:c.level,tier:c.evidence_tier||'declared',completion:c.completion||0},children:children};
+  });
+  return {schema:LINEAGE_SCHEMA,purpose:'前端降级投影：旧账本也能钻取证据，不写回文件',
+    node_kinds:['capability','decision','evidence','state'],group_limit:6,trees:trees};
+}
+function deriveTimeline(events){
+  return (events||[]).map(ev=>{
+    const ch=ev.changes||{},codes={},keys=['level_transitions','added','removed','completion_delta','evidence_changes'];
+    keys.forEach(k=>(ch[k]||[]).forEach(x=>{const code=typeof x==='string'?x:x.code;if(code)codes[code]=1;}));
+    return {seq:ev.seq,ts:ev.ts||'',type:ev.type||'',note:ev.note||'',
+      fingerprint:ev.fingerprint_after||null,
+      change_count:keys.reduce((n,k)=>n+(ch[k]||[]).length,0),codes:Object.keys(codes).slice(0,6)};
+  });
+}
+function recomputeHealth(cm,d,overrides){
+  const caps=[];
+  ((cm||{}).projects||[]).forEach(p=>(p.modules||[]).forEach(m=>(m.caps||[]).forEach(c=>{
+    const ov=(overrides||{})[c.code]||{};
+    const level=ov.level===undefined?c.level:ov.level;
+    const tier=ov.tier||c.evidence_tier||'declared';
+    caps.push({code:c.code,level:level,tier:tier,completion:round1(level/5)});
+  })));
+  const sm=(cm||{}).summary||{};
+  const freshScores={fresh:100,stale:50,unbound:20};
+  const fresh=freshScores[sm.evidence_freshness||'unbound']===undefined
+    ?20:freshScores[sm.evidence_freshness];
+  const cases=((d||{}).test_results||{}).cases||[];
+  const passed=cases.filter(c=>c.status==='pass').length;
+  const failed=cases.filter(c=>c.status==='fail'||c.status==='error').length;
+  const open=(d.entries||[]).filter(e=>e.status==='proposed'||e.status==='deferred').length;
+  const verified=caps.filter(c=>c.tier==='verified').length;
+  const issues=(d.work_items||[]).filter(x=>x.kind==='issue'&&x.status!=='done');
+  const blocked=issues.filter(x=>x.status==='blocked').length;
+  const dims={
+    evidence_freshness:{score:fresh,weight:HEALTH_WEIGHTS.evidence_freshness,detail:sm.evidence_freshness||'unbound'},
+    test_pass_rate:{score:cases.length?round1(100*passed/cases.length):0,weight:HEALTH_WEIGHTS.test_pass_rate,detail:passed+'/'+cases.length},
+    decision_backlog:{score:Math.max(0,100-Math.min(100,open*10)),weight:HEALTH_WEIGHTS.decision_backlog,detail:'open='+open},
+    verified_coverage:{score:caps.length?round1(100*verified/caps.length):0,weight:HEALTH_WEIGHTS.verified_coverage,detail:verified+'/'+caps.length},
+    work_health:{score:Math.max(0,100-Math.min(100,blocked*20+(issues.length-blocked)*8+failed*15)),weight:HEALTH_WEIGHTS.work_health,detail:'blocked='+blocked+' failed='+failed}
+  };
+  let overall=0;Object.keys(dims).forEach(k=>{overall+=dims[k].score*dims[k].weight;});
+  return {dimensions:dims,overall:round1(overall)};
+}
+function deriveAnalytics(d){
+  const cm=d.capability_model||{}, caps=[];
+  ((cm.projects||[]).forEach(p=>(p.modules||[]).forEach(m=>(m.caps||[]).forEach(c=>caps.push(c)))));
+  const events=(d.history||{}).events||[];
+  const maturity={};
+  caps.forEach(c=>{maturity[c.code]={series:[],current_level:c.level,current_tier:c.evidence_tier||'declared'};});
+  events.forEach(ev=>{
+    const sd=ev.state_digest||{};
+    Object.keys(sd).forEach(code=>{
+      if(!maturity[code])return;
+      const st=sd[code]||{}, lv=st.l||0;
+      const pt={seq:ev.seq,ts:ev.ts||'',level:lv,level_code:'L'+lv,completion:st.c||0,tier:st.t||'declared'};
+      const s=maturity[code].series, last=s[s.length-1];
+      if(!last||last.level!==lv||last.tier!==pt.tier||last.completion!==pt.completion)s.push(pt);
+    });
+  });
+  caps.forEach(c=>{
+    const s=maturity[c.code].series, pt={seq:events.length,ts:events.length?events[events.length-1].ts||'':'',
+      level:c.level,level_code:c.level_code||('L'+c.level),completion:c.completion||0,
+      tier:c.evidence_tier||'declared'}, last=s[s.length-1];
+    if(!last||last.level!==pt.level||last.tier!==pt.tier||last.completion!==pt.completion)s.push(pt);
+  });
+  const prev=events.length>1?(events[events.length-2].state_digest||{}):{};
+  const lastEv=events[events.length-1]||{}, lastSd=lastEv.state_digest||{};
+  const transitions=[];
+  Object.keys(lastSd).forEach(code=>{
+    if(prev[code]&&prev[code].l!==lastSd[code].l)
+      transitions.push({code:code,from:'L'+prev[code].l,to:'L'+lastSd[code].l});
+  });
+  return {schema:ANALYTICS_SCHEMA,purpose:'前端降级投影：旧账本也能画热力图与趋势，不写回文件',
+    levels:['L0','L1','L2','L3','L4','L5'],maturity:maturity,
+    change_summary:{event_seq:lastEv.seq||0,ts:lastEv.ts||'',from_fingerprint:lastEv.fingerprint_before||null,
+      to_fingerprint:lastEv.fingerprint_after||null,level_transitions:transitions,
+      added:[],removed:[],completion_delta:[],evidence_changes:[]},
+    health:recomputeHealth(cm,d),recommended_actions:[],
+    timeline:deriveTimeline(events),lineage:deriveLineage(d,caps)};
+}
+function ensureAnalytics(){
+  const cm=VIEW_DATA.capability_model;
+  if(!cm)return null;
+  if(!cm.analytics||cm.analytics.schema!==ANALYTICS_SCHEMA)cm.analytics=deriveAnalytics(VIEW_DATA);
+  return cm.analytics;
+}
+function applyWhatIf(){
+  if(!whatIf.active){VIEW_DATA=DATA;return VIEW_DATA;}
+  VIEW_DATA=cloneData(DATA);
+  const cm=VIEW_DATA.capability_model||{};
+  const overrides=whatIf.overrides||{};
+  ((cm.projects||[]).forEach(p=>(p.modules||[]).forEach(m=>(m.caps||[]).forEach(c=>{
+    const ov=overrides[c.code];if(!ov)return;
+    if(ov.level!==undefined){c.level=Math.max(0,Math.min(5,ov.level));c.completion=round1(c.level/5);
+      c.level_code='L'+c.level;c.next_level=Math.min(5,c.level+1);}
+    if(ov.tier){c.evidence_tier=ov.tier;}
+  }))));
+  ensureAnalytics();
+  // 假设只改内存副本：同步时间序列末点、追溯树状态节点与变更高亮信号。
+  // 这样趋势图/热力图/追溯链一起变化，但 DATA（账本）永远不动。
+  const a=cm.analytics||{}, activeCodes=Object.keys(overrides).filter(k=>overrides[k]&&Object.keys(overrides[k]).length);
+  activeCodes.forEach(code=>{
+    const c=allCaps().find(x=>x.code===code);if(!c)return;
+    const row=(a.maturity||{})[code];
+    if(row){
+      row.current_level=c.level;row.current_tier=c.evidence_tier||'declared';
+      const series=row.series||[], events=(VIEW_DATA.history||{}).events||[];
+      const pt={seq:events.length,ts:events.length?events[events.length-1].ts||'':'',
+        level:c.level,level_code:'L'+c.level,completion:c.completion||0,
+        tier:c.evidence_tier||'declared'};
+      const last=series[series.length-1];
+      if(last&&last.seq===pt.seq&&last.level===pt.level&&last.tier===pt.tier)series[series.length-1]=pt;
+      else series.push(pt);
+      row.series=series;
+    }
+    const tree=((a.lineage||{}).trees||{})[code];
+    if(tree){
+      tree.status={level:c.level,tier:c.evidence_tier||'declared',completion:c.completion||0};
+      (tree.children||[]).forEach(n=>{
+        if(n.kind==='state'){n.level=c.level;n.tier=c.evidence_tier||'declared';
+          n.completion=c.completion||0;n.label='L'+c.level+' · '+n.tier+' · '+n.completion;}
+      });
+    }
+  });
+  if(activeCodes.length){
+    const ch=a.change_summary||(a.change_summary={});
+    ch.added=Array.from(new Set((ch.added||[]).concat(activeCodes)));
+    ch.to_fingerprint=String(ch.to_fingerprint||'base').replace(/:whatif$/,'')+':whatif';
+  }
+  const health=recomputeHealth(cm,VIEW_DATA);
+  cm.summary=cm.summary||{};cm.summary.health_dimensions={};
+  Object.keys(health.dimensions).forEach(k=>{cm.summary.health_dimensions[k]=health.dimensions[k].score;});
+  cm.summary.health_overall=health.overall;
+  cm.analytics.health=health;
+  const gain={};(cm.analytics.recommended_actions||[]).forEach(a=>{gain[a.code]=a.health_gain;});
+  cm.next_queue=(cm.next_queue||[]).map(t=>Object.assign({},t,{health_impact:gain[t.code]||0}));
+  return VIEW_DATA;
+}
+function toggleWhatIf(){whatIf.active=!whatIf.active;if(!whatIf.active)whatIf.overrides={};pageLimit=PAGE_SIZE;render();}
+function toggleWhatIfCap(code){
+  if(!whatIf.active)whatIf.active=true;
+  const cur=whatIf.overrides[code];
+  whatIf.overrides[code]=cur?{}:{tier:'verified',level:Math.min(5,(capByCode(code)||{}).level+1||3)};
+  render();
+}
+function whatIfBannerHtml(){
+  if(!whatIf.active)return '';
+  const n=Object.keys(whatIf.overrides||{}).filter(k=>whatIf.overrides[k]&&Object.keys(whatIf.overrides[k]).length).length;
+  return '<div class="whatif-banner"><b>What-if 模拟中</b><span>仅改内存副本，账本不变 · 已假设 '+n+' 项证据</span>'+
+    '<button class="wi-btn" type="button" data-action="reset-whatif">清除假设</button>'+
+    '<button class="wi-btn" type="button" data-action="whatif">退出模拟</button></div>';
+}
+function healthDashHtml(){
+  const cm=VIEW_DATA.capability_model||{};
+  const h=recomputeHealth(cm,VIEW_DATA);
+  return '<div class="health-dim">'+Object.keys(h.dimensions).map(k=>{
+    const v=h.dimensions[k], col=v.score>=80?'var(--green)':v.score>=50?'var(--amber)':'var(--red)';
+    return '<div class="hdim"><div class="hk"><span>'+esc(k)+'</span><span>'+esc(v.detail)+'</span></div>'+
+      '<div class="hv" style="color:'+col+'">'+esc(v.score)+'</div>'+
+      '<div class="hbar"><i style="width:'+esc(v.score)+'%;background:'+col+'"></i></div></div>';
+  }).join('')+'</div><div class="trustbar"><span class="tb">综合健康度 <b>'+esc(h.overall)+'</b></span>'+
+    '<span class="tb">口径 <b>证据20 / 测试25 / 积压15 / 实测20 / 工作20</b></span></div>';
+}
+function bindWhatIf(box){
+  box.querySelectorAll('[data-action="reset-whatif"]').forEach(b=>b.onclick=()=>{whatIf.overrides={};applyWhatIf();render();});
+  box.querySelectorAll('[data-whatif]').forEach(b=>b.onclick=()=>toggleWhatIfCap(b.dataset.whatif));
+}
+function bindCapSelect(box){
+  box.querySelectorAll('[data-cap-select]').forEach(b=>b.onclick=()=>{selectedCap=b.dataset.capSelect;render();});
+}
+function workSig(x){return JSON.stringify([x.id,x.status,x.title,x.detail,x.scope,x.severity]);}
+function markChanges(box){
+  if(!box||!box.querySelectorAll)return;
+  let prev={};try{prev=JSON.parse(localStorage.getItem('ledger-driven-dev:view-state')||'{}');}catch(e){}
+  const a=(VIEW_DATA.capability_model||{}).analytics||{};
+  const fp=((a.change_summary||{}).to_fingerprint)||'';
+  const codes={};
+  (((a.change_summary||{}).level_transitions)||[]).forEach(t=>{codes[t.code]=1;});
+  (((a.change_summary||{}).added)||[]).forEach(c=>{codes[c]=1;});
+  if(prev.fingerprint&&fp&&prev.fingerprint!==fp){
+    box.querySelectorAll('[data-capcode]').forEach(el=>{if(codes[el.dataset.capcode]&&el.classList)el.classList.add('changed');});
+  }
+  const workMap={};(VIEW_DATA.work_items||[]).forEach(x=>{workMap[x.id]=workSig(x);});
+  const workFp=JSON.stringify(workMap);
+  if(prev.work&&prev.work!==workFp){
+    const old=prev.work_map||{};
+    box.querySelectorAll('[data-wid]').forEach(el=>{
+      const id=el.dataset.wid;if(old[id]&&old[id]!==workMap[id]&&el.classList)el.classList.add('changed');
+    });
+  }
+  try{localStorage.setItem('ledger-driven-dev:view-state',JSON.stringify({fingerprint:fp,work:workFp,work_map:workMap}));}catch(e){}
+}
+function renderEvidenceChain(code){
+  const c=capByCode(code);if(!c)return '';
+  const di=c.doc_index||{}, a=(VIEW_DATA.capability_model||{}).analytics||{};
+  const row=a.maturity&&a.maturity[code], s=(row&&row.series)||[];
+  const trail=s.map(p=>'#'+esc(p.seq)+' '+esc(p.level_code)+' '+esc(p.tier)).join(' → ');
+  const sim=c.evidence_tier!=='verified'||c.level<5
+    ?'<button class="wi-btn" type="button" data-whatif="'+esc(code)+'">假设补证升级</button>':'';
+  return '<div class="evidence-chain"><h3>证据链 · '+esc(code)+' '+esc(c.name)+'</h3>'+
+    '<div class="qmeta">等级轨迹 '+(trail||'暂无历史快照')+'</div>'+
+    docIndexHtml(di)+(capHistoryHtml(code)?'<div class="subhead">变更历史</div>'+capHistoryHtml(code):'')+
+    (capLessonsHtml(c)?'<div class="subhead">关联经验</div>'+capLessonsHtml(c):'')+
+    '<div class="subhead">What-if</div>'+(sim||'<span class="wchip">已达标，无需模拟</span>')+'</div>';
+}
+/* ---- D3 渲染器：只在 hasD3() 时调用；DOM 类名与降级版保持一致 ---- */
+function renderTrendD3(box,codes,a){
+  const host=box.querySelector('#d3-trend-root');if(!host)return;
+  const W=920,H=320,L=48,T=18,B=42;
+  const seqs=[];codes.forEach(c=>((a.maturity[c]||{}).series||[]).forEach(p=>seqs.push(p.seq||0)));
+  const min=Math.min.apply(null,seqs),max=Math.max.apply(null,seqs);
+  const x=d3.scaleLinear().domain([min,max]).range([L,W-24]);
+  const y=d3.scaleLinear().domain([0,5]).range([H-B,T]);
+  const svg=d3.select(host).append('svg').attr('viewBox','0 0 '+W+' '+H)
+    .attr('role','img').attr('aria-label','能力成熟度趋势（D3）');
+  svg.append('g').attr('class','d3-axis').attr('transform','translate('+L+',0)')
+    .call(d3.axisLeft(y).tickValues([0,1,2,3,4,5]).tickFormat(d=>'L'+d));
+  const ticks=Array.from(new Set(seqs)).slice(0,10);
+  svg.append('g').attr('class','d3-axis').attr('transform','translate(0,'+(H-B)+')')
+    .call(d3.axisBottom(x).tickValues(ticks).tickFormat(d=>'#'+d));
+  const line=d3.line().x(p=>x(p.seq||0)).y(p=>y(p.level||0));
+  codes.forEach((code,i)=>{
+    const pts=(a.maturity[code]||{}).series||[];
+    const col=TREND_COLORS[i%TREND_COLORS.length];
+    const g=svg.append('g').attr('data-capcode',code).attr('class','trend-series');
+    g.append('path').attr('class','trend-line').attr('stroke',col).attr('d',line(pts));
+    const dots=g.selectAll('circle').data(pts).enter().append('circle')
+      .attr('class','trend-dot').attr('cx',p=>x(p.seq||0)).attr('cy',p=>y(p.level||0))
+      .attr('r',p=>(code===selectedCap?5:3.5)).attr('fill',col);
+    dots.append('title').text(p=>code+' #'+p.seq+' '+p.level_code+' '+p.tier);
+    dots.on('mouseenter',function(){d3.select(this).attr('r',6);})
+      .on('mouseleave',function(){d3.select(this).attr('r',code===selectedCap?5:3.5);})
+      .on('click',()=>{selectedCap=code;render();});
+  });
+}
+function renderHeatmapD3(box,panels){
+  const host=box.querySelector('#d3-heatmap-root');if(!host)return;
+  if(!panels.length){host.innerHTML='<div class="empty">无匹配能力点</div>';return;}
+  const labelW=170,colW=112,rowH=32,W=labelW+6*colW+24;
+  const heights=panels.map(p=>Math.max(1,...[0,1,2,3,4,5].map(lv=>p.caps.filter(c=>(c.level||0)===lv).length)));
+  const H=heights.reduce((n,h)=>n+h*rowH+42,20);
+  const color=d3.scaleOrdinal().domain([0,1,2,3,4,5]).range(LEVEL_COLORS);
+  const svg=d3.select(host).append('svg').attr('viewBox','0 0 '+W+' '+H)
+    .attr('role','img').attr('aria-label','能力成熟度热力图（D3）');
+  let top=24;
+  panels.forEach((panel,pi)=>{
+    const g=svg.append('g').attr('transform','translate(0,'+top+')');
+    g.append('text').attr('class','d3-heat-title').attr('x',8).attr('y',14)
+      .text(shortLabel(panel.p+' / '+panel.m,30)+' · '+panel.caps.length+' 点');
+    for(let lv=0;lv<=5;lv++)g.append('text').attr('class','d3-heat-axis')
+      .attr('x',labelW+lv*colW+colW/2).attr('y',14).attr('text-anchor','middle').text('L'+lv);
+    for(let lv=0;lv<=5;lv++){
+      const cells=panel.caps.filter(c=>(c.level||0)===lv);
+      cells.forEach((c,j)=>{
+        const x=labelW+lv*colW+6,y=26+j*rowH;
+        const rect=g.append('rect').attr('class','d3-heat-cell')
+          .attr('x',x).attr('y',y).attr('width',colW-12).attr('height',rowH-5).attr('rx',6)
+          .attr('fill',color(lv)).attr('data-capcode',c.code).attr('tabindex',0).attr('role','button');
+        rect.append('title').text(c.code+' · L'+lv+' · '+(c.evidence_tier||'declared'));
+        g.append('text').attr('class','d3-heat-label').attr('x',x+8).attr('y',y+rowH/2-1)
+          .text(shortLabel(c.code.split('.').slice(-2).join('.'),16));
+        g.append('text').attr('class','d3-heat-sub').attr('x',x+colW-18).attr('y',y+rowH/2-1)
+          .attr('text-anchor','end').text(c.evidence_tier==='verified'?'✓':'声明');
+        const pick=()=>{selectedCap=c.code;render();};
+        rect.on('click',pick).on('keydown',ev=>{if(ev.key==='Enter'||ev.key===' '){ev.preventDefault();pick();}});
+      });
+    }
+    top+=42+heights[pi]*rowH;
+  });
+}
+function lineageDetailHtml(node){
+  if(!node)return '';
+  const bits=['<b>'+esc(node.kind||'node')+'</b> · '+esc(node.label||node.id||'')];
+  if(node.decision_id)bits.push('决策 '+esc(node.decision_id));
+  if(node.status)bits.push('状态 '+esc(node.status));
+  if(node.path)bits.push('<code>'+esc(node.path)+'</code>');
+  if(node.category)bits.push('类别 '+esc(node.category));
+  return '<div class="lineage-detail">'+bits.join(' · ')+'</div>';
+}
+function lineageNodeHtml(n,depth){
+  const kids=(n.children||[]).map(c=>lineageNodeHtml(c,depth+1)).join('');
+  return '<details'+(depth===0?' open':'')+'><summary><span class="chip s">'+esc(n.kind||'')+'</span> '+
+    esc(n.label||n.id||'')+'</summary>'+(kids?'<div class="lineage-children">'+kids+'</div>':'')+'</details>';
+}
+function renderLineageD3(box,tree,code){
+  const host=box.querySelector('#d3-lineage-root');if(!host)return;
+  const detail=box.querySelector('#lineage-detail');
+  const root=d3.hierarchy(tree);
+  root.descendants().forEach(d=>{d._children=d.children;if(d.depth>=1)d.children=null;});
+  const rowH=30,height=Math.max(280,root.descendants().length*rowH+60);
+  d3.tree().nodeSize([rowH,190])(root);
+  const svg=d3.select(host).append('svg').attr('viewBox','0 0 1000 '+height)
+    .attr('role','img').attr('aria-label','追溯链（D3）');
+  const g=svg.append('g').attr('transform','translate(60,30)');
+  const linkG=g.append('g').attr('class','lineage-links');
+  const nodeG=g.append('g').attr('class','lineage-nodes');
+  const link=d3.linkHorizontal().x(d=>d.y).y(d=>d.x);
+  function update(){
+    const nodes=root.descendants(),links=root.links();
+    linkG.selectAll('path').data(links,d=>d.target.data.id).join('path')
+      .attr('class','lineage-link').attr('d',link);
+    const sel=nodeG.selectAll('g.lineage-node').data(nodes,d=>d.data.id);
+    const enter=sel.enter().append('g').attr('class','lineage-node')
+      .attr('tabindex',0).attr('role','button');
+    enter.append('circle').attr('r',8);
+    enter.append('text').attr('x',14).attr('dy',4);
+    enter.append('title');
+    const merged=enter.merge(sel)
+      .attr('transform',d=>'translate('+d.x+','+d.y+')')
+      .attr('data-kind',d=>d.data.kind);
+    merged.select('circle').attr('fill',d=>D3_KIND_COLORS[d.data.kind]||'#5F5E5A');
+    merged.select('text').text(d=>shortLabel(d.data.label||d.data.id,28));
+    merged.select('title').text(d=>(d.data.path||d.data.label||d.data.id||''));
+    merged.on('click',(ev,d)=>{
+      if(detail)detail.innerHTML=lineageDetailHtml(d.data);
+      if(d.children||d._children){d.children=d.children?null:d._children;update();}
+    }).on('keydown',(ev,d)=>{if(ev.key==='Enter'||ev.key===' '){ev.preventDefault();
+      if(detail)detail.innerHTML=lineageDetailHtml(d.data);
+      if(d.children||d._children){d.children=d.children?null:d._children;update();}}});
+    sel.exit().remove();
+  }
+  update();
+}
+function renderLineage(box){
+  ensureAnalytics();
+  const trees=(((VIEW_DATA.capability_model||{}).analytics||{}).lineage||{}).trees||{};
+  const all=Object.keys(trees);
+  const codes=all.filter(code=>{
+    const t=trees[code]||{},blob=[code,t.label,JSON.stringify(t.children||[])].join(' ').toLowerCase();
+    return !query||blob.includes(query);
+  });
+  let html=whatIfBannerHtml()+'<div class="day">规划 → 决策 → 证据 → 当前状态</div>';
+  if(!codes.length){html+='<div class="empty">无匹配追溯链：旧账本会自动降级派生；可先切换其他视图。</div>';}
+  else{
+    if(!selectedCap||!trees[selectedCap])selectedCap=codes[0];
+    const tree=trees[selectedCap];
+    html+='<div class="bar" style="position:static;margin-bottom:10px">'+
+      codes.slice(0,12).map(code=>'<button class="tab'+(selectedCap===code?' on':'')+
+        '" type="button" data-capcode="'+esc(code)+'" data-cap-select="'+esc(code)+'">'+
+        esc(code.split('.').slice(-2).join('.'))+'</button>').join('')+'</div>'+
+      '<div id="lineage-detail" class="lineage-detail">'+lineageDetailHtml(tree)+'</div>'+
+      (hasD3()?'<div class="lineage-tree" id="d3-lineage-root"></div>'
+              :'<div class="lineage-tree">'+lineageNodeHtml(tree,0)+'</div>')+
+      renderEvidenceChain(selectedCap);
+  }
+  document.getElementById('legend').innerHTML='<span>树来自账本已有决策与证据路径；展开只改 DOM，不写回文件。D3 缺失时回退 details 树。</span>';
+  box.innerHTML=html;
+  if(hasD3()&&codes.length)renderLineageD3(box,trees[selectedCap],selectedCap);
+  bindCapSelect(box);bindWhatIf(box);markChanges(box);
+}
+function renderHealthTiles(box){
+  ensureAnalytics();
+  box.innerHTML='<div class="day">健康度多维度</div>'+healthDashHtml();
+  markChanges(box);
+}
+function renderHeatmap(box){
+  ensureAnalytics();
+  const cm=VIEW_DATA.capability_model||{};
+  const tiers=[['all','双层'],['declared','仅 declared'],['verified','仅 verified']];
+  const panels=[];
+  (cm.projects||[]).forEach(p=>(p.modules||[]).forEach(m=>{
+    const caps=(m.caps||[]).filter(c=>{
+      if(tierFilter==='declared'&&c.evidence_tier==='verified')return false;
+      if(tierFilter==='verified'&&c.evidence_tier!=='verified')return false;
+      return !query||[c.code,c.name,m.code,p.code].join(' ').toLowerCase().includes(query);
+    });
+    if(caps.length)panels.push({p:p.code,m:m.code,caps:caps});
+  }));
+  const shown=panels.reduce((n,x)=>n+x.caps.length,0);
+  let html=whatIfBannerHtml()+'<div class="day">健康度多维度</div>'+healthDashHtml()+
+    '<div class="day">分层切换</div><div class="bar" style="position:static;margin-bottom:10px">'+
+    tiers.map(t=>'<button class="tab'+(tierFilter===t[0]?' on':'')+'" type="button" data-tier="'+t[0]+'">'+t[1]+'</button>').join('')+'</div>'+
+    '<div class="day">能力成熟度热力图（L0 → L5）</div>'+
+    '<div class="heat-scale">'+['L0','L1','L2','L3','L4','L5'].map((l,i)=>'<i class="lv'+i+'"></i><span>'+l+'</span>').join('')+'</div>'+
+    '<div class="heat-grid"'+(hasD3()?' id="d3-heatmap-root"':'')+'>';
+  if(!hasD3()){
+    panels.forEach(panel=>{
+      const dist=[0,0,0,0,0,0];panel.caps.forEach(c=>dist[c.level||0]++);
+      html+='<div class="heat-panel"><h3>'+esc(panel.p)+' / '+esc(panel.m)+' <span class="chip s">'+panel.caps.length+' 点</span></h3>'+
+        '<div class="qmeta">L0-L5 分布 '+dist.join(' / ')+'</div><div class="heat-cells">'+
+        panel.caps.map(c=>'<button class="heat-cell lv'+esc(c.level)+(selectedCap===c.code?' sel':'')+'" type="button" data-capcode="'+esc(c.code)+'" data-cap-select="'+esc(c.code)+'">'+
+          '<span class="hc-code">'+esc(c.code.split('.').slice(-2).join('.'))+'</span>'+
+          '<span class="hc-meta">'+esc(c.level_code||('L'+c.level))+' · '+(c.evidence_tier==='verified'?'✓':'声明')+'</span></button>').join('')+
+        '</div></div>';
+    });
+    if(!shown)html+='<div class="empty">无匹配能力点</div>';
+  }
+  html+='</div>'+renderEvidenceChain(selectedCap);
+  document.getElementById('legend').innerHTML='<span>颜色由 level 决定；点击能力点展开证据链。Heatmap 是账本投影，不是手绘图。</span>';
+  box.innerHTML=html;
+  if(hasD3())renderHeatmapD3(box,panels);
+  box.querySelectorAll('[data-tier]').forEach(b=>b.onclick=()=>{tierFilter=b.dataset.tier;render();});
+  bindCapSelect(box);bindWhatIf(box);markChanges(box);
+}
+function renderTrend(box){
+  ensureAnalytics();
+  const a=(VIEW_DATA.capability_model||{}).analytics||{}, maturity=a.maturity||{};
+  const palette=TREND_COLORS;
+  let codes=Object.keys(maturity).filter(code=>{
+    const s=(maturity[code]||{}).series||[];
+    return s.length>1&&(!query||[code,(capByCode(code)||{}).name].join(' ').toLowerCase().includes(query));
+  }).sort().slice(0,8);
+  let html=whatIfBannerHtml()+'<div class="day">成熟度趋势（history.events 回放）</div>';
+  if(!codes.length){html+='<div class="empty">暂无等级变化：当前事件流中能力等级保持稳定，或旧账本只有基线快照</div>';}
+  else{
+    const all=[].concat.apply([],codes.map(c=>(maturity[c]||{}).series||[]));
+    const seqs=all.map(p=>p.seq||0), min=Math.min.apply(null,seqs), max=Math.max.apply(null,seqs);
+    const W=920,H=320,L=44,T=18,B=42;
+    const x=seq=>L+((seq-min)/((max-min)||1))*(W-L-24);
+    const y=lv=>T+(5-lv)*(H-T-B)/5;
+    let svg='<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="能力成熟度趋势">';
+    for(let lv=0;lv<=5;lv++)svg+='<line class="trend-axis" x1="'+L+'" y1="'+y(lv)+'" x2="'+(W-18)+'" y2="'+y(lv)+'"/>'+
+      '<text class="trend-label" x="'+(L-26)+'" y="'+(y(lv)+3)+'">L'+lv+'</text>';
+    codes.forEach((code,i)=>{
+      const pts=(maturity[code]||{}).series||[];
+      const d=pts.map((p,j)=>(j?'L':'M')+x(p.seq||0)+' '+y(p.level||0)).join(' ');
+      svg+='<path class="trend-line" stroke="'+palette[i%palette.length]+'" d="'+d+'"/>';
+      pts.forEach(p=>{svg+='<circle class="trend-dot" cx="'+x(p.seq||0)+'" cy="'+y(p.level||0)+'" r="3.5" fill="'+palette[i%palette.length]+'"><title>'+esc(code)+' #'+esc(p.seq)+' '+esc(p.level_code)+'</title></circle>';});
+    });
+    [min,max].forEach(s=>{svg+='<text class="trend-label" x="'+x(s)+'" y="'+(H-16)+'" text-anchor="middle">事件 #'+esc(s)+'</text>';});
+    svg+='</svg>';
+    html+='<div class="trend-wrap"'+(hasD3()?' id="d3-trend-root"':'')+'>'+(hasD3()?'':svg)+'</div>'+
+      '<div class="day">序列图例（点击查看证据链）</div><div class="launchpad">'+
+      codes.map((code,i)=>'<button class="launch" type="button" data-capcode="'+esc(code)+'" data-cap-select="'+esc(code)+'">'+
+        '<div class="lt" style="color:'+palette[i%palette.length]+'">'+esc(code.split('.').slice(-2).join('.'))+'</div>'+
+        '<div class="ld">'+esc((capByCode(code)||{}).name||'')+'</div><div class="ln">'+esc(((maturity[code]||{}).series||[]).length)+' 点</div></button>').join('')+'</div>';
+  }
+  html+=renderEvidenceChain(selectedCap);
+  document.getElementById('legend').innerHTML='<span>纵轴为 L0–L5，横轴为事件序号；曲线来自 history.state_digest，非人工填报。</span>';
+  box.innerHTML=html;
+  if(hasD3()&&codes.length)renderTrendD3(box,codes,a);
+  bindCapSelect(box);bindWhatIf(box);markChanges(box);
+}
+function renderQueue(box){
+  ensureAnalytics();
+  const q=(VIEW_DATA.capability_model||{}).next_queue||[];
+  const list=q.filter(t=>!query||[t.code,t.action,(t.missing_evidence||[]).join(),(t.lessons||[]).map(x=>x.id).join()].join(' ').toLowerCase().includes(query));
+  let html=whatIfBannerHtml()+'<div class="day">健康度多维度</div>'+healthDashHtml()+
+    '<div class="day">任务卡片墙（'+list.length+' / '+q.length+'）</div><div class="queue-wall">'+
+    (list.length?list.map(t=>{
+      const lessons=(t.lessons||[]).map(x=>'<span class="chip s" title="'+esc(x.insight||'')+'">'+esc(x.id)+' '+esc(x.title||'')+'</span>').join('');
+      const gaps=(t.missing_evidence||[]).map(x=>'<span class="chip">'+esc(x)+'</span>').join('')||'<span class="chip s">无显式缺口</span>';
+      return '<div class="qcard" data-capcode="'+esc(t.code)+'">'+
+        '<div class="qtop"><span class="qrank">#'+esc(t.rank)+'</span><span class="capcode">'+esc(t.code)+'</span>'+
+        '<span class="pill p-deferred">'+esc(t.level||'')+' → '+esc(t.target_level||'')+'</span>'+
+        healthChip(Math.max(0,Math.min(100,Math.round(100-(t.health_impact||0)*10))))+'</div>'+
+        '<div class="qtitle">'+esc(t.action||'')+'</div>'+
+        '<div class="qmeta">项目 '+esc(t.project||'')+' · 模块 '+esc(t.module||'')+' · 完成度 '+((t.completion||0)*100).toFixed(0)+'%</div>'+
+        '<div class="qmeta">缺失证据 '+gaps+'</div>'+
+        '<div class="qmeta">关联经验 '+(lessons||'<span class="chip s">无</span>')+'</div>'+
+        '<div class="qimpact">健康增益 +'+esc(t.health_impact||0)+' 分</div>'+
+        '<div class="qmeta"><button class="wi-btn" type="button" data-cap-select="'+esc(t.code)+'">查看证据链</button> '+
+        (t.evidence_tier!=='verified'?'<button class="wi-btn" type="button" data-whatif="'+esc(t.code)+'">假设补证</button>':'')+'</div></div>';
+    }).join(''):'<div class="empty">无匹配任务卡</div>')+'</div>'+renderEvidenceChain(selectedCap);
+  document.getElementById('legend').innerHTML='<span>卡片来自 SELECT 产出；健康增益由同一套公式模拟，点按钮可在内存中预览。</span>';
+  box.innerHTML=html;
+  bindCapSelect(box);bindWhatIf(box);markChanges(box);
 }
 function scopeApplies(scope,code){
   return scope==='PROJECT'||scope===code||code.indexOf(scope+'.')===0;
@@ -351,12 +917,12 @@ function unitTestPaths(codes){
 }
 function nodeItems(scope){
   const codes=workScopeCodes(scope);
-  return (DATA.work_items||[]).filter(x=>x.scope===scope||codes.some(c=>scopeApplies(x.scope||'',c)));
+  return (VIEW_DATA.work_items||[]).filter(x=>x.scope===scope||codes.some(c=>scopeApplies(x.scope||'',c)));
 }
 function nodeTests(scope){
   const norm=s=>String(s||'').replace(/\\/g,'/').replace(/^\.\//,'');
   const ps=unitTestPaths(workScopeCodes(scope)).map(norm);
-  return ((DATA.test_results||{}).cases||[]).filter(c=>{
+  return ((VIEW_DATA.test_results||{}).cases||[]).filter(c=>{
     const f=norm(c.file);
     return ps.some(p=>f===p||f.slice(-p.length-1)==='/'+p||p.slice(-f.length-1)==='/'+f);
   });
@@ -367,7 +933,7 @@ function nodeWork(scope){
   const issues=items.filter(x=>x.kind==='issue'&&x.status!=='done');
   const blocked=issues.filter(x=>x.status==='blocked');
   const failed=tc.filter(c=>c.status==='fail'||c.status==='error');
-  const fresh=((DATA.capability_model||{}).summary||{}).evidence_freshness;
+  const fresh=((VIEW_DATA.capability_model||{}).summary||{}).evidence_freshness;
   const declared=codes.some(c=>{const cap=allCaps().find(x=>x.code===c);return cap&&cap.evidence_tier!=='verified';});
   const penalty=20*blocked.length+8*(issues.length-blocked.length)+15*failed.length+(fresh!=='fresh'?15:0)+(declared?10:0);
   return {scope:scope,items:items,todo:todo,issues:issues,blocked:blocked,tests:tc,
@@ -406,7 +972,7 @@ function bindWorkLinks(box){
 function workItemCard(x){
   const cls=x.status==='done'?'done':x.status==='blocked'||x.kind==='issue'?(x.status==='blocked'?'blocked':'issue'):'';
   const refs=(x.refs||[]).map(r=>'<span class="chip s" title="'+esc(r.kind||'')+'">'+esc(r.value||'')+'</span>').join('');
-  return '<div class="witem '+cls+'"><div class="chead"><span class="cid">'+esc(x.id)+'</span>'+
+  return '<div class="witem '+cls+'" data-wid="'+esc(x.id)+'"><div class="chead"><span class="cid">'+esc(x.id)+'</span>'+
     '<span class="pill '+(x.kind==='issue'?'p-proposed':'p-done')+'">'+esc(W_KIND[x.kind]||x.kind)+'</span>'+
     '<span class="pill '+(x.status==='blocked'?'p-superseded':x.status==='done'?'p-done':'p-deferred')+'">'+
     esc(W_STATUS[x.status]||x.status)+'</span><span class="ctitle">'+esc(x.title)+'</span></div>'+
@@ -422,9 +988,9 @@ function testCaseHtml(c){
     esc(c.id)+' <span style="color:var(--mut)">· '+esc(c.file)+'</span></div>';
 }
 function renderWorkbench(box){
-  const cm=DATA.capability_model||{}, sm=cm.summary||{}, w=nodeWork('PROJECT');
-  const tr=DATA.test_results||{}, cases=tr.cases||[];
-  const pending=(DATA.entries||[]).filter(e=>e.status==='proposed'||e.status==='deferred');
+  const cm=VIEW_DATA.capability_model||{}, sm=cm.summary||{}, w=nodeWork('PROJECT');
+  const tr=VIEW_DATA.test_results||{}, cases=tr.cases||[];
+  const pending=(VIEW_DATA.entries||[]).filter(e=>e.status==='proposed'||e.status==='deferred');
   const queue=cm.next_queue||[], caps=allCaps();
   document.getElementById('stats').innerHTML=
     stat(w.todo.length,'未关闭 TODO','var(--amber)','work')+
@@ -457,12 +1023,16 @@ function renderWorkbench(box){
     '<span class="tb">verified <b>'+verified+'/'+caps.length+'</b></span>'+
     '<span class="tb">完成度 <b>'+((sm.overall_completion||0)*100).toFixed(0)+'%</b></span>'+
     '<span class="tb">报告绑定 <b>'+esc(tr.source_sha256?String(tr.source_sha256).slice(0,10):'未启用')+'</b></span>'+
-    '<span class="src">数据：'+esc(DATA_SOURCE)+' · 账本 '+esc((DATA.entries||[]).length)+' 条</span></div>';
-  // 入口矩阵：把原来看不见的 14 个视图收成可下钻的工作入口。
+    '<span class="src">数据：'+esc(DATA_SOURCE)+' · 账本 '+esc((VIEW_DATA.entries||[]).length)+' 条</span></div>';
+  html+=whatIfBannerHtml()+healthDashHtml();
+  // 入口矩阵：把原来看不见的视图收成可下钻的工作入口。
   const launches=[
     ['工作项','TODO / Issue 全量状态',w.items.length,'work'],
+    ['能力热力图','模块 × L0-L5 颜色梯度',caps.length,'heatmap'],
+    ['成熟度趋势','事件流等级回放',((VIEW_DATA.history||{}).events||[]).length,'trend'],
+    ['任务卡片墙','下一轮 SELECT 产出',queue.length,'queue'],
     ['架构图','结构分层与实时计数',caps.length,'diagram'],
-    ['数据流','三条链路的账本规模',((DATA.history||{}).events||[]).length,'flow'],
+    ['数据流','三条链路的账本规模',((VIEW_DATA.history||{}).events||[]).length,'flow'],
     ['能力地图','完成度由证据重算',caps.length,'capability'],
     ['术语与实现','本体投影 + 人读解说',(ONTO_DATA||[]).length,'glossary'],
     ['设计理念','七条原则与界面落点',DESIGN_PRINCIPLES.length,'design']
@@ -502,10 +1072,10 @@ function renderWorkbench(box){
     '<div class="empty">所有能力点均已 verified</div>';
   html+=moreHtml(stale.length,Math.min(stale.length,pageLimit),' 个能力点');
   box.innerHTML=html;
-  bindWorkLinks(box);bindCapLinks(box);bindJumps(box);bindMore(box);
+  bindWorkLinks(box);bindCapLinks(box);bindJumps(box);bindMore(box);bindWhatIf(box);markChanges(box);
 }
 function renderWork(box){
-  const all=DATA.work_items||[];
+  const all=VIEW_DATA.work_items||[];
   let list=workScope?nodeItems(workScope):all.slice();
   if(query) list=list.filter(x=>[x.id,x.kind,x.status,x.scope,x.title,x.detail,x.owner,x.severity].join(' ').toLowerCase().includes(query));
   const rank=x=>x.status==='done'?4:x.status==='blocked'?0:x.kind==='issue'?1:x.severity==='high'?2:3;
@@ -527,7 +1097,7 @@ function renderWork(box){
     '<div class="empty">该作用域没有绑定测试：跑 run_tests.py 后用 work_panel.py sync-tests 投影进账本</div>';
   html+=moreHtml(tc.length,Math.min(tc.length,pageLimit),' 条用例');
   box.innerHTML=html;
-  bindWorkLinks(box);bindMore(box);
+  bindWorkLinks(box);bindMore(box);markChanges(box);
 }
 
 function setView(v){
@@ -568,6 +1138,7 @@ function renderContext(){
   box.innerHTML='<span class="vtitle">'+esc(meta.name)+'</span>'+
     '<span class="hints">'+esc(meta.hint)+'</span>'+chips.join('')+
     '<span class="ctx-actions">'+
+    '<button class="ctx-clear" type="button" data-action="whatif">'+(whatIf.active?'退出模拟':'What-if 模拟')+'</button>'+
     '<button class="ctx-clear" type="button" data-jump="design">设计理念</button>'+
     '<button class="ctx-clear" type="button" data-action="expand">展开全部</button>'+
     '<button class="ctx-clear" type="button" data-action="collapse">收起全部</button></span>';
@@ -580,6 +1151,7 @@ function bindContext(box){
     if(!b||!b.dataset) return;
     if(b.dataset.clear==='query') clearQuery();
     else if(b.dataset.clear==='scope') clearScope();
+    else if(b.dataset.action==='whatif'){toggleWhatIf();return;}
     else if(b.dataset.jump) setView(b.dataset.jump);
     else if(b.dataset.action==='expand'||b.dataset.action==='collapse'){
       const open=b.dataset.action==='expand';
@@ -614,10 +1186,10 @@ function bindJumps(box){
 }
 function bindStats(box){bindJumps(box);}
 function flowData(){
-  const cs=allCaps(), ws=DATA.work_items||[], cases=(DATA.test_results||{}).cases||[];
+  const cs=allCaps(), ws=VIEW_DATA.work_items||[], cases=(VIEW_DATA.test_results||{}).cases||[];
   return {
-    decisions:(DATA.entries||[]).length,
-    events:((DATA.history||{}).events||[]).length,
+    decisions:(VIEW_DATA.entries||[]).length,
+    events:((VIEW_DATA.history||{}).events||[]).length,
     caps:cs.length,
     verified:cs.filter(c=>c.evidence_tier==='verified').length,
     work:ws.length,
@@ -625,9 +1197,9 @@ function flowData(){
     cases:cases.length,
     failed:cases.filter(c=>c.status==='fail'||c.status==='error').length,
     terms:(ONTO_DATA||[]).length,
-    modules:((DATA.module_map||{}).modules||[]).length,
-    lessons:((DATA.lessons||{}).items||[]).length,
-    projects:((DATA.architecture||{}).projects||[]).length
+    modules:((VIEW_DATA.module_map||{}).modules||[]).length,
+    lessons:((VIEW_DATA.lessons||{}).items||[]).length,
+    projects:((VIEW_DATA.architecture||{}).projects||[]).length
   };
 }
 function renderDesign(box){
@@ -727,7 +1299,7 @@ function init(){
   // 先用内嵌账本立刻渲染，再尝试同目录 JSON 刷新；离线也能看到内容。
   render();
   fetch('DECISION_LEDGER.json').then(r=>r.ok?r.json():Promise.reject())
-    .then(d=>{DATA=d;DATA_SOURCE='实时 JSON';render();})
+    .then(d=>{DATA=d;VIEW_DATA=d;DATA_SOURCE='实时 JSON';render();})
     .catch(()=>{DATA_SOURCE='离线快照';render();});
   document.querySelectorAll('.bar .tab').forEach(t=>t.onclick=()=>setView(t.dataset.v));
   const q=document.getElementById('q');
@@ -781,18 +1353,20 @@ function docIndexHtml(di){
   ];
   let s='<div class="idx"><div class="idxtitle">文档索引（点击打开）</div>';
   g.forEach(([label,arr,kind])=>{const h=docLinks(arr,kind,6);if(h)s+='<div class="idxgrp"><span class="k">'+label+'</span><span>'+h+'</span></div>';});
-  const decs=(di.decisions||[]).map(d=>{const e=DATA.entries.find(x=>x.id===d.id);return '<span class="chip" title="'+esc(e?e.decision||e.title:d.title)+'">'+esc(d.id)+' '+esc(d.status||'')+'</span>';}).join('');
+  const decs=(di.decisions||[]).map(d=>{const e=VIEW_DATA.entries.find(x=>x.id===d.id);return '<span class="chip" title="'+esc(e?e.decision||e.title:d.title)+'">'+esc(d.id)+' '+esc(d.status||'')+'</span>';}).join('');
   if(decs)s+='<div class="idxgrp"><span class="k">关联决策</span><span>'+decs+'</span></div>';
   const cc=di.control_center||{};
-  if(cc.page||(cc.sections||[]).length)s+='<div class="idxgrp"><span class="k">控制入口</span><span>'+(cc.page?'<a class="doclink" href="'+ROOT+DATA.module_map.pages_path+esc(cc.page)+'.html">🖥 '+esc(cc.page)+' 页面</a>':'')+(cc.sections||[]).map(x=>'<span class="chip s">'+esc(x)+'</span>').join('')+'</span></div>';
+  if(cc.page||(cc.sections||[]).length)s+='<div class="idxgrp"><span class="k">控制入口</span><span>'+(cc.page?'<a class="doclink" href="'+ROOT+VIEW_DATA.module_map.pages_path+esc(cc.page)+'.html">🖥 '+esc(cc.page)+' 页面</a>':'')+(cc.sections||[]).map(x=>'<span class="chip s">'+esc(x)+'</span>').join('')+'</span></div>';
   return s+'</div>';
 }
 
 function render(){
-  const es=DATA.entries||[];
+  applyWhatIf();
+  ensureAnalytics();
+  const es=VIEW_DATA.entries||[];
   renderContext();
-  document.getElementById('sub').textContent='单一事实源 · 最后更新 '+(DATA.last_updated||'未知')+' · 共 '+es.length+' 条决策/裁决（一份账本取代散落报告与日志）';
-  const gm=DATA.governance_meta||{};
+  document.getElementById('sub').textContent='单一事实源 · 最后更新 '+(VIEW_DATA.last_updated||'未知')+' · 共 '+es.length+' 条决策/裁决（一份账本取代散落报告与日志）';
+  const gm=VIEW_DATA.governance_meta||{};
   document.getElementById('foot').innerHTML='账本路径 governance/DECISION_LEDGER.json · 方法版本 '+esc(gm.method_version||'未绑定')+
     ' · 骨架 '+esc(String(gm.board_skeleton||'未绑定').slice(0,12))+
     ' · 数据来源 '+esc(DATA_SOURCE)+' · 本页是只读投影，修改请改权威源并重算';
@@ -803,10 +1377,10 @@ function render(){
     stat(cnt.done||0,'已完成','var(--blue)','all')+
     stat((cnt.proposed||0)+(cnt.deferred||0),'待裁决 / 暂缓','var(--amber)','pending')+
     stat(cnt.superseded||0,'已被取代（取代链）','var(--red)','history')+
-    stat(((DATA.history||{}).events||[]).length,'历史事件（append-only）','var(--purple)','history')+
-    stat(((DATA.lessons||{}).items||[]).length,'已确认经验','var(--green)','lessons')+
-    stat((DATA.work_items||[]).filter(x=>x.status!=='done').length,'未关闭 TODO / Issue','var(--amber)','workbench')+
-    stat(((DATA.test_results||{}).cases||[]).filter(c=>c.status==='fail'||c.status==='error').length,
+    stat(((VIEW_DATA.history||{}).events||[]).length,'历史事件（append-only）','var(--purple)','history')+
+    stat(((VIEW_DATA.lessons||{}).items||[]).length,'已确认经验','var(--green)','lessons')+
+    stat((VIEW_DATA.work_items||[]).filter(x=>x.status!=='done').length,'未关闭 TODO / Issue','var(--amber)','workbench')+
+    stat(((VIEW_DATA.test_results||{}).cases||[]).filter(c=>c.status==='fail'||c.status==='error').length,
          '失败 / 异常用例','var(--red)','workbench');
   document.getElementById('legend').innerHTML=Object.keys(STATUS).map(k=>'<span class="pill '+STATUS[k].cls+'">'+STATUS[k].label+'</span>').join('')+'<span>点击卡片展开详情 · 红色/橙色为需关注项</span>';
 
@@ -821,13 +1395,17 @@ function render(){
   if(view==='flow'){ renderFlow(box); return; }
   if(view==='workbench'){ renderWorkbench(box); return; }
   if(view==='work'){ renderWork(box); return; }
+  if(view==='heatmap'){ renderHeatmap(box); return; }
+  if(view==='trend'){ renderTrend(box); return; }
+  if(view==='lineage'){ renderLineage(box); return; }
+  if(view==='queue'){ renderQueue(box); return; }
   if(view==='capability'){ renderCapability(box); return; }
   if(view==='history'){ renderHistory(box); return; }
   if(view==='lessons'){ renderLessons(box); return; }
   if(view==='glossary'){ renderGlossary(box); return; }
   if(view==='arch'){
     document.getElementById('legend').innerHTML='<span>点击项目展开 → 模块 → 嵌套组件树（目录/文件逐层展开）→ 文档索引 → 能力编码 → 决策控制。组件由源码目录真实提取。</span>';
-    let ps=DATA.architecture.projects;
+    let ps=VIEW_DATA.architecture.projects;
     if(query) ps=ps.filter(p=>[p.name,p.id,p.role,(p.modules||[]).map(m=>m.name+(m.components||[]).join()).join()].join(' ').toLowerCase().includes(query));
     const totalProjects=ps.length;
     ps=ps.slice(0,pageLimit);
@@ -837,7 +1415,7 @@ function render(){
     return;
   }
   if(view==='modules'){
-    const mm=DATA.module_map;
+    const mm=VIEW_DATA.module_map;
     document.getElementById('legend').innerHTML='<span>源码 → 文档 → 控制中心 section → 可视化页面 → 关联决策，一屏对应</span>';
     let mods=mm.modules;
     if(query) mods=mods.filter(m=>[m.name,m.id,(m.source||[]).join(),(m.docs||[]).join(),(m.cc_section||[]).join(),m.page].join(' ').toLowerCase().includes(query));
@@ -865,7 +1443,7 @@ function render(){
     if(t.setAttribute) t.setAttribute('aria-expanded',open?'true':'false');
   });
   bindCapLinks(box);bindWorkLinks(box);
-  bindMore(box);
+  bindMore(box);markChanges(box);
 }
 function bindCapLinks(box){
   box.querySelectorAll('[data-cap]').forEach(a=>a.onclick=ev=>{
@@ -892,10 +1470,10 @@ function modCard(m,mm){
   const docs=(m.docs||[]).map(x=>'<a class="link" href="'+root+x+'" title="'+esc(x)+'">📄 '+esc(x.split('/').pop())+'</a>').join('');
   const secs=(m.cc_section||[]).map(s=>'<span class="chip s">'+esc(s)+'</span>').join('');
   const page=m.page?'<a class="link" href="'+root+mm.pages_path+m.page+'.html">🖥 '+esc(m.page)+' 页面</a>':'';
-  const decs=(m.decisions||[]).map(id=>{const e=DATA.entries.find(x=>x.id===id);return '<span class="chip" title="'+esc(e?e.title:id)+'">'+esc(id)+'</span>'}).join('')||'<span style="color:var(--mut);font-size:12px">无直接关联</span>';
+  const decs=(m.decisions||[]).map(id=>{const e=VIEW_DATA.entries.find(x=>x.id===id);return '<span class="chip" title="'+esc(e?e.title:id)+'">'+esc(id)+'</span>'}).join('')||'<span style="color:var(--mut);font-size:12px">无直接关联</span>';
   const cards=(m.cards_module||[]).map(c=>'<span class="link" style="color:var(--mut)">'+esc(c)+'</span>').join('');
   // 关联能力模型中的同 id 模块，展示嵌套组件树 + 能力点索引入口
-  const cmMod=(DATA.capability_model&&DATA.capability_model.projects||[]).flatMap(p=>p.modules||[])
+  const cmMod=(VIEW_DATA.capability_model&&VIEW_DATA.capability_model.projects||[]).flatMap(p=>p.modules||[])
     .find(x=>x.name===m.name)||{};
   const tree=treeHtml(cmMod.component_tree||[],0);
   const capCodes=(cmMod.caps||[]).map(c=>'<a class="capcode" href="#" data-cap="'+esc(c.code)+'" title="'+esc(c.name)+'">'+esc(c.code)+'</a>').join('');
@@ -918,7 +1496,7 @@ function projectCard(p){
     const di=m.doc_index||{};
     const docs=docLinks((di.docs||[]).concat(di.plans||[]),'module_doc',6);
     const caps=(m.capability_codes||[]).map(c=>'<span class="capcode">'+esc(c)+'</span>').join('');
-    const decs=(m.decisions||[]).map(id=>{const e=DATA.entries.find(x=>x.id===id);return '<span class="chip" title="'+esc(e?e.title:id)+'">'+esc(id)+'</span>'}).join('');
+    const decs=(m.decisions||[]).map(id=>{const e=VIEW_DATA.entries.find(x=>x.id===id);return '<span class="chip" title="'+esc(e?e.title:id)+'">'+esc(id)+'</span>'}).join('');
     const scope=p.id+'.'+String(m.id||'').replace('M-','');
     return '<div class="mtile"><h4>'+esc(m.name)+' <span class="cid">'+esc(m.id)+'</span></h4>'+
       workStripHtml(scope)+
@@ -966,7 +1544,7 @@ function card(e){
     '</div></div>';
 }
 function renderHistory(box){
-  const h=DATA.history||{}, evs=h.events||[], spec=h.spec||{};
+  const h=VIEW_DATA.history||{}, evs=h.events||[], spec=h.spec||{};
   document.getElementById('legend').innerHTML='<span>'+esc(spec.purpose||'')+' · '+esc(spec.invariant||'')+'</span>';
   let shown=evs;
   if(query) shown=evs.filter(e=>JSON.stringify(e).toLowerCase().includes(query));
@@ -1002,7 +1580,7 @@ function renderHistory(box){
 }
 
 function renderLessons(box){
-  const ls=DATA.lessons||{}, items=ls.items||[], cands=ls.candidates||[], spec=ls.spec||{};
+  const ls=VIEW_DATA.lessons||{}, items=ls.items||[], cands=ls.candidates||[], spec=ls.spec||{};
   document.getElementById('legend').innerHTML='<span>'+esc(spec.purpose||'')+'</span>';
   const filt=x=>!query||JSON.stringify(x).toLowerCase().includes(query);
   let I=items.filter(filt), C=cands.filter(filt);
@@ -1098,7 +1676,7 @@ function renderGlossary(box){
   box.innerHTML=html;bindMore(box);
 }
 function capHistoryHtml(code){
-  const evs=(DATA.history||{}).events||[];
+  const evs=(VIEW_DATA.history||{}).events||[];
   const hits=evs.filter(e=>{
     const ch=e.changes||{};
     return (ch.level_transitions||[]).some(t=>t.code===code)
@@ -1118,7 +1696,7 @@ function capHistoryHtml(code){
 }
 function capLessonsHtml(c){
   const parts=c.code.split('.');
-  const items=((DATA.lessons||{}).items||[]).filter(x=>{
+  const items=((VIEW_DATA.lessons||{}).items||[]).filter(x=>{
     if(x.status!=='confirmed') return false;
     const sc=x.scope||{};
     const caps=sc.capabilities||[], projs=sc.projects||[], doms=sc.domains||[], lvls=sc.levels||[];
@@ -1130,7 +1708,7 @@ function capLessonsHtml(c){
 }
 
 function renderCapability(box){
-  const cm=DATA.capability_model;
+  const cm=VIEW_DATA.capability_model;
   if(!cm){box.innerHTML='<div class="empty">能力模型未生成，请运行 governance/build_capability_model.py</div>';return;}
   const spec=cm.coding_spec, sm=cm.summary;
   const lvName={};Object.keys(cm.levels).forEach(k=>lvName[cm.levels[k].code]=cm.levels[k].name);
@@ -1151,7 +1729,7 @@ function renderCapability(box){
         const di=c.doc_index||{};
         const lh=capLessonsHtml(c), hh=capHistoryHtml(c.code);
         const peek=docLinks((di.contracts||[]).concat(di.impl||[],di.test_records||[],di.plans||[],di.module_docs||[]),'doc',4);
-        return '<div class="caprow" style="display:block"><div style="display:flex;gap:10px;align-items:flex-start">'+
+        return '<div class="caprow" data-capcode="'+esc(c.code)+'" style="display:block"><div style="display:flex;gap:10px;align-items:flex-start">'+
           '<div class="capmeta"><div class="cn"><span class="capcode">'+esc(c.code)+'</span> '+esc(c.name)+
           '<span class="lvl l'+c.level+'">'+esc(c.level_code)+' '+esc(lvName[c.level_code]||'')+'</span>'+
           (c.evidence_tier?'<span class="tier tier-'+esc(c.evidence_tier)+'" title="'+esc((c.tier_detail||{}).basis||'')+'">'+(c.evidence_tier==='verified'?'✓ 实测':'声明')+'</span>':'')+'</div>'+
@@ -1174,7 +1752,7 @@ function renderCapability(box){
   }).join('');
   box.innerHTML=specHtml+(projects.length?body:'<div class="empty">无匹配能力节点</div>')+
     moreHtml(totalMods,shownMods,' 个模块');
-  bindMore(box);bindWorkLinks(box);
+  bindMore(box);bindWorkLinks(box);markChanges(box);
 }
 document.getElementById('foot').textContent='账本文件：governance/DECISION_LEDGER.json（唯一事实源） · 工作台/工作项/测试结果来自账本内 work_items 与 test_results 投影 · 校验：governance/verify_ledger.py --strict · 能力模型由生成器从证据重算';
 init();

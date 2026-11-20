@@ -913,7 +913,16 @@
       },
       "verified_coverage": 0.75,
       "evidence_bound": true,
-      "evidence_freshness": "fresh"
+      "evidence_freshness": "fresh",
+      "health_dimensions": {
+        "evidence_freshness": 100.0,
+        "test_pass_rate": 100.0,
+        "decision_backlog": 100.0,
+        "verified_coverage": 75.0,
+        "work_health": 76.0
+      },
+      "health_overall": 90.2,
+      "health_method": "加权投影：证据新鲜度20% + 测试通过率25% + 决策积压15% + verified 覆盖20% + 工作健康20%；各项 0-100，全部来自账本现有字段。"
     },
     "next_queue": [
       {
@@ -944,6 +953,7 @@
           "test_records": []
         },
         "decisions": [],
+        "health_impact": 5.0,
         "lessons": [
           {
             "id": "L-001",
@@ -1139,6 +1149,518 @@
           "origin": "derive"
         }
       ]
+    },
+    "analytics": {
+      "schema": "maturity-analytics/1",
+      "purpose": "能力成熟度与健康度的只读投影；前端不得写回账本。",
+      "levels": [
+        "L0",
+        "L1",
+        "L2",
+        "L3",
+        "L4",
+        "L5"
+      ],
+      "maturity": {
+        "DEMO.API.QUERY.01": {
+          "series": [
+            {
+              "seq": 1,
+              "ts": "2026-11-17 21:24 HKT",
+              "level": 2,
+              "level_code": "L2",
+              "completion": 0.4,
+              "tier": "declared"
+            }
+          ],
+          "current_level": 2,
+          "current_tier": "declared"
+        },
+        "DEMO.CORE.ORDER.01": {
+          "series": [
+            {
+              "seq": 1,
+              "ts": "2026-11-17 21:24 HKT",
+              "level": 5,
+              "level_code": "L5",
+              "completion": 1.0,
+              "tier": "declared"
+            },
+            {
+              "seq": 4,
+              "ts": "2026-11-17 22:14 HKT",
+              "level": 5,
+              "level_code": "L5",
+              "completion": 1.0,
+              "tier": "verified"
+            }
+          ],
+          "current_level": 5,
+          "current_tier": "verified"
+        },
+        "DEMO.CORE.PRICE.02": {
+          "series": [
+            {
+              "seq": 1,
+              "ts": "2026-11-17 21:24 HKT",
+              "level": 2,
+              "level_code": "L2",
+              "completion": 0.4,
+              "tier": "declared"
+            },
+            {
+              "seq": 2,
+              "ts": "2026-11-17 21:26 HKT",
+              "level": 5,
+              "level_code": "L5",
+              "completion": 1.0,
+              "tier": "declared"
+            },
+            {
+              "seq": 4,
+              "ts": "2026-11-17 22:14 HKT",
+              "level": 5,
+              "level_code": "L5",
+              "completion": 1.0,
+              "tier": "verified"
+            }
+          ],
+          "current_level": 5,
+          "current_tier": "verified"
+        },
+        "DEMO.DATA.READY.01": {
+          "series": [
+            {
+              "seq": 1,
+              "ts": "2026-11-17 21:24 HKT",
+              "level": 5,
+              "level_code": "L5",
+              "completion": 1.0,
+              "tier": "declared"
+            },
+            {
+              "seq": 4,
+              "ts": "2026-11-17 22:14 HKT",
+              "level": 5,
+              "level_code": "L5",
+              "completion": 1.0,
+              "tier": "verified"
+            }
+          ],
+          "current_level": 5,
+          "current_tier": "verified"
+        }
+      },
+      "change_summary": {
+        "level_transitions": [],
+        "added": [],
+        "removed": [],
+        "completion_delta": [],
+        "evidence_changes": [],
+        "event_seq": 4,
+        "ts": "2026-11-17 22:14 HKT",
+        "from_fingerprint": "78f8cff9e5f8e90b",
+        "to_fingerprint": "8be2cb497e26f77a"
+      },
+      "health": {
+        "dimensions": {
+          "evidence_freshness": {
+            "score": 100.0,
+            "weight": 0.2,
+            "detail": "fresh"
+          },
+          "test_pass_rate": {
+            "score": 100.0,
+            "weight": 0.25,
+            "detail": "3/3"
+          },
+          "decision_backlog": {
+            "score": 100.0,
+            "weight": 0.15,
+            "detail": "open=0"
+          },
+          "verified_coverage": {
+            "score": 75.0,
+            "weight": 0.2,
+            "detail": "3/4"
+          },
+          "work_health": {
+            "score": 76.0,
+            "weight": 0.2,
+            "detail": "blocked=0 issues=3 failed=0"
+          }
+        },
+        "overall": 90.2,
+        "method": "加权投影：证据新鲜度20% + 测试通过率25% + 决策积压15% + verified 覆盖20% + 工作健康20%；各项 0-100，全部来自账本现有字段。"
+      },
+      "recommended_actions": [
+        {
+          "code": "DEMO.API.QUERY.01",
+          "name": "订单查询接口",
+          "action": "补齐 契约(L1) 并升到 L3",
+          "health_gain": 5.0,
+          "evidence": "契约(L1)"
+        }
+      ],
+      "timeline": [
+        {
+          "seq": 1,
+          "ts": "2026-11-17 21:24 HKT",
+          "type": "genesis",
+          "note": "账本初始化：记录当前全部能力点快照作为演进基线。",
+          "fingerprint": "dd4b6ffc6cade331",
+          "change_count": 4,
+          "codes": [
+            "DEMO.API.QUERY.01",
+            "DEMO.CORE.ORDER.01",
+            "DEMO.CORE.PRICE.02",
+            "DEMO.DATA.READY.01"
+          ]
+        },
+        {
+          "seq": 2,
+          "ts": "2026-11-17 21:26 HKT",
+          "type": "change",
+          "note": "证据 / 等级 / 文档索引变化，由生成器自动侦测。",
+          "fingerprint": "e3c959ccb2996cde",
+          "change_count": 3,
+          "codes": [
+            "DEMO.CORE.PRICE.02"
+          ]
+        },
+        {
+          "seq": 3,
+          "ts": "2026-11-17 21:28 HKT",
+          "type": "change",
+          "note": "证据 / 等级 / 文档索引变化，由生成器自动侦测。",
+          "fingerprint": "78f8cff9e5f8e90b",
+          "change_count": 0,
+          "codes": []
+        },
+        {
+          "seq": 4,
+          "ts": "2026-11-17 22:14 HKT",
+          "type": "change",
+          "note": "证据 / 等级 / 文档索引变化，由生成器自动侦测。",
+          "fingerprint": "8be2cb497e26f77a",
+          "change_count": 0,
+          "codes": []
+        }
+      ],
+      "lineage": {
+        "schema": "trace-lineage/1",
+        "purpose": "规划→决策→证据→当前状态的导航树；与账本同源，前端只读不写回。",
+        "node_kinds": [
+          "capability",
+          "decision",
+          "evidence",
+          "state"
+        ],
+        "group_limit": 6,
+        "trees": {
+          "DEMO.DATA.READY.01": {
+            "id": "cap:DEMO.DATA.READY.01",
+            "kind": "capability",
+            "code": "DEMO.DATA.READY.01",
+            "label": "数据就绪契约",
+            "status": {
+              "level": 5,
+              "tier": "verified",
+              "completion": 1.0
+            },
+            "children": [
+              {
+                "id": "cap:DEMO.DATA.READY.01/ev:plans:examples/demo-shop/docs/plans/DATA_PIPELINE_PLAN.md",
+                "kind": "evidence",
+                "label": "DATA_PIPELINE_PLAN.md",
+                "category": "plans",
+                "path": "examples/demo-shop/docs/plans/DATA_PIPELINE_PLAN.md",
+                "children": []
+              },
+              {
+                "id": "cap:DEMO.DATA.READY.01/ev:contracts:examples/demo-shop/src/contracts/data_ready.py",
+                "kind": "evidence",
+                "label": "data_ready.py",
+                "category": "contracts",
+                "path": "examples/demo-shop/src/contracts/data_ready.py",
+                "children": []
+              },
+              {
+                "id": "cap:DEMO.DATA.READY.01/ev:impl:examples/demo-shop/src/contracts/data_ready.py",
+                "kind": "evidence",
+                "label": "data_ready.py",
+                "category": "impl",
+                "path": "examples/demo-shop/src/contracts/data_ready.py",
+                "children": []
+              },
+              {
+                "id": "cap:DEMO.DATA.READY.01/ev:unit_tests:examples/demo-shop/tests/unit/test_data_ready.py",
+                "kind": "evidence",
+                "label": "test_data_ready.py",
+                "category": "unit_tests",
+                "path": "examples/demo-shop/tests/unit/test_data_ready.py",
+                "children": []
+              },
+              {
+                "id": "cap:DEMO.DATA.READY.01/ev:test_records:examples/demo-shop/docs/test_records/DATA_READY_TEST_RECORD.md",
+                "kind": "evidence",
+                "label": "DATA_READY_TEST_RECORD.md",
+                "category": "test_records",
+                "path": "examples/demo-shop/docs/test_records/DATA_READY_TEST_RECORD.md",
+                "children": []
+              },
+              {
+                "id": "cap:DEMO.DATA.READY.01/state",
+                "kind": "state",
+                "label": "L5 · verified · 1.0",
+                "level": 5,
+                "tier": "verified",
+                "completion": 1.0,
+                "children": []
+              }
+            ]
+          },
+          "DEMO.CORE.ORDER.01": {
+            "id": "cap:DEMO.CORE.ORDER.01",
+            "kind": "capability",
+            "code": "DEMO.CORE.ORDER.01",
+            "label": "订单领域模型",
+            "status": {
+              "level": 5,
+              "tier": "verified",
+              "completion": 1.0
+            },
+            "children": [
+              {
+                "id": "cap:DEMO.CORE.ORDER.01/dec:D-001",
+                "kind": "decision",
+                "label": "订单领域纳入 L5 生产闭环",
+                "decision_id": "D-001",
+                "status": "done",
+                "children": [
+                  {
+                    "id": "cap:DEMO.CORE.ORDER.01/dec:D-001/ev:decision:examples/demo-shop/docs/test_records/ORDER_TEST_RECORD.md",
+                    "kind": "evidence",
+                    "label": "ORDER_TEST_RECORD.md",
+                    "category": "decision",
+                    "path": "examples/demo-shop/docs/test_records/ORDER_TEST_RECORD.md",
+                    "children": []
+                  }
+                ]
+              },
+              {
+                "id": "cap:DEMO.CORE.ORDER.01/dec:D-002",
+                "kind": "decision",
+                "label": "定价服务暂不补单测",
+                "decision_id": "D-002",
+                "status": "superseded",
+                "children": [
+                  {
+                    "id": "cap:DEMO.CORE.ORDER.01/dec:D-002/ev:decision:examples/demo-shop/docs/plans/PRICING_ROADMAP.md",
+                    "kind": "evidence",
+                    "label": "PRICING_ROADMAP.md",
+                    "category": "decision",
+                    "path": "examples/demo-shop/docs/plans/PRICING_ROADMAP.md",
+                    "children": []
+                  }
+                ]
+              },
+              {
+                "id": "cap:DEMO.CORE.ORDER.01/ev:contracts:examples/demo-shop/src/contracts/order_schema.py",
+                "kind": "evidence",
+                "label": "order_schema.py",
+                "category": "contracts",
+                "path": "examples/demo-shop/src/contracts/order_schema.py",
+                "children": []
+              },
+              {
+                "id": "cap:DEMO.CORE.ORDER.01/ev:impl:examples/demo-shop/src/contracts/order_schema.py",
+                "kind": "evidence",
+                "label": "order_schema.py",
+                "category": "impl",
+                "path": "examples/demo-shop/src/contracts/order_schema.py",
+                "children": []
+              },
+              {
+                "id": "cap:DEMO.CORE.ORDER.01/ev:impl:examples/demo-shop/src/domain/order.py",
+                "kind": "evidence",
+                "label": "order.py",
+                "category": "impl",
+                "path": "examples/demo-shop/src/domain/order.py",
+                "children": []
+              },
+              {
+                "id": "cap:DEMO.CORE.ORDER.01/ev:unit_tests:examples/demo-shop/tests/unit/test_order.py",
+                "kind": "evidence",
+                "label": "test_order.py",
+                "category": "unit_tests",
+                "path": "examples/demo-shop/tests/unit/test_order.py",
+                "children": []
+              },
+              {
+                "id": "cap:DEMO.CORE.ORDER.01/ev:test_records:examples/demo-shop/docs/test_records/ORDER_TEST_RECORD.md",
+                "kind": "evidence",
+                "label": "ORDER_TEST_RECORD.md",
+                "category": "test_records",
+                "path": "examples/demo-shop/docs/test_records/ORDER_TEST_RECORD.md",
+                "children": []
+              },
+              {
+                "id": "cap:DEMO.CORE.ORDER.01/state",
+                "kind": "state",
+                "label": "L5 · verified · 1.0",
+                "level": 5,
+                "tier": "verified",
+                "completion": 1.0,
+                "children": []
+              }
+            ]
+          },
+          "DEMO.CORE.PRICE.02": {
+            "id": "cap:DEMO.CORE.PRICE.02",
+            "kind": "capability",
+            "code": "DEMO.CORE.PRICE.02",
+            "label": "定价服务",
+            "status": {
+              "level": 5,
+              "tier": "verified",
+              "completion": 1.0
+            },
+            "children": [
+              {
+                "id": "cap:DEMO.CORE.PRICE.02/dec:D-001",
+                "kind": "decision",
+                "label": "订单领域纳入 L5 生产闭环",
+                "decision_id": "D-001",
+                "status": "done",
+                "children": [
+                  {
+                    "id": "cap:DEMO.CORE.PRICE.02/dec:D-001/ev:decision:examples/demo-shop/docs/test_records/ORDER_TEST_RECORD.md",
+                    "kind": "evidence",
+                    "label": "ORDER_TEST_RECORD.md",
+                    "category": "decision",
+                    "path": "examples/demo-shop/docs/test_records/ORDER_TEST_RECORD.md",
+                    "children": []
+                  }
+                ]
+              },
+              {
+                "id": "cap:DEMO.CORE.PRICE.02/dec:D-002",
+                "kind": "decision",
+                "label": "定价服务暂不补单测",
+                "decision_id": "D-002",
+                "status": "superseded",
+                "children": [
+                  {
+                    "id": "cap:DEMO.CORE.PRICE.02/dec:D-002/ev:decision:examples/demo-shop/docs/plans/PRICING_ROADMAP.md",
+                    "kind": "evidence",
+                    "label": "PRICING_ROADMAP.md",
+                    "category": "decision",
+                    "path": "examples/demo-shop/docs/plans/PRICING_ROADMAP.md",
+                    "children": []
+                  }
+                ]
+              },
+              {
+                "id": "cap:DEMO.CORE.PRICE.02/dec:D-003",
+                "kind": "decision",
+                "label": "补齐定价服务证据并晋升 L5",
+                "decision_id": "D-003",
+                "status": "done",
+                "children": [
+                  {
+                    "id": "cap:DEMO.CORE.PRICE.02/dec:D-003/ev:decision:examples/demo-shop/docs/test_records/PRICE_TEST_RECORD.md",
+                    "kind": "evidence",
+                    "label": "PRICE_TEST_RECORD.md",
+                    "category": "decision",
+                    "path": "examples/demo-shop/docs/test_records/PRICE_TEST_RECORD.md",
+                    "children": []
+                  },
+                  {
+                    "id": "cap:DEMO.CORE.PRICE.02/dec:D-003/ev:decision:DEMO.CORE.PRICE.02",
+                    "kind": "evidence",
+                    "label": "DEMO.CORE.PRICE.02",
+                    "category": "decision",
+                    "path": "DEMO.CORE.PRICE.02",
+                    "children": []
+                  }
+                ]
+              },
+              {
+                "id": "cap:DEMO.CORE.PRICE.02/ev:plans:examples/demo-shop/docs/plans/PRICING_ROADMAP.md",
+                "kind": "evidence",
+                "label": "PRICING_ROADMAP.md",
+                "category": "plans",
+                "path": "examples/demo-shop/docs/plans/PRICING_ROADMAP.md",
+                "children": []
+              },
+              {
+                "id": "cap:DEMO.CORE.PRICE.02/ev:impl:examples/demo-shop/src/domain/pricing.py",
+                "kind": "evidence",
+                "label": "pricing.py",
+                "category": "impl",
+                "path": "examples/demo-shop/src/domain/pricing.py",
+                "children": []
+              },
+              {
+                "id": "cap:DEMO.CORE.PRICE.02/ev:unit_tests:examples/demo-shop/tests/unit/test_pricing.py",
+                "kind": "evidence",
+                "label": "test_pricing.py",
+                "category": "unit_tests",
+                "path": "examples/demo-shop/tests/unit/test_pricing.py",
+                "children": []
+              },
+              {
+                "id": "cap:DEMO.CORE.PRICE.02/ev:test_records:examples/demo-shop/docs/test_records/PRICE_TEST_RECORD.md",
+                "kind": "evidence",
+                "label": "PRICE_TEST_RECORD.md",
+                "category": "test_records",
+                "path": "examples/demo-shop/docs/test_records/PRICE_TEST_RECORD.md",
+                "children": []
+              },
+              {
+                "id": "cap:DEMO.CORE.PRICE.02/state",
+                "kind": "state",
+                "label": "L5 · verified · 1.0",
+                "level": 5,
+                "tier": "verified",
+                "completion": 1.0,
+                "children": []
+              }
+            ]
+          },
+          "DEMO.API.QUERY.01": {
+            "id": "cap:DEMO.API.QUERY.01",
+            "kind": "capability",
+            "code": "DEMO.API.QUERY.01",
+            "label": "订单查询接口",
+            "status": {
+              "level": 2,
+              "tier": "declared",
+              "completion": 0.4
+            },
+            "children": [
+              {
+                "id": "cap:DEMO.API.QUERY.01/ev:impl:examples/demo-shop/src/api/order_api.py",
+                "kind": "evidence",
+                "label": "order_api.py",
+                "category": "impl",
+                "path": "examples/demo-shop/src/api/order_api.py",
+                "children": []
+              },
+              {
+                "id": "cap:DEMO.API.QUERY.01/state",
+                "kind": "state",
+                "label": "L2 · declared · 0.4",
+                "level": 2,
+                "tier": "declared",
+                "completion": 0.4,
+                "children": []
+              }
+            ]
+          }
+        }
+      }
     }
   },
   "history": {
@@ -1610,7 +2132,7 @@
   "test_results": {
     "schema": "node-test-results/1",
     "source": "governance/test_report.json",
-    "source_sha256": "ec40da2df1788e84f96e7d252e531f68e8a7c0b0b612f56874d296eb20cf0e81",
+    "source_sha256": "e6d1ecb3d63830889b5b511ffd340c455c99d81a7ca8ff4bb82b7b88c3bbd277",
     "overall": "pass",
     "summary": {
       "total": 3,
@@ -1621,19 +2143,19 @@
     },
     "cases": [
       {
-        "id": "_lld_test_data_ready_35777.DataReadyTest.test_required_fields",
+        "id": "_lld_test_data_ready_2348.DataReadyTest.test_required_fields",
         "file": "examples/demo-shop/tests/unit/test_data_ready.py",
         "status": "pass",
-        "seconds": 2.2e-05
+        "seconds": 2.3e-05
       },
       {
-        "id": "_lld_test_order_10275.OrderTest.test_payable",
+        "id": "_lld_test_order_62845.OrderTest.test_payable",
         "file": "examples/demo-shop/tests/unit/test_order.py",
         "status": "pass",
-        "seconds": 1.5e-05
+        "seconds": 1.4e-05
       },
       {
-        "id": "_lld_test_pricing_32654.PricingTest.test_discount",
+        "id": "_lld_test_pricing_52899.PricingTest.test_discount",
         "file": "examples/demo-shop/tests/unit/test_pricing.py",
         "status": "pass",
         "seconds": 1.3e-05

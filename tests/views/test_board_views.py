@@ -28,10 +28,12 @@ def script_text() -> str:
 NODE_HARNESS = """
 const _els={};
 function _elem(){return {innerHTML:'',textContent:'',value:'',onclick:null,oninput:null,
-  querySelectorAll:()=>[],querySelector:()=>null,classList:{remove(){},add(){}},
+  querySelectorAll:()=>[],querySelector:()=>null,classList:{remove(){},add(){},contains(){return false;},toggle(){}},
   dataset:{},closest:()=>null};}
 global.document={getElementById:id=>_els[id]||(_els[id]=_elem()),
   querySelectorAll:()=>[],querySelector:()=>_elem()};
+const _store={};
+global.localStorage={getItem:k=>_store[k]||null,setItem:(k,v)=>{_store[k]=String(v);},removeItem:k=>{delete _store[k];}};
 global.fetch=()=>Promise.reject(new Error('offline'));
 """
 
@@ -43,8 +45,8 @@ class BoardViewsTest(unittest.TestCase):
         for needle in ('data-v="workbench"', 'data-v="work"', "const PAGE_SIZE=200",
                        "function renderWorkbench(", "function renderWork(",
                        "function workStripHtml(", "function nodeWork(",
-                       "function bindWorkLinks(", "DATA.work_items",
-                       "DATA.test_results", "workStripHtml(c.code)",
+                       "function bindWorkLinks(",                        "VIEW_DATA.work_items",
+                       "VIEW_DATA.test_results", "workStripHtml(c.code)",
                        "workStripHtml(m.code)", "workStripHtml(scope)",
                        'data-v="glossary"', "function renderGlossary(",
                        "const GLOSSARY=[", "const CODING_IDEAS=[",
@@ -104,6 +106,42 @@ class BoardViewsTest(unittest.TestCase):
                   'history', 'lessons', 'glossary'):
             self.assertIn(f'data-v="{v}"', html, v)
 
+    def test_board_analytics_contract(self):
+        """v2.11.0：热力图 / 趋势 / 卡片墙 / 证据链 / What-if 都是契约。"""
+        html = TEMPLATE.read_text(encoding="utf-8")
+        for needle in (
+            'data-v="heatmap"', 'data-v="trend"', 'data-v="lineage"', 'data-v="queue"',
+            'function renderHeatmap(', 'function renderTrend(',
+            'function renderLineage(', 'function renderLineageD3(',
+            'function renderQueue(', 'function renderEvidenceChain(',
+            'function ensureAnalytics(', 'function recomputeHealth(',
+            'function applyWhatIf(', 'function markChanges(',
+            'maturity-analytics/1', 'localStorage', 'whatIf',
+            'data-tier="', 'data-whatif="', "classList.add('changed')",
+            'health-dim', 'class="heat-grid"', 'class="queue-wall"',
+        ):
+            self.assertIn(needle, html, needle)
+        for v in ('workbench', 'heatmap', 'trend', 'lineage', 'queue', 'work',
+                  'capability', 'all', 'design', 'diagram', 'flow',
+                  'timeline', 'modules', 'arch', 'history', 'lessons', 'glossary', 'pending'):
+            self.assertIn(f'data-v="{v}"', html, v)
+
+    def test_local_d3_contract(self):
+        """v2.12.0：D3 必须本地、离线、可降级；不允许 CDN 或运行时下载。"""
+        html = TEMPLATE.read_text(encoding="utf-8")
+        vendor = ROOT / "templates" / "vendor" / "d3.v7.min.js"
+        self.assertTrue(vendor.is_file(), "缺少本地 D3 文件")
+        self.assertIn('<script src="vendor/d3.v7.min.js"></script>', html)
+        self.assertNotIn("https://cdn.jsdelivr.net", html)
+        self.assertNotIn("https://d3js.org/d3", html)
+        body = vendor.read_text(encoding="utf-8")
+        self.assertIn("v7.", body[:120], "D3 版本标记缺失")
+        self.assertGreater(len(body), 200_000, "D3 文件疑似截断")
+        for needle in ('function hasD3(', 'function renderTrendD3(',
+                       'function renderHeatmapD3(', 'function renderLineageD3(',
+                       'function deriveLineage(', 'trace-lineage/1'):
+            self.assertIn(needle, html, needle)
+
     def test_work_views_degrade_without_data(self):
         """用最小 DOM stub 在 Node 里真实执行模板 JS，证明空账本不报错。"""
         if not _has_node():
@@ -128,6 +166,22 @@ renderDiagram(document.getElementById('list'));
 if(!document.getElementById('list').innerHTML.includes('<svg')) throw new Error('架构图缺 SVG');
 renderFlow(document.getElementById('list'));
 if(!document.getElementById('list').innerHTML.includes('数据流 · 实时计数')) throw new Error('数据流缺计数标题');
+ensureAnalytics();
+renderHeatmap(document.getElementById('list'));
+if(!document.getElementById('list').innerHTML.includes('能力成熟度热力图')) throw new Error('热力图缺标题');
+renderTrend(document.getElementById('list'));
+if(!document.getElementById('list').innerHTML.includes('成熟度趋势')) throw new Error('趋势图缺标题');
+renderLineage(document.getElementById('list'));
+if(!document.getElementById('list').innerHTML.includes('规划 → 决策 → 证据 → 当前状态')) throw new Error('追溯链缺标题');
+renderQueue(document.getElementById('list'));
+if(!document.getElementById('list').innerHTML.includes('任务卡片墙')) throw new Error('卡片墙缺标题');
+const h=recomputeHealth(VIEW_DATA.capability_model||{},VIEW_DATA);
+if(h.overall<0||h.overall>100) throw new Error('模拟健康度越界');
+toggleWhatIf();
+toggleWhatIfCap('DEMO.API.QUERY.01');
+applyWhatIf();
+if(!whatIf.active) throw new Error('What-if 未激活');
+toggleWhatIf();
 console.log('OK');
 """, encoding="utf-8")
             p = subprocess.run(["node", str(js)], capture_output=True, text=True)

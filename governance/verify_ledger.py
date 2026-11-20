@@ -39,6 +39,10 @@
     （未安装资产时 na）
 27. binding_issues_derived：每个非 bound 能力恰好一条 source=derived 的 open
     issue；已 bound 的派生 issue 不得仍 open（issue 是账本投影，非手工第二源）
+28. analytics_maturity_valid：分析层时间序列末点与当前等级一致、健康度子维度
+    在 0-100 且加权和自洽、推荐行动与任务卡增益可追溯（旧账本未启用判 na）
+29. analytics_d3_projection_valid：D3 消费的追溯树与事件时间轴自证——节点 id
+    唯一、决策引用真实、状态节点等于当前能力、时间轴 seq 连续（旧账本判 na）
 
 三态语义
 --------
@@ -595,6 +599,149 @@ def verify(repo_root: Path, ledger: dict, registry: dict | None,
              if not b_errors else f"错误={b_errors[:5]}"))
     else:
         add("binding_issues_derived", True, "未启用绑定门禁（旧账本）", status="na")
+
+    # 28. 分析层（v2.11.0）：热力图/趋势/健康度/推荐行动都从这里取数。
+    #     若允许手填分数，看板就会变成第二套判定——必须逐字段自证。
+    analytics = cm.get("analytics")
+    if not isinstance(analytics, dict):
+        add("analytics_maturity_valid", True, "未启用分析层（旧账本）", status="na")
+    else:
+        from build_capability_model import (  # 局部导入：保持旧脚本可单独运行
+            ANALYTICS_SCHEMA, HEALTH_DIMENSION_WEIGHTS)
+
+        a_errors: list[str] = []
+        cap_by_code = {c.get("code"): c for c in caps}
+        if analytics.get("schema") != ANALYTICS_SCHEMA:
+            a_errors.append(f"schema={analytics.get('schema')}")
+        maturity = analytics.get("maturity") or {}
+        for code, row in maturity.items():
+            if code not in cap_by_code:
+                a_errors.append(f"{code}:未知能力")
+                continue
+            series = (row or {}).get("series") or []
+            if not series:
+                a_errors.append(f"{code}:空序列")
+                continue
+            last = series[-1]
+            cap = cap_by_code[code]
+            if last.get("level") != cap.get("level") or last.get("tier") != cap.get("evidence_tier"):
+                a_errors.append(f"{code}:末点≠当前")
+            for pt in series:
+                lv = pt.get("level")
+                if not isinstance(lv, int) or not 0 <= lv <= 5:
+                    a_errors.append(f"{code}:等级越界 {lv}")
+                    break
+        change = analytics.get("change_summary") or {}
+        for key in ("level_transitions", "added", "removed"):
+            if key not in change:
+                a_errors.append(f"差异缺 {key}")
+        for tr in change.get("level_transitions") or []:
+            if tr.get("code") not in cap_by_code:
+                a_errors.append(f"差异能力未知 {tr.get('code')}")
+        health = analytics.get("health") or {}
+        dims = health.get("dimensions") or {}
+        if set(dims) != set(HEALTH_DIMENSION_WEIGHTS):
+            a_errors.append("健康度维度集合不符")
+        weighted = 0.0
+        for name, row in dims.items():
+            score, weight = row.get("score"), row.get("weight")
+            if not isinstance(score, (int, float)) or not 0 <= score <= 100:
+                a_errors.append(f"{name}:分数越界 {score}")
+                continue
+            if abs(float(weight) - HEALTH_DIMENSION_WEIGHTS.get(name, -1)) > 1e-9:
+                a_errors.append(f"{name}:权重不符")
+            weighted += float(score) * float(weight)
+        if abs(round(weighted, 1) - float(health.get("overall", -1))) > 0.15:
+            a_errors.append(f"overall 不符：记录={health.get('overall')} 实算={round(weighted, 1)}")
+        summary_dims = (cm.get("summary") or {}).get("health_dimensions") or {}
+        expected_summary = {k: v.get("score") for k, v in dims.items()}
+        if summary_dims != expected_summary:
+            a_errors.append("summary.health_dimensions 与分析层不一致")
+        for action in analytics.get("recommended_actions") or []:
+            if action.get("code") not in cap_by_code:
+                a_errors.append(f"推荐行动能力未知 {action.get('code')}")
+            if float(action.get("health_gain", -1)) < 0:
+                a_errors.append(f"推荐增益非法 {action.get('code')}")
+        for task in cm.get("next_queue") or []:
+            if "health_impact" in task and float(task["health_impact"]) < 0:
+                a_errors.append(f"队列增益非法 {task.get('code')}")
+        add("analytics_maturity_valid", not a_errors,
+            (f"序列 {len(maturity)} 条 · 增益 {len(analytics.get('recommended_actions') or [])} 项"
+             if not a_errors else f"错误={a_errors[:5]}"))
+
+    # 29. D3 投影（v2.12.0）：追溯树与时间轴是导航索引，不能被手改成第二事实源。
+    #     新字段缺失视为旧账本 na；一旦启用，逐节点与当前账本对照。
+    if not isinstance(analytics, dict) or not isinstance(analytics.get("lineage"), dict):
+        add("analytics_d3_projection_valid", True,
+            "未启用 D3 追溯投影（旧账本）", status="na")
+    else:
+        from build_capability_model import LINEAGE_SCHEMA  # 局部导入，兼容旧脚本
+
+        d_errors: list[str] = []
+        lineage = analytics.get("lineage") or {}
+        if lineage.get("schema") != LINEAGE_SCHEMA:
+            d_errors.append(f"lineage schema={lineage.get('schema')}")
+        trees = lineage.get("trees") or {}
+        known_decisions = {e.get("id") for e in entries if e.get("id")}
+        node_count = 0
+        for code, tree in trees.items():
+            cap = cap_by_code.get(code)
+            if cap is None:
+                d_errors.append(f"{code}:树指向未知能力")
+                continue
+            if not isinstance(tree, dict) or tree.get("kind") != "capability":
+                d_errors.append(f"{code}:根节点类型错误")
+                continue
+            ids: set[str] = set()
+            stack = [tree]
+            states = 0
+            while stack:
+                node = stack.pop()
+                if not isinstance(node, dict):
+                    d_errors.append(f"{code}:节点非对象")
+                    continue
+                node_count += 1
+                nid = node.get("id")
+                if not nid or nid in ids:
+                    d_errors.append(f"{code}:节点 id 缺失或重复 {nid}")
+                    continue
+                ids.add(nid)
+                if node.get("kind") not in ("capability", "decision", "evidence", "state"):
+                    d_errors.append(f"{code}:节点 kind 非法 {node.get('kind')}")
+                if node.get("kind") == "decision":
+                    did = node.get("decision_id")
+                    if did not in known_decisions:
+                        d_errors.append(f"{code}:决策引用未知 {did}")
+                if node.get("kind") == "state":
+                    states += 1
+                    if (node.get("level") != cap.get("level")
+                            or node.get("tier") != cap.get("evidence_tier")):
+                        d_errors.append(f"{code}:状态节点≠当前能力")
+                children = node.get("children")
+                if not isinstance(children, list):
+                    d_errors.append(f"{code}:children 非数组 {nid}")
+                    continue
+                stack.extend(children)
+            if states != 1:
+                d_errors.append(f"{code}:状态节点数={states}")
+
+        timeline = analytics.get("timeline")
+        if not isinstance(timeline, list):
+            d_errors.append("时间轴缺失")
+        else:
+            last_seq = 0
+            for point in timeline:
+                seq = point.get("seq")
+                if not isinstance(seq, int) or seq <= last_seq:
+                    d_errors.append(f"时间轴 seq 非递增 {seq}")
+                    break
+                last_seq = seq
+                if not isinstance(point.get("change_count"), int):
+                    d_errors.append(f"时间轴 change_count 非法 {seq}")
+                    break
+        add("analytics_d3_projection_valid", not d_errors,
+            (f"追溯树 {len(trees)} 棵 / 节点 {node_count} 个 / 时间轴 "
+             f"{len(timeline or [])} 点" if not d_errors else f"错误={d_errors[:5]}"))
 
     return results
 

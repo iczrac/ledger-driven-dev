@@ -42,15 +42,15 @@ class SelfHostingLedger(unittest.TestCase):
     def test_release_decisions_recorded(self):
         d = self._ledger()
         titles = " | ".join(str(e.get("title", "")) for e in d.get("entries", []))
-        for ver in ("2.4.0", "2.5.0", "2.6.0", "2.8.0", "2.9.0", "2.10.0"):
+        for ver in ("2.4.0", "2.5.0", "2.6.0", "2.8.0", "2.9.0", "2.10.0", "2.11.0"):
             self.assertIn(ver, titles, f"账本未记录发版决策 {ver}")
 
     def test_release_decisions_are_done(self):
         d = self._ledger()
         rel = [e for e in d.get("entries", [])
                if any(v in str(e.get("title", "")) for v in
-                      ("2.4.0", "2.5.0", "2.6.0", "2.8.0", "2.9.0", "2.10.0"))]
-        self.assertEqual(len(rel), 6, "应有六条发版决策")
+                      ("2.4.0", "2.5.0", "2.6.0", "2.8.0", "2.9.0", "2.10.0", "2.11.0"))]
+        self.assertEqual(len(rel), 7, "应有七条发版决策")
         for e in rel:
             self.assertEqual(e.get("status"), "done", f"{e['id']} 未完成流转")
 

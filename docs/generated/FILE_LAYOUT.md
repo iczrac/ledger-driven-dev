@@ -1,7 +1,7 @@
 # FILE_LAYOUT · 引入方案后的文件布局
 
 > 本文件由 `scripts/file_layout.py` 从布局定义渲染；请勿手改。
-> schema `file-layout/1` · 条目 34 · 引入后新增 29 项 · 账本内字段 12 项。
+> schema `file-layout/1` · 条目 36 · 引入后新增 31 项 · 账本内字段 12 项。
 
 ## 分层含义
 
@@ -30,6 +30,8 @@
 | `governance/registry.json` | 事实源层 | 引入方案后新增 | 治理骨架必需 | 人（唯一手写清单） | `manual` | 可 | 建议提交 git | 能力注册表：项目信息、模块清单、impls / hints / unit_test 声明。全项目唯一需手填的清单。　保护：registry_impls_exist / component_paths_exist。　注：新建为空清单；存量接入来自人工确认后的 registry.draft.json。多人同改仍需 git 合并。 |
 | `governance/DECISION_LEDGER.json` | 事实源层 | 引入方案后新增 | 治理骨架必需 | 生成器 / 决策脚本 / 生命周期脚本 | `rewrite` | 禁 | 建议提交 git | 单一事实源：entries 决策、capability_model 派生结果、history、lessons、lifecycle 全在这里。　保护：26 条不变量 / --expect-fingerprint CAS / frozen 冻结 / 看板 EMBED 同步。　注：可以写 entries（经 ledger_decide.py），但 level / completion / history / EMBED 一律自动派生，禁止手改。 |
 | `governance/index.html` | 派生层 | 引入方案后新增 | 治理骨架必需 | build_capability_model.py / lifecycle.py / upgrade.py / board_contract.py | `rewrite` | 禁 | 建议提交 git | 可视化看板；EMBED 与账本逐字节等价，CSS/DOM/JS 骨架与权威模板一致、按 PAGE_SIZE 分批渲染。　保护：board_embed_synced 不变量 + 去 EMBED 后的骨架 sha256（board_contract.py）。　注：lifecycle.py 改状态时同步 EMBED；禁止在项目里改样式，换版面要改模板并发版再由 upgrade 归一。 |
+| `governance/vendor/` | 派生层 | 引入方案后新增 | 跑对应命令后才出现（不出现属正常） | upgrade.py | `rewrite` | 禁 | 建议提交 git | 治理目录下的本地前端依赖目录；当前只放 D3，避免 CDN 与后端依赖。　保护：relative file:// path。　注：由 upgrade.py 创建；目录内文件必须逐项登记，禁止手工塞入第二套事实源。 |
+| `governance/vendor/d3.v7.min.js` | 派生层 | 引入方案后新增 | 跑对应命令后才出现（不出现属正常） | upgrade.py | `rewrite` | 禁 | 建议提交 git | 本地 D3 v7 运行时：供追溯树、趋势与热力图做离线交互，不访问 CDN、不引后端。　保护：upgrade.py TOOLING 摘要一致 / file:// 相对路径加载 / hasD3() 降级。　注：由方法仓下发；删除后看板自动回退原生 SVG / details 树，禁止在项目内改版本。 |
 | `governance/test_report.json` | 派生层 | 引入方案后新增 | 跑对应命令后才出现（不出现属正常） | run_tests.py | `rewrite` | 禁 | 可提交（便于离线审计）或 CI 重跑 | 机器可读测试报告，schema ledger-test-report/1；是 verified 证据的唯一来源。　保护：evidence_binding 逐文件 sha256 / --strict-evidence。　注：报告绑定测试源码内容摘要；源码一改就判 stale，verified 回落 declared。 |
 | `governance/TARGET_ARCHITECTURE.json` | 派生层 | 引入方案后新增 | 跑对应命令后才出现（不出现属正常） | architect_from_docs.py | `write-if-absent` | 禁 | 可提交（便于离线审计）或 CI 重跑 | 从规范文档抽取的目标架构：目标 / 模块 / 能力编码 / 依赖 / target_level。　保护：置信度 warnings。　注：结构化抽取而非自然语言理解；差异只报告，不自动回写 registry。 |
 | `governance/GIT_TRACE.json` | 派生层 | 引入方案后新增 | 跑对应命令后才出现（不出现属正常） | trace_git.py | `write-if-absent` | 禁 | 可提交（便于离线审计）或 CI 重跑 | 提交 → 变更路径 → 模块 / 能力编码 / 决策 id / 历史事件序号的映射。　保护：只读 git log --name-only。　注：不信任 commit message，只认真实变更路径；force-push 重写历史无法本地证明。 |

@@ -100,6 +100,22 @@
           "domain": "WORKBENCH",
           "impl": ["scripts/board_contract.py"],
           "tests": ["tests/views/test_board_views.py"]
+        },
+        {
+          "code": "METHOD.GOV.ANALYTICS.14",
+          "name": "可视化分析层（v2.11.0）：热力图 + 趋势 + 证据链 + 健康度多维 + 卡片墙 + What-if",
+          "domain": "ANALYTICS",
+          "impl": ["templates/build_capability_model.py", "scripts/ontology.py"],
+          "tests": ["tests/core/test_maturity_analytics.py", "tests/views/test_board_views.py"]
+        },
+        {
+          "code": "METHOD.GOV.D3.15",
+          "name": "本地 D3 离线交互层（v2.12.0）：追溯树 + D3 热力图 + 趋势图 + What-if 联动",
+          "domain": "D3",
+          "impl": ["templates/build_capability_model.py", "templates/index.html.template",
+                   "scripts/upgrade.py", "scripts/file_layout.py"],
+          "tests": ["tests/core/test_maturity_analytics.py", "tests/views/test_board_views.py",
+                    "tests/core/test_verify.py", "tests/meta/test_upgrade.py"]
         }
       ]
     }

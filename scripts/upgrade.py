@@ -96,7 +96,7 @@ SOURCE_ROOT = Path(__file__).resolve().parents[1]
 SCHEMA_PLAN = "upgrade-plan/1"
 SCHEMA_APPLY = "upgrade-apply/1"
 SCHEMA_VERIFY = "upgrade-verify/1"
-METHOD_VERSION = "2.10.0"
+METHOD_VERSION = "2.12.0"
 
 
 def _version_tuple(value) -> tuple[int, ...]:
@@ -116,6 +116,8 @@ TOOLING: dict[str, str] = {
     "governance/verify_ledger.py": "templates/verify_ledger.py",
     "governance/registry_codec.py": "templates/registry_codec.py",
     "governance/run_tests.py": "scripts/run_tests.py",
+    # v2.12.0：本地 D3 随方法版本下发，file:// 下不访问 CDN。
+    "governance/vendor/d3.v7.min.js": "templates/vendor/d3.v7.min.js",
 }
 
 # 迁移只允许新增字段。任何需要改写历史/条目的迁移都必须另写人工方案。

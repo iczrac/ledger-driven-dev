@@ -201,7 +201,8 @@ class AssetsTest(unittest.TestCase):
             uv = upgrade_verify(target)
             self.assertEqual(next(c for c in uv["checks"]
                                   if c["id"] == "installed_assets")["status"], "pass")
-            backups = sorted((target / ".ledger-upgrade" / "backups").iterdir())
+            backups = sorted(p for p in (target / ".ledger-upgrade" / "backups").iterdir()
+                             if p.is_dir())
             from upgrade import rollback
             rollback(target, backups[-1].name, "gate-bot")
             self.assertFalse((target / ".workbuddy" / "skills" / "ledger-verify" /

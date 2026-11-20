@@ -1,6 +1,6 @@
 {
   "schema": "ledger-test-report/1",
-  "generated_at": "2026-11-17 23:03 HKT",
+  "generated_at": "2026-11-20 22:08 HKT",
   "test_dir": "examples/demo-shop/tests",
   "command": "unittest load from tests",
   "load_errors": [],
@@ -13,19 +13,19 @@
   },
   "cases": [
     {
-      "id": "_lld_test_data_ready_35777.DataReadyTest.test_required_fields",
+      "id": "_lld_test_data_ready_2348.DataReadyTest.test_required_fields",
       "file": "examples/demo-shop/tests/unit/test_data_ready.py",
       "status": "pass",
-      "seconds": 2.2e-05
+      "seconds": 2.3e-05
     },
     {
-      "id": "_lld_test_order_10275.OrderTest.test_payable",
+      "id": "_lld_test_order_62845.OrderTest.test_payable",
       "file": "examples/demo-shop/tests/unit/test_order.py",
       "status": "pass",
-      "seconds": 1.5e-05
+      "seconds": 1.4e-05
     },
     {
-      "id": "_lld_test_pricing_32654.PricingTest.test_discount",
+      "id": "_lld_test_pricing_52899.PricingTest.test_discount",
       "file": "examples/demo-shop/tests/unit/test_pricing.py",
       "status": "pass",
       "seconds": 1.3e-05
@@ -56,5 +56,5 @@
     ],
     "source_digest": "ce4beb069c1a9c1e"
   },
-  "label": "demo-unit"
+  "label": "gate"
 }

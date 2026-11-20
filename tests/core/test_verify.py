@@ -18,7 +18,7 @@ class VerifyTest(unittest.TestCase):
             self.assertEqual(result.returncode, 0, result.stderr)
             payload = json.loads(result.stdout)
             self.assertEqual(payload["failed"], 0)
-            self.assertEqual(len(payload["checks"]), 27)  # 21 + 3 工作台 + 2 v2.1.2 + 1 v2.3.0
+            self.assertEqual(len(payload["checks"]), 29)  # 27 + 分析层 + D3 投影
 
     def _corrupt_and_check(self, mutate, expected_check):
         with demo_copy() as (root, ledger, reg, board):
@@ -64,6 +64,37 @@ class VerifyTest(unittest.TestCase):
                             c.pop("binding_status", None)
                             return
         self._corrupt_and_check(mutate, "verified_tier_traceable")
+
+    def test_detects_forged_analytics_health(self):
+        """v2.11.0 #28：分数手改成越界值必须被抓到，健康度不能靠声明。"""
+        with demo_copy() as (root, ledger, reg, board):
+            d = json.loads(ledger.read_text())
+            a = d["capability_model"].get("analytics")
+            if not isinstance(a, dict):
+                self.skipTest("demo 账本尚未生成 analytics（数据层未实现）")
+            a["health"]["dimensions"]["test_pass_rate"]["score"] = 999
+            ledger.write_text(json.dumps(d, ensure_ascii=False))
+            payload = json.loads(run_verify(root, ledger, reg, board).stdout)
+            failed = [c["id"] for c in payload["checks"] if not c["ok"]]
+            self.assertIn("analytics_maturity_valid", failed)
+
+    def test_detects_forged_d3_lineage(self):
+        """v2.12.0 #29：追溯状态节点手改到与当前能力不符必须被抓到。"""
+        with demo_copy() as (root, ledger, reg, board):
+            d = json.loads(ledger.read_text())
+            a = d["capability_model"].get("analytics") or {}
+            lineage = a.get("lineage")
+            if not isinstance(lineage, dict) or not lineage.get("trees"):
+                self.skipTest("demo 账本尚未生成 lineage（数据层未实现）")
+            tree = next(iter(lineage["trees"].values()))
+            for node in tree.get("children") or []:
+                if node.get("kind") == "state":
+                    node["level"] = 99
+                    break
+            ledger.write_text(json.dumps(d, ensure_ascii=False))
+            payload = json.loads(run_verify(root, ledger, reg, board).stdout)
+            failed = [c["id"] for c in payload["checks"] if not c["ok"]]
+            self.assertIn("analytics_d3_projection_valid", failed)
 
     def test_detects_non_bound_cap_without_derived_issue(self):
         """v2.3.0 #27：非 bound 能力却删掉派生 issue → 必须 fail。
@@ -197,7 +228,7 @@ class TristateTest(unittest.TestCase):
             self.assertEqual(row["status"], "na")
             self.assertFalse(row["ok"])
             self.assertEqual(payload["na"], 2)  # test_results + 资产未安装
-            self.assertEqual(payload["passed"], 25)  # 27 总检查 - 2 na
+            self.assertEqual(payload["passed"], 27)  # 29 总检查 - 2 na
             self.assertEqual(payload["failed"], 0)
             self.assertFalse(payload["all_active"])
 
