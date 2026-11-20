@@ -2,7 +2,7 @@
   "ledger_version": "1.0",
   "title": "Ledger-Driven Dev 方法论仓库（自举） 决策与能力账本",
   "purpose": "单一事实源：决策、裁决、待办及能力索引的唯一写入点。",
-  "last_updated": "2026-11-20 01:20 HKT",
+  "last_updated": "2026-11-20 14:38 HKT",
   "owner": "待定",
   "provenance": {
     "mode": "greenfield",
@@ -35,6 +35,57 @@
       "rationale": "以 greenfield 模式建立治理骨架；registry 来源 template。",
       "evidence": [
         "governance/registry.json"
+      ],
+      "confidence": "high"
+    },
+    {
+      "id": "D-002",
+      "supersedes": null,
+      "date": "2026-11-20",
+      "title": "发版 v2.4.0：复述门（结构化意图声明 + 机器锚定）",
+      "category": "发版",
+      "scope": "METHOD",
+      "status": "done",
+      "decision": "新增 intent_restate.py 元工具：8 道校验、三态退出码、结论=f(声明,registry,账本)；接入 route_expert 前置，非 allow 阻断。压测 10/10 先红后绿。",
+      "rationale": "修复「让专家团接管全流程」被判 intents=[] 却静默路由的意图失真洞；声明权≠伪造权。tag v2.4.0 / commit 79579ef 已实际发生，此处补录进账本使之一致。",
+      "evidence": [
+        "CHANGELOG.md",
+        "feedback/DELIVERY-2.4.0.md",
+        "scripts/intent_restate.py"
+      ],
+      "confidence": "high"
+    },
+    {
+      "id": "D-003",
+      "supersedes": null,
+      "date": "2026-11-20",
+      "title": "发版 v2.5.0：expert-run 专家团自动编排",
+      "category": "发版",
+      "scope": "METHOD",
+      "status": "done",
+      "decision": "新增 expert_run.py：沿 handoff.chain 展开逐跳契约 + 命令分类(readonly/approval/manual) + 人工批准包；零新判定权、默认 dry-run 零执行。P0 路由修复一并收编。",
+      "rationale": "全 AI 驱动的机器可自治部分（展开契约/分类命令/生成批准包/流转交接）应自动化，人只在写点批准。tag v2.5.0 / commit 19b7d98 已实际发生，补录使账本反映真实历史。",
+      "evidence": [
+        "CHANGELOG.md",
+        "feedback/DELIVERY-2.5.0.md",
+        "scripts/expert_run.py"
+      ],
+      "confidence": "high"
+    },
+    {
+      "id": "D-004",
+      "supersedes": null,
+      "date": "2026-11-20",
+      "title": "发版 v2.6.0：来源投影与完成定义",
+      "category": "发版",
+      "scope": "METHOD",
+      "status": "done",
+      "decision": "新增 provenance_view.py（只读投影）：issue/decision 按 [AI推断]/[人确认] 分组；从任务卡派生 definition_of_done；不写回账本、不改治理规则。补可运行黄金范例。",
+      "rationale": "借鉴外部方法论的「来源可区分」但不造第二事实源——既有 source=derived/owner 已是等价事实。tag v2.6.0 / commit 60d40bd 已实际发生，补录使账本反映真实历史。",
+      "evidence": [
+        "CHANGELOG.md",
+        "feedback/DELIVERY-2.6.0.md",
+        "scripts/provenance_view.py"
       ],
       "confidence": "high"
     }
@@ -384,6 +435,175 @@
         },
         "trigger": "derive",
         "note": "证据 / 等级 / 文档索引变化，由生成器自动侦测。"
+      },
+      {
+        "seq": 4,
+        "ts": "2026-11-20 14:38 HKT",
+        "type": "change",
+        "fingerprint_before": "810d5e0de6b6245e",
+        "fingerprint_after": "d74c2c5e8e021873",
+        "changes": {
+          "level_transitions": [],
+          "added": [
+            "METHOD.GOV.ANNOT.10",
+            "METHOD.GOV.ORCH.09",
+            "METHOD.GOV.RESTATE.08"
+          ],
+          "removed": [],
+          "completion_delta": [],
+          "evidence_changes": []
+        },
+        "state_digest": {
+          "METHOD.GOV.FEEDBACK.01": {
+            "l": 3,
+            "c": 0.6,
+            "t": "verified",
+            "e": [
+              "scripts/ledger_feedback.py",
+              "tests/meta/test_feedback.py"
+            ],
+            "d": [
+              "scripts/ledger_feedback.py",
+              "tests/meta/test_feedback.py"
+            ],
+            "dec": [
+              "D-002",
+              "D-003",
+              "D-004"
+            ]
+          },
+          "METHOD.GOV.UPGRADE.02": {
+            "l": 3,
+            "c": 0.6,
+            "t": "verified",
+            "e": [
+              "scripts/upgrade.py",
+              "tests/meta/test_upgrade.py"
+            ],
+            "d": [
+              "scripts/upgrade.py",
+              "tests/meta/test_upgrade.py"
+            ],
+            "dec": []
+          },
+          "METHOD.GOV.PANEL.03": {
+            "l": 3,
+            "c": 0.6,
+            "t": "verified",
+            "e": [
+              "scripts/work_panel.py",
+              "tests/views/test_work_panel.py"
+            ],
+            "d": [
+              "scripts/work_panel.py",
+              "tests/views/test_work_panel.py"
+            ],
+            "dec": []
+          },
+          "METHOD.GOV.LAYOUT.04": {
+            "l": 3,
+            "c": 0.6,
+            "t": "verified",
+            "e": [
+              "scripts/file_layout.py",
+              "tests/meta/test_layout.py"
+            ],
+            "d": [
+              "docs/generated/FILE_LAYOUT.md",
+              "scripts/file_layout.py",
+              "tests/meta/test_layout.py"
+            ],
+            "dec": []
+          },
+          "METHOD.GOV.ASSETS.05": {
+            "l": 3,
+            "c": 0.6,
+            "t": "verified",
+            "e": [
+              "scripts/method_assets.py",
+              "tests/meta/test_platform_contract.py"
+            ],
+            "d": [
+              "scripts/method_assets.py",
+              "tests/meta/test_platform_contract.py"
+            ],
+            "dec": []
+          },
+          "METHOD.GOV.TESTMAP.06": {
+            "l": 3,
+            "c": 0.6,
+            "t": "verified",
+            "e": [
+              "scripts/test_modules.py",
+              "tests/views/test_test_modules.py"
+            ],
+            "d": [
+              "scripts/test_modules.py",
+              "tests/views/test_test_modules.py"
+            ],
+            "dec": []
+          },
+          "METHOD.GOV.BINDING.07": {
+            "l": 3,
+            "c": 0.6,
+            "t": "declared",
+            "e": [
+              "templates/binding_advisory.py",
+              "tests/core/test_binding_advisory.py"
+            ],
+            "d": [
+              "templates/binding_advisory.py",
+              "tests/core/test_binding_advisory.py"
+            ],
+            "dec": []
+          },
+          "METHOD.GOV.RESTATE.08": {
+            "l": 3,
+            "c": 0.6,
+            "t": "verified",
+            "e": [
+              "scripts/intent_restate.py",
+              "tests/routing/test_intent_restate.py"
+            ],
+            "d": [
+              "scripts/intent_restate.py",
+              "tests/routing/test_intent_restate.py"
+            ],
+            "dec": [
+              "D-002"
+            ]
+          },
+          "METHOD.GOV.ORCH.09": {
+            "l": 3,
+            "c": 0.6,
+            "t": "verified",
+            "e": [
+              "scripts/expert_run.py",
+              "tests/routing/test_expert_run.py"
+            ],
+            "d": [
+              "scripts/expert_run.py",
+              "tests/routing/test_expert_run.py"
+            ],
+            "dec": []
+          },
+          "METHOD.GOV.ANNOT.10": {
+            "l": 3,
+            "c": 0.6,
+            "t": "verified",
+            "e": [
+              "scripts/provenance_view.py",
+              "tests/routing/test_provenance_view.py"
+            ],
+            "d": [
+              "scripts/provenance_view.py",
+              "tests/routing/test_provenance_view.py"
+            ],
+            "dec": []
+          }
+        },
+        "trigger": "derive",
+        "note": "证据 / 等级 / 文档索引变化，由生成器自动侦测。"
       }
     ]
   },
@@ -413,9 +633,9 @@
         "kind": "stagnation",
         "reason": "能力 METHOD.GOV.FEEDBACK.01 连续 3 个事件停在 60%（L3），未补齐下一级证据；宜判断是优先级问题还是阻塞。",
         "source_events": [
-          1,
           2,
-          3
+          3,
+          4
         ],
         "suggested_scope": {
           "capabilities": [
@@ -430,9 +650,9 @@
         "kind": "stagnation",
         "reason": "能力 METHOD.GOV.UPGRADE.02 连续 3 个事件停在 60%（L3），未补齐下一级证据；宜判断是优先级问题还是阻塞。",
         "source_events": [
-          1,
           2,
-          3
+          3,
+          4
         ],
         "suggested_scope": {
           "capabilities": [
@@ -447,9 +667,9 @@
         "kind": "stagnation",
         "reason": "能力 METHOD.GOV.PANEL.03 连续 3 个事件停在 60%（L3），未补齐下一级证据；宜判断是优先级问题还是阻塞。",
         "source_events": [
-          1,
           2,
-          3
+          3,
+          4
         ],
         "suggested_scope": {
           "capabilities": [
@@ -464,9 +684,9 @@
         "kind": "stagnation",
         "reason": "能力 METHOD.GOV.LAYOUT.04 连续 3 个事件停在 60%（L3），未补齐下一级证据；宜判断是优先级问题还是阻塞。",
         "source_events": [
-          1,
           2,
-          3
+          3,
+          4
         ],
         "suggested_scope": {
           "capabilities": [
@@ -481,9 +701,9 @@
         "kind": "stagnation",
         "reason": "能力 METHOD.GOV.ASSETS.05 连续 3 个事件停在 60%（L3），未补齐下一级证据；宜判断是优先级问题还是阻塞。",
         "source_events": [
-          1,
           2,
-          3
+          3,
+          4
         ],
         "suggested_scope": {
           "capabilities": [
@@ -498,9 +718,9 @@
         "kind": "stagnation",
         "reason": "能力 METHOD.GOV.TESTMAP.06 连续 3 个事件停在 60%（L3），未补齐下一级证据；宜判断是优先级问题还是阻塞。",
         "source_events": [
-          1,
           2,
-          3
+          3,
+          4
         ],
         "suggested_scope": {
           "capabilities": [
@@ -530,7 +750,7 @@
   },
   "capability_model": {
     "version": "1.0",
-    "generated_at": "2026-11-20 01:20 HKT",
+    "generated_at": "2026-11-20 14:38 HKT",
     "generator": "templates/build_capability_model.py",
     "purpose": "统一能力编码 + 可复算完成度 + 嵌套组件树 + 文档索引，供规划与编码代理消费。",
     "coding_spec": {
@@ -651,8 +871,8 @@
                   "matched_tests": [
                     "test_feedback.py"
                   ],
-                  "report_at": "2026-11-20 01:20 HKT",
-                  "report_label": "方法仓自举 v2.3.0-final"
+                  "report_at": "2026-11-20 14:38 HKT",
+                  "report_label": "方法仓自举 v2.7.0-final"
                 },
                 "binding_status": "bound",
                 "next_level": 4,
@@ -678,7 +898,23 @@
                     }
                   ],
                   "test_records": [],
-                  "decisions": [],
+                  "decisions": [
+                    {
+                      "id": "D-002",
+                      "title": "发版 v2.4.0：复述门（结构化意图声明 + 机器锚定）",
+                      "status": "done"
+                    },
+                    {
+                      "id": "D-003",
+                      "title": "发版 v2.5.0：expert-run 专家团自动编排",
+                      "status": "done"
+                    },
+                    {
+                      "id": "D-004",
+                      "title": "发版 v2.6.0：来源投影与完成定义",
+                      "status": "done"
+                    }
+                  ],
                   "control_center": {
                     "page": "",
                     "sections": []
@@ -710,8 +946,8 @@
                   "matched_tests": [
                     "test_upgrade.py"
                   ],
-                  "report_at": "2026-11-20 01:20 HKT",
-                  "report_label": "方法仓自举 v2.3.0-final"
+                  "report_at": "2026-11-20 14:38 HKT",
+                  "report_label": "方法仓自举 v2.7.0-final"
                 },
                 "binding_status": "bound",
                 "next_level": 4,
@@ -769,8 +1005,8 @@
                   "matched_tests": [
                     "test_work_panel.py"
                   ],
-                  "report_at": "2026-11-20 01:20 HKT",
-                  "report_label": "方法仓自举 v2.3.0-final"
+                  "report_at": "2026-11-20 14:38 HKT",
+                  "report_label": "方法仓自举 v2.7.0-final"
                 },
                 "binding_status": "bound",
                 "next_level": 4,
@@ -828,8 +1064,8 @@
                   "matched_tests": [
                     "test_layout.py"
                   ],
-                  "report_at": "2026-11-20 01:20 HKT",
-                  "report_label": "方法仓自举 v2.3.0-final"
+                  "report_at": "2026-11-20 14:38 HKT",
+                  "report_label": "方法仓自举 v2.7.0-final"
                 },
                 "binding_status": "bound",
                 "next_level": 4,
@@ -893,8 +1129,8 @@
                   "matched_tests": [
                     "test_platform_contract.py"
                   ],
-                  "report_at": "2026-11-20 01:20 HKT",
-                  "report_label": "方法仓自举 v2.3.0-final"
+                  "report_at": "2026-11-20 14:38 HKT",
+                  "report_label": "方法仓自举 v2.7.0-final"
                 },
                 "binding_status": "bound",
                 "next_level": 4,
@@ -952,8 +1188,8 @@
                   "matched_tests": [
                     "test_test_modules.py"
                   ],
-                  "report_at": "2026-11-20 01:20 HKT",
-                  "report_label": "方法仓自举 v2.3.0-final"
+                  "report_at": "2026-11-20 14:38 HKT",
+                  "report_label": "方法仓自举 v2.7.0-final"
                 },
                 "binding_status": "bound",
                 "next_level": 4,
@@ -1011,8 +1247,8 @@
                   "matched_tests": [
                     "test_binding_advisory.py"
                   ],
-                  "report_at": "2026-11-20 01:20 HKT",
-                  "report_label": "方法仓自举 v2.3.0-final"
+                  "report_at": "2026-11-20 14:38 HKT",
+                  "report_label": "方法仓自举 v2.7.0-final"
                 },
                 "binding_status": "unbound",
                 "next_level": 4,
@@ -1034,6 +1270,189 @@
                     {
                       "path": "tests/core/test_binding_advisory.py",
                       "title": "test_binding_advisory.py",
+                      "kind": "unit_test"
+                    }
+                  ],
+                  "test_records": [],
+                  "decisions": [],
+                  "control_center": {
+                    "page": "",
+                    "sections": []
+                  }
+                }
+              },
+              {
+                "code": "METHOD.GOV.RESTATE.08",
+                "name": "复述门（v2.4.0 补录）：结构化意图声明 + 机器锚定，路由前置",
+                "domain": "RESTATE",
+                "level": 3,
+                "level_code": "L3",
+                "completion": 0.6,
+                "evidence": {
+                  "impl": [
+                    "scripts/intent_restate.py"
+                  ],
+                  "contract": [],
+                  "unit_test": [
+                    "tests/routing/test_intent_restate.py"
+                  ],
+                  "test_record": [],
+                  "governance": []
+                },
+                "evidence_tier": "verified",
+                "tier_detail": {
+                  "basis": "test_report_pass",
+                  "binding_status": "bound",
+                  "matched_tests": [
+                    "test_intent_restate.py"
+                  ],
+                  "report_at": "2026-11-20 14:38 HKT",
+                  "report_label": "方法仓自举 v2.7.0-final"
+                },
+                "binding_status": "bound",
+                "next_level": 4,
+                "next_action": "docs/test_records/ 有测试记录",
+                "status": "active",
+                "doc_index": {
+                  "plans": [],
+                  "related_docs": [],
+                  "module_docs": [],
+                  "contracts": [],
+                  "impl": [
+                    {
+                      "path": "scripts/intent_restate.py",
+                      "title": "intent_restate.py",
+                      "kind": "impl"
+                    }
+                  ],
+                  "unit_tests": [
+                    {
+                      "path": "tests/routing/test_intent_restate.py",
+                      "title": "test_intent_restate.py",
+                      "kind": "unit_test"
+                    }
+                  ],
+                  "test_records": [],
+                  "decisions": [
+                    {
+                      "id": "D-002",
+                      "title": "发版 v2.4.0：复述门（结构化意图声明 + 机器锚定）",
+                      "status": "done"
+                    }
+                  ],
+                  "control_center": {
+                    "page": "",
+                    "sections": []
+                  }
+                }
+              },
+              {
+                "code": "METHOD.GOV.ORCH.09",
+                "name": "专家团编排（v2.5.0 补录）：交接链展开 + 命令分类 + 人工批准包",
+                "domain": "ORCH",
+                "level": 3,
+                "level_code": "L3",
+                "completion": 0.6,
+                "evidence": {
+                  "impl": [
+                    "scripts/expert_run.py"
+                  ],
+                  "contract": [],
+                  "unit_test": [
+                    "tests/routing/test_expert_run.py"
+                  ],
+                  "test_record": [],
+                  "governance": []
+                },
+                "evidence_tier": "verified",
+                "tier_detail": {
+                  "basis": "test_report_pass",
+                  "binding_status": "bound",
+                  "matched_tests": [
+                    "test_expert_run.py"
+                  ],
+                  "report_at": "2026-11-20 14:38 HKT",
+                  "report_label": "方法仓自举 v2.7.0-final"
+                },
+                "binding_status": "bound",
+                "next_level": 4,
+                "next_action": "docs/test_records/ 有测试记录",
+                "status": "active",
+                "doc_index": {
+                  "plans": [],
+                  "related_docs": [],
+                  "module_docs": [],
+                  "contracts": [],
+                  "impl": [
+                    {
+                      "path": "scripts/expert_run.py",
+                      "title": "expert_run.py",
+                      "kind": "impl"
+                    }
+                  ],
+                  "unit_tests": [
+                    {
+                      "path": "tests/routing/test_expert_run.py",
+                      "title": "test_expert_run.py",
+                      "kind": "unit_test"
+                    }
+                  ],
+                  "test_records": [],
+                  "decisions": [],
+                  "control_center": {
+                    "page": "",
+                    "sections": []
+                  }
+                }
+              },
+              {
+                "code": "METHOD.GOV.ANNOT.10",
+                "name": "来源投影（v2.6.0 补录）：AI推断/人确认分组 + 完成定义派生",
+                "domain": "ANNOT",
+                "level": 3,
+                "level_code": "L3",
+                "completion": 0.6,
+                "evidence": {
+                  "impl": [
+                    "scripts/provenance_view.py"
+                  ],
+                  "contract": [],
+                  "unit_test": [
+                    "tests/routing/test_provenance_view.py"
+                  ],
+                  "test_record": [],
+                  "governance": []
+                },
+                "evidence_tier": "verified",
+                "tier_detail": {
+                  "basis": "test_report_pass",
+                  "binding_status": "bound",
+                  "matched_tests": [
+                    "test_provenance_view.py"
+                  ],
+                  "report_at": "2026-11-20 14:38 HKT",
+                  "report_label": "方法仓自举 v2.7.0-final"
+                },
+                "binding_status": "bound",
+                "next_level": 4,
+                "next_action": "docs/test_records/ 有测试记录",
+                "status": "active",
+                "doc_index": {
+                  "plans": [],
+                  "related_docs": [],
+                  "module_docs": [],
+                  "contracts": [],
+                  "impl": [
+                    {
+                      "path": "scripts/provenance_view.py",
+                      "title": "provenance_view.py",
+                      "kind": "impl"
+                    }
+                  ],
+                  "unit_tests": [
+                    {
+                      "path": "tests/routing/test_provenance_view.py",
+                      "title": "test_provenance_view.py",
                       "kind": "unit_test"
                     }
                   ],
@@ -1094,6 +1513,11 @@
                     "type": "file"
                   },
                   {
+                    "name": "expert_run.py",
+                    "path": "scripts/expert_run.py",
+                    "type": "file"
+                  },
+                  {
                     "name": "file_layout.py",
                     "path": "scripts/file_layout.py",
                     "type": "file"
@@ -1104,13 +1528,8 @@
                     "type": "file"
                   },
                   {
-                    "name": "ledger_decide.py",
-                    "path": "scripts/ledger_decide.py",
-                    "type": "file"
-                  },
-                  {
-                    "name": "ledger_feedback.py",
-                    "path": "scripts/ledger_feedback.py",
+                    "name": "intent_restate.py",
+                    "path": "scripts/intent_restate.py",
                     "type": "file"
                   }
                 ]
@@ -1209,20 +1628,52 @@
     "summary": {
       "projects": 1,
       "modules": 1,
-      "capabilities": 7,
+      "capabilities": 10,
       "level_distribution": {
-        "L3": 7
+        "L3": 10
       },
       "overall_completion": 0.6,
       "evidence_tier_distribution": {
-        "verified": 6,
+        "verified": 9,
         "declared": 1
       },
-      "verified_coverage": 0.86,
+      "verified_coverage": 0.9,
       "evidence_bound": true,
       "evidence_freshness": "fresh"
     },
     "next_queue": [
+      {
+        "code": "METHOD.GOV.ANNOT.10",
+        "name": "来源投影（v2.6.0 补录）：AI推断/人确认分组 + 完成定义派生",
+        "project": "METHOD",
+        "module": "METHOD.GOV",
+        "domain": "ANNOT",
+        "level": "L3",
+        "completion": 0.6,
+        "target_level": "L4",
+        "action": "docs/test_records/ 有测试记录",
+        "evidence_tier": "verified",
+        "needs_runtime_verification": false,
+        "missing_evidence": [
+          "契约(L1)",
+          "测试记录(L4)"
+        ],
+        "docs": {
+          "plans": [],
+          "module_docs": [],
+          "contracts": [],
+          "impl": [
+            "scripts/provenance_view.py"
+          ],
+          "unit_tests": [
+            "tests/routing/test_provenance_view.py"
+          ],
+          "test_records": []
+        },
+        "decisions": [],
+        "lessons": [],
+        "rank": 1
+      },
       {
         "code": "METHOD.GOV.ASSETS.05",
         "name": "方法资产清单",
@@ -1253,7 +1704,7 @@
         },
         "decisions": [],
         "lessons": [],
-        "rank": 1
+        "rank": 2
       },
       {
         "code": "METHOD.GOV.BINDING.07",
@@ -1285,7 +1736,7 @@
         },
         "decisions": [],
         "lessons": [],
-        "rank": 2
+        "rank": 3
       },
       {
         "code": "METHOD.GOV.FEEDBACK.01",
@@ -1315,9 +1766,13 @@
           ],
           "test_records": []
         },
-        "decisions": [],
+        "decisions": [
+          "D-002",
+          "D-003",
+          "D-004"
+        ],
         "lessons": [],
-        "rank": 3
+        "rank": 4
       },
       {
         "code": "METHOD.GOV.LAYOUT.04",
@@ -1349,7 +1804,39 @@
         },
         "decisions": [],
         "lessons": [],
-        "rank": 4
+        "rank": 5
+      },
+      {
+        "code": "METHOD.GOV.ORCH.09",
+        "name": "专家团编排（v2.5.0 补录）：交接链展开 + 命令分类 + 人工批准包",
+        "project": "METHOD",
+        "module": "METHOD.GOV",
+        "domain": "ORCH",
+        "level": "L3",
+        "completion": 0.6,
+        "target_level": "L4",
+        "action": "docs/test_records/ 有测试记录",
+        "evidence_tier": "verified",
+        "needs_runtime_verification": false,
+        "missing_evidence": [
+          "契约(L1)",
+          "测试记录(L4)"
+        ],
+        "docs": {
+          "plans": [],
+          "module_docs": [],
+          "contracts": [],
+          "impl": [
+            "scripts/expert_run.py"
+          ],
+          "unit_tests": [
+            "tests/routing/test_expert_run.py"
+          ],
+          "test_records": []
+        },
+        "decisions": [],
+        "lessons": [],
+        "rank": 6
       },
       {
         "code": "METHOD.GOV.PANEL.03",
@@ -1381,7 +1868,41 @@
         },
         "decisions": [],
         "lessons": [],
-        "rank": 5
+        "rank": 7
+      },
+      {
+        "code": "METHOD.GOV.RESTATE.08",
+        "name": "复述门（v2.4.0 补录）：结构化意图声明 + 机器锚定，路由前置",
+        "project": "METHOD",
+        "module": "METHOD.GOV",
+        "domain": "RESTATE",
+        "level": "L3",
+        "completion": 0.6,
+        "target_level": "L4",
+        "action": "docs/test_records/ 有测试记录",
+        "evidence_tier": "verified",
+        "needs_runtime_verification": false,
+        "missing_evidence": [
+          "契约(L1)",
+          "测试记录(L4)"
+        ],
+        "docs": {
+          "plans": [],
+          "module_docs": [],
+          "contracts": [],
+          "impl": [
+            "scripts/intent_restate.py"
+          ],
+          "unit_tests": [
+            "tests/routing/test_intent_restate.py"
+          ],
+          "test_records": []
+        },
+        "decisions": [
+          "D-002"
+        ],
+        "lessons": [],
+        "rank": 8
       },
       {
         "code": "METHOD.GOV.TESTMAP.06",
@@ -1413,7 +1934,7 @@
         },
         "decisions": [],
         "lessons": [],
-        "rank": 6
+        "rank": 9
       },
       {
         "code": "METHOD.GOV.UPGRADE.02",
@@ -1445,7 +1966,7 @@
         },
         "decisions": [],
         "lessons": [],
-        "rank": 7
+        "rank": 10
       }
     ],
     "history": {
@@ -1461,17 +1982,19 @@
         ],
         "invariant": "events[i].fingerprint_before == events[i-1].fingerprint_after；seq 从 1 连续递增。"
       },
-      "event_count": 3,
+      "event_count": 4,
       "latest": {
-        "seq": 3,
-        "ts": "2026-11-20 00:59 HKT",
+        "seq": 4,
+        "ts": "2026-11-20 14:38 HKT",
         "type": "change",
-        "fingerprint_before": "59822eeea23d7ba6",
-        "fingerprint_after": "810d5e0de6b6245e",
+        "fingerprint_before": "810d5e0de6b6245e",
+        "fingerprint_after": "d74c2c5e8e021873",
         "changes": {
           "level_transitions": [],
           "added": [
-            "METHOD.GOV.BINDING.07"
+            "METHOD.GOV.ANNOT.10",
+            "METHOD.GOV.ORCH.09",
+            "METHOD.GOV.RESTATE.08"
           ],
           "removed": [],
           "completion_delta": [],
@@ -1490,7 +2013,11 @@
               "scripts/ledger_feedback.py",
               "tests/meta/test_feedback.py"
             ],
-            "dec": []
+            "dec": [
+              "D-002",
+              "D-003",
+              "D-004"
+            ]
           },
           "METHOD.GOV.UPGRADE.02": {
             "l": 3,
@@ -1576,12 +2103,56 @@
               "tests/core/test_binding_advisory.py"
             ],
             "dec": []
+          },
+          "METHOD.GOV.RESTATE.08": {
+            "l": 3,
+            "c": 0.6,
+            "t": "verified",
+            "e": [
+              "scripts/intent_restate.py",
+              "tests/routing/test_intent_restate.py"
+            ],
+            "d": [
+              "scripts/intent_restate.py",
+              "tests/routing/test_intent_restate.py"
+            ],
+            "dec": [
+              "D-002"
+            ]
+          },
+          "METHOD.GOV.ORCH.09": {
+            "l": 3,
+            "c": 0.6,
+            "t": "verified",
+            "e": [
+              "scripts/expert_run.py",
+              "tests/routing/test_expert_run.py"
+            ],
+            "d": [
+              "scripts/expert_run.py",
+              "tests/routing/test_expert_run.py"
+            ],
+            "dec": []
+          },
+          "METHOD.GOV.ANNOT.10": {
+            "l": 3,
+            "c": 0.6,
+            "t": "verified",
+            "e": [
+              "scripts/provenance_view.py",
+              "tests/routing/test_provenance_view.py"
+            ],
+            "d": [
+              "scripts/provenance_view.py",
+              "tests/routing/test_provenance_view.py"
+            ],
+            "dec": []
           }
         },
         "trigger": "derive",
         "note": "证据 / 等级 / 文档索引变化，由生成器自动侦测。"
       },
-      "current_fingerprint": "810d5e0de6b6245e"
+      "current_fingerprint": "d74c2c5e8e021873"
     },
     "lessons": {
       "spec": {
@@ -1609,9 +2180,9 @@
           "kind": "stagnation",
           "reason": "能力 METHOD.GOV.FEEDBACK.01 连续 3 个事件停在 60%（L3），未补齐下一级证据；宜判断是优先级问题还是阻塞。",
           "source_events": [
-            1,
             2,
-            3
+            3,
+            4
           ],
           "suggested_scope": {
             "capabilities": [
@@ -1626,9 +2197,9 @@
           "kind": "stagnation",
           "reason": "能力 METHOD.GOV.UPGRADE.02 连续 3 个事件停在 60%（L3），未补齐下一级证据；宜判断是优先级问题还是阻塞。",
           "source_events": [
-            1,
             2,
-            3
+            3,
+            4
           ],
           "suggested_scope": {
             "capabilities": [
@@ -1643,9 +2214,9 @@
           "kind": "stagnation",
           "reason": "能力 METHOD.GOV.PANEL.03 连续 3 个事件停在 60%（L3），未补齐下一级证据；宜判断是优先级问题还是阻塞。",
           "source_events": [
-            1,
             2,
-            3
+            3,
+            4
           ],
           "suggested_scope": {
             "capabilities": [
@@ -1660,9 +2231,9 @@
           "kind": "stagnation",
           "reason": "能力 METHOD.GOV.LAYOUT.04 连续 3 个事件停在 60%（L3），未补齐下一级证据；宜判断是优先级问题还是阻塞。",
           "source_events": [
-            1,
             2,
-            3
+            3,
+            4
           ],
           "suggested_scope": {
             "capabilities": [
@@ -1677,9 +2248,9 @@
           "kind": "stagnation",
           "reason": "能力 METHOD.GOV.ASSETS.05 连续 3 个事件停在 60%（L3），未补齐下一级证据；宜判断是优先级问题还是阻塞。",
           "source_events": [
-            1,
             2,
-            3
+            3,
+            4
           ],
           "suggested_scope": {
             "capabilities": [
@@ -1694,9 +2265,9 @@
           "kind": "stagnation",
           "reason": "能力 METHOD.GOV.TESTMAP.06 连续 3 个事件停在 60%（L3），未补齐下一级证据；宜判断是优先级问题还是阻塞。",
           "source_events": [
-            1,
             2,
-            3
+            3,
+            4
           ],
           "suggested_scope": {
             "capabilities": [
@@ -1737,5 +2308,2404 @@
         "capability": "METHOD.GOV.BINDING.07"
       }
     }
-  ]
+  ],
+  "governance_meta": {
+    "schema_version": "1.0",
+    "method_version": "2.7.0",
+    "upgraded_from": "pre-1.0.0",
+    "ledger_version": "1.0",
+    "migrations_applied": [
+      "M1-governance-meta",
+      "M2-access-registry",
+      "M4-method-version",
+      "M5-method-assets",
+      "M6-board-skeleton",
+      "M7-asset-install",
+      "M8-work-panel"
+    ],
+    "upgrade_log": [
+      {
+        "seq": 1,
+        "at": "2026-11-20T06:20:39Z",
+        "action": "apply",
+        "from": "pre-1.0.0",
+        "to": "2.7.0",
+        "approved_by": "user-approved-A2B",
+        "migrations": [
+          "M1-governance-meta",
+          "M2-access-registry",
+          "M4-method-version",
+          "M5-method-assets",
+          "M6-board-skeleton",
+          "M7-asset-install",
+          "M8-work-panel"
+        ],
+        "backup": "20261120T062039Z-ae797813",
+        "risk": "medium",
+        "assets_digest": "c1103f18fbbabe2c",
+        "board_skeleton": "ba37cd4027cab653"
+      },
+      {
+        "seq": 2,
+        "at": "2026-11-20T06:40:05Z",
+        "action": "apply",
+        "from": "2.7.0",
+        "to": "2.7.0",
+        "approved_by": "user-approved-A2B",
+        "migrations": [
+          "M5-method-assets"
+        ],
+        "backup": "20261120T064002Z-b0d524e4",
+        "risk": "low",
+        "assets_digest": "f86766bb6c8f07d0",
+        "board_skeleton": "ba37cd4027cab653"
+      },
+      {
+        "seq": 3,
+        "at": "2026-11-20T06:52:21Z",
+        "action": "apply",
+        "from": "2.7.0",
+        "to": "2.7.0",
+        "approved_by": "user-approved-A2B",
+        "migrations": [
+          "M5-method-assets"
+        ],
+        "backup": "20261120T065218Z-7ecb3a4e",
+        "risk": "low",
+        "assets_digest": "9b3ebdc90c4c25ed",
+        "board_skeleton": "ba37cd4027cab653"
+      }
+    ],
+    "tools": {
+      "governance/build_capability_model.py": "617011f395c0f2c1bc4ae3ec480bdfe563193109757abbee828a2977f073381a",
+      "governance/binding_advisory.py": "e5368433f594854857fff87002430ee692401ec4b7125168b7699cb00f1dde0b",
+      "governance/derived_issues.py": "4ff4097765996071e256302f91439a9464a5203840d2df64fb5d93df6ea13a21",
+      "governance/verify_ledger.py": "9d9800447ca2876f007ded47bf3e1aa291c36338b1e2e1c991e6b71a9c3a8e53",
+      "governance/registry_codec.py": "f0d1edafc0c4a54294a49337bbd9995c45555e093878ce8c06174a2e6ab4ae3b",
+      "governance/run_tests.py": "fcc4097788cd5e87ab7b747cfdcde32da8dc36a7f94c9ee507ba86937533fc3c"
+    },
+    "activation": {
+      "schema": "evidence-activation/1",
+      "state": "active",
+      "reason": "已绑定 governance/test_report.json（377 用例，overall=pass），证据能力激活",
+      "all_active": true
+    },
+    "method_assets": {
+      "algorithm": "sha256-files-v1",
+      "digest": "9b3ebdc90c4c25ed8847bc00e8b956ded25e1d1fc5949a6b51107c9c7cc44cfa",
+      "file_count": 97,
+      "counts": {
+        "experts": 8,
+        "skills": 22,
+        "scripts": 32,
+        "templates": 7,
+        "method_docs": 27,
+        "standard": 1
+      },
+      "source": "方法论仓库 tag（权威源，不复制；只读副本由 M7 安装）"
+    },
+    "ontology_digest": "fb48a6a67dd9d10256e273b69190474db9363c5ea6fcc617f2b8dc79f0410926",
+    "board_skeleton": {
+      "digest": "ba37cd4027cab653df3406eef46ab434f2a72c80d057ed332ccac280f6fc9f80",
+      "source": "templates/index.html.template",
+      "note": "去 EMBED 后的骨架 sha256；禁止在项目内自定义版面"
+    },
+    "installed_assets": {
+      "schema": "installed-assets-binding/1",
+      "digest": "fa32c956ae76203fe48e6e20a3c21cd9897611c357160aafecd0d9ffcb850708",
+      "file_count": 30,
+      "counts": {
+        "experts": 8,
+        "skills": 22
+      },
+      "install_root": ".workbuddy",
+      "manifest": "governance/ASSET_MANIFEST.json",
+      "source": "方法论仓库 tag（只读副本，禁止在目标项目内编辑）"
+    }
+  },
+  "access": {
+    "schema": "access/1",
+    "revision": 0,
+    "agents": [],
+    "leases": [],
+    "audit": []
+  },
+  "test_results": {
+    "schema": "node-test-results/1",
+    "source": "governance/test_report.json",
+    "source_sha256": "5226d02d8a66decd0a8963675339c310cd542f83146b67bca03a63d02342c56d",
+    "overall": "pass",
+    "summary": {
+      "total": 377,
+      "passed": 377,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "cases": [
+      {
+        "id": "_lld_test_bootstrap_53788.BootstrapTest.test_adopt_consumes_draft_without_touching_it",
+        "file": "tests/adoption/test_bootstrap.py",
+        "status": "pass",
+        "seconds": 1.274301
+      },
+      {
+        "id": "_lld_test_bootstrap_53788.BootstrapTest.test_adopt_without_draft_fails_closed",
+        "file": "tests/adoption/test_bootstrap.py",
+        "status": "pass",
+        "seconds": 0.295742
+      },
+      {
+        "id": "_lld_test_bootstrap_53788.BootstrapTest.test_adopted_project_generates_and_verifies",
+        "file": "tests/adoption/test_bootstrap.py",
+        "status": "pass",
+        "seconds": 1.547363
+      },
+      {
+        "id": "_lld_test_bootstrap_53788.BootstrapTest.test_existing_files_are_not_overwritten",
+        "file": "tests/adoption/test_bootstrap.py",
+        "status": "pass",
+        "seconds": 0.983039
+      },
+      {
+        "id": "_lld_test_bootstrap_53788.BootstrapTest.test_greenfield_creates_skeleton_with_provenance",
+        "file": "tests/adoption/test_bootstrap.py",
+        "status": "pass",
+        "seconds": 0.805995
+      },
+      {
+        "id": "_lld_test_bootstrap_53788.BootstrapTest.test_greenfield_drops_example_declarations",
+        "file": "tests/adoption/test_bootstrap.py",
+        "status": "pass",
+        "seconds": 0.890847
+      },
+      {
+        "id": "_lld_test_discovery_17914.DiscoveryTest.test_cli_writes_then_respects_existing_then_force",
+        "file": "tests/adoption/test_discovery.py",
+        "status": "pass",
+        "seconds": 0.6243
+      },
+      {
+        "id": "_lld_test_discovery_17914.DiscoveryTest.test_discover_empty_project_warns_and_is_deterministic",
+        "file": "tests/adoption/test_discovery.py",
+        "status": "pass",
+        "seconds": 0.048434
+      },
+      {
+        "id": "_lld_test_discovery_17914.DiscoveryTest.test_discover_groups_by_source_root",
+        "file": "tests/adoption/test_discovery.py",
+        "status": "pass",
+        "seconds": 0.596855
+      },
+      {
+        "id": "_lld_test_discovery_17914.DiscoveryTest.test_dry_run_does_not_write",
+        "file": "tests/adoption/test_discovery.py",
+        "status": "pass",
+        "seconds": 0.221439
+      },
+      {
+        "id": "_lld_test_discovery_17914.DiscoveryTest.test_json_cli_is_valid",
+        "file": "tests/adoption/test_discovery.py",
+        "status": "pass",
+        "seconds": 0.178763
+      },
+      {
+        "id": "_lld_test_discovery_17914.DiscoveryTest.test_max_caps_is_bounded",
+        "file": "tests/adoption/test_discovery.py",
+        "status": "pass",
+        "seconds": 0.898642
+      },
+      {
+        "id": "_lld_test_discovery_17914.DiscoveryTest.test_report_has_no_absolute_paths",
+        "file": "tests/adoption/test_discovery.py",
+        "status": "pass",
+        "seconds": 0.136903
+      },
+      {
+        "id": "_lld_test_discovery_17914.DiscoveryTest.test_sanitize_code",
+        "file": "tests/adoption/test_discovery.py",
+        "status": "pass",
+        "seconds": 2e-05
+      },
+      {
+        "id": "_lld_test_binding_advisory_42075.BindingAdvisoryTest.test_direct_import_is_bound",
+        "file": "tests/core/test_binding_advisory.py",
+        "status": "pass",
+        "seconds": 0.333094
+      },
+      {
+        "id": "_lld_test_binding_advisory_42075.BindingAdvisoryTest.test_missing_impl_and_missing_tests_are_classified",
+        "file": "tests/core/test_binding_advisory.py",
+        "status": "pass",
+        "seconds": 0.235806
+      },
+      {
+        "id": "_lld_test_binding_advisory_42075.BindingAdvisoryTest.test_reexport_chain_is_bound",
+        "file": "tests/core/test_binding_advisory.py",
+        "status": "pass",
+        "seconds": 0.32917
+      },
+      {
+        "id": "_lld_test_binding_advisory_42075.BindingAdvisoryTest.test_unrelated_test_is_unbound_and_tier_untouched",
+        "file": "tests/core/test_binding_advisory.py",
+        "status": "pass",
+        "seconds": 0.415835
+      },
+      {
+        "id": "_lld_test_binding_advisory_42075.BindingAdvisoryTest.test_via_one_hop_is_reported_with_bridge",
+        "file": "tests/core/test_binding_advisory.py",
+        "status": "pass",
+        "seconds": 0.379238
+      },
+      {
+        "id": "_lld_test_declared_evidence_52829.DeclaredEvidenceTest.test_declared_test_drives_level_three",
+        "file": "tests/core/test_declared_evidence.py",
+        "status": "pass",
+        "seconds": 0.234345
+      },
+      {
+        "id": "_lld_test_declared_evidence_52829.DeclaredEvidenceTest.test_diff_projects_flags_drift",
+        "file": "tests/core/test_declared_evidence.py",
+        "status": "pass",
+        "seconds": 0.279787
+      },
+      {
+        "id": "_lld_test_declared_evidence_52829.DeclaredEvidenceTest.test_hint_scan_is_scoped_to_own_project",
+        "file": "tests/core/test_declared_evidence.py",
+        "status": "pass",
+        "seconds": 0.649127
+      },
+      {
+        "id": "_lld_test_declared_evidence_52829.DeclaredEvidenceTest.test_ledger_evidence_no_longer_influences_result",
+        "file": "tests/core/test_declared_evidence.py",
+        "status": "pass",
+        "seconds": 0.280483
+      },
+      {
+        "id": "_lld_test_declared_evidence_52829.DeclaredEvidenceTest.test_missing_declared_test_is_reported_and_downgrades",
+        "file": "tests/core/test_declared_evidence.py",
+        "status": "pass",
+        "seconds": 0.229887
+      },
+      {
+        "id": "_lld_test_derived_issues_2390.DerivedIssuesTest.test_bound_cap_auto_closes_its_derived_issue",
+        "file": "tests/core/test_derived_issues.py",
+        "status": "pass",
+        "seconds": 6.9e-05
+      },
+      {
+        "id": "_lld_test_derived_issues_2390.DerivedIssuesTest.test_check_detects_deleted_derived_issue",
+        "file": "tests/core/test_derived_issues.py",
+        "status": "pass",
+        "seconds": 3.6e-05
+      },
+      {
+        "id": "_lld_test_derived_issues_2390.DerivedIssuesTest.test_check_detects_stale_binding_status",
+        "file": "tests/core/test_derived_issues.py",
+        "status": "pass",
+        "seconds": 1.7e-05
+      },
+      {
+        "id": "_lld_test_derived_issues_2390.DerivedIssuesTest.test_idempotent_and_preserves_human_fields",
+        "file": "tests/core/test_derived_issues.py",
+        "status": "pass",
+        "seconds": 1.7e-05
+      },
+      {
+        "id": "_lld_test_derived_issues_2390.DerivedIssuesTest.test_manual_items_untouched",
+        "file": "tests/core/test_derived_issues.py",
+        "status": "pass",
+        "seconds": 1.1e-05
+      },
+      {
+        "id": "_lld_test_derived_issues_2390.DerivedIssuesTest.test_non_bound_caps_get_one_derived_issue_each",
+        "file": "tests/core/test_derived_issues.py",
+        "status": "pass",
+        "seconds": 1.5e-05
+      },
+      {
+        "id": "_lld_test_derived_issues_2390.DerivedIssuesTest.test_severity_reflects_binding_status",
+        "file": "tests/core/test_derived_issues.py",
+        "status": "pass",
+        "seconds": 1.3e-05
+      },
+      {
+        "id": "_lld_test_evidence_adapter_12286.ClassnameToFileTest.test_empty_input_safe",
+        "file": "tests/core/test_evidence_adapter.py",
+        "status": "pass",
+        "seconds": 1.3e-05
+      },
+      {
+        "id": "_lld_test_evidence_adapter_12286.ClassnameToFileTest.test_exact_basename_hit",
+        "file": "tests/core/test_evidence_adapter.py",
+        "status": "pass",
+        "seconds": 9e-06
+      },
+      {
+        "id": "_lld_test_evidence_adapter_12286.ClassnameToFileTest.test_miss_returns_empty_not_guess",
+        "file": "tests/core/test_evidence_adapter.py",
+        "status": "pass",
+        "seconds": 7e-06
+      },
+      {
+        "id": "_lld_test_evidence_adapter_12286.DeclaredEvidenceTest.test_generator_no_longer_derives_hints_from_ledger",
+        "file": "tests/core/test_evidence_adapter.py",
+        "status": "pass",
+        "seconds": 0.359887
+      },
+      {
+        "id": "_lld_test_evidence_adapter_12286.DeclaredEvidenceTest.test_missing_declared_path_is_reported_not_dropped",
+        "file": "tests/core/test_evidence_adapter.py",
+        "status": "pass",
+        "seconds": 0.094132
+      },
+      {
+        "id": "_lld_test_evidence_adapter_12286.DeclaredEvidenceTest.test_resolves_existing_declared_path",
+        "file": "tests/core/test_evidence_adapter.py",
+        "status": "pass",
+        "seconds": 0.142208
+      },
+      {
+        "id": "_lld_test_evidence_adapter_12286.DefaultSourceDirsTest.test_empty_tree_returns_empty",
+        "file": "tests/core/test_evidence_adapter.py",
+        "status": "pass",
+        "seconds": 0.049562
+      },
+      {
+        "id": "_lld_test_evidence_adapter_12286.DefaultSourceDirsTest.test_monorepo_expands_projects",
+        "file": "tests/core/test_evidence_adapter.py",
+        "status": "pass",
+        "seconds": 0.137222
+      },
+      {
+        "id": "_lld_test_evidence_adapter_12286.DefaultSourceDirsTest.test_single_layout_prefers_root",
+        "file": "tests/core/test_evidence_adapter.py",
+        "status": "pass",
+        "seconds": 0.189086
+      },
+      {
+        "id": "_lld_test_evidence_adapter_12286.NoRegressTest.test_flags_downgrade",
+        "file": "tests/core/test_evidence_adapter.py",
+        "status": "pass",
+        "seconds": 9.4e-05
+      },
+      {
+        "id": "_lld_test_evidence_adapter_12286.NoRegressTest.test_levels_code_normalizes_string",
+        "file": "tests/core/test_evidence_adapter.py",
+        "status": "pass",
+        "seconds": 1e-05
+      },
+      {
+        "id": "_lld_test_evidence_adapter_12286.NoRegressTest.test_same_level_passes",
+        "file": "tests/core/test_evidence_adapter.py",
+        "status": "pass",
+        "seconds": 7e-06
+      },
+      {
+        "id": "_lld_test_evidence_tier_55343.EvidenceTierTest.test_binding_bound_allows_verified",
+        "file": "tests/core/test_evidence_tier.py",
+        "status": "pass",
+        "seconds": 0.04167
+      },
+      {
+        "id": "_lld_test_evidence_tier_55343.EvidenceTierTest.test_binding_no_impl_denies_verified",
+        "file": "tests/core/test_evidence_tier.py",
+        "status": "pass",
+        "seconds": 0.046229
+      },
+      {
+        "id": "_lld_test_evidence_tier_55343.EvidenceTierTest.test_binding_unbound_denies_verified_even_with_pass_report",
+        "file": "tests/core/test_evidence_tier.py",
+        "status": "pass",
+        "seconds": 0.001581
+      },
+      {
+        "id": "_lld_test_evidence_tier_55343.EvidenceTierTest.test_binding_via1_denies_verified",
+        "file": "tests/core/test_evidence_tier.py",
+        "status": "pass",
+        "seconds": 0.00153
+      },
+      {
+        "id": "_lld_test_evidence_tier_55343.EvidenceTierTest.test_failed_report_never_upgrades",
+        "file": "tests/core/test_evidence_tier.py",
+        "status": "pass",
+        "seconds": 0.04477
+      },
+      {
+        "id": "_lld_test_evidence_tier_55343.EvidenceTierTest.test_generator_with_report_upgrades_matching_caps",
+        "file": "tests/core/test_evidence_tier.py",
+        "status": "pass",
+        "seconds": 1.675014
+      },
+      {
+        "id": "_lld_test_evidence_tier_55343.EvidenceTierTest.test_generator_without_report_keeps_all_declared",
+        "file": "tests/core/test_evidence_tier.py",
+        "status": "pass",
+        "seconds": 1.497723
+      },
+      {
+        "id": "_lld_test_evidence_tier_55343.EvidenceTierTest.test_no_report_is_declared",
+        "file": "tests/core/test_evidence_tier.py",
+        "status": "pass",
+        "seconds": 2.5e-05
+      },
+      {
+        "id": "_lld_test_evidence_tier_55343.EvidenceTierTest.test_non_matching_test_stays_declared",
+        "file": "tests/core/test_evidence_tier.py",
+        "status": "pass",
+        "seconds": 0.043705
+      },
+      {
+        "id": "_lld_test_evidence_tier_55343.EvidenceTierTest.test_passing_report_upgrades_to_verified",
+        "file": "tests/core/test_evidence_tier.py",
+        "status": "pass",
+        "seconds": 0.001442
+      },
+      {
+        "id": "_lld_test_evidence_tier_55343.EvidenceTierTest.test_tier_corruption_caught_by_verifier",
+        "file": "tests/core/test_evidence_tier.py",
+        "status": "pass",
+        "seconds": 1.840683
+      },
+      {
+        "id": "_lld_test_generation_64994.GenerationTest.test_all_indexed_doc_paths_exist",
+        "file": "tests/core/test_generation.py",
+        "status": "pass",
+        "seconds": 0.000238
+      },
+      {
+        "id": "_lld_test_generation_64994.GenerationTest.test_completion_derived_from_level",
+        "file": "tests/core/test_generation.py",
+        "status": "pass",
+        "seconds": 8e-06
+      },
+      {
+        "id": "_lld_test_generation_64994.GenerationTest.test_encoding_unique_and_well_formed",
+        "file": "tests/core/test_generation.py",
+        "status": "pass",
+        "seconds": 1.8e-05
+      },
+      {
+        "id": "_lld_test_generation_64994.GenerationTest.test_levels_match_real_evidence",
+        "file": "tests/core/test_generation.py",
+        "status": "pass",
+        "seconds": 7e-06
+      },
+      {
+        "id": "_lld_test_generation_64994.GenerationTest.test_next_queue_carries_confirmed_lesson",
+        "file": "tests/core/test_generation.py",
+        "status": "pass",
+        "seconds": 1.1e-05
+      },
+      {
+        "id": "_lld_test_generation_64994.GenerationTest.test_registry_hint_matches_test_record_name",
+        "file": "tests/core/test_generation.py",
+        "status": "pass",
+        "seconds": 0.001239
+      },
+      {
+        "id": "_lld_test_history_5621.FingerprintTest.test_cross_implementation_agrees",
+        "file": "tests/core/test_history.py",
+        "status": "pass",
+        "seconds": 0.047915
+      },
+      {
+        "id": "_lld_test_history_5621.FingerprintTest.test_diff_reports_transitions_and_evidence",
+        "file": "tests/core/test_history.py",
+        "status": "pass",
+        "seconds": 3.5e-05
+      },
+      {
+        "id": "_lld_test_history_5621.FingerprintTest.test_stable_and_sensitive",
+        "file": "tests/core/test_history.py",
+        "status": "pass",
+        "seconds": 0.001736
+      },
+      {
+        "id": "_lld_test_history_5621.HistoryTest.test_candidate_rules_fired",
+        "file": "tests/core/test_history.py",
+        "status": "pass",
+        "seconds": 0.046529
+      },
+      {
+        "id": "_lld_test_history_5621.HistoryTest.test_event_chain_self_certifies",
+        "file": "tests/core/test_history.py",
+        "status": "pass",
+        "seconds": 0.001776
+      },
+      {
+        "id": "_lld_test_history_5621.HistoryTest.test_new_evidence_appends_one_event",
+        "file": "tests/core/test_history.py",
+        "status": "pass",
+        "seconds": 2.335993
+      },
+      {
+        "id": "_lld_test_history_5621.HistoryTest.test_real_transition_recorded",
+        "file": "tests/core/test_history.py",
+        "status": "pass",
+        "seconds": 0.044612
+      },
+      {
+        "id": "_lld_test_history_5621.HistoryTest.test_repeated_generation_is_idempotent",
+        "file": "tests/core/test_history.py",
+        "status": "pass",
+        "seconds": 1.975084
+      },
+      {
+        "id": "_lld_test_path_scope_58519.RepoScopeTest.test_component_tree_skips_untracked",
+        "file": "tests/core/test_path_scope.py",
+        "status": "pass",
+        "seconds": 0.601703
+      },
+      {
+        "id": "_lld_test_path_scope_58519.RepoScopeTest.test_glob_files_skips_untracked",
+        "file": "tests/core/test_path_scope.py",
+        "status": "pass",
+        "seconds": 0.653196
+      },
+      {
+        "id": "_lld_test_path_scope_58519.RepoScopeTest.test_non_git_dir_degrades_visibly",
+        "file": "tests/core/test_path_scope.py",
+        "status": "pass",
+        "seconds": 0.792709
+      },
+      {
+        "id": "_lld_test_path_scope_58519.RepoScopeTest.test_report_binding_untracked_test_is_not_fresh",
+        "file": "tests/core/test_path_scope.py",
+        "status": "pass",
+        "seconds": 0.657346
+      },
+      {
+        "id": "_lld_test_path_scope_58519.RepoScopeTest.test_runtime_artifact_dirs_are_invisible",
+        "file": "tests/core/test_path_scope.py",
+        "status": "pass",
+        "seconds": 0.663887
+      },
+      {
+        "id": "_lld_test_path_scope_58519.RepoScopeTest.test_tracked_paths_are_visible",
+        "file": "tests/core/test_path_scope.py",
+        "status": "pass",
+        "seconds": 0.654756
+      },
+      {
+        "id": "_lld_test_path_scope_58519.RepoScopeTest.test_untracked_file_is_invisible",
+        "file": "tests/core/test_path_scope.py",
+        "status": "pass",
+        "seconds": 0.606218
+      },
+      {
+        "id": "_lld_test_registry2_43350.ActivationSyncTest.test_empty_or_failed_report_stays_unbound",
+        "file": "tests/core/test_registry2.py",
+        "status": "pass",
+        "seconds": 6.5e-05
+      },
+      {
+        "id": "_lld_test_registry2_43350.ActivationSyncTest.test_pass_report_activates",
+        "file": "tests/core/test_registry2.py",
+        "status": "pass",
+        "seconds": 2.4e-05
+      },
+      {
+        "id": "_lld_test_registry2_43350.CapCodeFormatTest.test_monorepo_cap_code_is_4_segments",
+        "file": "tests/core/test_registry2.py",
+        "status": "pass",
+        "seconds": 9.8e-05
+      },
+      {
+        "id": "_lld_test_registry2_43350.CapCodeFormatTest.test_real_ledger_codes_match_namespace_rule",
+        "file": "tests/core/test_registry2.py",
+        "status": "pass",
+        "seconds": 0.05077
+      },
+      {
+        "id": "_lld_test_registry2_43350.CapCodeFormatTest.test_single_project_cap_code_is_4_segments",
+        "file": "tests/core/test_registry2.py",
+        "status": "pass",
+        "seconds": 1.8e-05
+      },
+      {
+        "id": "_lld_test_registry2_43350.CodeNamespaceTest.test_empty_inputs_safe",
+        "file": "tests/core/test_registry2.py",
+        "status": "pass",
+        "seconds": 9e-06
+      },
+      {
+        "id": "_lld_test_registry2_43350.CodeNamespaceTest.test_monorepo_module_keeps_namespace",
+        "file": "tests/core/test_registry2.py",
+        "status": "pass",
+        "seconds": 1.3e-05
+      },
+      {
+        "id": "_lld_test_registry2_43350.CodeNamespaceTest.test_no_double_prefix_leak",
+        "file": "tests/core/test_registry2.py",
+        "status": "pass",
+        "seconds": 6e-06
+      },
+      {
+        "id": "_lld_test_registry2_43350.CodeNamespaceTest.test_single_project_adds_prefix",
+        "file": "tests/core/test_registry2.py",
+        "status": "pass",
+        "seconds": 4e-06
+      },
+      {
+        "id": "_lld_test_registry2_43350.NoRegressAlignedTest.test_real_downgrade_still_flagged",
+        "file": "tests/core/test_registry2.py",
+        "status": "pass",
+        "seconds": 1.3e-05
+      },
+      {
+        "id": "_lld_test_registry2_43350.NoRegressAlignedTest.test_same_format_code_no_false_downgrade",
+        "file": "tests/core/test_registry2.py",
+        "status": "pass",
+        "seconds": 7e-06
+      },
+      {
+        "id": "_lld_test_registry_schema_28424.RegistrySchemaTest.test_dual_read_produces_identical_caps",
+        "file": "tests/core/test_registry_schema.py",
+        "status": "pass",
+        "seconds": 0.000789
+      },
+      {
+        "id": "_lld_test_registry_schema_28424.RegistrySchemaTest.test_normalize_projects_exposes_project_config",
+        "file": "tests/core/test_registry_schema.py",
+        "status": "pass",
+        "seconds": 0.000507
+      },
+      {
+        "id": "_lld_test_registry_schema_28424.RegistrySchemaTest.test_schema_name_is_registry_2",
+        "file": "tests/core/test_registry_schema.py",
+        "status": "pass",
+        "seconds": 0.000387
+      },
+      {
+        "id": "_lld_test_registry_schema_28424.RegistrySchemaTest.test_stable_code_keeps_explicit_identity",
+        "file": "tests/core/test_registry_schema.py",
+        "status": "pass",
+        "seconds": 0.000402
+      },
+      {
+        "id": "_lld_test_registry_schema_28424.SingleCodecTest.test_generator_consumes_shared_codec",
+        "file": "tests/core/test_registry_schema.py",
+        "status": "pass",
+        "seconds": 0.044116
+      },
+      {
+        "id": "_lld_test_registry_schema_28424.SingleCodecTest.test_trace_common_has_no_bare_five_segment_code",
+        "file": "tests/core/test_registry_schema.py",
+        "status": "pass",
+        "seconds": 0.001495
+      },
+      {
+        "id": "_lld_test_registry_schema_28424.SingleCodecTest.test_verify_ledger_consumes_shared_codec",
+        "file": "tests/core/test_registry_schema.py",
+        "status": "pass",
+        "seconds": 0.001272
+      },
+      {
+        "id": "_lld_test_verify_7439.TristateTest.test_missing_projection_is_na_not_pass",
+        "file": "tests/core/test_verify.py",
+        "status": "pass",
+        "seconds": 1.731009
+      },
+      {
+        "id": "_lld_test_verify_7439.TristateTest.test_strict_ignores_na_but_require_active_does_not",
+        "file": "tests/core/test_verify.py",
+        "status": "pass",
+        "seconds": 2.777601
+      },
+      {
+        "id": "_lld_test_verify_7439.VerifyTest.test_clean_ledger_passes_all_checks",
+        "file": "tests/core/test_verify.py",
+        "status": "pass",
+        "seconds": 1.450427
+      },
+      {
+        "id": "_lld_test_verify_7439.VerifyTest.test_detects_broken_history_chain",
+        "file": "tests/core/test_verify.py",
+        "status": "pass",
+        "seconds": 1.571886
+      },
+      {
+        "id": "_lld_test_verify_7439.VerifyTest.test_detects_hand_written_completion",
+        "file": "tests/core/test_verify.py",
+        "status": "pass",
+        "seconds": 1.641661
+      },
+      {
+        "id": "_lld_test_verify_7439.VerifyTest.test_detects_lesson_without_action",
+        "file": "tests/core/test_verify.py",
+        "status": "pass",
+        "seconds": 1.628242
+      },
+      {
+        "id": "_lld_test_verify_7439.VerifyTest.test_detects_missing_document",
+        "file": "tests/core/test_verify.py",
+        "status": "pass",
+        "seconds": 1.944742
+      },
+      {
+        "id": "_lld_test_verify_7439.VerifyTest.test_detects_non_bound_cap_without_derived_issue",
+        "file": "tests/core/test_verify.py",
+        "status": "pass",
+        "seconds": 1.543834
+      },
+      {
+        "id": "_lld_test_verify_7439.VerifyTest.test_detects_open_item_with_satisfied_close_condition",
+        "file": "tests/core/test_verify.py",
+        "status": "pass",
+        "seconds": 1.538125
+      },
+      {
+        "id": "_lld_test_verify_7439.VerifyTest.test_detects_satisfied_derived_issue_still_open",
+        "file": "tests/core/test_verify.py",
+        "status": "pass",
+        "seconds": 1.38209
+      },
+      {
+        "id": "_lld_test_verify_7439.VerifyTest.test_detects_tampered_event_state",
+        "file": "tests/core/test_verify.py",
+        "status": "pass",
+        "seconds": 1.510083
+      },
+      {
+        "id": "_lld_test_verify_7439.VerifyTest.test_detects_tampered_installed_asset",
+        "file": "tests/core/test_verify.py",
+        "status": "pass",
+        "seconds": 6.245483
+      },
+      {
+        "id": "_lld_test_verify_7439.VerifyTest.test_detects_unowned_open_work_item",
+        "file": "tests/core/test_verify.py",
+        "status": "pass",
+        "seconds": 1.381587
+      },
+      {
+        "id": "_lld_test_verify_7439.VerifyTest.test_detects_verified_with_missing_binding_field",
+        "file": "tests/core/test_verify.py",
+        "status": "pass",
+        "seconds": 1.52695
+      },
+      {
+        "id": "_lld_test_verify_7439.VerifyTest.test_detects_verified_without_bound_binding",
+        "file": "tests/core/test_verify.py",
+        "status": "pass",
+        "seconds": 1.390524
+      },
+      {
+        "id": "_lld_test_verify_7439.VerifyTest.test_open_item_with_unmet_condition_still_passes",
+        "file": "tests/core/test_verify.py",
+        "status": "pass",
+        "seconds": 1.378281
+      },
+      {
+        "id": "_lld_test_verify_7439.VerifyTest.test_owner_note_satisfies_ownership_rule",
+        "file": "tests/core/test_verify.py",
+        "status": "pass",
+        "seconds": 1.723113
+      },
+      {
+        "id": "_lld_test_acceptance_46251.AppendOnlyTest.test_closed_fields_must_survive",
+        "file": "tests/meta/test_acceptance.py",
+        "status": "pass",
+        "seconds": 3.2e-05
+      },
+      {
+        "id": "_lld_test_acceptance_46251.AppendOnlyTest.test_correct_merge_passes",
+        "file": "tests/meta/test_acceptance.py",
+        "status": "pass",
+        "seconds": 1.8e-05
+      },
+      {
+        "id": "_lld_test_acceptance_46251.AppendOnlyTest.test_duplicate_ids_and_non_idempotent_second_run_fail",
+        "file": "tests/meta/test_acceptance.py",
+        "status": "pass",
+        "seconds": 1.1e-05
+      },
+      {
+        "id": "_lld_test_acceptance_46251.AppendOnlyTest.test_overwrite_is_rejected_with_named_reasons",
+        "file": "tests/meta/test_acceptance.py",
+        "status": "pass",
+        "seconds": 1e-05
+      },
+      {
+        "id": "_lld_test_acceptance_46251.BuildTest.test_preconditions_scope_is_exactly_l4",
+        "file": "tests/meta/test_acceptance.py",
+        "status": "pass",
+        "seconds": 8.349675
+      },
+      {
+        "id": "_lld_test_acceptance_46251.BuildTest.test_schema_is_stable_and_deterministic",
+        "file": "tests/meta/test_acceptance.py",
+        "status": "pass",
+        "seconds": 22.724623
+      },
+      {
+        "id": "_lld_test_acceptance_46251.ConstantsTest.test_chinese_and_arabic_numerals",
+        "file": "tests/meta/test_acceptance.py",
+        "status": "pass",
+        "seconds": 1.9e-05
+      },
+      {
+        "id": "_lld_test_acceptance_46251.ConstantsTest.test_constants_follow_source_not_hardcoded",
+        "file": "tests/meta/test_acceptance.py",
+        "status": "pass",
+        "seconds": 0.152297
+      },
+      {
+        "id": "_lld_test_acceptance_46251.ConstantsTest.test_expected_values_come_from_upgrade_ast",
+        "file": "tests/meta/test_acceptance.py",
+        "status": "pass",
+        "seconds": 0.007683
+      },
+      {
+        "id": "_lld_test_acceptance_46251.DerivedTest.test_hand_edited_derived_file_is_caught",
+        "file": "tests/meta/test_acceptance.py",
+        "status": "pass",
+        "seconds": 6.324575
+      },
+      {
+        "id": "_lld_test_acceptance_46251.DerivedTest.test_real_derived_files_are_reproducible",
+        "file": "tests/meta/test_acceptance.py",
+        "status": "pass",
+        "seconds": 1.057829
+      },
+      {
+        "id": "_lld_test_acceptance_46251.L5DetectorTest.test_end_to_end_reports_missing_callable",
+        "file": "tests/meta/test_acceptance.py",
+        "status": "pass",
+        "seconds": 0.237016
+      },
+      {
+        "id": "_lld_test_acceptance_46251.L5DetectorTest.test_evidence_adapter_names_each_missing_symbol",
+        "file": "tests/meta/test_acceptance.py",
+        "status": "pass",
+        "seconds": 0.236648
+      },
+      {
+        "id": "_lld_test_acceptance_46251.L5DetectorTest.test_l5_contract_doc_requires_all_anchors",
+        "file": "tests/meta/test_acceptance.py",
+        "status": "pass",
+        "seconds": 0.287969
+      },
+      {
+        "id": "_lld_test_acceptance_46251.L5DetectorTest.test_no_regression_guard_names_missing_gate",
+        "file": "tests/meta/test_acceptance.py",
+        "status": "pass",
+        "seconds": 0.237973
+      },
+      {
+        "id": "_lld_test_acceptance_46251.LiteralScanTest.test_classify_names_each_kind",
+        "file": "tests/meta/test_acceptance.py",
+        "status": "pass",
+        "seconds": 6e-05
+      },
+      {
+        "id": "_lld_test_acceptance_46251.LiteralScanTest.test_clean_tree_has_no_drift",
+        "file": "tests/meta/test_acceptance.py",
+        "status": "pass",
+        "seconds": 0.236466
+      },
+      {
+        "id": "_lld_test_acceptance_46251.LiteralScanTest.test_historical_helper_is_conservative",
+        "file": "tests/meta/test_acceptance.py",
+        "status": "pass",
+        "seconds": 2.4e-05
+      },
+      {
+        "id": "_lld_test_acceptance_46251.LiteralScanTest.test_historical_statements_are_review_not_failure",
+        "file": "tests/meta/test_acceptance.py",
+        "status": "pass",
+        "seconds": 0.286575
+      },
+      {
+        "id": "_lld_test_acceptance_46251.LiteralScanTest.test_stale_literals_are_all_named",
+        "file": "tests/meta/test_acceptance.py",
+        "status": "pass",
+        "seconds": 0.191059
+      },
+      {
+        "id": "_lld_test_acceptance_46251.LiteralScanTest.test_unrelated_units_do_not_false_positive",
+        "file": "tests/meta/test_acceptance.py",
+        "status": "pass",
+        "seconds": 0.19276
+      },
+      {
+        "id": "_lld_test_acceptance_46251.PreconditionTest.test_evaluate_activation_named_failures",
+        "file": "tests/meta/test_acceptance.py",
+        "status": "pass",
+        "seconds": 2.7e-05
+      },
+      {
+        "id": "_lld_test_acceptance_46251.PreconditionTest.test_evaluate_conditional_named_failures",
+        "file": "tests/meta/test_acceptance.py",
+        "status": "pass",
+        "seconds": 2.2e-05
+      },
+      {
+        "id": "_lld_test_acceptance_46251.PreconditionTest.test_roadmap_consistency_pass_and_named_failures",
+        "file": "tests/meta/test_acceptance.py",
+        "status": "pass",
+        "seconds": 0.372621
+      },
+      {
+        "id": "_lld_test_agent_gateway_33190.GatewayTest.test_apply_writes_claim_audit_and_keeps_invariants",
+        "file": "tests/meta/test_agent_gateway.py",
+        "status": "pass",
+        "seconds": 9.891764
+      },
+      {
+        "id": "_lld_test_agent_gateway_33190.GatewayTest.test_cas_required_and_mismatch",
+        "file": "tests/meta/test_agent_gateway.py",
+        "status": "pass",
+        "seconds": 8.504496
+      },
+      {
+        "id": "_lld_test_agent_gateway_33190.GatewayTest.test_cli_request_denies_unknown_agent",
+        "file": "tests/meta/test_agent_gateway.py",
+        "status": "pass",
+        "seconds": 9.878419
+      },
+      {
+        "id": "_lld_test_agent_gateway_33190.GatewayTest.test_cli_status_json_is_leak_free",
+        "file": "tests/meta/test_agent_gateway.py",
+        "status": "pass",
+        "seconds": 7.66236
+      },
+      {
+        "id": "_lld_test_agent_gateway_33190.GatewayTest.test_default_deny_without_access",
+        "file": "tests/meta/test_agent_gateway.py",
+        "status": "pass",
+        "seconds": 2.381713
+      },
+      {
+        "id": "_lld_test_agent_gateway_33190.GatewayTest.test_definitions_selfcheck",
+        "file": "tests/meta/test_agent_gateway.py",
+        "status": "pass",
+        "seconds": 4.2e-05
+      },
+      {
+        "id": "_lld_test_agent_gateway_33190.GatewayTest.test_dispatch_rejects_invalid_lesson_candidate",
+        "file": "tests/meta/test_agent_gateway.py",
+        "status": "pass",
+        "seconds": 9.37064
+      },
+      {
+        "id": "_lld_test_agent_gateway_33190.GatewayTest.test_dry_run_does_not_write",
+        "file": "tests/meta/test_agent_gateway.py",
+        "status": "pass",
+        "seconds": 10.019792
+      },
+      {
+        "id": "_lld_test_agent_gateway_33190.GatewayTest.test_lease_blocks_concurrent_agent",
+        "file": "tests/meta/test_agent_gateway.py",
+        "status": "pass",
+        "seconds": 7.809837
+      },
+      {
+        "id": "_lld_test_agent_gateway_33190.GatewayTest.test_policy_point_boundary_is_declared",
+        "file": "tests/meta/test_agent_gateway.py",
+        "status": "pass",
+        "seconds": 1.8e-05
+      },
+      {
+        "id": "_lld_test_agent_gateway_33190.GatewayTest.test_register_requires_human_and_no_self_approval",
+        "file": "tests/meta/test_agent_gateway.py",
+        "status": "pass",
+        "seconds": 7.841398
+      },
+      {
+        "id": "_lld_test_agent_gateway_33190.GatewayTest.test_register_writes_audit_and_keeps_board_synced",
+        "file": "tests/meta/test_agent_gateway.py",
+        "status": "pass",
+        "seconds": 8.600985
+      },
+      {
+        "id": "_lld_test_agent_gateway_33190.GatewayTest.test_registry_cas_detects_concurrent_edit",
+        "file": "tests/meta/test_agent_gateway.py",
+        "status": "pass",
+        "seconds": 7.21472
+      },
+      {
+        "id": "_lld_test_agent_gateway_33190.GatewayTest.test_revision_detects_intervening_write",
+        "file": "tests/meta/test_agent_gateway.py",
+        "status": "pass",
+        "seconds": 6.91935
+      },
+      {
+        "id": "_lld_test_agent_gateway_33190.GatewayTest.test_self_approval_and_self_register_denied",
+        "file": "tests/meta/test_agent_gateway.py",
+        "status": "pass",
+        "seconds": 10.73509
+      },
+      {
+        "id": "_lld_test_agent_gateway_33190.GatewayTest.test_unregistered_and_unauthorized_denied",
+        "file": "tests/meta/test_agent_gateway.py",
+        "status": "pass",
+        "seconds": 12.517745
+      },
+      {
+        "id": "_lld_test_dogfood_51335.SelfHostingBoardOntology.test_board_embeds_ontology_terms",
+        "file": "tests/meta/test_dogfood.py",
+        "status": "pass",
+        "seconds": 0.047134
+      },
+      {
+        "id": "_lld_test_dogfood_51335.SelfHostingBoardOntology.test_template_has_ontology_terms_marker",
+        "file": "tests/meta/test_dogfood.py",
+        "status": "pass",
+        "seconds": 0.050265
+      },
+      {
+        "id": "_lld_test_dogfood_51335.SelfHostingLedger.test_board_embed_matches_ledger",
+        "file": "tests/meta/test_dogfood.py",
+        "status": "pass",
+        "seconds": 0.053249
+      },
+      {
+        "id": "_lld_test_dogfood_51335.SelfHostingLedger.test_governance_meta_bound",
+        "file": "tests/meta/test_dogfood.py",
+        "status": "pass",
+        "seconds": 0.00214
+      },
+      {
+        "id": "_lld_test_dogfood_51335.SelfHostingLedger.test_release_decisions_are_done",
+        "file": "tests/meta/test_dogfood.py",
+        "status": "pass",
+        "seconds": 0.050366
+      },
+      {
+        "id": "_lld_test_dogfood_51335.SelfHostingLedger.test_release_decisions_recorded",
+        "file": "tests/meta/test_dogfood.py",
+        "status": "pass",
+        "seconds": 0.001691
+      },
+      {
+        "id": "_lld_test_feedback_36970.AppendOnlyTest.test_existing_row_wins_over_fresh_open_row",
+        "file": "tests/meta/test_feedback.py",
+        "status": "pass",
+        "seconds": 2.7e-05
+      },
+      {
+        "id": "_lld_test_feedback_36970.AppendOnlyTest.test_export_creates_file_when_absent",
+        "file": "tests/meta/test_feedback.py",
+        "status": "pass",
+        "seconds": 1.642038
+      },
+      {
+        "id": "_lld_test_feedback_36970.AppendOnlyTest.test_export_preserves_closed_evidence_and_is_idempotent",
+        "file": "tests/meta/test_feedback.py",
+        "status": "pass",
+        "seconds": 2.13608
+      },
+      {
+        "id": "_lld_test_feedback_36970.AppendOnlyTest.test_merge_is_idempotent_and_order_stable",
+        "file": "tests/meta/test_feedback.py",
+        "status": "pass",
+        "seconds": 2.8e-05
+      },
+      {
+        "id": "_lld_test_feedback_36970.ClosureTest.test_artifact_ref_must_exist",
+        "file": "tests/meta/test_feedback.py",
+        "status": "pass",
+        "seconds": 3.41405
+      },
+      {
+        "id": "_lld_test_feedback_36970.ClosureTest.test_closed_without_disposition_fails_then_passes",
+        "file": "tests/meta/test_feedback.py",
+        "status": "pass",
+        "seconds": 3.207442
+      },
+      {
+        "id": "_lld_test_feedback_36970.ClosureTest.test_fingerprint_blocks_manual_edit",
+        "file": "tests/meta/test_feedback.py",
+        "status": "pass",
+        "seconds": 3.347154
+      },
+      {
+        "id": "_lld_test_feedback_36970.ClosureTest.test_triage_requires_artifact_for_four_products",
+        "file": "tests/meta/test_feedback.py",
+        "status": "pass",
+        "seconds": 3.567968
+      },
+      {
+        "id": "_lld_test_feedback_36970.ClosureTest.test_wontfix_needs_reason_but_no_artifact",
+        "file": "tests/meta/test_feedback.py",
+        "status": "pass",
+        "seconds": 4.54204
+      },
+      {
+        "id": "_lld_test_feedback_36970.ExportTest.test_read_only_and_idempotent",
+        "file": "tests/meta/test_feedback.py",
+        "status": "pass",
+        "seconds": 2.183415
+      },
+      {
+        "id": "_lld_test_feedback_36970.ExportTest.test_redact_is_data_driven_not_hardcoded",
+        "file": "tests/meta/test_feedback.py",
+        "status": "pass",
+        "seconds": 1.51154
+      },
+      {
+        "id": "_lld_test_feedback_36970.ExportTest.test_version_gap_and_legacy_verifier_are_observations",
+        "file": "tests/meta/test_feedback.py",
+        "status": "pass",
+        "seconds": 1.801255
+      },
+      {
+        "id": "_lld_test_feedback_36970.ExportTest.test_write_requires_human_approval",
+        "file": "tests/meta/test_feedback.py",
+        "status": "pass",
+        "seconds": 2.123815
+      },
+      {
+        "id": "_lld_test_layout_35353.LayoutDefinitionTest.test_check_catches_producer_drift",
+        "file": "tests/meta/test_layout.py",
+        "status": "pass",
+        "seconds": 0.890649
+      },
+      {
+        "id": "_lld_test_layout_35353.LayoutDefinitionTest.test_cli_check_and_json",
+        "file": "tests/meta/test_layout.py",
+        "status": "pass",
+        "seconds": 0.109607
+      },
+      {
+        "id": "_lld_test_layout_35353.LayoutDefinitionTest.test_definition_passes_selfcheck",
+        "file": "tests/meta/test_layout.py",
+        "status": "pass",
+        "seconds": 0.028442
+      },
+      {
+        "id": "_lld_test_layout_35353.LayoutDefinitionTest.test_derived_layer_is_never_manual",
+        "file": "tests/meta/test_layout.py",
+        "status": "pass",
+        "seconds": 0.027985
+      },
+      {
+        "id": "_lld_test_layout_35353.LayoutDefinitionTest.test_ledger_fields_are_not_files",
+        "file": "tests/meta/test_layout.py",
+        "status": "pass",
+        "seconds": 9.1e-05
+      },
+      {
+        "id": "_lld_test_layout_35353.LayoutDefinitionTest.test_no_absolute_paths_in_definition",
+        "file": "tests/meta/test_layout.py",
+        "status": "pass",
+        "seconds": 0.000675
+      },
+      {
+        "id": "_lld_test_layout_35353.LayoutDefinitionTest.test_render_is_deterministic_and_synced",
+        "file": "tests/meta/test_layout.py",
+        "status": "pass",
+        "seconds": 0.143942
+      },
+      {
+        "id": "_lld_test_layout_35353.LayoutDiffTest.test_brownfield_draft_is_detected",
+        "file": "tests/meta/test_layout.py",
+        "status": "pass",
+        "seconds": 0.316818
+      },
+      {
+        "id": "_lld_test_layout_35353.LayoutDiffTest.test_demo_is_governed_and_diff_is_readonly",
+        "file": "tests/meta/test_layout.py",
+        "status": "pass",
+        "seconds": 1.936875
+      },
+      {
+        "id": "_lld_test_layout_35353.LayoutDiffTest.test_empty_project_is_bootstrap",
+        "file": "tests/meta/test_layout.py",
+        "status": "pass",
+        "seconds": 0.102685
+      },
+      {
+        "id": "_lld_test_layout_35353.LayoutDiffTest.test_greenfield_bootstrap_has_eight_files",
+        "file": "tests/meta/test_layout.py",
+        "status": "pass",
+        "seconds": 1.035891
+      },
+      {
+        "id": "_lld_test_layout_35353.LayoutDiffTest.test_ignored_cache_is_not_unexpected",
+        "file": "tests/meta/test_layout.py",
+        "status": "pass",
+        "seconds": 1.593485
+      },
+      {
+        "id": "_lld_test_layout_35353.LayoutDiffTest.test_missing_target_fails_closed",
+        "file": "tests/meta/test_layout.py",
+        "status": "pass",
+        "seconds": 0.039791
+      },
+      {
+        "id": "_lld_test_layout_35353.LayoutDiffTest.test_unexpected_governance_file_is_flagged",
+        "file": "tests/meta/test_layout.py",
+        "status": "pass",
+        "seconds": 1.565986
+      },
+      {
+        "id": "_lld_test_lifecycle_65437.LifecycleTest.test_archive_is_terminal",
+        "file": "tests/meta/test_lifecycle.py",
+        "status": "pass",
+        "seconds": 9.2e-05
+      },
+      {
+        "id": "_lld_test_lifecycle_65437.LifecycleTest.test_archive_without_approval_rejected",
+        "file": "tests/meta/test_lifecycle.py",
+        "status": "pass",
+        "seconds": 1.1e-05
+      },
+      {
+        "id": "_lld_test_lifecycle_65437.LifecycleTest.test_claim_release_and_duplicate_claim_rejected",
+        "file": "tests/meta/test_lifecycle.py",
+        "status": "pass",
+        "seconds": 3.2e-05
+      },
+      {
+        "id": "_lld_test_lifecycle_65437.LifecycleTest.test_cli_rejects_unfreeze_without_approval",
+        "file": "tests/meta/test_lifecycle.py",
+        "status": "pass",
+        "seconds": 1.540651
+      },
+      {
+        "id": "_lld_test_lifecycle_65437.LifecycleTest.test_freeze_blocks_generator",
+        "file": "tests/meta/test_lifecycle.py",
+        "status": "pass",
+        "seconds": 1.607885
+      },
+      {
+        "id": "_lld_test_lifecycle_65437.LifecycleTest.test_freeze_requires_active_and_records_reason",
+        "file": "tests/meta/test_lifecycle.py",
+        "status": "pass",
+        "seconds": 8.9e-05
+      },
+      {
+        "id": "_lld_test_lifecycle_65437.LifecycleTest.test_retire_validates_code_and_deduplicates",
+        "file": "tests/meta/test_lifecycle.py",
+        "status": "pass",
+        "seconds": 4.9e-05
+      },
+      {
+        "id": "_lld_test_lifecycle_65437.LifecycleTest.test_state_changes_keep_board_synced_and_history_untouched",
+        "file": "tests/meta/test_lifecycle.py",
+        "status": "pass",
+        "seconds": 1.927088
+      },
+      {
+        "id": "_lld_test_lifecycle_65437.LifecycleTest.test_status_cli_json",
+        "file": "tests/meta/test_lifecycle.py",
+        "status": "pass",
+        "seconds": 1.817613
+      },
+      {
+        "id": "_lld_test_lifecycle_65437.LifecycleTest.test_unfreeze_requires_human_approval",
+        "file": "tests/meta/test_lifecycle.py",
+        "status": "pass",
+        "seconds": 7.1e-05
+      },
+      {
+        "id": "_lld_test_ontology_19454.OntologyTest.test_build_is_deterministic",
+        "file": "tests/meta/test_ontology.py",
+        "status": "pass",
+        "seconds": 1.748287
+      },
+      {
+        "id": "_lld_test_ontology_19454.OntologyTest.test_check_catches_cardinality_contradiction",
+        "file": "tests/meta/test_ontology.py",
+        "status": "pass",
+        "seconds": 1.700856
+      },
+      {
+        "id": "_lld_test_ontology_19454.OntologyTest.test_check_catches_illegal_status_and_recovers",
+        "file": "tests/meta/test_ontology.py",
+        "status": "pass",
+        "seconds": 2.145099
+      },
+      {
+        "id": "_lld_test_ontology_19454.OntologyTest.test_check_catches_polyseme_and_undeclared_entity",
+        "file": "tests/meta/test_ontology.py",
+        "status": "pass",
+        "seconds": 1.655792
+      },
+      {
+        "id": "_lld_test_ontology_19454.OntologyTest.test_diff_emits_valid_ontology_observations",
+        "file": "tests/meta/test_ontology.py",
+        "status": "pass",
+        "seconds": 2.022511
+      },
+      {
+        "id": "_lld_test_ontology_19454.OntologyTest.test_generated_projection_is_read_only_and_synced",
+        "file": "tests/meta/test_ontology.py",
+        "status": "pass",
+        "seconds": 0.433281
+      },
+      {
+        "id": "_lld_test_ontology_19454.OntologyTest.test_no_orphan_source_refs_and_relations",
+        "file": "tests/meta/test_ontology.py",
+        "status": "pass",
+        "seconds": 0.050142
+      },
+      {
+        "id": "_lld_test_ontology_19454.OntologyTest.test_polyseme_is_disambiguated_not_unified",
+        "file": "tests/meta/test_ontology.py",
+        "status": "pass",
+        "seconds": 0.045265
+      },
+      {
+        "id": "_lld_test_ontology_19454.OntologyTest.test_unupgraded_project_reports_binding_as_na",
+        "file": "tests/meta/test_ontology.py",
+        "status": "pass",
+        "seconds": 1.477504
+      },
+      {
+        "id": "_lld_test_ontology_19454.OntologyTest.test_upgrade_binds_seventh_axis",
+        "file": "tests/meta/test_ontology.py",
+        "status": "pass",
+        "seconds": 8.963262
+      },
+      {
+        "id": "_lld_test_ontology_19454.OntologyTest.test_value_domains_match_real_code_enums",
+        "file": "tests/meta/test_ontology.py",
+        "status": "pass",
+        "seconds": 0.042427
+      },
+      {
+        "id": "_lld_test_ontology_19454.OntologyTest.test_write_requires_human_approval",
+        "file": "tests/meta/test_ontology.py",
+        "status": "pass",
+        "seconds": 0.085596
+      },
+      {
+        "id": "_lld_test_platform_contract_21779.AssetsTest.test_check_rejects_incomplete_asset_set",
+        "file": "tests/meta/test_platform_contract.py",
+        "status": "pass",
+        "seconds": 0.157609
+      },
+      {
+        "id": "_lld_test_platform_contract_21779.AssetsTest.test_digest_tracks_asset_content",
+        "file": "tests/meta/test_platform_contract.py",
+        "status": "pass",
+        "seconds": 0.623983
+      },
+      {
+        "id": "_lld_test_platform_contract_21779.AssetsTest.test_manifest_is_deterministic_and_grouped",
+        "file": "tests/meta/test_platform_contract.py",
+        "status": "pass",
+        "seconds": 0.221705
+      },
+      {
+        "id": "_lld_test_platform_contract_21779.AssetsTest.test_post_upgrade_covers_all_three_contracts",
+        "file": "tests/meta/test_platform_contract.py",
+        "status": "pass",
+        "seconds": 1.7e-05
+      },
+      {
+        "id": "_lld_test_platform_contract_21779.AssetsTest.test_upgrade_binds_assets_and_detects_drift",
+        "file": "tests/meta/test_platform_contract.py",
+        "status": "pass",
+        "seconds": 15.510414
+      },
+      {
+        "id": "_lld_test_platform_contract_21779.BoardTest.test_cli_check_fails_on_drift",
+        "file": "tests/meta/test_platform_contract.py",
+        "status": "pass",
+        "seconds": 0.351114
+      },
+      {
+        "id": "_lld_test_platform_contract_21779.BoardTest.test_demo_board_uses_authoritative_template",
+        "file": "tests/meta/test_platform_contract.py",
+        "status": "pass",
+        "seconds": 0.154193
+      },
+      {
+        "id": "_lld_test_platform_contract_21779.BoardTest.test_digest_ignores_embed_data_but_detects_css",
+        "file": "tests/meta/test_platform_contract.py",
+        "status": "pass",
+        "seconds": 5.5e-05
+      },
+      {
+        "id": "_lld_test_platform_contract_21779.BoardTest.test_drift_is_part_of_the_upgrade_plan",
+        "file": "tests/meta/test_platform_contract.py",
+        "status": "pass",
+        "seconds": 19.41929
+      },
+      {
+        "id": "_lld_test_platform_contract_21779.BoardTest.test_missing_anchor_is_reported",
+        "file": "tests/meta/test_platform_contract.py",
+        "status": "pass",
+        "seconds": 0.156714
+      },
+      {
+        "id": "_lld_test_platform_contract_21779.BoardTest.test_normalize_defaults_to_dry_run_and_requires_approval",
+        "file": "tests/meta/test_platform_contract.py",
+        "status": "pass",
+        "seconds": 1.40711
+      },
+      {
+        "id": "_lld_test_platform_contract_21779.BoardTest.test_normalize_repairs_css_drift_without_touching_data",
+        "file": "tests/meta/test_platform_contract.py",
+        "status": "pass",
+        "seconds": 1.447868
+      },
+      {
+        "id": "_lld_test_platform_contract_21779.BudgetTest.test_demo_budget_is_clean_and_layout_is_fixed",
+        "file": "tests/meta/test_platform_contract.py",
+        "status": "pass",
+        "seconds": 0.006347
+      },
+      {
+        "id": "_lld_test_platform_contract_21779.BudgetTest.test_probe_shows_file_count_stays_fixed",
+        "file": "tests/meta/test_platform_contract.py",
+        "status": "pass",
+        "seconds": 12.102144
+      },
+      {
+        "id": "_lld_test_platform_contract_21779.BudgetTest.test_render_limit_is_read_from_template",
+        "file": "tests/meta/test_platform_contract.py",
+        "status": "pass",
+        "seconds": 0.002854
+      },
+      {
+        "id": "_lld_test_platform_contract_21779.BudgetTest.test_thresholds_flag_oversized_project",
+        "file": "tests/meta/test_platform_contract.py",
+        "status": "pass",
+        "seconds": 0.206848
+      },
+      {
+        "id": "_lld_test_upgrade_41694.UpgradeTest.test_apply_is_approved_backed_up_and_verifiable",
+        "file": "tests/meta/test_upgrade.py",
+        "status": "pass",
+        "seconds": 8.983214
+      },
+      {
+        "id": "_lld_test_upgrade_41694.UpgradeTest.test_apply_is_idempotent",
+        "file": "tests/meta/test_upgrade.py",
+        "status": "pass",
+        "seconds": 8.518402
+      },
+      {
+        "id": "_lld_test_upgrade_41694.UpgradeTest.test_apply_requires_human_approval",
+        "file": "tests/meta/test_upgrade.py",
+        "status": "pass",
+        "seconds": 1.471774
+      },
+      {
+        "id": "_lld_test_upgrade_41694.UpgradeTest.test_cli_apply_without_approval_is_rejected",
+        "file": "tests/meta/test_upgrade.py",
+        "status": "pass",
+        "seconds": 1.524731
+      },
+      {
+        "id": "_lld_test_upgrade_41694.UpgradeTest.test_cli_plan_json_is_deterministic_and_leak_free",
+        "file": "tests/meta/test_upgrade.py",
+        "status": "pass",
+        "seconds": 5.816187
+      },
+      {
+        "id": "_lld_test_upgrade_41694.UpgradeTest.test_definitions_selfcheck",
+        "file": "tests/meta/test_upgrade.py",
+        "status": "pass",
+        "seconds": 1.854185
+      },
+      {
+        "id": "_lld_test_upgrade_41694.UpgradeTest.test_plan_detects_tool_drift",
+        "file": "tests/meta/test_upgrade.py",
+        "status": "pass",
+        "seconds": 2.227688
+      },
+      {
+        "id": "_lld_test_upgrade_41694.UpgradeTest.test_plan_is_read_only_deterministic_and_leak_free",
+        "file": "tests/meta/test_upgrade.py",
+        "status": "pass",
+        "seconds": 6.112734
+      },
+      {
+        "id": "_lld_test_upgrade_41694.UpgradeTest.test_rollback_restores_state_and_writes_receipt",
+        "file": "tests/meta/test_upgrade.py",
+        "status": "pass",
+        "seconds": 7.27247
+      },
+      {
+        "id": "_lld_test_upgrade_41694.UpgradeTest.test_unsupported_version_and_frozen_block",
+        "file": "tests/meta/test_upgrade.py",
+        "status": "pass",
+        "seconds": 4.912747
+      },
+      {
+        "id": "_lld_test_upgrade_41694.UpgradeTest.test_verify_flags_stale_evidence",
+        "file": "tests/meta/test_upgrade.py",
+        "status": "pass",
+        "seconds": 11.582692
+      },
+      {
+        "id": "_lld_test_upgrade_41694.UpgradeV130Test.test_m8_writes_activation_placeholder_without_report",
+        "file": "tests/meta/test_upgrade.py",
+        "status": "pass",
+        "seconds": 6.176607
+      },
+      {
+        "id": "_lld_test_upgrade_41694.UpgradeV130Test.test_plan_converges_without_test_report",
+        "file": "tests/meta/test_upgrade.py",
+        "status": "pass",
+        "seconds": 8.857887
+      },
+      {
+        "id": "_lld_test_upgrade_41694.UpgradeV130Test.test_post_upgrade_report_is_generated_in_target",
+        "file": "tests/meta/test_upgrade.py",
+        "status": "pass",
+        "seconds": 1.1e-05
+      },
+      {
+        "id": "_lld_test_upgrade_41694.UpgradeV130Test.test_post_upgrade_steps_are_conditional",
+        "file": "tests/meta/test_upgrade.py",
+        "status": "pass",
+        "seconds": 8e-06
+      },
+      {
+        "id": "_lld_test_expert_run_42380.ClassifyCommandTest.test_approval_tokens_win",
+        "file": "tests/routing/test_expert_run.py",
+        "status": "pass",
+        "seconds": 1.3e-05
+      },
+      {
+        "id": "_lld_test_expert_run_42380.ClassifyCommandTest.test_dry_run_init_project_is_readonly",
+        "file": "tests/routing/test_expert_run.py",
+        "status": "pass",
+        "seconds": 5e-06
+      },
+      {
+        "id": "_lld_test_expert_run_42380.ClassifyCommandTest.test_readonly_commands",
+        "file": "tests/routing/test_expert_run.py",
+        "status": "pass",
+        "seconds": 9e-06
+      },
+      {
+        "id": "_lld_test_expert_run_42380.ClassifyCommandTest.test_unknown_command_is_manual",
+        "file": "tests/routing/test_expert_run.py",
+        "status": "pass",
+        "seconds": 5e-06
+      },
+      {
+        "id": "_lld_test_expert_run_42380.ClassifyCommandTest.test_write_commands_without_readonly_flag_are_approval",
+        "file": "tests/routing/test_expert_run.py",
+        "status": "pass",
+        "seconds": 1e-05
+      },
+      {
+        "id": "_lld_test_expert_run_42380.OrchestrateTest.test_approval_bundle_aggregates_write_commands",
+        "file": "tests/routing/test_expert_run.py",
+        "status": "pass",
+        "seconds": 3.5e-05
+      },
+      {
+        "id": "_lld_test_expert_run_42380.OrchestrateTest.test_chain_matches_route_handoff",
+        "file": "tests/routing/test_expert_run.py",
+        "status": "pass",
+        "seconds": 0.820106
+      },
+      {
+        "id": "_lld_test_expert_run_42380.OrchestrateTest.test_deterministic_bytes",
+        "file": "tests/routing/test_expert_run.py",
+        "status": "pass",
+        "seconds": 0.73548
+      },
+      {
+        "id": "_lld_test_expert_run_42380.OrchestrateTest.test_fail_closed_on_meta_intent",
+        "file": "tests/routing/test_expert_run.py",
+        "status": "pass",
+        "seconds": 0.088462
+      },
+      {
+        "id": "_lld_test_expert_run_42380.OrchestrateTest.test_hardcoded_placeholder_absent",
+        "file": "tests/routing/test_expert_run.py",
+        "status": "pass",
+        "seconds": 0.400418
+      },
+      {
+        "id": "_lld_test_expert_run_42380.OrchestrateTest.test_intent_file_only_recorded_as_source",
+        "file": "tests/routing/test_expert_run.py",
+        "status": "pass",
+        "seconds": 0.087645
+      },
+      {
+        "id": "_lld_test_expert_run_42380.OrchestrateTest.test_no_new_judgement_authority",
+        "file": "tests/routing/test_expert_run.py",
+        "status": "pass",
+        "seconds": 0.490452
+      },
+      {
+        "id": "_lld_test_expert_run_42380.OrchestrateTest.test_ready_intent_produces_chain",
+        "file": "tests/routing/test_expert_run.py",
+        "status": "pass",
+        "seconds": 0.564621
+      },
+      {
+        "id": "_lld_test_expert_run_42380.OrchestrateTest.test_target_display_transmitted_to_commands",
+        "file": "tests/routing/test_expert_run.py",
+        "status": "pass",
+        "seconds": 0.418446
+      },
+      {
+        "id": "_lld_test_expert_run_42380.RenderTest.test_render_halt",
+        "file": "tests/routing/test_expert_run.py",
+        "status": "pass",
+        "seconds": 0.401447
+      },
+      {
+        "id": "_lld_test_expert_run_42380.RenderTest.test_render_ready",
+        "file": "tests/routing/test_expert_run.py",
+        "status": "pass",
+        "seconds": 0.35127
+      },
+      {
+        "id": "_lld_test_intent_restate_44338.IntentRestateTest.test_collect_cap_codes_from_all_sources",
+        "file": "tests/routing/test_intent_restate.py",
+        "status": "pass",
+        "seconds": 2.8e-05
+      },
+      {
+        "id": "_lld_test_intent_restate_44338.IntentRestateTest.test_competing_intents_need_clarification",
+        "file": "tests/routing/test_intent_restate.py",
+        "status": "pass",
+        "seconds": 2.5e-05
+      },
+      {
+        "id": "_lld_test_intent_restate_44338.IntentRestateTest.test_deterministic",
+        "file": "tests/routing/test_intent_restate.py",
+        "status": "pass",
+        "seconds": 4.2e-05
+      },
+      {
+        "id": "_lld_test_intent_restate_44338.IntentRestateTest.test_gate_fail_closed_on_missing_inputs",
+        "file": "tests/routing/test_intent_restate.py",
+        "status": "pass",
+        "seconds": 5.6e-05
+      },
+      {
+        "id": "_lld_test_intent_restate_44338.IntentRestateTest.test_hallucinated_capability_is_rejected",
+        "file": "tests/routing/test_intent_restate.py",
+        "status": "pass",
+        "seconds": 1.3e-05
+      },
+      {
+        "id": "_lld_test_intent_restate_44338.IntentRestateTest.test_invalid_schema_and_intent",
+        "file": "tests/routing/test_intent_restate.py",
+        "status": "pass",
+        "seconds": 1.6e-05
+      },
+      {
+        "id": "_lld_test_intent_restate_44338.IntentRestateTest.test_meta_needs_open_questions",
+        "file": "tests/routing/test_intent_restate.py",
+        "status": "pass",
+        "seconds": 9e-06
+      },
+      {
+        "id": "_lld_test_intent_restate_44338.IntentRestateTest.test_readonly_intent_cannot_write",
+        "file": "tests/routing/test_intent_restate.py",
+        "status": "pass",
+        "seconds": 9e-06
+      },
+      {
+        "id": "_lld_test_intent_restate_44338.IntentRestateTest.test_real_project_anchors_real_capability",
+        "file": "tests/routing/test_intent_restate.py",
+        "status": "pass",
+        "seconds": 0.112238
+      },
+      {
+        "id": "_lld_test_intent_restate_44338.IntentRestateTest.test_restate_cannot_copy_raw",
+        "file": "tests/routing/test_intent_restate.py",
+        "status": "pass",
+        "seconds": 2.5e-05
+      },
+      {
+        "id": "_lld_test_intent_restate_44338.IntentRestateTest.test_schema_and_happy_path",
+        "file": "tests/routing/test_intent_restate.py",
+        "status": "pass",
+        "seconds": 1.3e-05
+      },
+      {
+        "id": "_lld_test_provenance_view_36814.CliTest.test_bad_ledger_path",
+        "file": "tests/routing/test_provenance_view.py",
+        "status": "pass",
+        "seconds": 0.05561
+      },
+      {
+        "id": "_lld_test_provenance_view_36814.ProjectionTest.test_decision_provenance_groups",
+        "file": "tests/routing/test_provenance_view.py",
+        "status": "pass",
+        "seconds": 2.9e-05
+      },
+      {
+        "id": "_lld_test_provenance_view_36814.ProjectionTest.test_definition_of_done_derived",
+        "file": "tests/routing/test_provenance_view.py",
+        "status": "pass",
+        "seconds": 2e-05
+      },
+      {
+        "id": "_lld_test_provenance_view_36814.ProjectionTest.test_deterministic_bytes",
+        "file": "tests/routing/test_provenance_view.py",
+        "status": "pass",
+        "seconds": 5.5e-05
+      },
+      {
+        "id": "_lld_test_provenance_view_36814.ProjectionTest.test_issue_provenance_groups",
+        "file": "tests/routing/test_provenance_view.py",
+        "status": "pass",
+        "seconds": 9e-06
+      },
+      {
+        "id": "_lld_test_provenance_view_36814.ProjectionTest.test_kind_filter",
+        "file": "tests/routing/test_provenance_view.py",
+        "status": "pass",
+        "seconds": 1.1e-05
+      },
+      {
+        "id": "_lld_test_provenance_view_36814.ProjectionTest.test_labels_present",
+        "file": "tests/routing/test_provenance_view.py",
+        "status": "pass",
+        "seconds": 6e-06
+      },
+      {
+        "id": "_lld_test_provenance_view_36814.ProjectionTest.test_no_mutation_of_ledger",
+        "file": "tests/routing/test_provenance_view.py",
+        "status": "pass",
+        "seconds": 3.9e-05
+      },
+      {
+        "id": "_lld_test_provenance_view_36814.ProjectionTest.test_no_new_fields_in_ledger",
+        "file": "tests/routing/test_provenance_view.py",
+        "status": "pass",
+        "seconds": 1e-05
+      },
+      {
+        "id": "_lld_test_provenance_view_36814.ProjectionTest.test_real_ledger_projects",
+        "file": "tests/routing/test_provenance_view.py",
+        "status": "pass",
+        "seconds": 0.001932
+      },
+      {
+        "id": "_lld_test_routing_50842.RoutingTest.test_brownfield_routes_to_archaeologist",
+        "file": "tests/routing/test_routing.py",
+        "status": "pass",
+        "seconds": 0.764602
+      },
+      {
+        "id": "_lld_test_routing_50842.RoutingTest.test_classify_intent_scores_chinese_and_english",
+        "file": "tests/routing/test_routing.py",
+        "status": "pass",
+        "seconds": 2.9e-05
+      },
+      {
+        "id": "_lld_test_routing_50842.RoutingTest.test_cli_json_is_deterministic_and_leak_free",
+        "file": "tests/routing/test_routing.py",
+        "status": "pass",
+        "seconds": 1.135202
+      },
+      {
+        "id": "_lld_test_routing_50842.RoutingTest.test_conflicting_intents_ask_for_clarification",
+        "file": "tests/routing/test_routing.py",
+        "status": "pass",
+        "seconds": 1.034632
+      },
+      {
+        "id": "_lld_test_routing_50842.RoutingTest.test_corrupt_ledger_is_fail_closed",
+        "file": "tests/routing/test_routing.py",
+        "status": "pass",
+        "seconds": 0.851623
+      },
+      {
+        "id": "_lld_test_routing_50842.RoutingTest.test_empty_intent_still_defaults",
+        "file": "tests/routing/test_routing.py",
+        "status": "pass",
+        "seconds": 1.32605
+      },
+      {
+        "id": "_lld_test_routing_50842.RoutingTest.test_explicit_mode_conflict_asks_question",
+        "file": "tests/routing/test_routing.py",
+        "status": "pass",
+        "seconds": 0.541731
+      },
+      {
+        "id": "_lld_test_routing_50842.RoutingTest.test_frozen_state_still_beats_meta_intent",
+        "file": "tests/routing/test_routing.py",
+        "status": "pass",
+        "seconds": 0.806597
+      },
+      {
+        "id": "_lld_test_routing_50842.RoutingTest.test_governed_verify_and_code_and_plan",
+        "file": "tests/routing/test_routing.py",
+        "status": "pass",
+        "seconds": 6.121907
+      },
+      {
+        "id": "_lld_test_routing_50842.RoutingTest.test_greenfield_empty_dir",
+        "file": "tests/routing/test_routing.py",
+        "status": "pass",
+        "seconds": 1.166815
+      },
+      {
+        "id": "_lld_test_routing_50842.RoutingTest.test_handoff_chain_is_multihop_and_deterministic",
+        "file": "tests/routing/test_routing.py",
+        "status": "pass",
+        "seconds": 4.139871
+      },
+      {
+        "id": "_lld_test_routing_50842.RoutingTest.test_inspect_counts_are_bounded",
+        "file": "tests/routing/test_routing.py",
+        "status": "pass",
+        "seconds": 0.108879
+      },
+      {
+        "id": "_lld_test_routing_50842.RoutingTest.test_meta_intents_route_to_platform_steward",
+        "file": "tests/routing/test_routing.py",
+        "status": "pass",
+        "seconds": 2.610288
+      },
+      {
+        "id": "_lld_test_routing_50842.RoutingTest.test_partial_state_does_not_overwrite_existing_files",
+        "file": "tests/routing/test_routing.py",
+        "status": "pass",
+        "seconds": 1.204313
+      },
+      {
+        "id": "_lld_test_routing_50842.RoutingTest.test_route_intent_goes_to_expert_router",
+        "file": "tests/routing/test_routing.py",
+        "status": "pass",
+        "seconds": 1.139941
+      },
+      {
+        "id": "_lld_test_routing_50842.RoutingTest.test_unrecognized_nonempty_intent_asks_clarification",
+        "file": "tests/routing/test_routing.py",
+        "status": "pass",
+        "seconds": 2.036195
+      },
+      {
+        "id": "_lld_test_scenarios_6901.ScenarioDefinitionTest.test_every_covered_scenario_has_a_probe",
+        "file": "tests/routing/test_scenarios.py",
+        "status": "pass",
+        "seconds": 4.6e-05
+      },
+      {
+        "id": "_lld_test_scenarios_6901.ScenarioDefinitionTest.test_every_gap_has_an_explicit_cost",
+        "file": "tests/routing/test_scenarios.py",
+        "status": "pass",
+        "seconds": 8e-06
+      },
+      {
+        "id": "_lld_test_scenarios_6901.ScenarioDefinitionTest.test_matrix_definition_is_valid",
+        "file": "tests/routing/test_scenarios.py",
+        "status": "pass",
+        "seconds": 3.1e-05
+      },
+      {
+        "id": "_lld_test_scenarios_6901.ScenarioDefinitionTest.test_matrix_render_is_deterministic",
+        "file": "tests/routing/test_scenarios.py",
+        "status": "pass",
+        "seconds": 0.000308
+      },
+      {
+        "id": "_lld_test_scenarios_6901.ScenarioDefinitionTest.test_summary_counts_match_definition",
+        "file": "tests/routing/test_scenarios.py",
+        "status": "pass",
+        "seconds": 2.4e-05
+      },
+      {
+        "id": "_lld_test_scenarios_6901.ScenarioProbeTest.test_absolute_path_blocks",
+        "file": "tests/routing/test_scenarios.py",
+        "status": "pass",
+        "seconds": 5.4e-05
+      },
+      {
+        "id": "_lld_test_scenarios_6901.ScenarioProbeTest.test_archive_is_terminal_even_for_lifecycle_writes",
+        "file": "tests/routing/test_scenarios.py",
+        "status": "pass",
+        "seconds": 1.8e-05
+      },
+      {
+        "id": "_lld_test_scenarios_6901.ScenarioProbeTest.test_cas_rejects_stale_write",
+        "file": "tests/routing/test_scenarios.py",
+        "status": "pass",
+        "seconds": 1.6e-05
+      },
+      {
+        "id": "_lld_test_scenarios_6901.ScenarioProbeTest.test_corrupt_ledger_blocks_writes",
+        "file": "tests/routing/test_scenarios.py",
+        "status": "pass",
+        "seconds": 1.7e-05
+      },
+      {
+        "id": "_lld_test_scenarios_6901.ScenarioProbeTest.test_fingerprint_drift_detected",
+        "file": "tests/routing/test_scenarios.py",
+        "status": "pass",
+        "seconds": 1.887884
+      },
+      {
+        "id": "_lld_test_scenarios_6901.ScenarioProbeTest.test_freshness_uses_content_not_clock",
+        "file": "tests/routing/test_scenarios.py",
+        "status": "pass",
+        "seconds": 1.862868
+      },
+      {
+        "id": "_lld_test_scenarios_6901.ScenarioProbeTest.test_frozen_blocks_writes_but_allows_read",
+        "file": "tests/routing/test_scenarios.py",
+        "status": "pass",
+        "seconds": 8.4e-05
+      },
+      {
+        "id": "_lld_test_scenarios_6901.ScenarioProbeTest.test_gap_scenarios_are_explicitly_declared",
+        "file": "tests/routing/test_scenarios.py",
+        "status": "pass",
+        "seconds": 2.6e-05
+      },
+      {
+        "id": "_lld_test_scenarios_6901.ScenarioProbeTest.test_guard_cli_json_is_leak_free",
+        "file": "tests/routing/test_scenarios.py",
+        "status": "pass",
+        "seconds": 1.776487
+      },
+      {
+        "id": "_lld_test_scenarios_6901.ScenarioProbeTest.test_guard_detects_stale_report",
+        "file": "tests/routing/test_scenarios.py",
+        "status": "pass",
+        "seconds": 2.509902
+      },
+      {
+        "id": "_lld_test_scenarios_6901.ScenarioProbeTest.test_guard_is_read_only",
+        "file": "tests/routing/test_scenarios.py",
+        "status": "pass",
+        "seconds": 1.727091
+      },
+      {
+        "id": "_lld_test_scenarios_6901.ScenarioProbeTest.test_missing_version_warns_instead_of_blocking",
+        "file": "tests/routing/test_scenarios.py",
+        "status": "pass",
+        "seconds": 8.1e-05
+      },
+      {
+        "id": "_lld_test_scenarios_6901.ScenarioProbeTest.test_retired_cap_conflict_blocks",
+        "file": "tests/routing/test_scenarios.py",
+        "status": "pass",
+        "seconds": 1.85658
+      },
+      {
+        "id": "_lld_test_scenarios_6901.ScenarioProbeTest.test_stale_claim_warns",
+        "file": "tests/routing/test_scenarios.py",
+        "status": "pass",
+        "seconds": 5e-05
+      },
+      {
+        "id": "_lld_test_scenarios_6901.ScenarioProbeTest.test_stale_report_downgrades_evidence",
+        "file": "tests/routing/test_scenarios.py",
+        "status": "pass",
+        "seconds": 2.36259
+      },
+      {
+        "id": "_lld_test_scenarios_6901.ScenarioProbeTest.test_truncated_scan_warns",
+        "file": "tests/routing/test_scenarios.py",
+        "status": "pass",
+        "seconds": 6.1e-05
+      },
+      {
+        "id": "_lld_test_scenarios_6901.ScenarioProbeTest.test_unbound_report_is_warned_and_rejected_in_strict_mode",
+        "file": "tests/routing/test_scenarios.py",
+        "status": "pass",
+        "seconds": 2.051849
+      },
+      {
+        "id": "_lld_test_scenarios_6901.ScenarioProbeTest.test_unsupported_version_blocks",
+        "file": "tests/routing/test_scenarios.py",
+        "status": "pass",
+        "seconds": 7e-05
+      },
+      {
+        "id": "_lld_test_scenarios_6901.ScenarioProbeTest.test_uri_schemes_are_not_false_absolute_paths",
+        "file": "tests/routing/test_scenarios.py",
+        "status": "pass",
+        "seconds": 0.012628
+      },
+      {
+        "id": "_lld_test_skills_41253.DecideTest.test_creates_proposed_from_queue",
+        "file": "tests/routing/test_skills.py",
+        "status": "pass",
+        "seconds": 0.039707
+      },
+      {
+        "id": "_lld_test_skills_41253.DecideTest.test_id_never_reuses",
+        "file": "tests/routing/test_skills.py",
+        "status": "pass",
+        "seconds": 0.001722
+      },
+      {
+        "id": "_lld_test_skills_41253.DecideTest.test_rejects_code_not_in_queue",
+        "file": "tests/routing/test_skills.py",
+        "status": "pass",
+        "seconds": 0.05332
+      },
+      {
+        "id": "_lld_test_skills_41253.DecideTest.test_rejects_duplicate_open_decision",
+        "file": "tests/routing/test_skills.py",
+        "status": "pass",
+        "seconds": 0.001546
+      },
+      {
+        "id": "_lld_test_skills_41253.LessonTest.test_confirm_links_back_to_candidate",
+        "file": "tests/routing/test_skills.py",
+        "status": "pass",
+        "seconds": 0.05424
+      },
+      {
+        "id": "_lld_test_skills_41253.LessonTest.test_confirm_requires_insight_and_action",
+        "file": "tests/routing/test_skills.py",
+        "status": "pass",
+        "seconds": 0.001477
+      },
+      {
+        "id": "_lld_test_skills_41253.LessonTest.test_dismiss_marks_candidate",
+        "file": "tests/routing/test_skills.py",
+        "status": "pass",
+        "seconds": 0.05283
+      },
+      {
+        "id": "_lld_test_skills_41253.LessonTest.test_dismiss_requires_reason",
+        "file": "tests/routing/test_skills.py",
+        "status": "pass",
+        "seconds": 0.001559
+      },
+      {
+        "id": "_lld_test_skills_41253.LessonTest.test_id_never_reuses",
+        "file": "tests/routing/test_skills.py",
+        "status": "pass",
+        "seconds": 0.053536
+      },
+      {
+        "id": "_lld_test_skills_41253.LessonTest.test_unknown_candidate_rejected",
+        "file": "tests/routing/test_skills.py",
+        "status": "pass",
+        "seconds": 0.00147
+      },
+      {
+        "id": "_lld_test_compare_graphs_19846.CompareGraphsTest.test_actual_only_capability_gets_steward",
+        "file": "tests/traceability/test_compare_graphs.py",
+        "status": "pass",
+        "seconds": 3.058983
+      },
+      {
+        "id": "_lld_test_compare_graphs_19846.CompareGraphsTest.test_compare_planned_and_actual",
+        "file": "tests/traceability/test_compare_graphs.py",
+        "status": "pass",
+        "seconds": 2.755041
+      },
+      {
+        "id": "_lld_test_compare_graphs_19846.CompareGraphsTest.test_execution_order_uses_next_queue_and_experts",
+        "file": "tests/traceability/test_compare_graphs.py",
+        "status": "pass",
+        "seconds": 3.601834
+      },
+      {
+        "id": "_lld_test_compare_graphs_19846.CompareGraphsTest.test_fallback_to_registry_warns",
+        "file": "tests/traceability/test_compare_graphs.py",
+        "status": "pass",
+        "seconds": 2.915542
+      },
+      {
+        "id": "_lld_test_compare_graphs_19846.CompareGraphsTest.test_outputs_are_non_destructive_and_forceable",
+        "file": "tests/traceability/test_compare_graphs.py",
+        "status": "pass",
+        "seconds": 4.269642
+      },
+      {
+        "id": "_lld_test_compare_graphs_19846.CompareGraphsTest.test_planned_only_capability_gets_archaeologist",
+        "file": "tests/traceability/test_compare_graphs.py",
+        "status": "pass",
+        "seconds": 2.860072
+      },
+      {
+        "id": "_lld_test_trace_arch_git_33695.TraceArchGitTest.test_architect_empty_docs_warns",
+        "file": "tests/traceability/test_trace_arch_git.py",
+        "status": "pass",
+        "seconds": 1.582662
+      },
+      {
+        "id": "_lld_test_trace_arch_git_33695.TraceArchGitTest.test_architect_is_non_destructive",
+        "file": "tests/traceability/test_trace_arch_git.py",
+        "status": "pass",
+        "seconds": 3.045412
+      },
+      {
+        "id": "_lld_test_trace_arch_git_33695.TraceArchGitTest.test_dependency_is_extracted_from_docs",
+        "file": "tests/traceability/test_trace_arch_git.py",
+        "status": "pass",
+        "seconds": 2.155999
+      },
+      {
+        "id": "_lld_test_trace_arch_git_33695.TraceArchGitTest.test_docs_to_target_architecture",
+        "file": "tests/traceability/test_trace_arch_git.py",
+        "status": "pass",
+        "seconds": 2.03313
+      },
+      {
+        "id": "_lld_test_trace_arch_git_33695.TraceArchGitTest.test_git_trace_maps_paths_to_capabilities_and_events",
+        "file": "tests/traceability/test_trace_arch_git.py",
+        "status": "pass",
+        "seconds": 1.80912
+      },
+      {
+        "id": "_lld_test_trace_arch_git_33695.TraceArchGitTest.test_git_trace_requires_repo_and_respects_existing",
+        "file": "tests/traceability/test_trace_arch_git.py",
+        "status": "pass",
+        "seconds": 3.217478
+      },
+      {
+        "id": "_lld_test_trace_docs_39852.TraceDocsTest.test_code_index_consumes_git_trace",
+        "file": "tests/traceability/test_trace_docs.py",
+        "status": "pass",
+        "seconds": 1.732713
+      },
+      {
+        "id": "_lld_test_trace_docs_39852.TraceDocsTest.test_code_index_maps_all_artifacts",
+        "file": "tests/traceability/test_trace_docs.py",
+        "status": "pass",
+        "seconds": 1.656782
+      },
+      {
+        "id": "_lld_test_trace_docs_39852.TraceDocsTest.test_code_index_non_destructive",
+        "file": "tests/traceability/test_trace_docs.py",
+        "status": "pass",
+        "seconds": 2.170639
+      },
+      {
+        "id": "_lld_test_trace_docs_39852.TraceDocsTest.test_rebuild_docs_creates_canonical_set",
+        "file": "tests/traceability/test_trace_docs.py",
+        "status": "pass",
+        "seconds": 2.710295
+      },
+      {
+        "id": "_lld_test_trace_docs_39852.TraceDocsTest.test_rebuild_docs_dry_run_writes_nothing",
+        "file": "tests/traceability/test_trace_docs.py",
+        "status": "pass",
+        "seconds": 1.588398
+      },
+      {
+        "id": "_lld_test_trace_docs_39852.TraceDocsTest.test_rebuild_docs_is_non_destructive_and_forceable",
+        "file": "tests/traceability/test_trace_docs.py",
+        "status": "pass",
+        "seconds": 2.029267
+      },
+      {
+        "id": "_lld_test_trace_docs_39852.TraceDocsTest.test_rebuild_docs_json_summary",
+        "file": "tests/traceability/test_trace_docs.py",
+        "status": "pass",
+        "seconds": 3.294641
+      },
+      {
+        "id": "_lld_test_assets_62733.AssetsTest.test_bundle_is_deterministic_and_complete",
+        "file": "tests/views/test_assets.py",
+        "status": "pass",
+        "seconds": 0.340809
+      },
+      {
+        "id": "_lld_test_assets_62733.AssetsTest.test_check_assets_detects_byte_drift_against_manifest",
+        "file": "tests/views/test_assets.py",
+        "status": "pass",
+        "seconds": 8.328618
+      },
+      {
+        "id": "_lld_test_assets_62733.AssetsTest.test_check_assets_digest_equals_bundle_digest",
+        "file": "tests/views/test_assets.py",
+        "status": "pass",
+        "seconds": 5.618679
+      },
+      {
+        "id": "_lld_test_assets_62733.AssetsTest.test_check_assets_without_manifest_stays_form_only",
+        "file": "tests/views/test_assets.py",
+        "status": "pass",
+        "seconds": 5.97499
+      },
+      {
+        "id": "_lld_test_assets_62733.AssetsTest.test_install_requires_human_approval_and_is_idempotent",
+        "file": "tests/views/test_assets.py",
+        "status": "pass",
+        "seconds": 6.839284
+      },
+      {
+        "id": "_lld_test_assets_62733.AssetsTest.test_installed_copy_drift_is_detected",
+        "file": "tests/views/test_assets.py",
+        "status": "pass",
+        "seconds": 9.075246
+      },
+      {
+        "id": "_lld_test_assets_62733.AssetsTest.test_manifest_binding_mismatch_is_detected",
+        "file": "tests/views/test_assets.py",
+        "status": "pass",
+        "seconds": 8.173624
+      },
+      {
+        "id": "_lld_test_assets_62733.AssetsTest.test_project_owned_skills_do_not_poison_asset_check",
+        "file": "tests/views/test_assets.py",
+        "status": "pass",
+        "seconds": 7.010505
+      },
+      {
+        "id": "_lld_test_assets_62733.AssetsTest.test_router_consumes_installed_assets",
+        "file": "tests/views/test_assets.py",
+        "status": "pass",
+        "seconds": 9.547742
+      },
+      {
+        "id": "_lld_test_assets_62733.AssetsTest.test_scoped_check_still_detects_missing_installed_asset",
+        "file": "tests/views/test_assets.py",
+        "status": "pass",
+        "seconds": 5.205711
+      },
+      {
+        "id": "_lld_test_assets_62733.AssetsTest.test_stale_edited_copy_is_protected",
+        "file": "tests/views/test_assets.py",
+        "status": "pass",
+        "seconds": 8.406049
+      },
+      {
+        "id": "_lld_test_assets_62733.AssetsTest.test_upgrade_m7_installs_and_rollback_removes_created",
+        "file": "tests/views/test_assets.py",
+        "status": "pass",
+        "seconds": 23.38493
+      },
+      {
+        "id": "_lld_test_board_views_49940.BoardViewsTest.test_board_contract_and_budget_include_new_views",
+        "file": "tests/views/test_board_views.py",
+        "status": "pass",
+        "seconds": 0.166891
+      },
+      {
+        "id": "_lld_test_board_views_49940.BoardViewsTest.test_template_has_all_work_views_and_anchors",
+        "file": "tests/views/test_board_views.py",
+        "status": "pass",
+        "seconds": 0.057035
+      },
+      {
+        "id": "_lld_test_board_views_49940.BoardViewsTest.test_work_views_degrade_without_data",
+        "file": "tests/views/test_board_views.py",
+        "status": "pass",
+        "seconds": 0.197024
+      },
+      {
+        "id": "_lld_test_test_modules_56059.TestModulesTest.test_detects_missing_module_id_and_bad_module_name",
+        "file": "tests/views/test_test_modules.py",
+        "status": "pass",
+        "seconds": 0.343492
+      },
+      {
+        "id": "_lld_test_test_modules_56059.TestModulesTest.test_map_module_id_and_discovery_agree",
+        "file": "tests/views/test_test_modules.py",
+        "status": "pass",
+        "seconds": 1.459488
+      },
+      {
+        "id": "_lld_test_test_modules_56059.TestModulesTest.test_render_is_deterministic_and_describes_modules",
+        "file": "tests/views/test_test_modules.py",
+        "status": "pass",
+        "seconds": 0.059264
+      },
+      {
+        "id": "_lld_test_test_modules_56059.TestModulesTest.test_target_report_flags_modules_without_tests",
+        "file": "tests/views/test_test_modules.py",
+        "status": "pass",
+        "seconds": 0.220613
+      },
+      {
+        "id": "_lld_test_test_modules_56059.TestModulesTest.test_two_discovery_mechanisms_find_same_files",
+        "file": "tests/views/test_test_modules.py",
+        "status": "pass",
+        "seconds": 0.002059
+      },
+      {
+        "id": "_lld_test_work_panel_54939.CloseConditionTest.test_close_requires_resolution_when_condition_present",
+        "file": "tests/views/test_work_panel.py",
+        "status": "pass",
+        "seconds": 1.876777
+      },
+      {
+        "id": "_lld_test_work_panel_54939.CloseConditionTest.test_declared_capability_allows_open",
+        "file": "tests/views/test_work_panel.py",
+        "status": "pass",
+        "seconds": 9.5e-05
+      },
+      {
+        "id": "_lld_test_work_panel_54939.CloseConditionTest.test_file_exists_uses_project_root",
+        "file": "tests/views/test_work_panel.py",
+        "status": "pass",
+        "seconds": 0.170134
+      },
+      {
+        "id": "_lld_test_work_panel_54939.CloseConditionTest.test_manual_never_auto_satisfied",
+        "file": "tests/views/test_work_panel.py",
+        "status": "pass",
+        "seconds": 7.1e-05
+      },
+      {
+        "id": "_lld_test_work_panel_54939.CloseConditionTest.test_unknown_kind_is_rejected",
+        "file": "tests/views/test_work_panel.py",
+        "status": "pass",
+        "seconds": 5.2e-05
+      },
+      {
+        "id": "_lld_test_work_panel_54939.CloseConditionTest.test_verified_capability_blocks_open",
+        "file": "tests/views/test_work_panel.py",
+        "status": "pass",
+        "seconds": 4.8e-05
+      },
+      {
+        "id": "_lld_test_work_panel_54939.ImportReportTest.test_dry_run_and_human_approval",
+        "file": "tests/views/test_work_panel.py",
+        "status": "pass",
+        "seconds": 0.46926
+      },
+      {
+        "id": "_lld_test_work_panel_54939.ImportReportTest.test_empty_report_never_green",
+        "file": "tests/views/test_work_panel.py",
+        "status": "pass",
+        "seconds": 0.397794
+      },
+      {
+        "id": "_lld_test_work_panel_54939.ImportReportTest.test_three_adapters_autodetect",
+        "file": "tests/views/test_work_panel.py",
+        "status": "pass",
+        "seconds": 0.788789
+      },
+      {
+        "id": "_lld_test_work_panel_54939.WorkPanelTest.test_add_and_close_require_approval_and_are_deterministic",
+        "file": "tests/views/test_work_panel.py",
+        "status": "pass",
+        "seconds": 2.642715
+      },
+      {
+        "id": "_lld_test_work_panel_54939.WorkPanelTest.test_node_summary_scopes_work_items",
+        "file": "tests/views/test_work_panel.py",
+        "status": "pass",
+        "seconds": 7.4e-05
+      },
+      {
+        "id": "_lld_test_work_panel_54939.WorkPanelTest.test_sync_tests_binding_and_24_invariants",
+        "file": "tests/views/test_work_panel.py",
+        "status": "pass",
+        "seconds": 2.743188
+      },
+      {
+        "id": "_lld_test_work_panel_54939.WorkPanelTest.test_tampered_projection_fails_verifier",
+        "file": "tests/views/test_work_panel.py",
+        "status": "pass",
+        "seconds": 2.112443
+      },
+      {
+        "id": "_lld_test_work_panel_54939.WorkPanelTest.test_validation_rejects_bad_scope_and_refs",
+        "file": "tests/views/test_work_panel.py",
+        "status": "pass",
+        "seconds": 0.000109
+      },
+      {
+        "id": "_lld_test_work_panel_54939.WorkPanelTest.test_work_panel_check_on_demo_is_clean",
+        "file": "tests/views/test_work_panel.py",
+        "status": "pass",
+        "seconds": 0.057895
+      }
+    ],
+    "note": "test_report.json 的只读投影；账本内不复制生成时间与日志尾部"
+  }
 }

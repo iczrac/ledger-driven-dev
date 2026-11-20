@@ -15,3 +15,8 @@ venv/
 # 临时产出
 *.tmp
 .temp/
+
+# 升级副产物（安装副本 / 备份 / 安装清单）：运行时生成，不入库
+.workbuddy/
+.ledger-upgrade/
+governance/ASSET_MANIFEST.json

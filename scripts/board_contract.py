@@ -45,17 +45,35 @@ TEMPLATE_REL = "templates/index.html.template"
 SCHEMA_CHECK = "board-contract/1"
 SCHEMA_NORMALIZE = "board-normalize/1"
 PLACEHOLDER = "const EMBED = /*LEDGER*/;\nlet DATA"
+# v2.7.0：本体投影词表段（第二个数据段）。与 EMBED 同范式——数据由权威
+# ONTOLOGY.json 注入，骨架摘要归一化该段，避免本体内容变化触发骨架漂移。
+ONTO_TERMS_RE = re.compile(
+    r"const ONTO_TERMS = \[.*?\];\nlet ONTO_DATA = ONTO_TERMS;", re.S)
+ONTO_PLACEHOLDER = "const ONTO_TERMS = /*ONTO*/;\nlet ONTO_DATA = ONTO_TERMS;"
+ONTOLOGY_REL = "docs/generated/ONTOLOGY.json"
 STYLE_RE = re.compile(r"<style>(.*?)</style>", re.S)
 REQUIRED_IDS = ("stats", "legend", "list", "foot", "q")
 BACKUP_DIR = ".ledger-upgrade/backups"
 
 
 def skeleton_digest(html: str) -> str:
-    """忽略 EMBED 数据内容，对骨架字节取摘要。"""
+    """忽略 EMBED 与 ONTO_TERMS 数据内容，对骨架字节取摘要。"""
     if not EMBED_RE.search(html):
         raise ValueError("找不到 const EMBED / let DATA 标记，无法计算骨架摘要")
     normalized = EMBED_RE.sub(lambda _m: PLACEHOLDER, html, count=1)
+    # ONTO_TERMS 段存在才归一化：兼容升级前的老看板（无该段）。
+    if ONTO_TERMS_RE.search(normalized):
+        normalized = ONTO_TERMS_RE.sub(lambda _m: ONTO_PLACEHOLDER, normalized, count=1)
     return sha256_bytes(normalized.encode("utf-8"))
+
+
+def ontology_terms(source_root: Path = ROOT) -> list[dict]:
+    """从权威本体投影读取 ubiquitous_language（只读派生，非第二事实源）。"""
+    p = Path(source_root) / ONTOLOGY_REL
+    if not p.is_file():
+        return []
+    onto = json.loads(p.read_text(encoding="utf-8"))
+    return list(onto.get("ubiquitous_language") or [])
 
 
 def template_digest(source_root: Path = ROOT) -> str:
@@ -130,6 +148,13 @@ def normalize_board(gov: Path, ledger: dict, source_root: Path = ROOT,
         raise ValueError("权威模板缺少 EMBED 标记")
     rebuilt = EMBED_RE.sub(lambda _m: "const EMBED = " + compact + ";\nlet DATA",
                            tpl, count=1)
+    # 注入本体投影词表（v2.7.0）：数据来自权威 ONTOLOGY.json，非硬编码。
+    terms = ontology_terms(source_root)
+    terms_json = json.dumps(terms, ensure_ascii=False, separators=(",", ":"))
+    if ONTO_TERMS_RE.search(rebuilt):
+        rebuilt = ONTO_TERMS_RE.sub(
+            lambda _m: "const ONTO_TERMS = " + terms_json + ";\nlet ONTO_DATA = ONTO_TERMS;",
+            rebuilt, count=1)
     board = gov / "index.html"
     before = board_digest(gov) if board.is_file() else None
     backup = None

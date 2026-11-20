@@ -58,6 +58,27 @@
           "domain": "BINDING",
           "impl": ["templates/binding_advisory.py"],
           "tests": ["tests/core/test_binding_advisory.py"]
+        },
+        {
+          "code": "METHOD.GOV.RESTATE.08",
+          "name": "复述门（v2.4.0 补录）：结构化意图声明 + 机器锚定，路由前置",
+          "domain": "RESTATE",
+          "impl": ["scripts/intent_restate.py"],
+          "tests": ["tests/routing/test_intent_restate.py"]
+        },
+        {
+          "code": "METHOD.GOV.ORCH.09",
+          "name": "专家团编排（v2.5.0 补录）：交接链展开 + 命令分类 + 人工批准包",
+          "domain": "ORCH",
+          "impl": ["scripts/expert_run.py"],
+          "tests": ["tests/routing/test_expert_run.py"]
+        },
+        {
+          "code": "METHOD.GOV.ANNOT.10",
+          "name": "来源投影（v2.6.0 补录）：AI推断/人确认分组 + 完成定义派生",
+          "domain": "ANNOT",
+          "impl": ["scripts/provenance_view.py"],
+          "tests": ["tests/routing/test_provenance_view.py"]
         }
       ]
     }

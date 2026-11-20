@@ -2,6 +2,36 @@
 
 本项目版本遵循语义化版本（SemVer）。
 
+## [2.7.0] - 2026-11-20
+
+**真实自举 + 看板接本体**：修复「方法论仓库不用自己的账本开发自己」的断链，
+让账本重新等于真实开发历史；看板术语视图从纯硬编码改为消费本体投影。
+
+**A · 自举闭环**：
+- 方法仓账本此前停在 v2.3.0、无 `governance_meta`（从未走过 M1-M8）。
+  本版补齐版本轴绑定字段：`method_version=2.7.0` / `method_assets` / `board_skeleton` /
+  `installed_assets` / `ontology_digest`，全部由 upgrade apply 生成（带批准人）。
+- 补录 v2.4.0 / v2.5.0 / v2.6.0 三条实际已发生的发版决策（status=done，
+  证据指向真实 CHANGELOG / 交付卡 / 实现脚本），走 `ledger_io.write_ledger`
+  唯一写入口，看板 EMBED 同步。
+- 三个新元工具登记为方法仓能力点（`METHOD.GOV.RESTATE.08` / `ORCH.09` /
+  `ANNOT.10`），测试静态 import 实现可 bound；能力模型 7→10，
+  9 verified + 1 declared（BINDING.07 负向探针诚实保留），
+  `账本=f(registry,仓库,报告)` 逐字段可复算。
+- 新增 `tests/meta/test_dogfood.py` 守门测试（6 条），先红后绿锁定自举状态。
+
+**B · 看板术语接本体**：
+- 权威模板新增第二个数据段 `ONTO_TERMS`（与 EMBED 同范式）：由
+  `board_contract.normalize` 从 `docs/generated/ONTOLOGY.json` 注入 11 条
+  `ubiquitous_language`，骨架摘要归一化该段以保持稳定。
+- 「术语与实现」视图新增「本体投影词表」区（标注机器派生来源），
+  与原 21 条概念解说、6 条思路、7 条实现并列——两类术语语义层次不同，
+  不相互替代。`ledger_io.sync_board` 只管 EMBED，不触碰本体段，无写入冲突。
+- 方法仓 + 示例看板骨架统一归一（digest `ba37cd40…`），M6 迁移推送。
+
+无新治理不变量、无新账本字段；本体投影与来源投影范式不变。
+全量门禁 EXIT=0、377 单测、27 不变量绿。
+
 ## [2.6.0] - 2026-11-20
 
 **来源投影与完成定义**：借鉴外部方法论「让 AI 产出与人确认可区分」的思路，

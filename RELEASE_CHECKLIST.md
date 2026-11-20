@@ -23,7 +23,9 @@
 - [x] 专家团自动编排：expert_run 沿交接链展开逐跳契约 + 命令分类（readonly/approval/manual）+ 人工批准包；零新判定权、默认 dry-run 零执行、fail-closed、可复算；批准点仍由人 --approved-by
 - [x] 来源投影：provenance_view 把既有 issue/decision 字段按 [AI推断]/[人确认] 分组、从任务卡派生 definition_of_done；只读投影不写账本、不改 27 不变量；黄金范例 examples/golden-walkthrough 六步全链路可运行可复算零写盘
 - [x] 技能脚本：重复立项、缺行动经验、无理由驳回均由代码拒绝
-- [x] 243 个 unittest 用例（含 v1.3.0 的 7 个三态/幂等/适配器回归、v1.4.0 的 9 个反向回流专项、v1.5.0 的 12 个本体投影专项、v1.6.0 的 16 个验收契约专项 + 4 个 append-only 回归），零第三方依赖，临时目录隔离
+- [x] 377 个 unittest 用例（含 v1.3.0 的 7 个三态/幂等/适配器回归、v1.4.0 的 9 个反向回流专项、v1.5.0 的 12 个本体投影专项、v1.6.0 的 16 个验收契约专项 + 4 个 append-only 回归、v2.4 的 11 个复述门、v2.5 的 16 个编排器、v2.6 的 10 个来源投影、v2.7 的 6 个自举守门），零第三方依赖，临时目录隔离
+- [x] 自举闭环：方法仓账本走过 M1-M8 补齐 governance_meta 五轴、补录 v2.4/2.5/2.6 三条发版决策、三个新元工具登记为能力点（7→10），账本=f(registry,仓库,报告) 可复算；守门测试 test_dogfood 先红后绿
+- [x] 看板术语接本体：第二数据段 ONTO_TERMS 由 board_contract 从 ONTOLOGY.json 注入 11 条 ubiquitous_language，骨架摘要归一化该段；术语视图新增「本体投影词表」区与人读概念解说并列；方法与示例看板骨架统一（digest ba37cd40）
 - [x] CI（Python 3.10-3.13 矩阵）/ CD（tag 触发，先门禁后打包）
 - [x] 示例项目已跑通，产出真实账本与看板
 
@@ -140,7 +142,7 @@
 ## 文档
 
 - [x] README（价值主张、快速开始、目录结构、视图说明）
-- [x] 二十三篇编号方法论文档 + STANDARD.md + CONTRIBUTING.md
+- [x] 二十四篇编号方法论文档 + STANDARD.md + CONTRIBUTING.md
 - [x] LICENSE（MIT）
 - [x] CHANGELOG
 - [x] registry.example.json 含字段说明注释

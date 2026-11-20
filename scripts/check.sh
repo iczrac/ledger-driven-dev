@@ -300,7 +300,10 @@ stage_hygiene(){
 import os, re
 bad = []
 for root, dirs, files in os.walk('.'):
-    if '.git' in root:
+    # 跳过安装副本与升级备份：这些是只读派生/历史产物，其相对链接按
+    # 目标项目语境解析，不能拿权威源的内链口径要求它们（v2.7.0 方法仓
+    # 自举装了 .workbuddy 后暴露）。
+    if any(x in root for x in ('.git', '.workbuddy', '.ledger-upgrade')):
         continue
     for f in files:
         if not f.endswith('.md'):

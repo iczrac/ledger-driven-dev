@@ -83,7 +83,8 @@
         "tests/meta/test_platform_contract.py",
         "tests/meta/test_feedback.py",
         "tests/meta/test_ontology.py",
-        "tests/meta/test_acceptance.py"
+        "tests/meta/test_acceptance.py",
+        "tests/meta/test_dogfood.py"
       ]
     },
     {

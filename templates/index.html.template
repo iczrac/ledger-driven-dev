@@ -171,6 +171,9 @@ input.search:focus{border-color:var(--purple)}
 const EMBED = {"ledger_version":"1.0","title":"项目决策与能力账本","purpose":"单一事实源：决策、裁决、待办及能力索引的唯一写入点。","last_updated":"","owner":"待定","workflow":["所有重大决策/裁决/待办只写入本文件 entries，不再新建独立报告。","新增条目分配稳定 id，状态初始 proposed/decided，填齐字段。","旧决策被取代时设 superseded/supersedes，用取代链表达演进。","能力等级与完成度由 build_capability_model.py 从证据重算，禁止手填。"],"fields":{"id":"稳定标识，永不复用","status":"proposed | decided | done | superseded | deferred","evidence":"证据/文档路径","confidence":"high | medium | low"},"entries":[],"history":{"spec":{},"events":[]},"lessons":{"spec":{},"items":[],"candidates":[]},"module_map":{"modules":[],"pages_path":"artifacts/control_center/pages/"},"architecture":{"projects":[]},"capability_model":{"version":"1.0","generated_at":"","summary":{"projects":0,"modules":0,"capabilities":0,"overall_completion":0},"levels":{},"scoring":{},"coding_spec":{},"doc_index_spec":{},"projects":[],"loop_protocol":{}}};
 let DATA = EMBED;
 
+const ONTO_TERMS = [];
+let ONTO_DATA = ONTO_TERMS;
+
 const STATUS = {
   decided:{label:'已裁决',cls:'p-decided'},
   done:{label:'已完成',cls:'p-done'},
@@ -682,19 +685,23 @@ function glossCard(x,tag){
     '<div class="cmeta" style="margin-top:8px">'+esc(x.d)+'</div></div>';
 }
 function renderGlossary(box){
-  document.getElementById('legend').innerHTML='<span>专有词汇 · 编码思路 · 关键实现解说 —— 内容与仓库实现同源：改实现必须改权威模板并发版，禁止在项目内手改本页</span>';
+  document.getElementById('legend').innerHTML='<span>本体投影词表（机器派生）· 专有词汇 · 编码思路 · 关键实现 —— 本体词表来自 ONTOLOGY.json 投影，概念解说随权威模板发版，禁止项目内手改</span>';
   const f=x=>!query||(x.t+' '+(x.s||'')+' '+x.d).toLowerCase().includes(query);
   const G=GLOSSARY.filter(f),C=CODING_IDEAS.filter(f),N=IMPL_NOTES.filter(f);
-  const total=G.length+C.length+N.length;
-  const gs=G.slice(0,pageLimit),cs=C.slice(0,pageLimit),ns=N.slice(0,pageLimit);
-  let html='<div class="specbox"><b>词汇</b> '+G.length+' 条 · <b>思路</b> '+C.length+' 条 · <b>实现</b> '+N.length+' 条 · 可用右上搜索框过滤</div>';
+  // 本体投影词表：来自 ONTOLOGY.json 的 ubiquitous_language（只读派生，非硬编码）
+  const O=(Array.isArray(ONTO_DATA)?ONTO_DATA:[]).map(x=>({t:x.term,s:x.qualified_form||'',d:(x.definition||'')+(x.polyseme?' · 同形异义（需限定）':'')})).filter(f);
+  const total=O.length+G.length+C.length+N.length;
+  const os=O.slice(0,pageLimit),gs=G.slice(0,pageLimit),cs=C.slice(0,pageLimit),ns=N.slice(0,pageLimit);
+  let html='<div class="specbox"><b>本体词表</b> '+O.length+' 条 · <b>词汇</b> '+G.length+' 条 · <b>思路</b> '+C.length+' 条 · <b>实现</b> '+N.length+' 条 · 右上搜索框可过滤</div>';
+  html+='<div class="day">本体投影词表 · 来自 ONTOLOGY.json（机器派生，改权威源后重算）</div>';
+  html+=os.length?os.map(x=>glossCard(x,'本体')).join(''):'<div class="empty">无匹配本体术语（看板未注入投影或无可匹配项）</div>';
   html+='<div class="day">专有词汇表 · 术语释义</div>';
   html+=gs.length?gs.map(x=>glossCard(x,'术语')).join(''):'<div class="empty">无匹配术语</div>';
   html+='<div class="day">编码思路</div>';
   html+=cs.length?cs.map(x=>glossCard(x,'思路')).join(''):'<div class="empty">无匹配</div>';
   html+='<div class="day">关键实现解说</div>';
   html+=ns.length?ns.map(x=>glossCard(x,'实现')).join(''):'<div class="empty">无匹配</div>';
-  html+=moreHtml(total,gs.length+cs.length+ns.length,' 条内容');
+  html+=moreHtml(total,os.length+gs.length+cs.length+ns.length,' 条内容');
   box.innerHTML=html;bindMore(box);
 }
 function capHistoryHtml(code){
