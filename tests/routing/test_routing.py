@@ -156,6 +156,48 @@ class RoutingTest(unittest.TestCase):
         self.assertTrue(facts["counts"]["truncated"])
         self.assertEqual(facts["counts"]["scanned"], 0)
 
+    def test_unrecognized_nonempty_intent_asks_clarification(self):
+        for intent in ("让专家团接管全流程", "随便聊聊"):
+            with self.subTest(intent=intent):
+                root = governed_tree()
+                result = build(root, intent, "auto", "proj")
+                self.assertEqual(result["intents"], [])
+                self.assertIsNotNone(result["needs_clarification"])
+                self.assertIn("intent.json",
+                              result["needs_clarification"]["question"])
+                self.assertEqual(result["route"]["confidence"], "low")
+
+    def test_empty_intent_still_defaults(self):
+        root = governed_tree()
+        result = build(root, "", "auto", "proj")
+        self.assertIsNone(result["needs_clarification"])
+        self.assertEqual(result["route"]["expert"], "ledger-steward")
+
+    def test_route_intent_goes_to_expert_router(self):
+        root = governed_tree()
+        result = build(root, "该找谁处理这个任务", "auto", "proj")
+        self.assertEqual(result["intents"], ["route(1)"])
+        self.assertEqual(result["route"]["expert"], "expert-router")
+        self.assertEqual(result["route"]["writes"], [])
+        self.assertIsNone(result["needs_clarification"])
+
+    def test_handoff_chain_is_multihop_and_deterministic(self):
+        cases = {
+            "实现新功能并补单测": ["loop-executor", "evidence-auditor",
+                             "ledger-steward"],
+            "CI 校验账本不变量": ["evidence-auditor", "ledger-steward",
+                            "loop-executor"],
+            "该找谁处理这个任务": ["expert-router", "ledger-steward",
+                            "evidence-auditor"],
+        }
+        for intent, expected in cases.items():
+            with self.subTest(intent=intent):
+                root = governed_tree()
+                result = build(root, intent, "auto", "proj")
+                self.assertEqual(result["route"]["handoff"]["chain"], expected)
+                again = build(root, intent, "auto", "proj")
+                self.assertEqual(again["route"]["handoff"]["chain"], expected)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -312,6 +312,19 @@ FOLLOW_UP = {
     "resume": "loop-executor",
 }
 
+HANDOFF_CHAIN = {
+    "expert-router": ["expert-router", "ledger-steward", "evidence-auditor"],
+    "greenfield-architect": ["greenfield-architect", "ledger-steward",
+                             "evidence-auditor"],
+    "project-archaeologist": ["project-archaeologist", "greenfield-architect",
+                              "ledger-steward"],
+    "ledger-steward": ["ledger-steward", "loop-executor", "evidence-auditor"],
+    "loop-executor": ["loop-executor", "evidence-auditor", "ledger-steward"],
+    "evidence-auditor": ["evidence-auditor", "ledger-steward", "loop-executor"],
+    "release-steward": ["release-steward", "evidence-auditor", "ledger-steward"],
+    "platform-steward": ["platform-steward", "evidence-auditor", "loop-executor"],
+}
+
 EXCLUDE_DIRS = {
     ".git", ".hg", ".svn", ".workbuddy", ".codegraph", ".gitnexus",
     "__pycache__", "node_modules", ".venv", "venv", "dist", "build",
@@ -460,7 +473,7 @@ def decide(facts: dict, scores: dict[str, int], explicit_mode: str) -> dict:
     active = _intent_summary(scores)
     top = max(scores.values())
     strong = [k for k, _ in sorted(scores.items(), key=lambda x: (-x[1], x[0]))
-              if k != "route" and scores[k] == top and top > 0]
+              if scores[k] == top and top > 0]
     primary = strong[0] if strong else None
     clarification = None
     if len(strong) > 1:
@@ -499,6 +512,12 @@ def decide(facts: dict, scores: dict[str, int], explicit_mode: str) -> dict:
                       stop_if=["无 --approved-by 不得 apply / rollback / register",
                                "post_upgrade 未跑完不得宣布升级完成"],
                       next_expert="evidence-auditor")
+    elif primary == "route":
+        # "该找谁"是编排层意图：由专家路由本人回答，不写账本/源码/看板。
+        route = _card("expert-router", "high",
+                      "本轮只问该找谁：由专家路由给出确定性与交接链，本身不写入。",
+                      facts,
+                      preconditions=["本结论只读；实际执行需按交接链切换负责人"])
     elif explicit_mode == "greenfield" and mode != "greenfield":
         route = _card("greenfield-architect", "medium",
                       "显式指定新建模式，但目标目录已存在治理或历史资产；需确认是否另起子项目。",
@@ -586,6 +605,11 @@ def decide(facts: dict, scores: dict[str, int], explicit_mode: str) -> dict:
         if name != route["expert"] and name != "expert-router"
     ][:3]
     route["alternatives"] = alternatives
+    chain = list(HANDOFF_CHAIN.get(route["expert"], [route["expert"]]))
+    nxt = route["handoff"].get("next_expert")
+    if nxt and nxt in EXPERT_CARDS and nxt not in chain:
+        chain.insert(1, nxt)
+    route["handoff"]["chain"] = chain
     return {"route": route, "clarification": clarification, "intents": active}
 
 
@@ -656,6 +680,17 @@ def build(target: Path, intent: str, explicit_mode: str,
     scores = classify_intent(intent)
     decision = decide(facts, scores, explicit_mode)
     route = decision["route"]
+    # 未识别的非空指令不得静默高置信路由：抛回人复述，并诚实降置信度。
+    # 空意图是合法的"按现状给默认路由"调用，保持兼容。
+    if intent.strip() and not decision["intents"] \
+            and decision["clarification"] is None:
+        decision["clarification"] = {
+            "question": "未识别本轮意图（" + intent.strip()[:80] +
+                        "）：请用 --intent-file 提交 intent.json 结构化复述，"
+                        "或直接说明目标。",
+            "options": ["提交 intent.json", "改用明确意图", "按现状默认路由"],
+        }
+        route["confidence"] = "low"
     route["suggested_commands"] = commands_for(route["expert"], target_display)
     root = asset_root(target, assets_root)
     assets = load_assets(root, installed_manifest_paths(root))
@@ -734,6 +769,8 @@ def render(result: dict) -> str:
     lines.extend(f"  {c}" for c in r["suggested_commands"])
     if r["handoff"]["next_expert"]:
         lines.append(f"交接给：{r['handoff']['next_expert']}")
+    if r["handoff"].get("chain"):
+        lines.append("交接链：" + " → ".join(r["handoff"]["chain"]))
     if r["blocked"]:
         lines.append("已冻结：修复阻塞项前不要继续写入。")
     return "\n".join(lines)
