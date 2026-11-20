@@ -5,22 +5,43 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>决策与能力账本 · 单一事实源</title>
 <style>
-:root{--ink:#1a1a1a;--mut:#666;--line:#e3e3e3;--bg:#fff;--soft:#f7f7f5;--purple:#534AB7;--pp:#EEEDFE;--green:#0F6E56;--gp:#E1F5EE;--amber:#854F0B;--ap:#FAEEDA;--red:#A32D2D;--rp:#FCEBEB;--blue:#185FA5;--bp:#E6F1FB;--gray:#5F5E5A;--gp2:#F1EFE8}
-*{box-sizing:border-box}body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;color:var(--ink);line-height:1.6;max-width:1180px;margin:0 auto;padding:32px 26px;background:var(--bg)}
+:root{--ink:#1a1a1a;--mut:#666;--line:#e3e3e3;--bg:#fff;--soft:#f7f7f5;--purple:#534AB7;--pp:#EEEDFE;--green:#0F6E56;--gp:#E1F5EE;--amber:#854F0B;--ap:#FAEEDA;--red:#A32D2D;--rp:#FCEBEB;--blue:#185FA5;--bp:#E6F1FB;--gray:#5F5E5A;--gp2:#F1EFE8;--shadow:0 8px 24px rgba(20,20,30,.06)}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;color:var(--ink);line-height:1.6;max-width:1180px;margin:0 auto;padding:32px 26px 72px;background:var(--bg)}
+[hidden]{display:none!important}
+.skip-link{position:absolute;left:-9999px;top:8px;z-index:100;background:var(--ink);color:#fff;padding:8px 14px;border-radius:8px;text-decoration:none}
+.skip-link:focus{left:12px}
+:focus-visible{outline:2px solid var(--purple);outline-offset:2px}
 h1{font-size:22px;font-weight:600;margin:0 0 4px}.sub{font-size:12px;color:var(--mut);margin-bottom:22px}
-.bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:18px;border-bottom:1px solid var(--line);padding-bottom:14px}
-.tab{font-size:13px;padding:7px 14px;border:1px solid var(--line);background:var(--bg);border-radius:8px;cursor:pointer;color:var(--mut)}
-.tab:hover{border-color:var(--purple);color:var(--purple)}.tab.on{background:var(--purple);color:#fff;border-color:var(--purple)}
-input.search{font-size:13px;padding:7px 12px;border:1px solid var(--line);border-radius:8px;flex:1;min-width:180px;outline:none}
-input.search:focus{border-color:var(--purple)}
-.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:24px}
-.stat{border:1px solid var(--line);border-radius:12px;padding:14px 16px;background:var(--soft)}
+.bar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:12px;border:1px solid var(--line);border-radius:12px;background:rgba(255,255,255,.94);backdrop-filter:blur(8px);padding:10px;position:sticky;top:0;z-index:20;box-shadow:var(--shadow)}
+.navscroll{display:flex;gap:6px;align-items:center;flex:1 1 auto;min-width:0;overflow-x:auto;scrollbar-width:thin;padding:2px}
+.tab{font-family:inherit;font-size:13px;line-height:1.4;padding:7px 13px;border:1px solid var(--line);background:var(--bg);border-radius:8px;cursor:pointer;color:var(--mut);white-space:nowrap;transition:border-color .15s,color .15s,background .15s,transform .15s}
+.tab:hover{border-color:var(--purple);color:var(--purple)}.tab:active{transform:translateY(1px)}.tab.on,.tab[aria-current="page"]{background:var(--purple);color:#fff;border-color:var(--purple)}
+.search-wrap{position:relative;flex:0 1 320px;min-width:200px;display:flex;align-items:center}
+input.search{font-size:13px;padding:7px 32px 7px 12px;border:1px solid var(--line);border-radius:8px;width:100%;outline:none;background:var(--bg)}
+input.search:focus{border-color:var(--purple);box-shadow:0 0 0 3px var(--pp)}
+.qclear{position:absolute;right:6px;width:22px;height:22px;border:0;border-radius:6px;background:transparent;color:var(--mut);cursor:pointer;font-size:16px;line-height:1}
+.qclear:hover{background:var(--soft);color:var(--ink)}
+.context{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:14px;padding:9px 12px;border:1px solid var(--line);border-radius:10px;background:var(--soft);font-size:12px;color:var(--mut)}
+.context .vtitle{font-weight:600;color:var(--ink)}.context .hints{color:var(--mut)}
+.ctx-chip{display:inline-flex;gap:5px;align-items:center;padding:2px 7px;border-radius:8px;background:var(--bg);border:1px solid var(--line);color:var(--purple)}
+.ctx-clear{border:0;background:transparent;color:var(--mut);cursor:pointer;padding:0 2px;font-size:13px;line-height:1}
+.ctx-clear:hover{color:var(--red)}.ctx-actions{margin-left:auto;display:flex;gap:6px}
+.navgroup{display:flex;gap:6px;align-items:center}
+.navgroup.more{display:none}
+.bar.expanded .navgroup.more{display:flex}
+.navtoggle{font-family:inherit;font-size:12px;padding:7px 10px;border:1px dashed var(--line);border-radius:8px;background:var(--soft);color:var(--mut);cursor:pointer;white-space:nowrap}
+.navtoggle:hover{border-color:var(--purple);color:var(--purple)}
+.bar.expanded .navtoggle{background:var(--purple);color:#fff;border-style:solid}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:18px}
+.stat{font-family:inherit;text-align:left;width:100%;border:1px solid var(--line);border-radius:12px;padding:14px 16px;background:var(--soft);cursor:pointer;transition:border-color .15s,transform .15s,box-shadow .15s}
+.stat[data-jump]:hover{border-color:var(--purple);transform:translateY(-1px);box-shadow:var(--shadow)}
 .stat .n{font-size:26px;font-weight:600;line-height:1.2}.stat .l{font-size:12px;color:var(--mut);margin-top:4px}
 .pill{display:inline-block;font-size:11px;padding:2px 9px;border-radius:10px;font-weight:600;white-space:nowrap}
 .p-decided{background:var(--gp);color:var(--green)}.p-done{background:var(--bp);color:var(--blue)}
 .p-proposed{background:var(--ap);color:var(--amber)}.p-deferred{background:var(--gp2);color:var(--gray)}
 .p-superseded{background:var(--rp);color:var(--red)}
-.card{border:1px solid var(--line);border-radius:12px;padding:16px 18px;margin-bottom:12px;background:var(--bg)}
+.card{border:1px solid var(--line);border-radius:12px;padding:16px 18px;margin-bottom:12px;background:var(--bg);transition:box-shadow .15s,border-color .15s}
+.card:hover{border-color:#cfcfcf;box-shadow:var(--shadow)}
 .card.attention{border-left:3px solid var(--amber)}
 .card.old{opacity:.72;border-left:3px solid var(--red)}
 .chead{display:flex;gap:10px;align-items:baseline;flex-wrap:wrap}
@@ -33,7 +54,10 @@ input.search:focus{border-color:var(--purple)}
 .cbody .v{display:inline-block;width:calc(100% - 62px);vertical-align:top}
 .ev{font-size:11px;color:var(--blue);word-break:break-all}
 .chain{font-size:12px;background:var(--pp);color:var(--purple);padding:5px 10px;border-radius:6px;display:inline-block;margin:3px 0}
-.toggle{font-size:12px;color:var(--purple);cursor:pointer;user-select:none;white-space:nowrap}
+.toggle{font-family:inherit;font-size:12px;color:var(--purple);cursor:pointer;user-select:none;white-space:nowrap;border:0;background:transparent;padding:2px 4px;border-radius:6px}
+.toggle:hover{background:var(--pp)}
+.backtop{position:fixed;right:20px;bottom:20px;z-index:30;font-family:inherit;font-size:12px;padding:8px 12px;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--purple);box-shadow:var(--shadow);cursor:pointer}
+.backtop:hover{border-color:var(--purple)}
 .day{font-size:13px;font-weight:600;color:var(--purple);margin:20px 0 10px;border-bottom:1px dashed var(--line);padding-bottom:6px}
 .empty{text-align:center;color:var(--mut);padding:50px 0;font-size:14px}
 .mod{border:1px solid var(--line);border-radius:12px;padding:16px 18px;margin-bottom:12px;background:var(--bg)}
@@ -140,32 +164,113 @@ input.search:focus{border-color:var(--purple)}
 .wgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;margin-bottom:14px}
 .wpanel{border:1px solid var(--line);border-radius:10px;padding:12px 14px;background:var(--soft);font-size:12px;line-height:1.7}
 .wpanel b{color:var(--purple)}
+/* v2.9.0：设计理念 / 架构图 / 数据流 */
+.design-hero{border:1px solid var(--line);border-left:3px solid var(--purple);border-radius:12px;padding:16px 18px;margin-bottom:14px;background:var(--soft)}
+.design-hero h2{font-size:18px;margin:0 0 6px}.design-hero p{margin:0;color:var(--mut);font-size:13px}
+.principle-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
+.principle{border:1px solid var(--line);border-radius:12px;padding:14px 16px;background:var(--bg)}
+.principle h3{font-size:14px;margin:0 0 6px;color:var(--purple)}
+.principle p{margin:4px 0;font-size:12px;color:var(--ink)}
+.principle .k{display:inline-block;font-size:11px;color:var(--mut);margin-right:6px}
+.principle .anti{color:var(--red)}
+.diagram-wrap{display:grid;gap:14px}
+.diagram-card{border:1px solid var(--line);border-radius:12px;background:var(--bg);padding:14px 16px;overflow:hidden}
+.diagram-card h2{font-size:15px;margin:0 0 2px}.diagram-card .dsub{font-size:12px;color:var(--mut);margin-bottom:10px}
+.diagram-card svg{width:100%;height:auto;display:block}
+.dnode{cursor:pointer}.dnode rect{transition:stroke .15s,fill .15s}.dnode:hover rect,.dnode:focus rect{stroke:var(--purple);fill:var(--pp)}
+.dnode .dt{font-size:12px;font-weight:600;fill:var(--ink)}.dnode .ds{font-size:10px;fill:var(--mut)}
+.dnode .dc{font-size:13px;font-weight:700;fill:var(--purple)}
+.dedge{fill:none;stroke:#b9b7d8;stroke-width:1.5;marker-end:url(#arrow)}
+.dcount{font-size:10px;fill:var(--mut)}
+/* v2.10.0：工作台视角——先给结论和入口，再给明细 */
+.focus-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px;margin-bottom:14px}
+.focus-card{border:1px solid var(--line);border-top:3px solid var(--amber);border-radius:12px;padding:14px 16px;background:var(--bg)}
+.focus-card.good{border-top-color:var(--green)}.focus-card.bad{border-top-color:var(--red)}
+.focus-card .fk{font-size:12px;color:var(--mut)}.focus-card .fv{font-size:22px;font-weight:600;margin:3px 0}
+.focus-card .fa{font-family:inherit;font-size:12px;color:var(--purple);border:0;background:none;padding:2px 0;cursor:pointer}
+.focus-card .fa:hover{text-decoration:underline}
+.trustbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;border:1px solid var(--line);border-radius:12px;padding:10px 14px;background:var(--soft);margin-bottom:16px;font-size:12px}
+.trustbar .tb{display:inline-flex;gap:5px;align-items:center;padding:3px 9px;border-radius:8px;background:var(--bg);border:1px solid var(--line)}
+.trustbar .tb b{color:var(--ink)}.trustbar .src{margin-left:auto;color:var(--mut)}
+.launchpad{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin:14px 0 18px}
+.launch{font-family:inherit;text-align:left;border:1px solid var(--line);border-radius:12px;padding:14px 16px;background:var(--bg);cursor:pointer;transition:border-color .15s,transform .15s,box-shadow .15s}
+.launch:hover{border-color:var(--purple);transform:translateY(-1px);box-shadow:var(--shadow)}
+.launch .lt{font-size:14px;font-weight:600;color:var(--purple)}.launch .ld{font-size:12px;color:var(--mut);margin:4px 0}.launch .ln{font-size:21px;font-weight:600}
+.diagram-scroll{overflow-x:auto;padding-bottom:6px}.diagram-scroll svg{min-width:720px}
+.dnode.hit rect{stroke-width:3;stroke:var(--amber)}
+/* 体验层：小屏与降低动态效果 */
+@media (max-width: 760px){
+  body{padding:18px 14px 80px}
+  h1{font-size:20px}
+  .bar{position:sticky;top:0;padding:8px;border-radius:10px}
+  .navscroll{order:1;flex-basis:100%;padding-bottom:4px}
+  .search-wrap{order:2;flex-basis:100%;min-width:0}
+  .stats{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+  .stat{padding:11px 12px}.stat .n{font-size:22px}
+  .card,.mod,.witem{padding:13px 14px}
+  .ctitle{min-width:140px}.cbody .k{width:48px}.cbody .v{width:calc(100% - 54px)}
+  .mrow .k{width:64px}.mrow .v{width:calc(100% - 70px)}
+  .capright{width:88px}.capmeta .cn{line-height:1.5}
+  .wgrid{grid-template-columns:1fr}
+  .context .ctx-actions{margin-left:0}
+  .principle-grid{grid-template-columns:1fr}
+  .diagram-card{padding:10px}
+  .focus-grid,.launchpad{grid-template-columns:1fr}
+  .trustbar .src{margin-left:0}
+}
+@media (prefers-reduced-motion: reduce){
+  html{scroll-behavior:auto}
+  *,*::before,*::after{transition:none!important;animation:none!important}
+}
+@media print{
+  .bar,.skip-link,.backtop,.ctx-actions{display:none!important}
+  body{max-width:none;padding:0}
+  .card,.mod,.witem{break-inside:avoid}
+}
 </style>
 </head>
 <body>
+<a class="skip-link" href="#list">跳到主要内容</a>
+<header class="page-head">
 <h1>决策与能力账本</h1>
 <div class="sub" id="sub">单一事实源 · 加载中…</div>
 
-<div class="stats" id="stats"></div>
+<div class="stats" id="stats" aria-label="账本概览"></div>
 
-<div class="bar">
-<div class="tab on" data-v="all">全部条目</div>
-<div class="tab" data-v="pending">待裁决</div>
-<div class="tab" data-v="workbench">工作台</div>
-<div class="tab" data-v="work">工作项</div>
-<div class="tab" data-v="timeline">时间线</div>
-<div class="tab" data-v="modules">模块地图</div>
-<div class="tab" data-v="arch">架构钻取</div>
-<div class="tab" data-v="capability">能力地图</div>
-<div class="tab" data-v="history">演进历史</div>
-<div class="tab" data-v="lessons">经验库</div>
-<div class="tab" data-v="glossary">术语与实现</div>
-<input class="search" id="q" placeholder="搜索标题 / 决策 / 分类 / id / 模块 / 能力 / TODO / issue / 测试 / 术语…">
+<nav class="bar" id="nav" aria-label="看板视图">
+<div class="navscroll">
+<div class="navgroup primary">
+<button class="tab on" type="button" data-v="workbench" aria-current="page">工作台</button>
+<button class="tab" type="button" data-v="work">工作项</button>
+<button class="tab" type="button" data-v="pending">待裁决</button>
+<button class="tab" type="button" data-v="diagram">架构图</button>
+<button class="tab" type="button" data-v="flow">数据流</button>
+<button class="tab" type="button" data-v="capability">能力地图</button>
+<button class="tab" type="button" data-v="design">设计理念</button>
 </div>
+<div class="navgroup more" id="navmore">
+<button class="tab" type="button" data-v="all">全部条目</button>
+<button class="tab" type="button" data-v="timeline">时间线</button>
+<button class="tab" type="button" data-v="modules">模块地图</button>
+<button class="tab" type="button" data-v="arch">架构钻取</button>
+<button class="tab" type="button" data-v="history">演进历史</button>
+<button class="tab" type="button" data-v="lessons">经验库</button>
+<button class="tab" type="button" data-v="glossary">术语与实现</button>
+</div>
+<button class="navtoggle" id="navtoggle" type="button" aria-expanded="false" aria-controls="navmore">更多视图 ▾</button>
+</div>
+<div class="search-wrap">
+<input class="search" id="q" type="search" aria-label="搜索看板" placeholder="搜索标题 / 决策 / 分类 / id / 模块 / 能力 / TODO / issue / 测试 / 术语…">
+<button class="qclear" id="qclear" type="button" title="清空搜索（Esc）" aria-label="清空搜索" hidden>×</button>
+</div>
+</nav>
+<div class="context" id="context" aria-live="polite"></div>
 <div class="legend" id="legend"></div>
-<div id="list"></div>
+</header>
+<main id="list" aria-live="polite"><div class="empty">正在从账本读取…</div></main>
 
-<div class="foot" id="foot"></div>
+<footer class="foot" id="foot"></footer>
+<button class="backtop" id="backtop" type="button" title="回到顶部" hidden>↑ 顶部</button>
 
 <script>
 const EMBED = {"ledger_version":"1.0","title":"项目决策与能力账本","purpose":"单一事实源：决策、裁决、待办及能力索引的唯一写入点。","last_updated":"","owner":"待定","workflow":["所有重大决策/裁决/待办只写入本文件 entries，不再新建独立报告。","新增条目分配稳定 id，状态初始 proposed/decided，填齐字段。","旧决策被取代时设 superseded/supersedes，用取代链表达演进。","能力等级与完成度由 build_capability_model.py 从证据重算，禁止手填。"],"fields":{"id":"稳定标识，永不复用","status":"proposed | decided | done | superseded | deferred","evidence":"证据/文档路径","confidence":"high | medium | low"},"entries":[],"history":{"spec":{},"events":[]},"lessons":{"spec":{},"items":[],"candidates":[]},"module_map":{"modules":[],"pages_path":"artifacts/control_center/pages/"},"architecture":{"projects":[]},"capability_model":{"version":"1.0","generated_at":"","summary":{"projects":0,"modules":0,"capabilities":0,"overall_completion":0},"levels":{},"scoring":{},"coding_spec":{},"doc_index_spec":{},"projects":[],"loop_protocol":{}}};
@@ -181,7 +286,36 @@ const STATUS = {
   deferred:{label:'暂缓/另案',cls:'p-deferred'},
   superseded:{label:'已被取代',cls:'p-superseded'}
 };
-let view='all', query='';
+// 设计理念是呈现规则，不是账本事实：每条原则都能在界面上找到落点。
+const DESIGN_PRINCIPLES=[
+ {t:'单一事实源',why:'账本是唯一写入点，看板只是它的只读投影。',landing:'页脚标注账本路径；所有计数从 DATA 派生',anti:'在看板里手改数字或状态'},
+ {t:'一屏一问',why:'每个视图只回答一个问题，降低认知负荷。',landing:'分组导航：常用 7 项在前，治理/知识视图收进「更多」',anti:'十几个入口平铺让人逐个试'},
+ {t:'状态可见',why:'切到哪、搜了什么、钻取到哪一层必须一眼看到。',landing:'上下文条显示视图名、提示、搜索词与作用域 chip',anti:'筛选后不知道自己为什么只看到几条'},
+ {t:'计数即证据',why:'数字不是装饰，点击应能下钻到对应事实。',landing:'统计卡与架构图节点均可跳转；数据流标注实时条数',anti:'写死「共 N 条」且无法追溯'},
+ {t:'渐进披露',why:'先给摘要，再按需展开细节。',landing:'卡片折叠、模块树、文档索引、批量展开/收起',anti:'首屏塞满全部字段'},
+ {t:'双轨术语',why:'机器分型词表与人读概念解说层次不同，应并列不替代。',landing:'术语视图并列 ONTO_TERMS 与 GLOSSARY',anti:'拿枚举值当概念解释'},
+ {t:'可达与降级',why:'键盘、读屏、窄屏、离线同样可用。',landing:'skip link / aria / focus 轮廓 / 两列响应 / 内嵌数据先渲染',anti:'只适配鼠标和大屏'}
+];
+// 体验层：视图元信息只描述如何呈现，不新增任何账本事实。
+const VIEW_META={
+  all:{name:'全部条目',hint:'点统计卡可跳转；点击卡片展开详情',ph:'搜索标题 / 决策 / 分类 / id / 模块 / 能力 / TODO / issue / 测试 / 术语…'},
+  pending:{name:'待裁决',hint:'聚焦 proposed / deferred 决策，避免被已完成项淹没',ph:'在待裁决中搜索标题 / 理由 / 分类 / id…'},
+  workbench:{name:'工作台',hint:'打开先回答：今天做什么、可信度如何、下一步走哪条能力',ph:'搜索焦点 / 任务卡 / 工作项 / 失败用例…'},
+  work:{name:'工作项',hint:'TODO / Issue 来自账本 work_items；可点作用域钻取',ph:'搜索工作项 id / 类型 / 状态 / 作用域 / 标题…'},
+  timeline:{name:'时间线',hint:'按日期倒序查看决策与裁决',ph:'搜索后按日期倒序展示命中决策…'},
+  modules:{name:'模块地图',hint:'源码 → 文档 → 控制中心 → 页面 → 决策，一屏对应',ph:'搜索模块名 / id / 源码 / 文档 / 页面…'},
+  arch:{name:'架构钻取',hint:'项目 → 模块 → 嵌套组件树 → 文档索引 → 能力编码',ph:'搜索项目 / 模块 / 组件…'},
+  capability:{name:'能力地图',hint:'完成度由证据自动判定；展开能力点看文档索引与规划',ph:'搜索能力编码 / 名称 / 项目 / 模块…'},
+  history:{name:'演进历史',hint:'append-only 事件链；状态快照可回放，不修改历史',ph:'搜索事件指纹 / 类型 / 变更说明…'},
+  lessons:{name:'经验库',hint:'已确认经验自动附到任务卡；候选需人或 AI 下结论',ph:'搜索经验标题 / 洞察 / 行动 / 来源事件…'},
+  glossary:{name:'术语与实现',hint:'本体投影词表 + 人读概念解说并列；搜索可跨四段过滤',ph:'搜索术语 / 英文标识 / 概念 / 实现解说…'},
+  design:{name:'设计理念',hint:'七条原则解释界面为什么这样组织；每条都对应一个可见落点',ph:'搜索原则 / 界面落点 / 反例…'},
+  diagram:{name:'架构图',hint:'账本 → 生成器 → 投影 → 视图的分层结构；节点可点击下钻',ph:'搜索架构节点 / 投影 / 视图（命中节点将高亮）…'},
+  flow:{name:'数据流',hint:'账本驱动的实时计数：每条边标注当前数据规模，数字来自账本',ph:'搜索数据流节点 / 计数 / 来源（命中节点将高亮）…'}
+};
+let view='workbench', query='';
+// 数据来源徽标：内嵌快照先渲染，同目录 JSON 成功后再标注为实时；失败如实降级。
+let DATA_SOURCE='内嵌快照';
 // 规模契约：所有项目共用同一模板与同一分批上限；禁止在项目里改 CSS / DOM / 此常量。
 // scale_budget.py 会解析 PAGE_SIZE，保证预算口径与实际渲染一致。
 const PAGE_SIZE=200;
@@ -291,53 +425,84 @@ function renderWorkbench(box){
   const cm=DATA.capability_model||{}, sm=cm.summary||{}, w=nodeWork('PROJECT');
   const tr=DATA.test_results||{}, cases=tr.cases||[];
   const pending=(DATA.entries||[]).filter(e=>e.status==='proposed'||e.status==='deferred');
-  const queue=cm.next_queue||[];
+  const queue=cm.next_queue||[], caps=allCaps();
   document.getElementById('stats').innerHTML=
-    stat(w.todo.length,'未关闭 TODO','var(--amber)')+
-    stat(w.issues.length,'未关闭 Issue','var(--red)')+
-    stat(w.blocked.length,'阻塞项','var(--red)')+
-    stat(w.failed.length,'失败 / 异常用例','var(--red)')+
-    stat(pending.length,'待裁决决策','var(--amber)')+
-    stat(queue.length,'下一轮任务卡','var(--purple)')+
-    stat(cases.length,'绑定测试用例','var(--green)')+
-    stat(w.health,'项目健康度',w.health>=80?'var(--green)':'var(--amber)');
-  document.getElementById('legend').innerHTML='<span>工作台从同一份账本复算节点工作态；健康度 = 100 − 阻塞×20 − Issue×8 − 失败测试×15 − 证据过期×15 − 含 declared 能力×10。点「查看该节点」可钻取。</span>';
-  let html='<div class="wgrid">'+
-    '<div class="wpanel"><b>证据状态</b><br>新鲜度 '+esc(w.fresh)+' · verified 覆盖 '+((sm.verified_coverage||0)*100).toFixed(0)+'%<br>'+
-    '测试结果投影绑定 '+esc(tr.source_sha256?String(tr.source_sha256).slice(0,12):'（未启用）')+'<br>'+
-    '整体完成度 '+((sm.overall_completion||0)*100).toFixed(0)+'%</div>'+
-    '<div class="wpanel"><b>最需要处理的三件事</b><br>'+
-    (w.blocked.length?'1. 解开 '+w.blocked.length+' 个阻塞 issue<br>':'1. 无阻塞 issue<br>')+
-    (w.failed.length?'2. 修复 '+w.failed.length+' 个失败用例<br>':'2. 测试用例全通过<br>')+
-    (w.todo.length?'3. 推进 '+w.todo.length+' 条 TODO（见下方任务卡）<br>':'3. 暂无未关闭 TODO<br>')+'</div></div>';
-  const focus=w.items.filter(x=>x.status!=='done').sort((a,b)=>{
-    const rank=x=>(x.status==='blocked'?0:x.kind==='issue'?1:x.severity==='high'?2:3);
-    return rank(a)-rank(b);
-  });
-  html+='<div class="day">焦点队列（'+focus.length+' 条，阻塞优先）</div>';
-  const fTotal=focus.length, fShown=focus.slice(0,pageLimit);
-  html+=fShown.length?fShown.map(workItemCard).join(''):'<div class="empty">暂无未关闭工作项</div>';
-  html+=moreHtml(fTotal,fShown.length,' 条工作项');
-  html+='<div class="day">下一轮任务卡（SELECT 产出，按完成度升序）</div>';
-  const qShown=queue.slice(0,pageLimit);
+    stat(w.todo.length,'未关闭 TODO','var(--amber)','work')+
+    stat(w.issues.length,'未关闭 Issue','var(--red)','work')+
+    stat(w.blocked.length,'阻塞项','var(--red)','work')+
+    stat(w.failed.length,'失败 / 异常用例','var(--red)','work')+
+    stat(pending.length,'待裁决决策','var(--amber)','pending')+
+    stat(queue.length,'下一轮任务卡','var(--purple)','workbench')+
+    stat(cases.length,'绑定测试用例','var(--green)','work')+
+    stat(w.health,'项目健康度',w.health>=80?'var(--green)':'var(--amber)','workbench');
+  document.getElementById('legend').innerHTML='<span>工作台从同一份账本复算：结论先行、明细可下钻。健康度 = 100 − 阻塞×20 − Issue×8 − 失败测试×15 − 证据过期×15 − 含 declared 能力×10。</span>';
+  const q=query, hit=s=>!q||String(s||'').toLowerCase().includes(q);
+  // 一屏一问：先回答「现在最需要处理什么」
+  const staleCaps=caps.filter(c=>c.evidence_tier!=='verified');
+  const focusCards=[
+    {k:'阻塞',v:w.blocked.length,hint:'解开阻塞 issue',jump:'work'},
+    {k:'失败用例',v:w.failed.length,hint:'修复失败 / 异常用例',jump:'workbench'},
+    {k:'证据待补',v:staleCaps.length,hint:'把 declared 变为 verified',jump:'capability'}
+  ].filter(x=>hit(x.k+' '+x.hint+' '+x.v));
+  let html='<div class="day">今日焦点（结论先行）</div><div class="focus-grid">'+
+    (focusCards.length?focusCards.map(x=>'<div class="focus-card '+(x.v?(x.k==='阻塞'?'bad':''):'good')+'">'+
+      '<div class="fk">'+esc(x.k)+'</div><div class="fv">'+esc(x.v)+'</div>'+
+      '<div class="fk">'+esc(x.hint)+'</div>'+
+      '<button class="fa" type="button" data-jump="'+x.jump+'">前往处理 →</button></div>').join(''):
+      '<div class="empty">无匹配焦点</div>')+'</div>';
+  // 可信度条：核心卖点是「诚实 > 绿灯」，这些数字必须第一眼可见。
+  const verified=caps.filter(c=>c.evidence_tier==='verified').length;
+  html+='<div class="trustbar">'+
+    '<span class="tb">可信度 · 证据新鲜度 <b>'+esc(sm.evidence_freshness||'unbound')+'</b></span>'+
+    '<span class="tb">verified <b>'+verified+'/'+caps.length+'</b></span>'+
+    '<span class="tb">完成度 <b>'+((sm.overall_completion||0)*100).toFixed(0)+'%</b></span>'+
+    '<span class="tb">报告绑定 <b>'+esc(tr.source_sha256?String(tr.source_sha256).slice(0,10):'未启用')+'</b></span>'+
+    '<span class="src">数据：'+esc(DATA_SOURCE)+' · 账本 '+esc((DATA.entries||[]).length)+' 条</span></div>';
+  // 入口矩阵：把原来看不见的 14 个视图收成可下钻的工作入口。
+  const launches=[
+    ['工作项','TODO / Issue 全量状态',w.items.length,'work'],
+    ['架构图','结构分层与实时计数',caps.length,'diagram'],
+    ['数据流','三条链路的账本规模',((DATA.history||{}).events||[]).length,'flow'],
+    ['能力地图','完成度由证据重算',caps.length,'capability'],
+    ['术语与实现','本体投影 + 人读解说',(ONTO_DATA||[]).length,'glossary'],
+    ['设计理念','七条原则与界面落点',DESIGN_PRINCIPLES.length,'design']
+  ].filter(x=>hit(x[0]+' '+x[1]));
+  html+='<div class="day">入口矩阵（从工作台下钻）</div><div class="launchpad">'+
+    (launches.length?launches.map(x=>'<button class="launch" type="button" data-jump="'+x[3]+'">'+
+      '<div class="lt">'+esc(x[0])+'</div><div class="ld">'+esc(x[1])+'</div>'+
+      '<div class="ln">'+esc(x[2])+'</div></button>').join(''):
+      '<div class="empty">无匹配入口</div>')+'</div>';
+  // 下一轮任务卡：由 SELECT 从证据缺口算出，人只决定先做哪张。
+  const qShown=queue.filter(x=>hit([x.code,x.action,x.level,(x.missing_evidence||[]).join()].join(' '))).slice(0,pageLimit);
+  html+='<div class="day">下一轮队列（SELECT 产出，按完成度升序）</div>';
   html+=qShown.length?qShown.map(t=>'<div class="witem"><div class="chead"><span class="cid">#'+esc(t.rank)+'</span>'+
     '<span class="capcode">'+esc(t.code)+'</span><span class="ctitle">'+esc(t.action||'')+'</span></div>'+
     '<div class="wmeta">'+esc(t.level||'')+' → '+esc(t.target_level||'')+' · 缺口 '+esc((t.missing_evidence||[]).join(' / ')||'无')+
     ' · 文档 '+((t.docs||[]).length)+' 份</div>'+workStripHtml(t.code)+'</div>').join(''):
     '<div class="empty">任务队列为空：所有能力点已达标，或能力模型尚未生成</div>';
   html+=moreHtml(queue.length,qShown.length,' 张任务卡');
-  const bad=cases.filter(c=>c.status==='fail'||c.status==='error');
+  // 焦点工作项：阻塞 → issue → 高severity → 普通 todo。
+  const focus=w.items.filter(x=>x.status!=='done'&&
+    hit([x.id,x.kind,x.status,x.scope,x.title].join(' '))).sort((a,b)=>{
+    const rank=x=>(x.status==='blocked'?0:x.kind==='issue'?1:x.severity==='high'?2:3);
+    return rank(a)-rank(b);
+  });
+  html+='<div class="day">焦点队列（'+focus.length+' 条，阻塞优先）</div>';
+  const fShown=focus.slice(0,pageLimit);
+  html+=fShown.length?fShown.map(workItemCard).join(''):'<div class="empty">暂无未关闭工作项</div>';
+  html+=moreHtml(focus.length,fShown.length,' 条工作项');
+  const bad=cases.filter(c=>(c.status==='fail'||c.status==='error')&&hit(c.id+' '+c.file+' '+c.status));
   html+='<div class="day">失败 / 异常用例明细（'+bad.length+'）</div>';
   html+=bad.length?bad.slice(0,pageLimit).map(testCaseHtml).join(''):'<div class="empty">无失败用例（或未启用测试结果投影）</div>';
   html+=moreHtml(bad.length,Math.min(bad.length,pageLimit),' 条失败用例');
-  const stale=allCaps().filter(c=>c.evidence_tier!=='verified');
+  const stale=staleCaps.filter(c=>hit(c.code+' '+c.name));
   html+='<div class="day">证据待补能力点（'+stale.length+'）</div>';
   html+=stale.length?stale.slice(0,pageLimit).map(c=>'<div class="tcase pass"><span class="capcode">'+esc(c.code)+'</span> '+
     esc(c.name)+' · '+esc((c.tier_detail||{}).basis||'仅有文件存在，非实测')+'</div>').join(''):
     '<div class="empty">所有能力点均已 verified</div>';
   html+=moreHtml(stale.length,Math.min(stale.length,pageLimit),' 个能力点');
   box.innerHTML=html;
-  bindWorkLinks(box);bindCapLinks(box);bindMore(box);
+  bindWorkLinks(box);bindCapLinks(box);bindJumps(box);bindMore(box);
 }
 function renderWork(box){
   const all=DATA.work_items||[];
@@ -365,17 +530,230 @@ function renderWork(box){
   bindWorkLinks(box);bindMore(box);
 }
 
-function init(){
-  // 优先从同目录 JSON 读取（更新后自动同步），失败回退内嵌
-  fetch('DECISION_LEDGER.json').then(r=>r.ok?r.json():Promise.reject()).then(d=>{DATA=d;render();}).catch(()=>render());
-  document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{
-    document.querySelectorAll('.tab').forEach(x=>x.classList.remove('on'));
-    t.classList.add('on'); view=t.dataset.v; pageLimit=PAGE_SIZE; workScope=''; render();
+function setView(v){
+  if(!v||!VIEW_META[v]) return;
+  view=v; pageLimit=PAGE_SIZE; workScope='';
+  const tabs=document.querySelectorAll('.bar .tab');
+  tabs.forEach(t=>{
+    const on=t.dataset.v===v;
+    if(t.classList){
+      if(t.classList.toggle) t.classList.toggle('on',on);
+      else {t.classList.remove('on'); if(on)t.classList.add('on');}
+    }
+    if(t.setAttribute) on?t.setAttribute('aria-current','page'):t.removeAttribute('aria-current');
+    else if(t.removeAttribute && !on) t.removeAttribute('aria-current');
   });
-  document.getElementById('q').oninput=e=>{query=e.target.value.toLowerCase();pageLimit=PAGE_SIZE;render();};
+  const more=document.getElementById('navmore');
+  if(more && more.querySelector && more.querySelector('.tab[data-v="'+v+'"]')) toggleNav(true);
+  if(typeof window!=='undefined' && window.scrollTo) window.scrollTo({top:0,behavior:'smooth'});
+  render();
+}
+function clearQuery(){
+  query='';pageLimit=PAGE_SIZE;
+  const q=document.getElementById('q'); if(q) q.value='';
+  const c=document.getElementById('qclear'); if(c) c.hidden=true;
+  render();
+}
+function clearScope(){workScope='';pageLimit=PAGE_SIZE;render();}
+function renderContext(){
+  const box=document.getElementById('context'); if(!box) return;
+  const meta=VIEW_META[view]||VIEW_META.all;
+  const chips=[];
+  if(query) chips.push('<span class="ctx-chip">搜索：'+esc(query)+
+    ' <button class="ctx-clear" type="button" data-clear="query" aria-label="清空搜索">×</button></span>');
+  if(workScope) chips.push('<span class="ctx-chip">钻取：'+esc(workScope)+
+    ' <button class="ctx-clear" type="button" data-clear="scope" aria-label="退出钻取">×</button></span>');
+  chips.push('<span class="ctx-chip" title="数据来自内嵌快照还是同目录 JSON">数据：'+esc(DATA_SOURCE)+'</span>');
+  if(workScope) chips.push('<span class="hints">（上方搜索框可继续过滤该作用域）</span>');
+  box.innerHTML='<span class="vtitle">'+esc(meta.name)+'</span>'+
+    '<span class="hints">'+esc(meta.hint)+'</span>'+chips.join('')+
+    '<span class="ctx-actions">'+
+    '<button class="ctx-clear" type="button" data-jump="design">设计理念</button>'+
+    '<button class="ctx-clear" type="button" data-action="expand">展开全部</button>'+
+    '<button class="ctx-clear" type="button" data-action="collapse">收起全部</button></span>';
+  const q=document.getElementById('q'); if(q && meta.ph) q.placeholder=meta.ph;
+  const clear=document.getElementById('qclear'); if(clear) clear.hidden=!query;
+}
+function bindContext(box){
+  box.onclick=ev=>{
+    const b=ev.target&&ev.target.closest?ev.target.closest('[data-clear],[data-action],[data-jump]'):null;
+    if(!b||!b.dataset) return;
+    if(b.dataset.clear==='query') clearQuery();
+    else if(b.dataset.clear==='scope') clearScope();
+    else if(b.dataset.jump) setView(b.dataset.jump);
+    else if(b.dataset.action==='expand'||b.dataset.action==='collapse'){
+      const open=b.dataset.action==='expand';
+      box.querySelectorAll('.card,.witem,.lesson').forEach(c=>{
+        if(c.classList) c.classList[open?'add':'remove']('open');
+        const t=c.querySelector?c.querySelector('.toggle'):null;
+        if(t) t.textContent=open?'收起 ▴':'展开 ▾';
+      });
+      box.querySelectorAll('details').forEach(d=>{if('open' in d) d.open=open;});
+    }
+  };
+}
+function toggleNav(force){
+  const bar=document.getElementById('nav'), btn=document.getElementById('navtoggle');
+  if(!bar||!btn) return;
+  const cur=bar.classList&&bar.classList.contains?bar.classList.contains('expanded'):false;
+  const open=force===undefined?!cur:force;
+  if(bar.classList){ if(open)bar.classList.add('expanded');else bar.classList.remove('expanded'); }
+  if(btn.setAttribute) btn.setAttribute('aria-expanded',open?'true':'false');
+  btn.textContent=open?'收起视图 ▴':'更多视图 ▾';
+}
+function bindNavToggle(){const b=document.getElementById('navtoggle');if(b)b.onclick=()=>toggleNav();}
+function bindJumps(box){
+  if(!box) return;
+  const go=el=>{const v=el&&el.dataset?el.dataset.jump:null;if(v)setView(v);};
+  box.onclick=ev=>{const t=ev.target&&ev.target.closest?ev.target.closest('[data-jump]'):null;if(t)go(t);};
+  box.onkeydown=ev=>{
+    if(ev.key!=='Enter'&&ev.key!==' ')return;
+    const t=ev.target&&ev.target.closest?ev.target.closest('[data-jump]'):null;
+    if(t){if(ev.preventDefault)ev.preventDefault();go(t);}
+  };
+}
+function bindStats(box){bindJumps(box);}
+function flowData(){
+  const cs=allCaps(), ws=DATA.work_items||[], cases=(DATA.test_results||{}).cases||[];
+  return {
+    decisions:(DATA.entries||[]).length,
+    events:((DATA.history||{}).events||[]).length,
+    caps:cs.length,
+    verified:cs.filter(c=>c.evidence_tier==='verified').length,
+    work:ws.length,
+    openWork:ws.filter(x=>x.status!=='done').length,
+    cases:cases.length,
+    failed:cases.filter(c=>c.status==='fail'||c.status==='error').length,
+    terms:(ONTO_DATA||[]).length,
+    modules:((DATA.module_map||{}).modules||[]).length,
+    lessons:((DATA.lessons||{}).items||[]).length,
+    projects:((DATA.architecture||{}).projects||[]).length
+  };
+}
+function renderDesign(box){
+  const rows=DESIGN_PRINCIPLES.filter(p=>!query||
+    [p.t,p.why,p.landing,p.anti].join(' ').toLowerCase().includes(query));
+  box.innerHTML='<div class="design-hero"><h2>七条原则，一张账本</h2>'+
+    '<p>界面不是装饰层：每个设计选择都对应一个可验证的落点；原则只描述怎么呈现，不存任何账本事实。</p></div>'+
+    (rows.length?'<div class="principle-grid">'+rows.map((p,i)=>
+      '<div class="principle"><h3>'+('0'+(i+1)).slice(-2)+' · '+esc(p.t)+'</h3>'+
+      '<p><span class="k">为什么</span>'+esc(p.why)+'</p>'+
+      '<p><span class="k">界面落点</span>'+esc(p.landing)+'</p>'+
+      '<p class="anti"><span class="k">反例</span>'+esc(p.anti)+'</p></div>').join('')+'</div>':
+      '<div class="empty">无匹配原则</div>');
+}
+function svgNode(x,y,w,h,title,sub,count,jump,tone){
+  const tones={
+    source:['var(--bp)','var(--blue)'],gen:['var(--pp)','var(--purple)'],
+    proj:['var(--gp)','var(--green)'],view:['var(--ap)','var(--amber)']
+  };
+  const c=tones[tone]||tones.source;
+  const hit=query&&[title,sub].join(' ').toLowerCase().includes(query);
+  return '<g class="dnode'+(hit?' hit':'')+'" data-jump="'+esc(jump)+'" role="button" tabindex="0" aria-label="'+esc(title)+' · '+esc(String(count))+' · 点击下钻">'+
+    '<rect x="'+x+'" y="'+y+'" width="'+w+'" height="'+h+'" rx="10" fill="'+c[0]+'" stroke="'+c[1]+'"/>'+
+    '<text class="dt" x="'+(x+10)+'" y="'+(y+19)+'">'+esc(title)+'</text>'+
+    '<text class="ds" x="'+(x+10)+'" y="'+(y+36)+'">'+esc(sub)+'</text>'+
+    (count===null?'':'<text class="dc" x="'+(x+w-10)+'" y="'+(y+h-9)+'" text-anchor="end">'+esc(count)+'</text>')+'</g>';
+}
+function svgEdge(x1,y1,x2,y2,label){
+  const mx=(x1+x2)/2, my=(y1+y2)/2;
+  return '<path class="dedge" d="M'+x1+' '+y1+' C'+mx+' '+y1+' '+mx+' '+y2+' '+x2+' '+y2+'"/>'+
+    '<text class="dcount" x="'+mx+'" y="'+(my-5)+'" text-anchor="middle">'+esc(label)+'</text>';
+}
+function svgShell(title,sub,inner,height){
+  return '<div class="diagram-card"><h2>'+esc(title)+'</h2><div class="dsub">'+esc(sub)+'</div>'+
+    '<div class="diagram-scroll"><svg viewBox="0 0 920 '+height+'" role="img" aria-label="'+esc(title)+'">'+
+    '<defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">'+
+    '<path d="M 0 0 L 10 5 L 0 10 z" fill="#b9b7d8"/></marker></defs>'+inner+'</svg></div></div>';
+}
+function renderDiagram(box){
+  const f=flowData();
+  let s='';
+  s+=svgNode(20,50,170,62,'决策账本','唯一写入点',f.decisions+' 条','all','source');
+  s+=svgNode(20,140,170,62,'能力模型','generator 重算',f.caps+' 点','capability','source');
+  s+=svgNode(20,230,170,62,'本体投影','权威源派生',f.terms+' 词','glossary','source');
+  s+=svgNode(20,320,170,62,'测试报告','证据判定',f.cases+' 例','workbench','source');
+  s+=svgNode(255,50,170,62,'build_capability_model','证据→完成度',f.verified+' 实测','capability','gen');
+  s+=svgNode(255,140,170,62,'board_contract','骨架/数据段','归一化','design','gen');
+  s+=svgNode(255,230,170,62,'ontology.py','ubiquitous language',f.terms+' 词','glossary','gen');
+  s+=svgNode(255,320,170,62,'run_tests','报告=f(测试)',f.failed+' 失败','workbench','gen');
+  s+=svgNode(490,80,170,62,'EMBED','账本内嵌',f.decisions+' 条','all','proj');
+  s+=svgNode(490,190,170,62,'ONTO_TERMS','术语内嵌',f.terms+' 词','glossary','proj');
+  s+=svgNode(490,300,170,62,'work_items','任务/测试投影',f.work+' 项','workbench','proj');
+  s+=svgNode(730,70,170,62,'工作台 / 工作项','焦点与 TODO',f.openWork+' 未闭','work','view');
+  s+=svgNode(730,180,170,62,'能力地图','完成度可复算',f.caps+' 点','capability','view');
+  s+=svgNode(730,290,170,62,'术语视图','机器+人读并列',f.terms+' 词','glossary','view');
+  [50,140,230,320].forEach(y=>{s+=svgEdge(190,y+31,255,y+31,'');});
+  s+=svgEdge(425,81,490,111,f.decisions+' 条决策');
+  s+=svgEdge(425,171,490,221,f.terms+' 词');
+  s+=svgEdge(425,351,490,331,f.work+' 工作项');
+  s+=svgEdge(660,111,730,101,f.decisions+' 条');
+  s+=svgEdge(660,221,730,211,f.terms+' 词');
+  s+=svgEdge(660,331,730,321,f.work+' 项');
+  document.getElementById('legend').innerHTML='<span>节点可点击跳转到对应视图 · 数字由当前账本实时派生，非硬编码</span>';
+  box.innerHTML='<div class="diagram-wrap">'+svgShell('账本驱动的实时计数','权威源 → 生成器 → 投影 → 视图；每一层都有可点击下钻入口',s,410)+'</div>';
+  bindJumps(box);
+}
+function renderFlow(box){
+  const f=flowData();
+  let s='';
+  const row=(y,items)=>items.forEach((it,i)=>{s+=svgNode(20+i*180,y,160,62,it[0],it[1],it[2],it[3],it[4]);if(i<items.length-1)s+=svgEdge(180+i*180,y+31,200+i*180,y+31,it[5]||'');});
+  row(50,[
+    ['源码 / 测试 / 文档','仓库事实',f.modules+' 模块','modules','source','仓库扫描'],
+    ['registry.json','能力声明',f.caps+' 点','capability','source','声明'],
+    ['build_capability_model','逐字段复算',f.caps+' 点','capability','gen','f()'],
+    ['DECISION_LEDGER','唯一事实源',f.decisions+' 条','all','proj','写入'],
+    ['EMBED / 看板','只读投影',f.decisions+' 条','all','view','投影']
+  ]);
+  row(200,[
+    ['意图 / 路由','人工决策入口','—','design','source','声明'],
+    ['复述门','机器锚定','0/1/2','design','gen','校验'],
+    ['expert-run','交接链 + 批准包','人工批准','workbench','gen','执行'],
+    ['写入账本','append-only',f.decisions+' 条','all','proj','审计'],
+    ['history.events','状态快照',f.events+' 事件','history','view','回放']
+  ]);
+  row(350,[
+    ['ONTOLOGY.json','权威本体',f.terms+' 词','glossary','source','投影'],
+    ['ontology.py','只读派生',f.terms+' 词','glossary','gen','投影'],
+    ['ONTO_TERMS','看板数据段',f.terms+' 词','glossary','proj','注入'],
+    ['术语视图','机器分型',f.terms+' 词','glossary','view','并列'],
+    ['GLOSSARY','人读解说','并列','glossary','view','不替代']
+  ]);
+  document.getElementById('legend').innerHTML='<span>数据流 · 实时计数：每条边标注当前账本规模；写入链保留人工批准点，本体链只读派生</span>';
+  box.innerHTML='<div class="diagram-wrap">'+svgShell('数据流 · 实时计数','账本驱动的实时计数：数字来自 DATA / ONTO_TERMS，刷新账本即刷新图',s,440)+'</div>';
+  bindJumps(box);
+}
+function init(){
+  // 先用内嵌账本立刻渲染，再尝试同目录 JSON 刷新；离线也能看到内容。
+  render();
+  fetch('DECISION_LEDGER.json').then(r=>r.ok?r.json():Promise.reject())
+    .then(d=>{DATA=d;DATA_SOURCE='实时 JSON';render();})
+    .catch(()=>{DATA_SOURCE='离线快照';render();});
+  document.querySelectorAll('.bar .tab').forEach(t=>t.onclick=()=>setView(t.dataset.v));
+  const q=document.getElementById('q');
+  if(q) q.oninput=e=>{query=e.target.value.toLowerCase();pageLimit=PAGE_SIZE;render();};
+  const qc=document.getElementById('qclear'); if(qc) qc.onclick=clearQuery;
+  bindNavToggle();
+  bindStats(document.getElementById('stats'));
+  bindContext(document.getElementById('context'));
+  const back=document.getElementById('backtop');
+  if(back) back.onclick=()=>{if(typeof window!=='undefined'&&window.scrollTo)window.scrollTo({top:0,behavior:'smooth'});};
+  if(typeof window!=='undefined' && window.addEventListener){
+    window.addEventListener('keydown',e=>{
+      const tag=(e.target&&e.target.tagName||'').toLowerCase();
+      if(e.key==='/'&&tag!=='input'&&tag!=='textarea'){
+        e.preventDefault(); const box=document.getElementById('q'); if(box) box.focus(); return;
+      }
+      if(e.key==='Escape'){ if(query) clearQuery(); else if(workScope) clearScope(); }
+    });
+    window.addEventListener('scroll',()=>{
+      if(!back) return;
+      const y=window.scrollY||0; back.hidden=y<240;
+    },{passive:true});
+  }
 }
 
-function esc(s){return String(s==null?'':s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));}
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 const ROOT='../../';
 function docLink(x,kind){
   if(!x||!x.path) return '';
@@ -411,20 +789,25 @@ function docIndexHtml(di){
 }
 
 function render(){
-  const es=DATA.entries;
-  document.getElementById('sub').textContent='单一事实源 · 最后更新 '+DATA.last_updated+' · 共 '+es.length+' 条决策/裁决（一份账本取代散落报告与日志）';
+  const es=DATA.entries||[];
+  renderContext();
+  document.getElementById('sub').textContent='单一事实源 · 最后更新 '+(DATA.last_updated||'未知')+' · 共 '+es.length+' 条决策/裁决（一份账本取代散落报告与日志）';
+  const gm=DATA.governance_meta||{};
+  document.getElementById('foot').innerHTML='账本路径 governance/DECISION_LEDGER.json · 方法版本 '+esc(gm.method_version||'未绑定')+
+    ' · 骨架 '+esc(String(gm.board_skeleton||'未绑定').slice(0,12))+
+    ' · 数据来源 '+esc(DATA_SOURCE)+' · 本页是只读投影，修改请改权威源并重算';
   const cnt={};es.forEach(e=>cnt[e.status]=(cnt[e.status]||0)+1);
   document.getElementById('stats').innerHTML=
-    stat(es.length,'决策条目总数','')+
-    stat(cnt.decided||0,'已裁决','var(--green)')+
-    stat(cnt.done||0,'已完成','var(--blue)')+
-    stat((cnt.proposed||0)+(cnt.deferred||0),'待裁决 / 暂缓','var(--amber)')+
-    stat(cnt.superseded||0,'已被取代（取代链）','var(--red)')+
-    stat(((DATA.history||{}).events||[]).length,'历史事件（append-only）','var(--purple)')+
-    stat(((DATA.lessons||{}).items||[]).length,'已确认经验','var(--green)')+
-    stat((DATA.work_items||[]).filter(x=>x.status!=='done').length,'未关闭 TODO / Issue','var(--amber)')+
+    stat(es.length,'决策条目总数','','all')+
+    stat(cnt.decided||0,'已裁决','var(--green)','all')+
+    stat(cnt.done||0,'已完成','var(--blue)','all')+
+    stat((cnt.proposed||0)+(cnt.deferred||0),'待裁决 / 暂缓','var(--amber)','pending')+
+    stat(cnt.superseded||0,'已被取代（取代链）','var(--red)','history')+
+    stat(((DATA.history||{}).events||[]).length,'历史事件（append-only）','var(--purple)','history')+
+    stat(((DATA.lessons||{}).items||[]).length,'已确认经验','var(--green)','lessons')+
+    stat((DATA.work_items||[]).filter(x=>x.status!=='done').length,'未关闭 TODO / Issue','var(--amber)','workbench')+
     stat(((DATA.test_results||{}).cases||[]).filter(c=>c.status==='fail'||c.status==='error').length,
-         '失败 / 异常用例','var(--red)');
+         '失败 / 异常用例','var(--red)','workbench');
   document.getElementById('legend').innerHTML=Object.keys(STATUS).map(k=>'<span class="pill '+STATUS[k].cls+'">'+STATUS[k].label+'</span>').join('')+'<span>点击卡片展开详情 · 红色/橙色为需关注项</span>';
 
   let list=es.filter(match);
@@ -433,6 +816,9 @@ function render(){
   list=list.slice(0,pageLimit);
 
   const box=document.getElementById('list');
+  if(view==='design'){ renderDesign(box); return; }
+  if(view==='diagram'){ renderDiagram(box); return; }
+  if(view==='flow'){ renderFlow(box); return; }
   if(view==='workbench'){ renderWorkbench(box); return; }
   if(view==='work'){ renderWork(box); return; }
   if(view==='capability'){ renderCapability(box); return; }
@@ -471,7 +857,13 @@ function render(){
     box.innerHTML=list.map(card).join('');
   }
   box.innerHTML+=moreHtml(totalEntries,list.length,' 条决策');
-  box.querySelectorAll('.toggle').forEach(t=>t.onclick=()=>t.closest('.card').classList.toggle('open'));
+  box.querySelectorAll('.toggle').forEach(t=>t.onclick=()=>{
+    const c=t.closest?t.closest('.card'):null; if(!c||!c.classList) return;
+    const open=!c.classList.contains('open');
+    if(open) c.classList.add('open'); else c.classList.remove('open');
+    t.textContent=open?'收起 ▴':'展开 ▾';
+    if(t.setAttribute) t.setAttribute('aria-expanded',open?'true':'false');
+  });
   bindCapLinks(box);bindWorkLinks(box);
   bindMore(box);
 }
@@ -547,7 +939,8 @@ function projectCard(p){
     '</div></details>';
 }
 
-function stat(n,l,c){return '<div class="stat"><div class="n"'+(c?' style="color:'+c+'"':'')+'>'+n+'</div><div class="l">'+l+'</div></div>';}
+function stat(n,l,c,jump){return '<button class="stat" type="button"'+(jump?' data-jump="'+esc(jump)+'"':'')+'>'+
+  '<div class="n"'+(c?' style="color:'+c+'"':'')+'>'+n+'</div><div class="l">'+esc(l)+'</div></button>';}
 function match(e){
   if(!query)return true;
   return [e.title,e.decision,e.rationale,e.category,e.id,e.scope].join(' ').toLowerCase().includes(query);
@@ -563,7 +956,7 @@ function card(e){
   const ev=(e.evidence||[]).map(x=>'<div class="ev">'+esc(x)+'</div>').join('');
   return '<div class="'+cls+'">'+
     '<div class="chead"><span class="cid">'+esc(e.id)+'</span><span class="pill '+s.cls+'">'+s.label+'</span>'+
-    '<span class="ctitle">'+esc(e.title)+'</span><span class="toggle">展开 ▾</span></div>'+
+    '<span class="ctitle">'+esc(e.title)+'</span><button class="toggle" type="button" aria-expanded="false">展开 ▾</button></div>'+
     '<div class="cmeta">'+esc(e.category)+' · '+esc(e.scope)+' · '+esc(e.date)+' · 置信度 '+esc(e.confidence)+'</div>'+
     '<div class="cbody">'+
       '<div class="row"><span class="k">决策</span><span class="v">'+esc(e.decision)+'</span></div>'+

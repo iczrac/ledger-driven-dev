@@ -79,6 +79,27 @@
           "domain": "ANNOT",
           "impl": ["scripts/provenance_view.py"],
           "tests": ["tests/routing/test_provenance_view.py"]
+        },
+        {
+          "code": "METHOD.GOV.BOARD.11",
+          "name": "看板体验契约（v2.8.0）：语义结构 + 当前状态可见 + 搜索/跳转可达 + 响应式",
+          "domain": "BOARD",
+          "impl": ["scripts/board_contract.py"],
+          "tests": ["tests/views/test_board_views.py"]
+        },
+        {
+          "code": "METHOD.GOV.VISUAL.12",
+          "name": "架构图与数据流（v2.9.0）：账本驱动 SVG + 实时计数 + 可下钻节点 + 分组导航",
+          "domain": "VISUAL",
+          "impl": ["scripts/board_contract.py"],
+          "tests": ["tests/views/test_board_views.py"]
+        },
+        {
+          "code": "METHOD.GOV.WORKBENCH.13",
+          "name": "工作台视角（v2.10.0）：默认落点=工作台 + 今日焦点 + 可信度条 + 下一轮队列 + 入口矩阵",
+          "domain": "WORKBENCH",
+          "impl": ["scripts/board_contract.py"],
+          "tests": ["tests/views/test_board_views.py"]
         }
       ]
     }

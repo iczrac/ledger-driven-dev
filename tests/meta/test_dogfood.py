@@ -9,10 +9,14 @@ B：看板术语视图必须消费本体投影，而非纯硬编码常量。
 MODULE_ID = "meta"
 import json
 import re
+import sys
 import unittest
 from pathlib import Path
 
 from _base import ROOT
+
+sys.path.insert(0, str(ROOT / "scripts"))
+from upgrade import METHOD_VERSION  # noqa: E402
 
 GOV = ROOT / "governance"
 LEDGER = GOV / "DECISION_LEDGER.json"
@@ -31,21 +35,22 @@ class SelfHostingLedger(unittest.TestCase):
         d = self._ledger()
         gm = d.get("governance_meta")
         self.assertIsInstance(gm, dict, "方法仓账本缺 governance_meta（未走过 M1-M8）")
-        self.assertEqual(gm.get("method_version"), "2.7.0")
+        self.assertEqual(gm.get("method_version"), METHOD_VERSION)
         for key in ("method_assets", "board_skeleton", "installed_assets", "ontology_digest"):
             self.assertIn(key, gm, f"governance_meta 缺绑定轴 {key}")
 
     def test_release_decisions_recorded(self):
         d = self._ledger()
         titles = " | ".join(str(e.get("title", "")) for e in d.get("entries", []))
-        for ver in ("2.4.0", "2.5.0", "2.6.0"):
+        for ver in ("2.4.0", "2.5.0", "2.6.0", "2.8.0", "2.9.0", "2.10.0"):
             self.assertIn(ver, titles, f"账本未记录发版决策 {ver}")
 
     def test_release_decisions_are_done(self):
         d = self._ledger()
         rel = [e for e in d.get("entries", [])
-               if any(v in str(e.get("title", "")) for v in ("2.4.0", "2.5.0", "2.6.0"))]
-        self.assertEqual(len(rel), 3, "应有三条发版决策")
+               if any(v in str(e.get("title", "")) for v in
+                      ("2.4.0", "2.5.0", "2.6.0", "2.8.0", "2.9.0", "2.10.0"))]
+        self.assertEqual(len(rel), 6, "应有六条发版决策")
         for e in rel:
             self.assertEqual(e.get("status"), "done", f"{e['id']} 未完成流转")
 

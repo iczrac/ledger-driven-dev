@@ -96,7 +96,13 @@ SOURCE_ROOT = Path(__file__).resolve().parents[1]
 SCHEMA_PLAN = "upgrade-plan/1"
 SCHEMA_APPLY = "upgrade-apply/1"
 SCHEMA_VERIFY = "upgrade-verify/1"
-METHOD_VERSION = "2.7.0"
+METHOD_VERSION = "2.10.0"
+
+
+def _version_tuple(value) -> tuple[int, ...]:
+    """语义版本比较：避免把 2.10.0 当成「小于」2.9.0 的字符串比较。"""
+    parts = tuple(int(x) for x in re.findall(r"\d+", str(value))[:3])
+    return parts or (0,)
 LEDGER_SCHEMA_VERSION = "1.0"
 SUPPORTED_LEDGER_VERSIONS = {"1.0"}
 ACCESS_SCHEMA = "access/1"
@@ -265,7 +271,7 @@ def plan(target: Path, source_root: Path = SOURCE_ROOT) -> dict:
         blocks.append(dict(id="lifecycle_not_writable",
                            reason=f"生命周期为 {lc_state}，升级属于写入动作",
                            fix="由人批准 unfreeze 后再升级；归档项目请复制出新项目"))
-    if ledger and str(meta.get("method_version", METHOD_VERSION)) > METHOD_VERSION:
+    if ledger and _version_tuple(meta.get("method_version", METHOD_VERSION)) > _version_tuple(METHOD_VERSION):
         blocks.append(dict(id="future_method_version",
                            reason=f"账本由更新的方法论 {meta['method_version']} 写入",
                            fix="升级方法论仓库本身，不要用旧工具降级写新账本"))

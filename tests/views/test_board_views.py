@@ -57,6 +57,53 @@ class BoardViewsTest(unittest.TestCase):
         for rid in REQUIRED_IDS:
             self.assertIn(f'id="{rid}"', html)
 
+    def test_board_ux_contract(self):
+        """v2.8.0：体验改进也必须成为可复算契约，不能靠人记得别删。"""
+        html = TEMPLATE.read_text(encoding="utf-8")
+        for needle in (
+            '<nav class="bar" id="nav" aria-label="看板视图">',
+            'id="context"', 'aria-live="polite"', 'class="skip-link"',
+            'id="qclear"', ",'pending')+", 'data-clear="query"',
+            'function renderContext(', 'function setView(',
+            "function bindStats(", "function bindContext(",
+            '@media (max-width: 760px)', 'prefers-reduced-motion',
+            "const VIEW_META=", "window.addEventListener('keydown'",
+        ):
+            self.assertIn(needle, html, needle)
+
+    def test_board_visual_contract(self):
+        """v2.9.0：理念可见、架构与数据流可复算，不能退化成手写装饰图。"""
+        html = TEMPLATE.read_text(encoding="utf-8")
+        for needle in (
+            'data-v="design"', 'data-v="diagram"', 'data-v="flow"',
+            'const DESIGN_PRINCIPLES=[', 'function renderDesign(',
+            'function renderDiagram(', 'function renderFlow(',
+            'function flowData(', 'function bindJumps(',
+            'class="navgroup primary"', 'id="navtoggle"',
+            '<svg', 'data-jump="\'+esc(jump)+\'"', 'tabindex="0"',
+            '账本驱动的实时计数', '数据流 · 实时计数',
+        ):
+            self.assertIn(needle, html, needle)
+
+    def test_board_workbench_contract(self):
+        """v2.10.0：默认落点是工作台，而不是账本列表；工作台必须给结论和入口。"""
+        html = TEMPLATE.read_text(encoding="utf-8")
+        for needle in (
+            "let view='workbench', query='';", 'let DATA_SOURCE=',
+            'class="focus-grid"', 'class="trustbar"', 'class="launchpad"',
+            'class="diagram-scroll"', '可信度', '下一轮队列', '入口矩阵',
+            'DATA_SOURCE', '账本路径', '命中节点将高亮',
+        ):
+            self.assertIn(needle, html, needle)
+        self.assertLess(html.index('data-v="workbench"'),
+                        html.index('data-v="all"'),
+                        "工作台应排在全部条目之前")
+        # 原有 data-v 一个不能少：突破框架不等于拆契约。
+        for v in ('all', 'workbench', 'work', 'pending', 'design', 'diagram',
+                  'flow', 'timeline', 'modules', 'arch', 'capability',
+                  'history', 'lessons', 'glossary'):
+            self.assertIn(f'data-v="{v}"', html, v)
+
     def test_work_views_degrade_without_data(self):
         """用最小 DOM stub 在 Node 里真实执行模板 JS，证明空账本不报错。"""
         if not _has_node():
@@ -66,7 +113,8 @@ class BoardViewsTest(unittest.TestCase):
             js.write_text(NODE_HARNESS + script_text() + """
 renderWorkbench(document.getElementById('list'));
 const a=document.getElementById('list').innerHTML;
-if(!a.includes('焦点队列')||!a.includes('任务卡')) throw new Error('工作台缺区块');
+if(!a.includes('焦点队列')||!a.includes('下一轮队列')) throw new Error('工作台缺区块');
+if(!a.includes('可信度')||!a.includes('入口矩阵')) throw new Error('工作台视角缺可信度/入口');
 renderWork(document.getElementById('list'));
 const b=document.getElementById('list').innerHTML;
 if(!b.includes('TODO / Issue')) throw new Error('工作项缺区块');
@@ -74,6 +122,12 @@ workScope='DEMO.CORE.ORDER.01';
 const w=nodeWork(workScope);
 if(w.health<0||w.health>100) throw new Error('健康度越界');
 if(!Array.isArray(w.items)) throw new Error('工作项不是数组');
+renderDesign(document.getElementById('list'));
+if(!document.getElementById('list').innerHTML.includes('单一事实源')) throw new Error('设计理念缺原则');
+renderDiagram(document.getElementById('list'));
+if(!document.getElementById('list').innerHTML.includes('<svg')) throw new Error('架构图缺 SVG');
+renderFlow(document.getElementById('list'));
+if(!document.getElementById('list').innerHTML.includes('数据流 · 实时计数')) throw new Error('数据流缺计数标题');
 console.log('OK');
 """, encoding="utf-8")
             p = subprocess.run(["node", str(js)], capture_output=True, text=True)

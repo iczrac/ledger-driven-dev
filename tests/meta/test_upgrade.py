@@ -19,8 +19,8 @@ from _base import DEMO, ROOT, run_verify
 from ledger_io import current_fingerprint, load_ledger, write_ledger
 
 sys.path.insert(0, str(ROOT / "scripts"))
-from upgrade import (METHOD_VERSION, POST_UPGRADE, PRE_UPGRADE, TOOLING, apply,  # noqa: E402
-                     check_definitions, plan, rollback, verify)
+from upgrade import (METHOD_VERSION, POST_UPGRADE, PRE_UPGRADE, TOOLING, _version_tuple,  # noqa: E402
+                     apply, check_definitions, plan, rollback, verify)
 
 UPGRADE = ROOT / "scripts" / "upgrade.py"
 
@@ -47,6 +47,11 @@ def ledger_of(target: Path) -> dict:
 class UpgradeTest(unittest.TestCase):
 
     # ---------- 定义与计划 ----------
+    def test_two_digit_minor_is_semver_not_string(self):
+        """2.10.0 必须大于 2.9.0，否则旧账本会被误判为「来自未来」。"""
+        self.assertGreater(_version_tuple("2.10.0"), _version_tuple("2.9.0"))
+        self.assertEqual(_version_tuple(METHOD_VERSION), (2, 10, 0))
+
     def test_definitions_selfcheck(self):
         self.assertEqual(check_definitions(), [])
         self.assertEqual(plan.__name__, "plan")
