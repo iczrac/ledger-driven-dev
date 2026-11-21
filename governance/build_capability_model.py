@@ -492,6 +492,21 @@ def diff_projects(old_projects: list, new_projects: list) -> list[str]:
     return drift
 
 
+def diff_queue_risk(ledger: dict, model: dict) -> list[str]:
+    """显式提供 --runtime-signals 时，队列风险注解也必须可复算。"""
+    def index(cm: dict) -> dict[str, tuple]:
+        return {
+            str(t.get("code")): (t.get("risk_score"), t.get("risk_signal"),
+                                 t.get("risk_evidence"))
+            for t in (cm.get("next_queue") or []) if isinstance(t, dict)
+        }
+
+    a = index(ledger.get("capability_model") or {})
+    b = index(model)
+    return [f"next_queue[{code}]: 账本 {a[code]} ≠ 重算 {b[code]}"
+            for code in sorted(set(a) | set(b)) if a.get(code) != b.get(code)]
+
+
 def no_regress(old_ledger: dict, new_model: dict) -> list[str]:
     """重算不得降级任何能力的 level（v1.8.0 不降级硬门禁）。
 
@@ -790,7 +805,8 @@ def build_doc_index(
 # ------------------------------ 模型构建 ------------------------------
 
 def build(repo_root: Path, cfg_all: dict, ledger: dict, test_report: dict | None = None,
-          scope: "RepoScope | None" = None) -> dict:
+          scope: "RepoScope | None" = None,
+          runtime_signals: list[dict] | None = None) -> dict:
     """构建 capability_model 与 architecture.component_tree。
 
     scope 为 None 时按文件系统全集工作（仅供测试/非 git 场景）；正常入口
@@ -1010,7 +1026,7 @@ def build(repo_root: Path, cfg_all: dict, ledger: dict, test_report: dict | None
     }
     # SELECT 步骤的机器可读产出 + 分析层：每次重跑自动刷新，
     # 供规划/编码代理与离线看板直接消费。
-    apply_analytics(model, ledger)
+    apply_analytics(model, ledger, runtime_signals=runtime_signals)
     return model
 
 
@@ -1207,17 +1223,51 @@ def lesson_matches(item: dict, task: dict, domain: str) -> bool:
             or domain in doms or task["level"] in lvls)
 
 
+def _runtime_risk_index(entries: list[dict] | None) -> dict[str, tuple]:
+    """把外部传入的运行时信号投影索引成 code → (score, id, evidence)。
+
+    只接受显式数据，不读事件目录、不推断：坏条目跳过；同名能力取最高分。
+    这不是第二事实源——信号由 scripts/runtime_signals.project_signals 从事件
+    原文可复算地产出，生成器只是把它作为 f(...) 的一个只读输入。
+    """
+    idx: dict[str, tuple] = {}
+    for e in entries or []:
+        if not isinstance(e, dict):
+            continue
+        try:
+            score = round(min(max(float(e.get("risk_score", 0)), 0.0), 1.0), 2)
+        except (TypeError, ValueError):
+            continue
+        if score <= 0:
+            continue
+        sid = str(e.get("id", ""))
+        src = str(e.get("source_file", ""))
+        evidence = f"{src}#{sid}" if src or sid else None
+        caps = e.get("capabilities") or []
+        if isinstance(caps, str):
+            caps = [caps]
+        for code in caps:
+            if not isinstance(code, str):
+                continue
+            prev = idx.get(code)
+            if prev is None or score > prev[0]:
+                idx[code] = (score, sid, evidence)
+    return idx
+
+
 def build_next_queue(model: dict, limit: int = 10, lessons: dict | None = None,
-                     health_gain: dict[str, float] | None = None) -> list[dict]:
+                     health_gain: dict[str, float] | None = None,
+                     runtime_signals: list[dict] | None = None) -> list[dict]:
     """把循环协议的 SELECT 步骤机器化：输出可直接消费的任务队列。
 
     排序规则（可机读、可复算，免除每次重新解释）：
       1. 只收录未达 L5 的能力点；
-      2. 按 completion 升序（最低完成度优先）；
-      3. 同级按 code 排序，保证稳定可复现。
-    每个任务携带：目标编码、当前/目标等级、具体动作、缺失的证据类型、
-    关联文档与决策——AI 或人拿到一条即可开工，无需再查别处。
+      2. 显式提供 runtime_signals 时，命中的精确能力点按 risk 降序优先；
+      3. 其余按 completion 升序（最低完成度优先）；
+      4. 同级按 code 排序，保证稳定可复现。
+    风险只改排序与任务卡注解，不写 level/completion，不替代证据判定。
     """
+    risk_idx = _runtime_risk_index(runtime_signals)
     evidence_order = ("contracts", "impl", "unit_tests", "test_records")
     evidence_label = {
         "contracts": "契约(L1)", "impl": "实现(L2)",
@@ -1264,6 +1314,12 @@ def build_next_queue(model: dict, limit: int = 10, lessons: dict | None = None,
                     # 健康增益由 apply_analytics 注入；旧账本缺字段时前端按 0 处理。
                     "health_impact": float((health_gain or {}).get(c["code"], 0.0)),
                 }
+                risk = risk_idx.get(c["code"])
+                if risk:
+                    # 只有命中才加字段：未提供信号时不改变既有账本形状。
+                    task["risk_score"] = risk[0]
+                    task["risk_signal"] = risk[1]
+                    task["risk_evidence"] = risk[2]
                 # 经验层接入：任务卡自带相关已确认经验，执行者无需另行检索
                 items = (lessons or {}).get("items", []) or model.get("lessons", {}).get("items", [])
                 task["lessons"] = [
@@ -1272,7 +1328,7 @@ def build_next_queue(model: dict, limit: int = 10, lessons: dict | None = None,
                     for x in items if lesson_matches(x, task, domain)
                 ]
                 tasks.append(task)
-    tasks.sort(key=lambda t: (t["completion"], t["code"]))
+    tasks.sort(key=lambda t: (-t.get("risk_score", 0.0), t["completion"], t["code"]))
     for i, t in enumerate(tasks, 1):
         t["rank"] = i
     return tasks[:limit]
@@ -1606,7 +1662,8 @@ def build_analytics(model: dict, ledger: dict, health: dict) -> dict:
     }
 
 
-def apply_analytics(model: dict, ledger: dict) -> dict:
+def apply_analytics(model: dict, ledger: dict,
+                    runtime_signals: list[dict] | None = None) -> dict:
     """统一重算分析摘要、队列健康增益与看板摘要字段。"""
     health = compute_health_dimensions(model, ledger)
     model["summary"]["health_dimensions"] = {
@@ -1618,7 +1675,8 @@ def apply_analytics(model: dict, ledger: dict) -> dict:
     gain = {a["code"]: a["health_gain"]
             for a in analytics["recommended_actions"]}
     model["next_queue"] = build_next_queue(
-        model, lessons=ledger.get("lessons"), health_gain=gain)
+        model, lessons=ledger.get("lessons"), health_gain=gain,
+        runtime_signals=runtime_signals)
     return health
 
 
@@ -1671,7 +1729,22 @@ def main() -> None:
                     help="漂移门禁：重算结果与已写账本不一致即 exit 1（不写盘）")
     ap.add_argument("--binding-report",
                     help="把符号级证据绑定 advisory 写成 JSON 报告（供映射修正人审消费）")
+    ap.add_argument("--runtime-signals",
+                    help="运行时信号投影 JSON（由 scripts/runtime_signals.project_signals 产出）；"
+                         "提供时按精确能力点重排 next_queue，不改 level/completion")
     args = ap.parse_args()
+
+    runtime_signals = None
+    if args.runtime_signals:
+        try:
+            raw = json.loads(Path(args.runtime_signals).read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError) as exc:
+            raise SystemExit(f"[BLOCK] 运行时信号投影不可读：{exc}")
+        if isinstance(raw, dict):
+            raw = raw.get("signals") or raw.get("items") or []
+        if not isinstance(raw, list):
+            raise SystemExit("[BLOCK] 运行时信号投影必须是数组或含 signals/items 的对象")
+        runtime_signals = raw
 
     repo_root = Path(args.root).resolve()
     reg_path = Path(args.registry) if args.registry else repo_root / "governance" / "registry.json"
@@ -1750,7 +1823,8 @@ def main() -> None:
             test_report = None
         else:
             print("[WARN] 报告未绑定源码摘要；建议用 v0.8.0+ 的 run_tests.py 重跑")
-    model = build(repo_root, cfg_all, ledger, test_report=test_report, scope=scope)
+    model = build(repo_root, cfg_all, ledger, test_report=test_report, scope=scope,
+                  runtime_signals=runtime_signals)
     # 符号级绑定旁路报告：读 registry 声明做独立观察，供 --binding-report 人审。
     # 真正改 tier 的硬门禁在 build() 内，基于实际证据（ev）计算 binding_status。
     # 两条路径数据源不同：主仓 registry 声明了 tests 故一致；demo 用 hints，
@@ -1773,6 +1847,8 @@ def main() -> None:
         )
         # v2.3.0：issue 也是账本投影，手删/篡改派生 issue 必须被发现
         drift = drift + _check_issues(ledger, model)
+        if runtime_signals:
+            drift = drift + diff_queue_risk(ledger, model)
         if drift:
             print("[DRIFT] 账本与「registry + 仓库」重算结果不一致：", file=sys.stderr)
             for line in drift[:20]:
@@ -1790,7 +1866,7 @@ def main() -> None:
     new_event = evolve(ledger, model, ts)
     # evolve 之后重算分析层与队列：趋势必须包含本次新事件，
     # 任务卡则携带最新已确认经验与健康增益（build 内那次只是未接入经验的快照）。
-    apply_analytics(model, ledger)
+    apply_analytics(model, ledger, runtime_signals=runtime_signals)
     sync_architecture(ledger, model, repo_root, first_cfg["root"])
 
     print(json.dumps(model["summary"], ensure_ascii=False, indent=2))
@@ -1810,8 +1886,10 @@ def main() -> None:
         for t in model["next_queue"]:
             gap = "/".join(t["missing_evidence"]) or "无显式缺口"
             lesson = f" · 经验 {','.join(x['id'] for x in t['lessons'])}" if t["lessons"] else ""
+            risk = (f" · 风险 {t['risk_score']}({t['risk_signal']})"
+                    if t.get("risk_signal") else "")
             print(f"  #{t['rank']} {t['code']:<24} {t['level']}→{t['target_level']} "
-                  f"缺[{gap}] · {t['action']}{lesson}")
+                  f"缺[{gap}] · {t['action']}{lesson}{risk}")
         return
 
     # v1.8.0 不降级硬门禁：重算不得把任何能力 level 调低。

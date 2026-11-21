@@ -2,6 +2,16 @@
 
 本项目版本遵循语义化版本（SemVer）。
 
+## [2.15.0] - 2026-11-21
+
+**运行时风险入口**：让 `next_queue` 既能回答“缺什么证据”，也能回答“现场正发生什么”。
+
+- 新增 `scripts/runtime_signals.py`：从 `STATE/events/*.md` 解析 `## E<n>` 事件块，产出带 `source_file / id / confidence` 的可追溯信号；unknown 与无域命中 fail-closed。
+- Slice 1 域级重排：在内存副本按 `(-risk, completion, code)` 抬高风险域，不写盘、不改等级/证据。
+- Slice 2 精确映射 + 生成器接入：`capability_hits / project_signals / apply_risk_signals_exact` 按显式 code → 完整 code → 语义词表映射能力点，歧义即丢弃；`build_capability_model.py --runtime-signals` 只在命中时注入 `risk_score / risk_signal / risk_evidence`，`--check` 同步检查风险漂移。
+- 真实只读取证：17 个事件块 → 3 条精确投影；队列头号任务由“补证据”转为带原文可追溯的运行时风险点，原 rank1 降 rank3。收紧泛词「覆蓋」后，非审计事件不再误伤。
+- 新增能力点 `METHOD.GOV.RUNTIME.16`、`docs/34-运行时风险入口.md`、两份脱敏取证报告；测试 418→437，方法版本升至 2.15.0。
+
 ## [2.14.0] - 2026-11-21
 
 **推广探路驱动的目标编排加固**：让循环能表达治理目标、能识别空转、能在验证门 fail-closed。

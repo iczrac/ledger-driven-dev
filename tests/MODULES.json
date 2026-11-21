@@ -11,7 +11,8 @@
       "owner_scripts": [
         "templates/build_capability_model.py",
         "templates/verify_ledger.py",
-        "scripts/run_tests.py"
+        "scripts/run_tests.py",
+        "scripts/runtime_signals.py"
       ],
       "files": [
         "tests/core/test_generation.py",
@@ -25,7 +26,8 @@
         "tests/core/test_registry_schema.py",
         "tests/core/test_binding_advisory.py",
         "tests/core/test_derived_issues.py",
-        "tests/core/test_maturity_analytics.py"
+        "tests/core/test_maturity_analytics.py",
+        "tests/core/test_runtime_signals.py"
       ]
     },
     {
