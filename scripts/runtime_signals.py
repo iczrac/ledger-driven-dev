@@ -1,5 +1,6 @@
 """运行时风险入口：把 STATE 事件日志投影成可追溯的风险信号，并在内存副本中
-按风险重排 next_queue。Slice 1 = 域级重排；Slice 2 = 精确能力点映射 + 生成器接入。
+按风险重排 next_queue。Slice 1 = 域级重排；Slice 2 = 精确能力点映射 + 生成器接入；
+Slice 3 = 显式 as_of 下的时间衰减与过期。
 
 设计纪律（不可协商）：
   - 只读：解析事件、投影信号、重排副本；绝不写盘、绝不改账本或队列入参。
@@ -7,12 +8,15 @@
   - fail-closed：缺 confidence / 无法判域 / 能力点映射歧义 → 不进精确排序。
   - 向后兼容：Slice 1 的 apply_risk_signals 行为不变；精确入口独立提供。
   - 不造第二事实源：project_signals 只产出可序列化的投影，供生成器显式消费。
+  - 时间显式：只有调用方传入 as_of 才启用衰减；无 time 或过期信号 fail-closed。
+    隐式读系统时钟会让同一批事件在不同日期产出不同账本，破坏可复算性。
 
 本模块不依赖任何第三方库；不 import build_capability_model，避免副本漂移。
 """
 from __future__ import annotations
 
 import re
+from datetime import datetime, timezone
 from pathlib import Path
 
 # 域关键词：只在本表内的词才参与域判定，表外一律 unknown（fail-closed）。
@@ -34,6 +38,9 @@ _TREND = re.compile(r"\d+(?:\.\d+)?\s*%?\s*(?:→|->|至)\s*\d+(?:\.\d+)?")
 _NONE_ACTION = re.compile(r"\bnone\b", re.IGNORECASE)
 _OPERATOR_ACTION = re.compile(r"alert-operator|operator", re.IGNORECASE)
 _CAP_CODE = re.compile(r"[A-Z][A-Z0-9]*\.[A-Z][A-Z0-9]*\.[A-Z][A-Z0-9]*\.\d{2}")
+
+# Slice 3：事件超过该天数不再进入风险排序（线性衰减到 0 后即过期）。
+DEFAULT_MAX_AGE_DAYS = 7
 
 # Slice 2 精确映射：把事件原文里的语义锚点映射到能力码第三段（cap token）。
 # 规则是投影层的可审计词表，不是事实源；命中歧义时按“更长关键词优先”，
@@ -95,6 +102,37 @@ def parse_state_events(state_dir: str | Path) -> list[dict]:
         if s.get("confidence") not in ("fact", "inference", "unknown"):
             s["confidence"] = "unknown"
     return signals
+
+
+def signal_age_days(signal: dict, as_of: datetime | None = None) -> int | None:
+    """事件年龄（整天）；time 缺失或不可解析返回 None（fail-closed）。
+
+    as_of 由调用方显式提供；不传时按当前 UTC 计算，仅供一次性诊断，
+    不应作为可复算投影的基准。
+    """
+    raw = signal.get("time")
+    if not isinstance(raw, str) or not raw.strip():
+        return None
+    try:
+        observed = datetime.fromisoformat(raw.strip())
+    except ValueError:
+        return None
+    if observed.tzinfo is None:
+        observed = observed.replace(tzinfo=timezone.utc)
+    ref = as_of or datetime.now(timezone.utc)
+    if ref.tzinfo is None:
+        ref = ref.replace(tzinfo=timezone.utc)
+    return max(0, (ref - observed).days)
+
+
+def decay_factor(age_days: int | None,
+                 max_age_days: int = DEFAULT_MAX_AGE_DAYS) -> float | None:
+    """线性衰减系数；年龄不可判定返回 None，达到上限返回 0（过期）。"""
+    if age_days is None or max_age_days <= 0:
+        return None
+    if age_days >= max_age_days:
+        return 0.0
+    return round(1.0 - age_days / max_age_days, 4)
 
 
 def domain_hint(signal: dict) -> str:
@@ -237,8 +275,16 @@ def capability_hits(signal: dict, model: dict) -> list[str]:
     return sorted(set(matched))
 
 
-def project_signals(signals: list[dict], model: dict) -> list[dict]:
-    """产出可序列化给生成器的精确投影；只含可追溯字段，绝不写盘。"""
+def project_signals(signals: list[dict], model: dict,
+                    as_of: datetime | None = None,
+                    max_age_days: int = DEFAULT_MAX_AGE_DAYS) -> list[dict]:
+    """产出可序列化给生成器的精确投影；只含可追溯字段，绝不写盘。
+
+    只有显式传入 as_of 才启用时间衰减；不传则保持无时间字段的既有行为。
+    启用时无 time / 不可解析 / 达到 max_age_days 的信号一律 fail-closed
+    不进投影；同时输出 observed_at / age_days / decay_factor，使投影可复算。
+    """
+    enforce = as_of is not None
     entries: list[dict] = []
     for s in signals or []:
         if not isinstance(s, dict):
@@ -248,20 +294,31 @@ def project_signals(signals: list[dict], model: dict) -> list[dict]:
         # 这类信号应如实记录为 operator 警报，不进 next_queue 风险排序。
         if _OPERATOR_ACTION.search(str(s.get("action", ""))):
             continue
+        age = signal_age_days(s, as_of) if enforce else None
+        factor = decay_factor(age, max_age_days) if enforce else None
+        if enforce and (factor is None or factor <= 0):
+            continue
         score = _signal_score(s)
+        if enforce:
+            score = round(score * factor, 4)
         if score <= 0:
             continue
         caps = capability_hits(s, model)
         if not caps:
             continue
-        entries.append({
+        entry = {
             "id": str(s.get("id", "")),
             "source_file": str(s.get("source_file", "")),
             "confidence": s.get("confidence", "unknown"),
             "domain": s.get("domain") or domain_hint(s),
             "risk_score": score,
             "capabilities": caps,
-        })
+        }
+        if enforce:
+            entry["observed_at"] = str(s.get("time", ""))
+            entry["age_days"] = age
+            entry["decay_factor"] = factor
+        entries.append(entry)
     return entries
 
 

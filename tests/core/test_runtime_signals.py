@@ -9,6 +9,7 @@ MODULE_ID = "core"
 import json
 import tempfile
 import unittest
+from datetime import datetime, timezone
 from pathlib import Path
 
 import _base  # noqa: F401 — 触发 scripts/ 路径注入（与其他 core 测试一致）
@@ -221,6 +222,56 @@ class ExactMappingTest(unittest.TestCase):
         self.assertEqual(again, entries)
         out = apply_risk_signals_exact(self.queue, entries, self.model)
         self.assertEqual(out[0]["risk_score"], entries[0]["risk_score"])
+
+
+class SignalDecayTest(unittest.TestCase):
+    def setUp(self):
+        self.model = {"projects": [{"code": "P", "modules": [{
+            "code": "DATA", "caps": [
+                {"code": "P.DATA.PROVIDER.05", "name": "Provider gate"}]}]}]}
+        self.as_of = datetime(2026, 11, 21, 12, 0, tzinfo=timezone.utc)
+        self.signal = {
+            "id": "E4", "source_file": "2026-11-20.md", "confidence": "fact",
+            "finding": "canonical read source select 单调上升", "action": "none",
+            "time": "2026-11-20T09:00+08:00",
+        }
+
+    def test_age_uses_explicit_as_of_not_system_clock(self):
+        from runtime_signals import signal_age_days
+        self.assertEqual(signal_age_days(self.signal, self.as_of), 1)
+
+    def test_signal_without_time_is_dropped_when_enforced(self):
+        s = dict(self.signal)
+        s.pop("time")
+        self.assertEqual(project_signals([s], self.model, as_of=self.as_of), [])
+
+    def test_expired_signal_is_dropped(self):
+        s = dict(self.signal)
+        s["time"] = "2026-11-10T09:00+08:00"
+        self.assertEqual(project_signals([s], self.model, as_of=self.as_of), [])
+
+    def test_risk_score_decays_and_projection_is_explainable(self):
+        fresh = dict(self.signal)
+        fresh["time"] = "2026-11-21T11:00+08:00"
+        fresh_entries = project_signals([fresh], self.model, as_of=self.as_of)
+        aged_entries = project_signals([self.signal], self.model, as_of=self.as_of)
+        self.assertEqual(fresh_entries[0]["risk_score"], 1.0)
+        self.assertLess(aged_entries[0]["risk_score"], fresh_entries[0]["risk_score"])
+        self.assertEqual(aged_entries[0]["age_days"], 1)
+        self.assertEqual(aged_entries[0]["decay_factor"], 0.8571)
+        self.assertEqual(aged_entries[0]["observed_at"], self.signal["time"])
+
+    def test_same_as_of_is_deterministic(self):
+        a = project_signals([self.signal], self.model, as_of=self.as_of)
+        b = project_signals([self.signal], self.model, as_of=self.as_of)
+        self.assertEqual(a, b)
+        self.assertEqual(json.loads(json.dumps(a, ensure_ascii=False)), a)
+
+    def test_without_as_of_keeps_legacy_shape(self):
+        entries = project_signals([self.signal], self.model)
+        self.assertEqual(len(entries), 1)
+        self.assertNotIn("age_days", entries[0])
+        self.assertEqual(entries[0]["risk_score"], 1.0)
 
 
 class GeneratorIntegrationTest(unittest.TestCase):
