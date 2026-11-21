@@ -32,6 +32,7 @@ _E_HEADING = re.compile(r"^##\s+(E\d+)\b[·\s]*(.*)$")
 _FIELD = re.compile(r"^-\s+([a-z_]+):\s*(.*)$")
 _TREND = re.compile(r"\d+(?:\.\d+)?\s*%?\s*(?:→|->|至)\s*\d+(?:\.\d+)?")
 _NONE_ACTION = re.compile(r"\bnone\b", re.IGNORECASE)
+_OPERATOR_ACTION = re.compile(r"alert-operator|operator", re.IGNORECASE)
 _CAP_CODE = re.compile(r"[A-Z][A-Z0-9]*\.[A-Z][A-Z0-9]*\.[A-Z][A-Z0-9]*\.\d{2}")
 
 # Slice 2 精确映射：把事件原文里的语义锚点映射到能力码第三段（cap token）。
@@ -42,8 +43,9 @@ CAPABILITY_ALIASES: tuple[tuple[str, tuple[str, ...]], ...] = (
                   "固定來源", "固定来源", "upstream source", "provider")),
     ("ADJUSTED", ("price basis", "close_adj", "adjusted", "复权", "復權")),
     # 裸「覆蓋/覆盖」太泛（例如「只覆蓋 3 個檔案」会误伤），只保留审计语境。
-    ("COVERAGE", ("coverage audit", "coverage", "覆盖审计", "覆蓋審計",
-                  "gap fill", "frontier")),
+    # 移除裸 coverage / frontier：文件名（rs_universe_coverage.py）与 frontier
+    # 快照词会让运行时事件被误挂到本能力点；只保留覆盖审计的明确语境。
+    ("COVERAGE", ("coverage audit", "覆盖审计", "覆蓋審計", "gap fill")),
     ("RSCOV", ("momentum seam", "contamination", "污染", "rs coverage")),
     ("CORE", ("rs core", "core calc", "分母口径")),
     ("SECTOR", ("sector", "行业强度", "行業強度")),
@@ -240,6 +242,11 @@ def project_signals(signals: list[dict], model: dict) -> list[dict]:
     entries: list[dict] = []
     for s in signals or []:
         if not isinstance(s, dict):
+            continue
+        # operator 裁决项（服务重启/数据修复/告警规则）不属于 L1 自动队列的
+        # 可补证据能力点；投影它只会造出「补个测试记录就关警报」的假任务。
+        # 这类信号应如实记录为 operator 警报，不进 next_queue 风险排序。
+        if _OPERATOR_ACTION.search(str(s.get("action", ""))):
             continue
         score = _signal_score(s)
         if score <= 0:

@@ -151,6 +151,21 @@ class ExactMappingTest(unittest.TestCase):
             {"code": "P.DATA.COVERAGE.04", "completion": 0.6, "rank": 4},
         ]
 
+    def test_operator_action_is_not_projected_into_queue(self):
+        # operator 裁决项（重启服务/修数据/改告警规则）不是 L1 可补证据的能力点，
+        # 投影它只会造出「补个记录就关警报」的假绿灯。E1/E3 即属此类。
+        s = {"id": "E1", "confidence": "fact",
+             "finding": "RSUniverseCoverage audit failed for US, coverage audit",
+             "action": "alert-operator — 修法要 operator 裁决"}
+        self.assertEqual(capability_hits(s, self.model), ["P.DATA.COVERAGE.04"])
+        self.assertEqual(project_signals([s], self.model), [])
+
+    def test_bare_coverage_filename_does_not_map_to_coverage_capability(self):
+        # 裸 coverage / frontier 词（来自文件名 rs_universe_coverage.py）不该命中
+        # 覆盖审计能力点；只有明确的 "coverage audit" 审计语境才命中。
+        s = {"confidence": "fact", "finding": "rs_universe_coverage.py frontier collapsed"}
+        self.assertEqual(capability_hits(s, self.model), [])
+
     def test_explicit_capability_field_wins(self):
         s = {"finding": "canonical read 单调上升", "confidence": "fact",
              "capability": "P.DATA.ADJUSTED.03"}
