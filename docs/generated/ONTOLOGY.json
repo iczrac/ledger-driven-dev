@@ -36,7 +36,7 @@
     {
       "path": "templates/verify_ledger.py",
       "role": "axioms",
-      "sha256": "24a44d4e1fde36a34af358e30263acfe34b2b050d49fa9001e4140a3f22c4ba9"
+      "sha256": "29936363e119ba65f0244bc41287d67c25b48fab9dd6b5d40c532c20fc781cbe"
     }
   ],
   "bounded_contexts": [
@@ -745,6 +745,7 @@
   "invariant_ids": [
     "analytics_d3_projection_valid",
     "analytics_maturity_valid",
+    "analytics_test_results_detail_valid",
     "binding_issues_derived",
     "board_embed_synced",
     "completion_matches_level",
@@ -780,10 +781,10 @@
     "entity_types": 16,
     "value_domains": 18,
     "relations": 7,
-    "axioms": 37,
+    "axioms": 38,
     "source_files": 7,
     "polyseme_terms": 3,
     "drift_count": 0
   },
-  "ontology_digest": "a00d08c4f3a2247f4366df28efa9d3ee57e24fa00a50333b2f1319b0d83f50d2"
+  "ontology_digest": "ac81b5b49ab125b035592fb5f1c4b8d6dafa8521aacf6954df4cf84123e98bce"
 }

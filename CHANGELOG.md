@@ -2,6 +2,14 @@
 
 本项目版本遵循语义化版本（SemVer）。
 
+## [2.16.0] - 2026-11-21
+
+**投影新鲜度不变量**：健康度明细不能再落后于测试证据。
+
+- 新增第 31 条不变量 `analytics_test_results_detail_valid`：从 `test_results.cases` 实算 pass/total，核对 `summary` 与 `test_pass_rate.detail`，不一致即 fail-closed。
+- 修正 v2.15.0 遗留的明细陈旧：437/437 报告下健康明细仍写 418/418；本版按权威口径重算。
+- 第 31 条归入已有分析层能力 `METHOD.GOV.ANALYTICS.14`；新增 `docs/35-投影新鲜度不变量.md`，验证器三份副本同步。
+
 ## [2.15.0] - 2026-11-21
 
 **运行时风险入口**：让 `next_queue` 既能回答“缺什么证据”，也能回答“现场正发生什么”。

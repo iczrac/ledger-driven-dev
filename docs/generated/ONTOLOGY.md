@@ -1,6 +1,6 @@
 # 本体投影（generated，只读）
 
-schema `ledger-ontology/1` · digest `a00d08c4f3a2247f4366df28efa9d3ee57e24fa00a50333b2f1319b0d83f50d2`
+schema `ledger-ontology/1` · digest `ac81b5b49ab125b035592fb5f1c4b8d6dafa8521aacf6954df4cf84123e98bce`
 
 由 `python3 scripts/ontology.py build --apply --approved-by <人>` 从事实源渲染。
 **不是人工文档，也不是第二事实源**：删掉本文件后 build 可逐字节复原。
@@ -100,9 +100,9 @@ schema `ledger-ontology/1` · digest `a00d08c4f3a2247f4366df28efa9d3ee57e24fa00a
 | G3 | Kleene K3：含 Unknown 不得派生 pass | `three_valued` |
 | G4 | append-only：只取代不删除 | `append_only` |
 
-账本不变量 30 条：
+账本不变量 31 条：
 
-`analytics_d3_projection_valid` `analytics_maturity_valid` `binding_issues_derived` `board_embed_synced` `completion_matches_level` `component_paths_exist` `decision_refs_valid` `doc_paths_exist` `encoding_format` `encoding_unique` `entry_ids_unique` `evidence_tier_valid` `goal_loop_valid` `history_chain_consistent` `history_current_matches` `history_event_fingerprints` `history_state_encoding` `installed_assets_binding` `lesson_candidates_dedup` `lessons_valid` `next_action_present` `queue_lessons_confirmed` `registry_impls_exist` `supersede_chain_consistent` `test_results_binding_valid` `verified_tier_not_premature` `verified_tier_traceable` `work_item_refs_valid` `work_items_owned` `work_items_valid`
+`analytics_d3_projection_valid` `analytics_maturity_valid` `analytics_test_results_detail_valid` `binding_issues_derived` `board_embed_synced` `completion_matches_level` `component_paths_exist` `decision_refs_valid` `doc_paths_exist` `encoding_format` `encoding_unique` `entry_ids_unique` `evidence_tier_valid` `goal_loop_valid` `history_chain_consistent` `history_current_matches` `history_event_fingerprints` `history_state_encoding` `installed_assets_binding` `lesson_candidates_dedup` `lessons_valid` `next_action_present` `queue_lessons_confirmed` `registry_impls_exist` `supersede_chain_consistent` `test_results_binding_valid` `verified_tier_not_premature` `verified_tier_traceable` `work_item_refs_valid` `work_items_owned` `work_items_valid`
 
 ## 来源绑定
 
@@ -114,6 +114,6 @@ schema `ledger-ontology/1` · digest `a00d08c4f3a2247f4366df28efa9d3ee57e24fa00a
 | `scripts/ledger_feedback.py` | value_domains | `ee3d577f0a600e05…` |
 | `scripts/agent_gateway.py` | value_domains | `2feb4818bc21bb7e…` |
 | `templates/build_capability_model.py` | value_domains | `6b98770075764edb…` |
-| `templates/verify_ledger.py` | axioms | `24a44d4e1fde36a3…` |
+| `templates/verify_ledger.py` | axioms | `29936363e119ba65…` |
 
 漂移条目：0

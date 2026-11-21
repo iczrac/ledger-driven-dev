@@ -43,6 +43,9 @@
     在 0-100 且加权和自洽、推荐行动与任务卡增益可追溯（旧账本未启用判 na）
 29. analytics_d3_projection_valid：D3 消费的追溯树与事件时间轴自证——节点 id
     唯一、决策引用真实、状态节点等于当前能力、时间轴 seq 连续（旧账本判 na）
+30. goal_loop_valid：目标编排的方向锁、预算单调、判据机读与终态纪律
+31. analytics_test_results_detail_valid：健康投影的 test_pass_rate.detail 必须与
+    test_results.cases 实算一致；禁止 sync-tests 后留下旧分子/分母（旧账本判 na）
 
 三态语义
 --------
@@ -833,6 +836,36 @@ def verify(repo_root: Path, ledger: dict, registry: dict | None,
         add("goal_loop_valid", not g_errors,
             (f"目标 {len(seen_ids)} 个 · 均锁方向" if not g_errors
              else f"错误={g_errors[:5]}"))
+
+    # 31. 健康投影测试明细（v2.16.0）：sync-tests 更新 test_results 后若未重算
+    #     生成器，analytics 的 detail 会停留在旧分子/分母。分数可能仍是 100%，
+    #     但投影已经说谎，必须 fail-closed。
+    tr_projection = ledger.get("test_results")
+    if not isinstance(tr_projection, dict) or not isinstance(analytics, dict):
+        add("analytics_test_results_detail_valid", True,
+            "未启用测试证据或分析层（旧账本）", status="na")
+    else:
+        t_errors: list[str] = []
+        cases = tr_projection.get("cases")
+        if not isinstance(cases, list):
+            t_errors.append("test_results.cases 非数组")
+        else:
+            passed_count = sum(
+                1 for c in cases
+                if isinstance(c, dict) and c.get("status") == "pass")
+            expected_detail = f"{passed_count}/{len(cases)}"
+            summary = tr_projection.get("summary") or {}
+            if summary.get("total") != len(cases):
+                t_errors.append(f"summary.total={summary.get('total')}≠{len(cases)}")
+            if summary.get("passed") != passed_count:
+                t_errors.append(f"summary.passed={summary.get('passed')}≠{passed_count}")
+            dims = ((analytics.get("health") or {}).get("dimensions") or {})
+            detail = (dims.get("test_pass_rate") or {}).get("detail")
+            if detail != expected_detail:
+                t_errors.append(f"detail={detail}≠{expected_detail}")
+        add("analytics_test_results_detail_valid", not t_errors,
+            (f"测试明细一致：{expected_detail}" if not t_errors
+             else f"错误={t_errors[:5]}"))
 
     return results
 

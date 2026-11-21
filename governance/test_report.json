@@ -1,2644 +1,2650 @@
 {
   "schema": "ledger-test-report/1",
-  "generated_at": "2026-11-21 15:45 HKT",
+  "generated_at": "2026-11-21 16:35 HKT",
   "test_dir": "tests",
   "command": "unittest load from tests",
   "load_errors": [],
   "summary": {
-    "total": 437,
-    "passed": 437,
+    "total": 438,
+    "passed": 438,
     "failed": 0,
     "errors": 0,
     "skipped": 0
   },
   "cases": [
     {
-      "id": "_lld_test_bootstrap_24836.BootstrapTest.test_adopt_consumes_draft_without_touching_it",
+      "id": "_lld_test_bootstrap_11275.BootstrapTest.test_adopt_consumes_draft_without_touching_it",
       "file": "tests/adoption/test_bootstrap.py",
       "status": "pass",
-      "seconds": 0.130919
+      "seconds": 0.331463
     },
     {
-      "id": "_lld_test_bootstrap_24836.BootstrapTest.test_adopt_without_draft_fails_closed",
+      "id": "_lld_test_bootstrap_11275.BootstrapTest.test_adopt_without_draft_fails_closed",
       "file": "tests/adoption/test_bootstrap.py",
       "status": "pass",
-      "seconds": 0.04241
+      "seconds": 0.098706
     },
     {
-      "id": "_lld_test_bootstrap_24836.BootstrapTest.test_adopted_project_generates_and_verifies",
+      "id": "_lld_test_bootstrap_11275.BootstrapTest.test_adopted_project_generates_and_verifies",
       "file": "tests/adoption/test_bootstrap.py",
       "status": "pass",
-      "seconds": 0.240484
+      "seconds": 0.452856
     },
     {
-      "id": "_lld_test_bootstrap_24836.BootstrapTest.test_existing_files_are_not_overwritten",
+      "id": "_lld_test_bootstrap_11275.BootstrapTest.test_existing_files_are_not_overwritten",
       "file": "tests/adoption/test_bootstrap.py",
       "status": "pass",
-      "seconds": 0.066324
+      "seconds": 0.209727
     },
     {
-      "id": "_lld_test_bootstrap_24836.BootstrapTest.test_greenfield_creates_skeleton_with_provenance",
+      "id": "_lld_test_bootstrap_11275.BootstrapTest.test_greenfield_creates_skeleton_with_provenance",
       "file": "tests/adoption/test_bootstrap.py",
       "status": "pass",
-      "seconds": 0.067232
+      "seconds": 0.195771
     },
     {
-      "id": "_lld_test_bootstrap_24836.BootstrapTest.test_greenfield_drops_example_declarations",
+      "id": "_lld_test_bootstrap_11275.BootstrapTest.test_greenfield_drops_example_declarations",
       "file": "tests/adoption/test_bootstrap.py",
       "status": "pass",
-      "seconds": 0.062198
+      "seconds": 0.192984
     },
     {
-      "id": "_lld_test_discovery_48497.DiscoveryTest.test_cli_writes_then_respects_existing_then_force",
+      "id": "_lld_test_discovery_38518.DiscoveryTest.test_cli_writes_then_respects_existing_then_force",
       "file": "tests/adoption/test_discovery.py",
       "status": "pass",
-      "seconds": 0.13354
+      "seconds": 0.243055
     },
     {
-      "id": "_lld_test_discovery_48497.DiscoveryTest.test_discover_empty_project_warns_and_is_deterministic",
+      "id": "_lld_test_discovery_38518.DiscoveryTest.test_discover_empty_project_warns_and_is_deterministic",
       "file": "tests/adoption/test_discovery.py",
       "status": "pass",
-      "seconds": 0.004338
+      "seconds": 0.018398
     },
     {
-      "id": "_lld_test_discovery_48497.DiscoveryTest.test_discover_groups_by_source_root",
+      "id": "_lld_test_discovery_38518.DiscoveryTest.test_discover_groups_by_source_root",
       "file": "tests/adoption/test_discovery.py",
       "status": "pass",
-      "seconds": 0.02035
+      "seconds": 0.193776
     },
     {
-      "id": "_lld_test_discovery_48497.DiscoveryTest.test_dry_run_does_not_write",
+      "id": "_lld_test_discovery_38518.DiscoveryTest.test_dry_run_does_not_write",
       "file": "tests/adoption/test_discovery.py",
       "status": "pass",
-      "seconds": 0.038777
+      "seconds": 0.087441
     },
     {
-      "id": "_lld_test_discovery_48497.DiscoveryTest.test_json_cli_is_valid",
+      "id": "_lld_test_discovery_38518.DiscoveryTest.test_json_cli_is_valid",
       "file": "tests/adoption/test_discovery.py",
       "status": "pass",
-      "seconds": 0.04059
+      "seconds": 0.0846
     },
     {
-      "id": "_lld_test_discovery_48497.DiscoveryTest.test_max_caps_is_bounded",
+      "id": "_lld_test_discovery_38518.DiscoveryTest.test_max_caps_is_bounded",
       "file": "tests/adoption/test_discovery.py",
       "status": "pass",
-      "seconds": 0.038485
+      "seconds": 0.221529
     },
     {
-      "id": "_lld_test_discovery_48497.DiscoveryTest.test_report_has_no_absolute_paths",
+      "id": "_lld_test_discovery_38518.DiscoveryTest.test_report_has_no_absolute_paths",
       "file": "tests/adoption/test_discovery.py",
       "status": "pass",
-      "seconds": 0.003962
+      "seconds": 0.043885
     },
     {
-      "id": "_lld_test_discovery_48497.DiscoveryTest.test_sanitize_code",
+      "id": "_lld_test_discovery_38518.DiscoveryTest.test_sanitize_code",
       "file": "tests/adoption/test_discovery.py",
-      "status": "pass",
-      "seconds": 1.4e-05
-    },
-    {
-      "id": "_lld_test_binding_advisory_41125.BindingAdvisoryTest.test_direct_import_is_bound",
-      "file": "tests/core/test_binding_advisory.py",
-      "status": "pass",
-      "seconds": 0.014328
-    },
-    {
-      "id": "_lld_test_binding_advisory_41125.BindingAdvisoryTest.test_missing_impl_and_missing_tests_are_classified",
-      "file": "tests/core/test_binding_advisory.py",
-      "status": "pass",
-      "seconds": 0.009972
-    },
-    {
-      "id": "_lld_test_binding_advisory_41125.BindingAdvisoryTest.test_reexport_chain_is_bound",
-      "file": "tests/core/test_binding_advisory.py",
-      "status": "pass",
-      "seconds": 0.016111
-    },
-    {
-      "id": "_lld_test_binding_advisory_41125.BindingAdvisoryTest.test_unrelated_test_is_unbound_and_tier_untouched",
-      "file": "tests/core/test_binding_advisory.py",
-      "status": "pass",
-      "seconds": 0.01818
-    },
-    {
-      "id": "_lld_test_binding_advisory_41125.BindingAdvisoryTest.test_via_one_hop_is_reported_with_bridge",
-      "file": "tests/core/test_binding_advisory.py",
-      "status": "pass",
-      "seconds": 0.01852
-    },
-    {
-      "id": "_lld_test_declared_evidence_28785.DeclaredEvidenceTest.test_declared_test_drives_level_three",
-      "file": "tests/core/test_declared_evidence.py",
-      "status": "pass",
-      "seconds": 0.009565
-    },
-    {
-      "id": "_lld_test_declared_evidence_28785.DeclaredEvidenceTest.test_diff_projects_flags_drift",
-      "file": "tests/core/test_declared_evidence.py",
-      "status": "pass",
-      "seconds": 0.009283
-    },
-    {
-      "id": "_lld_test_declared_evidence_28785.DeclaredEvidenceTest.test_hint_scan_is_scoped_to_own_project",
-      "file": "tests/core/test_declared_evidence.py",
-      "status": "pass",
-      "seconds": 0.025799
-    },
-    {
-      "id": "_lld_test_declared_evidence_28785.DeclaredEvidenceTest.test_ledger_evidence_no_longer_influences_result",
-      "file": "tests/core/test_declared_evidence.py",
-      "status": "pass",
-      "seconds": 0.011131
-    },
-    {
-      "id": "_lld_test_declared_evidence_28785.DeclaredEvidenceTest.test_missing_declared_test_is_reported_and_downgrades",
-      "file": "tests/core/test_declared_evidence.py",
-      "status": "pass",
-      "seconds": 0.008901
-    },
-    {
-      "id": "_lld_test_derived_issues_24336.DerivedIssuesTest.test_bound_cap_auto_closes_its_derived_issue",
-      "file": "tests/core/test_derived_issues.py",
-      "status": "pass",
-      "seconds": 5.8e-05
-    },
-    {
-      "id": "_lld_test_derived_issues_24336.DerivedIssuesTest.test_check_detects_deleted_derived_issue",
-      "file": "tests/core/test_derived_issues.py",
-      "status": "pass",
-      "seconds": 3.4e-05
-    },
-    {
-      "id": "_lld_test_derived_issues_24336.DerivedIssuesTest.test_check_detects_stale_binding_status",
-      "file": "tests/core/test_derived_issues.py",
       "status": "pass",
       "seconds": 1.9e-05
     },
     {
-      "id": "_lld_test_derived_issues_24336.DerivedIssuesTest.test_idempotent_and_preserves_human_fields",
-      "file": "tests/core/test_derived_issues.py",
+      "id": "_lld_test_binding_advisory_53721.BindingAdvisoryTest.test_direct_import_is_bound",
+      "file": "tests/core/test_binding_advisory.py",
       "status": "pass",
-      "seconds": 1.7e-05
+      "seconds": 0.081971
     },
     {
-      "id": "_lld_test_derived_issues_24336.DerivedIssuesTest.test_manual_items_untouched",
-      "file": "tests/core/test_derived_issues.py",
+      "id": "_lld_test_binding_advisory_53721.BindingAdvisoryTest.test_missing_impl_and_missing_tests_are_classified",
+      "file": "tests/core/test_binding_advisory.py",
       "status": "pass",
-      "seconds": 1e-05
+      "seconds": 0.073256
     },
     {
-      "id": "_lld_test_derived_issues_24336.DerivedIssuesTest.test_non_bound_caps_get_one_derived_issue_each",
-      "file": "tests/core/test_derived_issues.py",
+      "id": "_lld_test_binding_advisory_53721.BindingAdvisoryTest.test_reexport_chain_is_bound",
+      "file": "tests/core/test_binding_advisory.py",
       "status": "pass",
-      "seconds": 1.5e-05
+      "seconds": 0.082534
     },
     {
-      "id": "_lld_test_derived_issues_24336.DerivedIssuesTest.test_severity_reflects_binding_status",
+      "id": "_lld_test_binding_advisory_53721.BindingAdvisoryTest.test_unrelated_test_is_unbound_and_tier_untouched",
+      "file": "tests/core/test_binding_advisory.py",
+      "status": "pass",
+      "seconds": 0.111347
+    },
+    {
+      "id": "_lld_test_binding_advisory_53721.BindingAdvisoryTest.test_via_one_hop_is_reported_with_bridge",
+      "file": "tests/core/test_binding_advisory.py",
+      "status": "pass",
+      "seconds": 0.110929
+    },
+    {
+      "id": "_lld_test_declared_evidence_11222.DeclaredEvidenceTest.test_declared_test_drives_level_three",
+      "file": "tests/core/test_declared_evidence.py",
+      "status": "pass",
+      "seconds": 0.074208
+    },
+    {
+      "id": "_lld_test_declared_evidence_11222.DeclaredEvidenceTest.test_diff_projects_flags_drift",
+      "file": "tests/core/test_declared_evidence.py",
+      "status": "pass",
+      "seconds": 0.072847
+    },
+    {
+      "id": "_lld_test_declared_evidence_11222.DeclaredEvidenceTest.test_hint_scan_is_scoped_to_own_project",
+      "file": "tests/core/test_declared_evidence.py",
+      "status": "pass",
+      "seconds": 0.209783
+    },
+    {
+      "id": "_lld_test_declared_evidence_11222.DeclaredEvidenceTest.test_ledger_evidence_no_longer_influences_result",
+      "file": "tests/core/test_declared_evidence.py",
+      "status": "pass",
+      "seconds": 0.075823
+    },
+    {
+      "id": "_lld_test_declared_evidence_11222.DeclaredEvidenceTest.test_missing_declared_test_is_reported_and_downgrades",
+      "file": "tests/core/test_declared_evidence.py",
+      "status": "pass",
+      "seconds": 0.074326
+    },
+    {
+      "id": "_lld_test_derived_issues_20690.DerivedIssuesTest.test_bound_cap_auto_closes_its_derived_issue",
+      "file": "tests/core/test_derived_issues.py",
+      "status": "pass",
+      "seconds": 8.8e-05
+    },
+    {
+      "id": "_lld_test_derived_issues_20690.DerivedIssuesTest.test_check_detects_deleted_derived_issue",
+      "file": "tests/core/test_derived_issues.py",
+      "status": "pass",
+      "seconds": 4.9e-05
+    },
+    {
+      "id": "_lld_test_derived_issues_20690.DerivedIssuesTest.test_check_detects_stale_binding_status",
+      "file": "tests/core/test_derived_issues.py",
+      "status": "pass",
+      "seconds": 2.6e-05
+    },
+    {
+      "id": "_lld_test_derived_issues_20690.DerivedIssuesTest.test_idempotent_and_preserves_human_fields",
+      "file": "tests/core/test_derived_issues.py",
+      "status": "pass",
+      "seconds": 2.5e-05
+    },
+    {
+      "id": "_lld_test_derived_issues_20690.DerivedIssuesTest.test_manual_items_untouched",
       "file": "tests/core/test_derived_issues.py",
       "status": "pass",
       "seconds": 1.3e-05
     },
     {
-      "id": "_lld_test_evidence_adapter_18891.ClassnameToFileTest.test_empty_input_safe",
+      "id": "_lld_test_derived_issues_20690.DerivedIssuesTest.test_non_bound_caps_get_one_derived_issue_each",
+      "file": "tests/core/test_derived_issues.py",
+      "status": "pass",
+      "seconds": 2.3e-05
+    },
+    {
+      "id": "_lld_test_derived_issues_20690.DerivedIssuesTest.test_severity_reflects_binding_status",
+      "file": "tests/core/test_derived_issues.py",
+      "status": "pass",
+      "seconds": 1.8e-05
+    },
+    {
+      "id": "_lld_test_evidence_adapter_58672.ClassnameToFileTest.test_empty_input_safe",
+      "file": "tests/core/test_evidence_adapter.py",
+      "status": "pass",
+      "seconds": 1.2e-05
+    },
+    {
+      "id": "_lld_test_evidence_adapter_58672.ClassnameToFileTest.test_exact_basename_hit",
       "file": "tests/core/test_evidence_adapter.py",
       "status": "pass",
       "seconds": 1e-05
     },
     {
-      "id": "_lld_test_evidence_adapter_18891.ClassnameToFileTest.test_exact_basename_hit",
+      "id": "_lld_test_evidence_adapter_58672.ClassnameToFileTest.test_miss_returns_empty_not_guess",
       "file": "tests/core/test_evidence_adapter.py",
       "status": "pass",
-      "seconds": 8e-06
+      "seconds": 1e-05
     },
     {
-      "id": "_lld_test_evidence_adapter_18891.ClassnameToFileTest.test_miss_returns_empty_not_guess",
+      "id": "_lld_test_evidence_adapter_58672.DeclaredEvidenceTest.test_generator_no_longer_derives_hints_from_ledger",
       "file": "tests/core/test_evidence_adapter.py",
       "status": "pass",
-      "seconds": 6e-06
+      "seconds": 0.045586
     },
     {
-      "id": "_lld_test_evidence_adapter_18891.DeclaredEvidenceTest.test_generator_no_longer_derives_hints_from_ledger",
+      "id": "_lld_test_evidence_adapter_58672.DeclaredEvidenceTest.test_missing_declared_path_is_reported_not_dropped",
       "file": "tests/core/test_evidence_adapter.py",
       "status": "pass",
-      "seconds": 0.005955
+      "seconds": 0.031337
     },
     {
-      "id": "_lld_test_evidence_adapter_18891.DeclaredEvidenceTest.test_missing_declared_path_is_reported_not_dropped",
+      "id": "_lld_test_evidence_adapter_58672.DeclaredEvidenceTest.test_resolves_existing_declared_path",
       "file": "tests/core/test_evidence_adapter.py",
       "status": "pass",
-      "seconds": 0.004467
+      "seconds": 0.043573
     },
     {
-      "id": "_lld_test_evidence_adapter_18891.DeclaredEvidenceTest.test_resolves_existing_declared_path",
+      "id": "_lld_test_evidence_adapter_58672.DefaultSourceDirsTest.test_empty_tree_returns_empty",
       "file": "tests/core/test_evidence_adapter.py",
       "status": "pass",
-      "seconds": 0.004177
+      "seconds": 0.014619
     },
     {
-      "id": "_lld_test_evidence_adapter_18891.DefaultSourceDirsTest.test_empty_tree_returns_empty",
+      "id": "_lld_test_evidence_adapter_58672.DefaultSourceDirsTest.test_monorepo_expands_projects",
       "file": "tests/core/test_evidence_adapter.py",
       "status": "pass",
-      "seconds": 0.001163
+      "seconds": 0.044321
     },
     {
-      "id": "_lld_test_evidence_adapter_18891.DefaultSourceDirsTest.test_monorepo_expands_projects",
+      "id": "_lld_test_evidence_adapter_58672.DefaultSourceDirsTest.test_single_layout_prefers_root",
       "file": "tests/core/test_evidence_adapter.py",
       "status": "pass",
-      "seconds": 0.00414
+      "seconds": 0.055226
     },
     {
-      "id": "_lld_test_evidence_adapter_18891.DefaultSourceDirsTest.test_single_layout_prefers_root",
+      "id": "_lld_test_evidence_adapter_58672.NoRegressTest.test_flags_downgrade",
       "file": "tests/core/test_evidence_adapter.py",
       "status": "pass",
-      "seconds": 0.004955
+      "seconds": 0.000143
     },
     {
-      "id": "_lld_test_evidence_adapter_18891.NoRegressTest.test_flags_downgrade",
-      "file": "tests/core/test_evidence_adapter.py",
-      "status": "pass",
-      "seconds": 0.00013
-    },
-    {
-      "id": "_lld_test_evidence_adapter_18891.NoRegressTest.test_levels_code_normalizes_string",
+      "id": "_lld_test_evidence_adapter_58672.NoRegressTest.test_levels_code_normalizes_string",
       "file": "tests/core/test_evidence_adapter.py",
       "status": "pass",
       "seconds": 7e-06
     },
     {
-      "id": "_lld_test_evidence_adapter_18891.NoRegressTest.test_same_level_passes",
+      "id": "_lld_test_evidence_adapter_58672.NoRegressTest.test_same_level_passes",
       "file": "tests/core/test_evidence_adapter.py",
-      "status": "pass",
-      "seconds": 7e-06
-    },
-    {
-      "id": "_lld_test_evidence_tier_42273.EvidenceTierTest.test_binding_bound_allows_verified",
-      "file": "tests/core/test_evidence_tier.py",
-      "status": "pass",
-      "seconds": 0.001318
-    },
-    {
-      "id": "_lld_test_evidence_tier_42273.EvidenceTierTest.test_binding_no_impl_denies_verified",
-      "file": "tests/core/test_evidence_tier.py",
-      "status": "pass",
-      "seconds": 0.001015
-    },
-    {
-      "id": "_lld_test_evidence_tier_42273.EvidenceTierTest.test_binding_unbound_denies_verified_even_with_pass_report",
-      "file": "tests/core/test_evidence_tier.py",
-      "status": "pass",
-      "seconds": 0.00096
-    },
-    {
-      "id": "_lld_test_evidence_tier_42273.EvidenceTierTest.test_binding_via1_denies_verified",
-      "file": "tests/core/test_evidence_tier.py",
-      "status": "pass",
-      "seconds": 0.000994
-    },
-    {
-      "id": "_lld_test_evidence_tier_42273.EvidenceTierTest.test_failed_report_never_upgrades",
-      "file": "tests/core/test_evidence_tier.py",
-      "status": "pass",
-      "seconds": 0.000935
-    },
-    {
-      "id": "_lld_test_evidence_tier_42273.EvidenceTierTest.test_generator_with_report_upgrades_matching_caps",
-      "file": "tests/core/test_evidence_tier.py",
-      "status": "pass",
-      "seconds": 0.190759
-    },
-    {
-      "id": "_lld_test_evidence_tier_42273.EvidenceTierTest.test_generator_without_report_keeps_all_declared",
-      "file": "tests/core/test_evidence_tier.py",
-      "status": "pass",
-      "seconds": 0.177368
-    },
-    {
-      "id": "_lld_test_evidence_tier_42273.EvidenceTierTest.test_no_report_is_declared",
-      "file": "tests/core/test_evidence_tier.py",
-      "status": "pass",
-      "seconds": 3.1e-05
-    },
-    {
-      "id": "_lld_test_evidence_tier_42273.EvidenceTierTest.test_non_matching_test_stays_declared",
-      "file": "tests/core/test_evidence_tier.py",
-      "status": "pass",
-      "seconds": 0.001431
-    },
-    {
-      "id": "_lld_test_evidence_tier_42273.EvidenceTierTest.test_passing_report_upgrades_to_verified",
-      "file": "tests/core/test_evidence_tier.py",
-      "status": "pass",
-      "seconds": 0.001261
-    },
-    {
-      "id": "_lld_test_evidence_tier_42273.EvidenceTierTest.test_tier_corruption_caught_by_verifier",
-      "file": "tests/core/test_evidence_tier.py",
-      "status": "pass",
-      "seconds": 0.256127
-    },
-    {
-      "id": "_lld_test_generation_6251.GenerationTest.test_all_indexed_doc_paths_exist",
-      "file": "tests/core/test_generation.py",
-      "status": "pass",
-      "seconds": 0.000201
-    },
-    {
-      "id": "_lld_test_generation_6251.GenerationTest.test_completion_derived_from_level",
-      "file": "tests/core/test_generation.py",
       "status": "pass",
       "seconds": 9e-06
     },
     {
-      "id": "_lld_test_generation_6251.GenerationTest.test_encoding_unique_and_well_formed",
+      "id": "_lld_test_evidence_tier_49267.EvidenceTierTest.test_binding_bound_allows_verified",
+      "file": "tests/core/test_evidence_tier.py",
+      "status": "pass",
+      "seconds": 0.011922
+    },
+    {
+      "id": "_lld_test_evidence_tier_49267.EvidenceTierTest.test_binding_no_impl_denies_verified",
+      "file": "tests/core/test_evidence_tier.py",
+      "status": "pass",
+      "seconds": 0.001475
+    },
+    {
+      "id": "_lld_test_evidence_tier_49267.EvidenceTierTest.test_binding_unbound_denies_verified_even_with_pass_report",
+      "file": "tests/core/test_evidence_tier.py",
+      "status": "pass",
+      "seconds": 0.001359
+    },
+    {
+      "id": "_lld_test_evidence_tier_49267.EvidenceTierTest.test_binding_via1_denies_verified",
+      "file": "tests/core/test_evidence_tier.py",
+      "status": "pass",
+      "seconds": 0.001385
+    },
+    {
+      "id": "_lld_test_evidence_tier_49267.EvidenceTierTest.test_failed_report_never_upgrades",
+      "file": "tests/core/test_evidence_tier.py",
+      "status": "pass",
+      "seconds": 0.001297
+    },
+    {
+      "id": "_lld_test_evidence_tier_49267.EvidenceTierTest.test_generator_with_report_upgrades_matching_caps",
+      "file": "tests/core/test_evidence_tier.py",
+      "status": "pass",
+      "seconds": 0.59724
+    },
+    {
+      "id": "_lld_test_evidence_tier_49267.EvidenceTierTest.test_generator_without_report_keeps_all_declared",
+      "file": "tests/core/test_evidence_tier.py",
+      "status": "pass",
+      "seconds": 0.86093
+    },
+    {
+      "id": "_lld_test_evidence_tier_49267.EvidenceTierTest.test_no_report_is_declared",
+      "file": "tests/core/test_evidence_tier.py",
+      "status": "pass",
+      "seconds": 3.3e-05
+    },
+    {
+      "id": "_lld_test_evidence_tier_49267.EvidenceTierTest.test_non_matching_test_stays_declared",
+      "file": "tests/core/test_evidence_tier.py",
+      "status": "pass",
+      "seconds": 0.001631
+    },
+    {
+      "id": "_lld_test_evidence_tier_49267.EvidenceTierTest.test_passing_report_upgrades_to_verified",
+      "file": "tests/core/test_evidence_tier.py",
+      "status": "pass",
+      "seconds": 0.001347
+    },
+    {
+      "id": "_lld_test_evidence_tier_49267.EvidenceTierTest.test_tier_corruption_caught_by_verifier",
+      "file": "tests/core/test_evidence_tier.py",
+      "status": "pass",
+      "seconds": 0.892402
+    },
+    {
+      "id": "_lld_test_generation_4167.GenerationTest.test_all_indexed_doc_paths_exist",
       "file": "tests/core/test_generation.py",
       "status": "pass",
-      "seconds": 2.2e-05
+      "seconds": 0.00025
     },
     {
-      "id": "_lld_test_generation_6251.GenerationTest.test_levels_match_real_evidence",
+      "id": "_lld_test_generation_4167.GenerationTest.test_completion_derived_from_level",
       "file": "tests/core/test_generation.py",
       "status": "pass",
-      "seconds": 6e-06
+      "seconds": 1e-05
     },
     {
-      "id": "_lld_test_generation_6251.GenerationTest.test_next_queue_carries_confirmed_lesson",
+      "id": "_lld_test_generation_4167.GenerationTest.test_encoding_unique_and_well_formed",
       "file": "tests/core/test_generation.py",
-      "status": "pass",
-      "seconds": 1.6e-05
-    },
-    {
-      "id": "_lld_test_generation_6251.GenerationTest.test_registry_hint_matches_test_record_name",
-      "file": "tests/core/test_generation.py",
-      "status": "pass",
-      "seconds": 0.001003
-    },
-    {
-      "id": "_lld_test_history_39034.FingerprintTest.test_cross_implementation_agrees",
-      "file": "tests/core/test_history.py",
-      "status": "pass",
-      "seconds": 0.001326
-    },
-    {
-      "id": "_lld_test_history_39034.FingerprintTest.test_diff_reports_transitions_and_evidence",
-      "file": "tests/core/test_history.py",
-      "status": "pass",
-      "seconds": 4e-05
-    },
-    {
-      "id": "_lld_test_history_39034.FingerprintTest.test_stable_and_sensitive",
-      "file": "tests/core/test_history.py",
-      "status": "pass",
-      "seconds": 0.001258
-    },
-    {
-      "id": "_lld_test_history_39034.HistoryTest.test_candidate_rules_fired",
-      "file": "tests/core/test_history.py",
-      "status": "pass",
-      "seconds": 0.001258
-    },
-    {
-      "id": "_lld_test_history_39034.HistoryTest.test_event_chain_self_certifies",
-      "file": "tests/core/test_history.py",
-      "status": "pass",
-      "seconds": 0.001396
-    },
-    {
-      "id": "_lld_test_history_39034.HistoryTest.test_new_evidence_appends_one_event",
-      "file": "tests/core/test_history.py",
-      "status": "pass",
-      "seconds": 0.25538
-    },
-    {
-      "id": "_lld_test_history_39034.HistoryTest.test_real_transition_recorded",
-      "file": "tests/core/test_history.py",
-      "status": "pass",
-      "seconds": 0.001553
-    },
-    {
-      "id": "_lld_test_history_39034.HistoryTest.test_repeated_generation_is_idempotent",
-      "file": "tests/core/test_history.py",
-      "status": "pass",
-      "seconds": 0.416788
-    },
-    {
-      "id": "_lld_test_maturity_analytics_50489.MaturityAnalyticsTest.test_analytics_has_series_change_summary_and_actions",
-      "file": "tests/core/test_maturity_analytics.py",
-      "status": "pass",
-      "seconds": 0.000647
-    },
-    {
-      "id": "_lld_test_maturity_analytics_50489.MaturityAnalyticsTest.test_d3_projection_is_tree_shaped_and_traceable",
-      "file": "tests/core/test_maturity_analytics.py",
-      "status": "pass",
-      "seconds": 0.000179
-    },
-    {
-      "id": "_lld_test_maturity_analytics_50489.MaturityAnalyticsTest.test_health_dimensions_are_precomputed_and_bounded",
-      "file": "tests/core/test_maturity_analytics.py",
       "status": "pass",
       "seconds": 2.1e-05
     },
     {
-      "id": "_lld_test_maturity_analytics_50489.MaturityAnalyticsTest.test_next_queue_carries_health_impact",
+      "id": "_lld_test_generation_4167.GenerationTest.test_levels_match_real_evidence",
+      "file": "tests/core/test_generation.py",
+      "status": "pass",
+      "seconds": 8e-06
+    },
+    {
+      "id": "_lld_test_generation_4167.GenerationTest.test_next_queue_carries_confirmed_lesson",
+      "file": "tests/core/test_generation.py",
+      "status": "pass",
+      "seconds": 1.3e-05
+    },
+    {
+      "id": "_lld_test_generation_4167.GenerationTest.test_registry_hint_matches_test_record_name",
+      "file": "tests/core/test_generation.py",
+      "status": "pass",
+      "seconds": 0.001387
+    },
+    {
+      "id": "_lld_test_history_16871.FingerprintTest.test_cross_implementation_agrees",
+      "file": "tests/core/test_history.py",
+      "status": "pass",
+      "seconds": 0.001633
+    },
+    {
+      "id": "_lld_test_history_16871.FingerprintTest.test_diff_reports_transitions_and_evidence",
+      "file": "tests/core/test_history.py",
+      "status": "pass",
+      "seconds": 4.1e-05
+    },
+    {
+      "id": "_lld_test_history_16871.FingerprintTest.test_stable_and_sensitive",
+      "file": "tests/core/test_history.py",
+      "status": "pass",
+      "seconds": 0.001778
+    },
+    {
+      "id": "_lld_test_history_16871.HistoryTest.test_candidate_rules_fired",
+      "file": "tests/core/test_history.py",
+      "status": "pass",
+      "seconds": 0.001616
+    },
+    {
+      "id": "_lld_test_history_16871.HistoryTest.test_event_chain_self_certifies",
+      "file": "tests/core/test_history.py",
+      "status": "pass",
+      "seconds": 0.00174
+    },
+    {
+      "id": "_lld_test_history_16871.HistoryTest.test_new_evidence_appends_one_event",
+      "file": "tests/core/test_history.py",
+      "status": "pass",
+      "seconds": 0.672691
+    },
+    {
+      "id": "_lld_test_history_16871.HistoryTest.test_real_transition_recorded",
+      "file": "tests/core/test_history.py",
+      "status": "pass",
+      "seconds": 0.001694
+    },
+    {
+      "id": "_lld_test_history_16871.HistoryTest.test_repeated_generation_is_idempotent",
+      "file": "tests/core/test_history.py",
+      "status": "pass",
+      "seconds": 0.844001
+    },
+    {
+      "id": "_lld_test_maturity_analytics_61047.MaturityAnalyticsTest.test_analytics_has_series_change_summary_and_actions",
+      "file": "tests/core/test_maturity_analytics.py",
+      "status": "pass",
+      "seconds": 0.000553
+    },
+    {
+      "id": "_lld_test_maturity_analytics_61047.MaturityAnalyticsTest.test_d3_projection_is_tree_shaped_and_traceable",
+      "file": "tests/core/test_maturity_analytics.py",
+      "status": "pass",
+      "seconds": 0.000153
+    },
+    {
+      "id": "_lld_test_maturity_analytics_61047.MaturityAnalyticsTest.test_health_dimensions_are_precomputed_and_bounded",
+      "file": "tests/core/test_maturity_analytics.py",
+      "status": "pass",
+      "seconds": 2.2e-05
+    },
+    {
+      "id": "_lld_test_maturity_analytics_61047.MaturityAnalyticsTest.test_next_queue_carries_health_impact",
       "file": "tests/core/test_maturity_analytics.py",
       "status": "pass",
       "seconds": 5e-06
     },
     {
-      "id": "_lld_test_path_scope_60894.RepoScopeTest.test_component_tree_skips_untracked",
+      "id": "_lld_test_path_scope_51542.RepoScopeTest.test_component_tree_skips_untracked",
       "file": "tests/core/test_path_scope.py",
       "status": "pass",
-      "seconds": 0.078228
+      "seconds": 0.222877
     },
     {
-      "id": "_lld_test_path_scope_60894.RepoScopeTest.test_glob_files_skips_untracked",
+      "id": "_lld_test_path_scope_51542.RepoScopeTest.test_glob_files_skips_untracked",
       "file": "tests/core/test_path_scope.py",
       "status": "pass",
-      "seconds": 0.07387
+      "seconds": 0.226995
     },
     {
-      "id": "_lld_test_path_scope_60894.RepoScopeTest.test_non_git_dir_degrades_visibly",
+      "id": "_lld_test_path_scope_51542.RepoScopeTest.test_non_git_dir_degrades_visibly",
       "file": "tests/core/test_path_scope.py",
       "status": "pass",
-      "seconds": 0.079742
+      "seconds": 0.255673
     },
     {
-      "id": "_lld_test_path_scope_60894.RepoScopeTest.test_report_binding_untracked_test_is_not_fresh",
+      "id": "_lld_test_path_scope_51542.RepoScopeTest.test_report_binding_untracked_test_is_not_fresh",
       "file": "tests/core/test_path_scope.py",
       "status": "pass",
-      "seconds": 0.075716
+      "seconds": 0.232416
     },
     {
-      "id": "_lld_test_path_scope_60894.RepoScopeTest.test_runtime_artifact_dirs_are_invisible",
+      "id": "_lld_test_path_scope_51542.RepoScopeTest.test_runtime_artifact_dirs_are_invisible",
       "file": "tests/core/test_path_scope.py",
       "status": "pass",
-      "seconds": 0.076715
+      "seconds": 0.217713
     },
     {
-      "id": "_lld_test_path_scope_60894.RepoScopeTest.test_tracked_paths_are_visible",
+      "id": "_lld_test_path_scope_51542.RepoScopeTest.test_tracked_paths_are_visible",
       "file": "tests/core/test_path_scope.py",
       "status": "pass",
-      "seconds": 0.073161
+      "seconds": 0.219869
     },
     {
-      "id": "_lld_test_path_scope_60894.RepoScopeTest.test_untracked_file_is_invisible",
+      "id": "_lld_test_path_scope_51542.RepoScopeTest.test_untracked_file_is_invisible",
       "file": "tests/core/test_path_scope.py",
       "status": "pass",
-      "seconds": 0.07284
+      "seconds": 0.21941
     },
     {
-      "id": "_lld_test_registry2_7804.ActivationSyncTest.test_empty_or_failed_report_stays_unbound",
+      "id": "_lld_test_registry2_61664.ActivationSyncTest.test_empty_or_failed_report_stays_unbound",
       "file": "tests/core/test_registry2.py",
       "status": "pass",
-      "seconds": 6.6e-05
+      "seconds": 7.7e-05
     },
     {
-      "id": "_lld_test_registry2_7804.ActivationSyncTest.test_pass_report_activates",
+      "id": "_lld_test_registry2_61664.ActivationSyncTest.test_pass_report_activates",
       "file": "tests/core/test_registry2.py",
       "status": "pass",
-      "seconds": 2e-05
+      "seconds": 2.1e-05
     },
     {
-      "id": "_lld_test_registry2_7804.CapCodeFormatTest.test_monorepo_cap_code_is_4_segments",
+      "id": "_lld_test_registry2_61664.CapCodeFormatTest.test_monorepo_cap_code_is_4_segments",
       "file": "tests/core/test_registry2.py",
       "status": "pass",
-      "seconds": 0.000108
+      "seconds": 0.000137
     },
     {
-      "id": "_lld_test_registry2_7804.CapCodeFormatTest.test_real_ledger_codes_match_namespace_rule",
+      "id": "_lld_test_registry2_61664.CapCodeFormatTest.test_real_ledger_codes_match_namespace_rule",
       "file": "tests/core/test_registry2.py",
       "status": "pass",
-      "seconds": 0.006371
+      "seconds": 0.007054
     },
     {
-      "id": "_lld_test_registry2_7804.CapCodeFormatTest.test_single_project_cap_code_is_4_segments",
+      "id": "_lld_test_registry2_61664.CapCodeFormatTest.test_single_project_cap_code_is_4_segments",
       "file": "tests/core/test_registry2.py",
       "status": "pass",
-      "seconds": 1.9e-05
+      "seconds": 1.3e-05
     },
     {
-      "id": "_lld_test_registry2_7804.CodeNamespaceTest.test_empty_inputs_safe",
+      "id": "_lld_test_registry2_61664.CodeNamespaceTest.test_empty_inputs_safe",
       "file": "tests/core/test_registry2.py",
       "status": "pass",
-      "seconds": 8e-06
+      "seconds": 9e-06
     },
     {
-      "id": "_lld_test_registry2_7804.CodeNamespaceTest.test_monorepo_module_keeps_namespace",
+      "id": "_lld_test_registry2_61664.CodeNamespaceTest.test_monorepo_module_keeps_namespace",
       "file": "tests/core/test_registry2.py",
       "status": "pass",
-      "seconds": 1.1e-05
+      "seconds": 1e-05
     },
     {
-      "id": "_lld_test_registry2_7804.CodeNamespaceTest.test_no_double_prefix_leak",
+      "id": "_lld_test_registry2_61664.CodeNamespaceTest.test_no_double_prefix_leak",
       "file": "tests/core/test_registry2.py",
       "status": "pass",
       "seconds": 6e-06
     },
     {
-      "id": "_lld_test_registry2_7804.CodeNamespaceTest.test_single_project_adds_prefix",
+      "id": "_lld_test_registry2_61664.CodeNamespaceTest.test_single_project_adds_prefix",
       "file": "tests/core/test_registry2.py",
       "status": "pass",
-      "seconds": 4e-06
+      "seconds": 5e-06
     },
     {
-      "id": "_lld_test_registry2_7804.NoRegressAlignedTest.test_real_downgrade_still_flagged",
+      "id": "_lld_test_registry2_61664.NoRegressAlignedTest.test_real_downgrade_still_flagged",
       "file": "tests/core/test_registry2.py",
       "status": "pass",
       "seconds": 1.2e-05
     },
     {
-      "id": "_lld_test_registry2_7804.NoRegressAlignedTest.test_same_format_code_no_false_downgrade",
+      "id": "_lld_test_registry2_61664.NoRegressAlignedTest.test_same_format_code_no_false_downgrade",
       "file": "tests/core/test_registry2.py",
       "status": "pass",
-      "seconds": 7e-06
+      "seconds": 8e-06
     },
     {
-      "id": "_lld_test_registry_schema_39165.RegistrySchemaTest.test_dual_read_produces_identical_caps",
+      "id": "_lld_test_registry_schema_30306.RegistrySchemaTest.test_dual_read_produces_identical_caps",
       "file": "tests/core/test_registry_schema.py",
       "status": "pass",
-      "seconds": 0.000759
+      "seconds": 0.00084
     },
     {
-      "id": "_lld_test_registry_schema_39165.RegistrySchemaTest.test_normalize_projects_exposes_project_config",
+      "id": "_lld_test_registry_schema_30306.RegistrySchemaTest.test_normalize_projects_exposes_project_config",
       "file": "tests/core/test_registry_schema.py",
       "status": "pass",
-      "seconds": 0.000447
+      "seconds": 0.000544
     },
     {
-      "id": "_lld_test_registry_schema_39165.RegistrySchemaTest.test_schema_name_is_registry_2",
+      "id": "_lld_test_registry_schema_30306.RegistrySchemaTest.test_schema_name_is_registry_2",
       "file": "tests/core/test_registry_schema.py",
       "status": "pass",
-      "seconds": 0.000393
+      "seconds": 0.000448
     },
     {
-      "id": "_lld_test_registry_schema_39165.RegistrySchemaTest.test_stable_code_keeps_explicit_identity",
+      "id": "_lld_test_registry_schema_30306.RegistrySchemaTest.test_stable_code_keeps_explicit_identity",
       "file": "tests/core/test_registry_schema.py",
       "status": "pass",
-      "seconds": 0.00042
+      "seconds": 0.000408
     },
     {
-      "id": "_lld_test_registry_schema_39165.SingleCodecTest.test_generator_consumes_shared_codec",
+      "id": "_lld_test_registry_schema_30306.SingleCodecTest.test_generator_consumes_shared_codec",
       "file": "tests/core/test_registry_schema.py",
       "status": "pass",
-      "seconds": 0.001672
+      "seconds": 0.001464
     },
     {
-      "id": "_lld_test_registry_schema_39165.SingleCodecTest.test_trace_common_has_no_bare_five_segment_code",
+      "id": "_lld_test_registry_schema_30306.SingleCodecTest.test_trace_common_has_no_bare_five_segment_code",
       "file": "tests/core/test_registry_schema.py",
       "status": "pass",
-      "seconds": 0.001297
+      "seconds": 0.001252
     },
     {
-      "id": "_lld_test_registry_schema_39165.SingleCodecTest.test_verify_ledger_consumes_shared_codec",
+      "id": "_lld_test_registry_schema_30306.SingleCodecTest.test_verify_ledger_consumes_shared_codec",
       "file": "tests/core/test_registry_schema.py",
       "status": "pass",
-      "seconds": 0.0013
+      "seconds": 0.001353
     },
     {
-      "id": "_lld_test_runtime_signals_45545.ExactMappingTest.test_ambiguous_equal_length_aliases_fail_closed",
+      "id": "_lld_test_runtime_signals_46964.ExactMappingTest.test_ambiguous_equal_length_aliases_fail_closed",
       "file": "tests/core/test_runtime_signals.py",
       "status": "pass",
-      "seconds": 5.4e-05
+      "seconds": 7.4e-05
     },
     {
-      "id": "_lld_test_runtime_signals_45545.ExactMappingTest.test_exact_queue_only_promotes_mapped_capability",
+      "id": "_lld_test_runtime_signals_46964.ExactMappingTest.test_exact_queue_only_promotes_mapped_capability",
       "file": "tests/core/test_runtime_signals.py",
       "status": "pass",
-      "seconds": 6.7e-05
+      "seconds": 6.6e-05
     },
     {
-      "id": "_lld_test_runtime_signals_45545.ExactMappingTest.test_explicit_capability_field_wins",
+      "id": "_lld_test_runtime_signals_46964.ExactMappingTest.test_explicit_capability_field_wins",
       "file": "tests/core/test_runtime_signals.py",
       "status": "pass",
       "seconds": 1.2e-05
     },
     {
-      "id": "_lld_test_runtime_signals_45545.ExactMappingTest.test_project_signals_is_serializable_and_fail_closed",
+      "id": "_lld_test_runtime_signals_46964.ExactMappingTest.test_project_signals_is_serializable_and_fail_closed",
       "file": "tests/core/test_runtime_signals.py",
       "status": "pass",
-      "seconds": 4.5e-05
+      "seconds": 5.8e-05
     },
     {
-      "id": "_lld_test_runtime_signals_45545.ExactMappingTest.test_projected_entry_can_be_reapplied_without_rescoring",
-      "file": "tests/core/test_runtime_signals.py",
-      "status": "pass",
-      "seconds": 3.1e-05
-    },
-    {
-      "id": "_lld_test_runtime_signals_45545.ExactMappingTest.test_semantic_alias_maps_canonical_read_to_provider",
-      "file": "tests/core/test_runtime_signals.py",
-      "status": "pass",
-      "seconds": 1.8e-05
-    },
-    {
-      "id": "_lld_test_runtime_signals_45545.ExactMappingTest.test_unknown_capability_field_is_ignored",
-      "file": "tests/core/test_runtime_signals.py",
-      "status": "pass",
-      "seconds": 1.1e-05
-    },
-    {
-      "id": "_lld_test_runtime_signals_45545.GeneratorIntegrationTest.test_malformed_entry_is_ignored",
+      "id": "_lld_test_runtime_signals_46964.ExactMappingTest.test_projected_entry_can_be_reapplied_without_rescoring",
       "file": "tests/core/test_runtime_signals.py",
       "status": "pass",
       "seconds": 3.4e-05
     },
     {
-      "id": "_lld_test_runtime_signals_45545.GeneratorIntegrationTest.test_no_signals_preserves_generator_shape",
+      "id": "_lld_test_runtime_signals_46964.ExactMappingTest.test_semantic_alias_maps_canonical_read_to_provider",
       "file": "tests/core/test_runtime_signals.py",
       "status": "pass",
-      "seconds": 1.5e-05
+      "seconds": 1.9e-05
     },
     {
-      "id": "_lld_test_runtime_signals_45545.GeneratorIntegrationTest.test_projected_signals_reorder_exact_capability",
+      "id": "_lld_test_runtime_signals_46964.ExactMappingTest.test_unknown_capability_field_is_ignored",
       "file": "tests/core/test_runtime_signals.py",
       "status": "pass",
       "seconds": 1.4e-05
     },
     {
-      "id": "_lld_test_runtime_signals_45545.ParseStateEventsTest.test_ignores_boundaries_section",
+      "id": "_lld_test_runtime_signals_46964.GeneratorIntegrationTest.test_malformed_entry_is_ignored",
       "file": "tests/core/test_runtime_signals.py",
-      "status": "pass",
-      "seconds": 0.005975
-    },
-    {
-      "id": "_lld_test_runtime_signals_45545.ParseStateEventsTest.test_inference_is_scored_lower_than_fact",
-      "file": "tests/core/test_runtime_signals.py",
-      "status": "pass",
-      "seconds": 0.009824
-    },
-    {
-      "id": "_lld_test_runtime_signals_45545.ParseStateEventsTest.test_missing_confidence_is_unknown",
-      "file": "tests/core/test_runtime_signals.py",
-      "status": "pass",
-      "seconds": 0.004818
-    },
-    {
-      "id": "_lld_test_runtime_signals_45545.ParseStateEventsTest.test_parses_e_block_fields",
-      "file": "tests/core/test_runtime_signals.py",
-      "status": "pass",
-      "seconds": 0.005055
-    },
-    {
-      "id": "_lld_test_runtime_signals_45545.RiskAndRankTest.test_domain_hint_from_momentum_seam",
-      "file": "tests/core/test_runtime_signals.py",
-      "status": "pass",
-      "seconds": 1.5e-05
-    },
-    {
-      "id": "_lld_test_runtime_signals_45545.RiskAndRankTest.test_no_signal_preserves_order",
-      "file": "tests/core/test_runtime_signals.py",
-      "status": "pass",
-      "seconds": 1.1e-05
-    },
-    {
-      "id": "_lld_test_runtime_signals_45545.RiskAndRankTest.test_seam_signal_promotes_data_domain_to_rank1",
-      "file": "tests/core/test_runtime_signals.py",
-      "status": "pass",
-      "seconds": 0.004753
-    },
-    {
-      "id": "_lld_test_runtime_signals_45545.RiskAndRankTest.test_signal_without_domain_match_does_not_change_order",
-      "file": "tests/core/test_runtime_signals.py",
-      "status": "pass",
-      "seconds": 0.005186
-    },
-    {
-      "id": "_lld_test_runtime_signals_45545.RiskAndRankTest.test_unknown_signal_does_not_change_order",
-      "file": "tests/core/test_runtime_signals.py",
-      "status": "pass",
-      "seconds": 0.004878
-    },
-    {
-      "id": "_lld_test_verify_13810.TristateTest.test_missing_projection_is_na_not_pass",
-      "file": "tests/core/test_verify.py",
-      "status": "pass",
-      "seconds": 0.180936
-    },
-    {
-      "id": "_lld_test_verify_13810.TristateTest.test_strict_ignores_na_but_require_active_does_not",
-      "file": "tests/core/test_verify.py",
-      "status": "pass",
-      "seconds": 0.231358
-    },
-    {
-      "id": "_lld_test_verify_13810.VerifyTest.test_clean_ledger_passes_all_checks",
-      "file": "tests/core/test_verify.py",
-      "status": "pass",
-      "seconds": 0.168315
-    },
-    {
-      "id": "_lld_test_verify_13810.VerifyTest.test_detects_broken_history_chain",
-      "file": "tests/core/test_verify.py",
-      "status": "pass",
-      "seconds": 0.168451
-    },
-    {
-      "id": "_lld_test_verify_13810.VerifyTest.test_detects_forged_analytics_health",
-      "file": "tests/core/test_verify.py",
-      "status": "pass",
-      "seconds": 0.178849
-    },
-    {
-      "id": "_lld_test_verify_13810.VerifyTest.test_detects_forged_d3_lineage",
-      "file": "tests/core/test_verify.py",
-      "status": "pass",
-      "seconds": 0.175501
-    },
-    {
-      "id": "_lld_test_verify_13810.VerifyTest.test_detects_hand_written_completion",
-      "file": "tests/core/test_verify.py",
-      "status": "pass",
-      "seconds": 0.170791
-    },
-    {
-      "id": "_lld_test_verify_13810.VerifyTest.test_detects_lesson_without_action",
-      "file": "tests/core/test_verify.py",
-      "status": "pass",
-      "seconds": 0.174834
-    },
-    {
-      "id": "_lld_test_verify_13810.VerifyTest.test_detects_missing_document",
-      "file": "tests/core/test_verify.py",
-      "status": "pass",
-      "seconds": 0.172321
-    },
-    {
-      "id": "_lld_test_verify_13810.VerifyTest.test_detects_non_bound_cap_without_derived_issue",
-      "file": "tests/core/test_verify.py",
-      "status": "pass",
-      "seconds": 0.176697
-    },
-    {
-      "id": "_lld_test_verify_13810.VerifyTest.test_detects_open_item_with_satisfied_close_condition",
-      "file": "tests/core/test_verify.py",
-      "status": "pass",
-      "seconds": 0.186378
-    },
-    {
-      "id": "_lld_test_verify_13810.VerifyTest.test_detects_satisfied_derived_issue_still_open",
-      "file": "tests/core/test_verify.py",
-      "status": "pass",
-      "seconds": 0.184414
-    },
-    {
-      "id": "_lld_test_verify_13810.VerifyTest.test_detects_tampered_event_state",
-      "file": "tests/core/test_verify.py",
-      "status": "pass",
-      "seconds": 0.177668
-    },
-    {
-      "id": "_lld_test_verify_13810.VerifyTest.test_detects_tampered_installed_asset",
-      "file": "tests/core/test_verify.py",
-      "status": "pass",
-      "seconds": 0.635532
-    },
-    {
-      "id": "_lld_test_verify_13810.VerifyTest.test_detects_unowned_open_work_item",
-      "file": "tests/core/test_verify.py",
-      "status": "pass",
-      "seconds": 0.18894
-    },
-    {
-      "id": "_lld_test_verify_13810.VerifyTest.test_detects_verified_with_missing_binding_field",
-      "file": "tests/core/test_verify.py",
-      "status": "pass",
-      "seconds": 0.190307
-    },
-    {
-      "id": "_lld_test_verify_13810.VerifyTest.test_detects_verified_without_bound_binding",
-      "file": "tests/core/test_verify.py",
-      "status": "pass",
-      "seconds": 0.194395
-    },
-    {
-      "id": "_lld_test_verify_13810.VerifyTest.test_open_item_with_unmet_condition_still_passes",
-      "file": "tests/core/test_verify.py",
-      "status": "pass",
-      "seconds": 0.180615
-    },
-    {
-      "id": "_lld_test_verify_13810.VerifyTest.test_owner_note_satisfies_ownership_rule",
-      "file": "tests/core/test_verify.py",
-      "status": "pass",
-      "seconds": 0.181655
-    },
-    {
-      "id": "_lld_test_acceptance_4323.AppendOnlyTest.test_closed_fields_must_survive",
-      "file": "tests/meta/test_acceptance.py",
       "status": "pass",
       "seconds": 3.3e-05
     },
     {
-      "id": "_lld_test_acceptance_4323.AppendOnlyTest.test_correct_merge_passes",
-      "file": "tests/meta/test_acceptance.py",
+      "id": "_lld_test_runtime_signals_46964.GeneratorIntegrationTest.test_no_signals_preserves_generator_shape",
+      "file": "tests/core/test_runtime_signals.py",
       "status": "pass",
-      "seconds": 1.8e-05
+      "seconds": 1.7e-05
     },
     {
-      "id": "_lld_test_acceptance_4323.AppendOnlyTest.test_duplicate_ids_and_non_idempotent_second_run_fail",
+      "id": "_lld_test_runtime_signals_46964.GeneratorIntegrationTest.test_projected_signals_reorder_exact_capability",
+      "file": "tests/core/test_runtime_signals.py",
+      "status": "pass",
+      "seconds": 1.9e-05
+    },
+    {
+      "id": "_lld_test_runtime_signals_46964.ParseStateEventsTest.test_ignores_boundaries_section",
+      "file": "tests/core/test_runtime_signals.py",
+      "status": "pass",
+      "seconds": 0.031104
+    },
+    {
+      "id": "_lld_test_runtime_signals_46964.ParseStateEventsTest.test_inference_is_scored_lower_than_fact",
+      "file": "tests/core/test_runtime_signals.py",
+      "status": "pass",
+      "seconds": 0.061792
+    },
+    {
+      "id": "_lld_test_runtime_signals_46964.ParseStateEventsTest.test_missing_confidence_is_unknown",
+      "file": "tests/core/test_runtime_signals.py",
+      "status": "pass",
+      "seconds": 0.029958
+    },
+    {
+      "id": "_lld_test_runtime_signals_46964.ParseStateEventsTest.test_parses_e_block_fields",
+      "file": "tests/core/test_runtime_signals.py",
+      "status": "pass",
+      "seconds": 0.030606
+    },
+    {
+      "id": "_lld_test_runtime_signals_46964.RiskAndRankTest.test_domain_hint_from_momentum_seam",
+      "file": "tests/core/test_runtime_signals.py",
+      "status": "pass",
+      "seconds": 2.7e-05
+    },
+    {
+      "id": "_lld_test_runtime_signals_46964.RiskAndRankTest.test_no_signal_preserves_order",
+      "file": "tests/core/test_runtime_signals.py",
+      "status": "pass",
+      "seconds": 1.4e-05
+    },
+    {
+      "id": "_lld_test_runtime_signals_46964.RiskAndRankTest.test_seam_signal_promotes_data_domain_to_rank1",
+      "file": "tests/core/test_runtime_signals.py",
+      "status": "pass",
+      "seconds": 0.032937
+    },
+    {
+      "id": "_lld_test_runtime_signals_46964.RiskAndRankTest.test_signal_without_domain_match_does_not_change_order",
+      "file": "tests/core/test_runtime_signals.py",
+      "status": "pass",
+      "seconds": 0.031379
+    },
+    {
+      "id": "_lld_test_runtime_signals_46964.RiskAndRankTest.test_unknown_signal_does_not_change_order",
+      "file": "tests/core/test_runtime_signals.py",
+      "status": "pass",
+      "seconds": 0.030408
+    },
+    {
+      "id": "_lld_test_verify_36184.TristateTest.test_missing_projection_is_na_not_pass",
+      "file": "tests/core/test_verify.py",
+      "status": "pass",
+      "seconds": 0.5467
+    },
+    {
+      "id": "_lld_test_verify_36184.TristateTest.test_strict_ignores_na_but_require_active_does_not",
+      "file": "tests/core/test_verify.py",
+      "status": "pass",
+      "seconds": 0.628731
+    },
+    {
+      "id": "_lld_test_verify_36184.VerifyTest.test_clean_ledger_passes_all_checks",
+      "file": "tests/core/test_verify.py",
+      "status": "pass",
+      "seconds": 0.625469
+    },
+    {
+      "id": "_lld_test_verify_36184.VerifyTest.test_detects_broken_history_chain",
+      "file": "tests/core/test_verify.py",
+      "status": "pass",
+      "seconds": 0.541953
+    },
+    {
+      "id": "_lld_test_verify_36184.VerifyTest.test_detects_forged_analytics_health",
+      "file": "tests/core/test_verify.py",
+      "status": "pass",
+      "seconds": 0.559276
+    },
+    {
+      "id": "_lld_test_verify_36184.VerifyTest.test_detects_forged_d3_lineage",
+      "file": "tests/core/test_verify.py",
+      "status": "pass",
+      "seconds": 0.551061
+    },
+    {
+      "id": "_lld_test_verify_36184.VerifyTest.test_detects_hand_written_completion",
+      "file": "tests/core/test_verify.py",
+      "status": "pass",
+      "seconds": 0.547868
+    },
+    {
+      "id": "_lld_test_verify_36184.VerifyTest.test_detects_lesson_without_action",
+      "file": "tests/core/test_verify.py",
+      "status": "pass",
+      "seconds": 0.556359
+    },
+    {
+      "id": "_lld_test_verify_36184.VerifyTest.test_detects_missing_document",
+      "file": "tests/core/test_verify.py",
+      "status": "pass",
+      "seconds": 0.586434
+    },
+    {
+      "id": "_lld_test_verify_36184.VerifyTest.test_detects_non_bound_cap_without_derived_issue",
+      "file": "tests/core/test_verify.py",
+      "status": "pass",
+      "seconds": 0.791946
+    },
+    {
+      "id": "_lld_test_verify_36184.VerifyTest.test_detects_open_item_with_satisfied_close_condition",
+      "file": "tests/core/test_verify.py",
+      "status": "pass",
+      "seconds": 0.557286
+    },
+    {
+      "id": "_lld_test_verify_36184.VerifyTest.test_detects_satisfied_derived_issue_still_open",
+      "file": "tests/core/test_verify.py",
+      "status": "pass",
+      "seconds": 0.558612
+    },
+    {
+      "id": "_lld_test_verify_36184.VerifyTest.test_detects_stale_analytics_test_detail",
+      "file": "tests/core/test_verify.py",
+      "status": "pass",
+      "seconds": 0.591636
+    },
+    {
+      "id": "_lld_test_verify_36184.VerifyTest.test_detects_tampered_event_state",
+      "file": "tests/core/test_verify.py",
+      "status": "pass",
+      "seconds": 0.564096
+    },
+    {
+      "id": "_lld_test_verify_36184.VerifyTest.test_detects_tampered_installed_asset",
+      "file": "tests/core/test_verify.py",
+      "status": "pass",
+      "seconds": 1.899932
+    },
+    {
+      "id": "_lld_test_verify_36184.VerifyTest.test_detects_unowned_open_work_item",
+      "file": "tests/core/test_verify.py",
+      "status": "pass",
+      "seconds": 0.566191
+    },
+    {
+      "id": "_lld_test_verify_36184.VerifyTest.test_detects_verified_with_missing_binding_field",
+      "file": "tests/core/test_verify.py",
+      "status": "pass",
+      "seconds": 0.570649
+    },
+    {
+      "id": "_lld_test_verify_36184.VerifyTest.test_detects_verified_without_bound_binding",
+      "file": "tests/core/test_verify.py",
+      "status": "pass",
+      "seconds": 0.574303
+    },
+    {
+      "id": "_lld_test_verify_36184.VerifyTest.test_open_item_with_unmet_condition_still_passes",
+      "file": "tests/core/test_verify.py",
+      "status": "pass",
+      "seconds": 0.57103
+    },
+    {
+      "id": "_lld_test_verify_36184.VerifyTest.test_owner_note_satisfies_ownership_rule",
+      "file": "tests/core/test_verify.py",
+      "status": "pass",
+      "seconds": 0.571271
+    },
+    {
+      "id": "_lld_test_acceptance_13915.AppendOnlyTest.test_closed_fields_must_survive",
+      "file": "tests/meta/test_acceptance.py",
+      "status": "pass",
+      "seconds": 4.2e-05
+    },
+    {
+      "id": "_lld_test_acceptance_13915.AppendOnlyTest.test_correct_merge_passes",
+      "file": "tests/meta/test_acceptance.py",
+      "status": "pass",
+      "seconds": 2.1e-05
+    },
+    {
+      "id": "_lld_test_acceptance_13915.AppendOnlyTest.test_duplicate_ids_and_non_idempotent_second_run_fail",
+      "file": "tests/meta/test_acceptance.py",
+      "status": "pass",
+      "seconds": 1.4e-05
+    },
+    {
+      "id": "_lld_test_acceptance_13915.AppendOnlyTest.test_overwrite_is_rejected_with_named_reasons",
       "file": "tests/meta/test_acceptance.py",
       "status": "pass",
       "seconds": 1.1e-05
     },
     {
-      "id": "_lld_test_acceptance_4323.AppendOnlyTest.test_overwrite_is_rejected_with_named_reasons",
+      "id": "_lld_test_acceptance_13915.BuildTest.test_preconditions_scope_is_exactly_l4",
       "file": "tests/meta/test_acceptance.py",
       "status": "pass",
-      "seconds": 1e-05
+      "seconds": 2.651042
     },
     {
-      "id": "_lld_test_acceptance_4323.BuildTest.test_preconditions_scope_is_exactly_l4",
+      "id": "_lld_test_acceptance_13915.BuildTest.test_schema_is_stable_and_deterministic",
       "file": "tests/meta/test_acceptance.py",
       "status": "pass",
-      "seconds": 1.075964
+      "seconds": 6.4488
     },
     {
-      "id": "_lld_test_acceptance_4323.BuildTest.test_schema_is_stable_and_deterministic",
+      "id": "_lld_test_acceptance_13915.ConstantsTest.test_chinese_and_arabic_numerals",
       "file": "tests/meta/test_acceptance.py",
       "status": "pass",
-      "seconds": 2.881366
+      "seconds": 2.4e-05
     },
     {
-      "id": "_lld_test_acceptance_4323.ConstantsTest.test_chinese_and_arabic_numerals",
+      "id": "_lld_test_acceptance_13915.ConstantsTest.test_constants_follow_source_not_hardcoded",
+      "file": "tests/meta/test_acceptance.py",
+      "status": "pass",
+      "seconds": 0.056727
+    },
+    {
+      "id": "_lld_test_acceptance_13915.ConstantsTest.test_expected_values_come_from_upgrade_ast",
+      "file": "tests/meta/test_acceptance.py",
+      "status": "pass",
+      "seconds": 0.008214
+    },
+    {
+      "id": "_lld_test_acceptance_13915.DerivedTest.test_hand_edited_derived_file_is_caught",
+      "file": "tests/meta/test_acceptance.py",
+      "status": "pass",
+      "seconds": 2.455711
+    },
+    {
+      "id": "_lld_test_acceptance_13915.DerivedTest.test_real_derived_files_are_reproducible",
+      "file": "tests/meta/test_acceptance.py",
+      "status": "pass",
+      "seconds": 0.245113
+    },
+    {
+      "id": "_lld_test_acceptance_13915.L5DetectorTest.test_end_to_end_reports_missing_callable",
+      "file": "tests/meta/test_acceptance.py",
+      "status": "pass",
+      "seconds": 0.064105
+    },
+    {
+      "id": "_lld_test_acceptance_13915.L5DetectorTest.test_evidence_adapter_names_each_missing_symbol",
+      "file": "tests/meta/test_acceptance.py",
+      "status": "pass",
+      "seconds": 0.080111
+    },
+    {
+      "id": "_lld_test_acceptance_13915.L5DetectorTest.test_l5_contract_doc_requires_all_anchors",
+      "file": "tests/meta/test_acceptance.py",
+      "status": "pass",
+      "seconds": 0.08335
+    },
+    {
+      "id": "_lld_test_acceptance_13915.L5DetectorTest.test_no_regression_guard_names_missing_gate",
+      "file": "tests/meta/test_acceptance.py",
+      "status": "pass",
+      "seconds": 0.063803
+    },
+    {
+      "id": "_lld_test_acceptance_13915.LiteralScanTest.test_classify_names_each_kind",
+      "file": "tests/meta/test_acceptance.py",
+      "status": "pass",
+      "seconds": 7.1e-05
+    },
+    {
+      "id": "_lld_test_acceptance_13915.LiteralScanTest.test_clean_tree_has_no_drift",
+      "file": "tests/meta/test_acceptance.py",
+      "status": "pass",
+      "seconds": 0.051616
+    },
+    {
+      "id": "_lld_test_acceptance_13915.LiteralScanTest.test_historical_helper_is_conservative",
       "file": "tests/meta/test_acceptance.py",
       "status": "pass",
       "seconds": 1.9e-05
     },
     {
-      "id": "_lld_test_acceptance_4323.ConstantsTest.test_constants_follow_source_not_hardcoded",
+      "id": "_lld_test_acceptance_13915.LiteralScanTest.test_historical_statements_are_review_not_failure",
       "file": "tests/meta/test_acceptance.py",
       "status": "pass",
-      "seconds": 0.015714
+      "seconds": 0.055002
     },
     {
-      "id": "_lld_test_acceptance_4323.ConstantsTest.test_expected_values_come_from_upgrade_ast",
+      "id": "_lld_test_acceptance_13915.LiteralScanTest.test_stale_literals_are_all_named",
       "file": "tests/meta/test_acceptance.py",
       "status": "pass",
-      "seconds": 0.006788
+      "seconds": 0.05172
     },
     {
-      "id": "_lld_test_acceptance_4323.DerivedTest.test_hand_edited_derived_file_is_caught",
+      "id": "_lld_test_acceptance_13915.LiteralScanTest.test_unrelated_units_do_not_false_positive",
       "file": "tests/meta/test_acceptance.py",
       "status": "pass",
-      "seconds": 0.674573
+      "seconds": 0.050582
     },
     {
-      "id": "_lld_test_acceptance_4323.DerivedTest.test_real_derived_files_are_reproducible",
+      "id": "_lld_test_acceptance_13915.PreconditionTest.test_evaluate_activation_named_failures",
       "file": "tests/meta/test_acceptance.py",
       "status": "pass",
-      "seconds": 0.415939
+      "seconds": 2.9e-05
     },
     {
-      "id": "_lld_test_acceptance_4323.L5DetectorTest.test_end_to_end_reports_missing_callable",
+      "id": "_lld_test_acceptance_13915.PreconditionTest.test_evaluate_conditional_named_failures",
       "file": "tests/meta/test_acceptance.py",
       "status": "pass",
-      "seconds": 0.010519
+      "seconds": 2e-05
     },
     {
-      "id": "_lld_test_acceptance_4323.L5DetectorTest.test_evidence_adapter_names_each_missing_symbol",
+      "id": "_lld_test_acceptance_13915.PreconditionTest.test_roadmap_consistency_pass_and_named_failures",
       "file": "tests/meta/test_acceptance.py",
       "status": "pass",
-      "seconds": 0.011227
+      "seconds": 0.108889
     },
     {
-      "id": "_lld_test_acceptance_4323.L5DetectorTest.test_l5_contract_doc_requires_all_anchors",
-      "file": "tests/meta/test_acceptance.py",
+      "id": "_lld_test_agent_gateway_34055.GatewayTest.test_apply_writes_claim_audit_and_keeps_invariants",
+      "file": "tests/meta/test_agent_gateway.py",
       "status": "pass",
-      "seconds": 0.015603
+      "seconds": 2.764775
     },
     {
-      "id": "_lld_test_acceptance_4323.L5DetectorTest.test_no_regression_guard_names_missing_gate",
-      "file": "tests/meta/test_acceptance.py",
+      "id": "_lld_test_agent_gateway_34055.GatewayTest.test_cas_required_and_mismatch",
+      "file": "tests/meta/test_agent_gateway.py",
       "status": "pass",
-      "seconds": 0.010336
+      "seconds": 2.557191
     },
     {
-      "id": "_lld_test_acceptance_4323.LiteralScanTest.test_classify_names_each_kind",
-      "file": "tests/meta/test_acceptance.py",
+      "id": "_lld_test_agent_gateway_34055.GatewayTest.test_cli_request_denies_unknown_agent",
+      "file": "tests/meta/test_agent_gateway.py",
       "status": "pass",
-      "seconds": 7e-05
+      "seconds": 2.589721
     },
     {
-      "id": "_lld_test_acceptance_4323.LiteralScanTest.test_clean_tree_has_no_drift",
-      "file": "tests/meta/test_acceptance.py",
+      "id": "_lld_test_agent_gateway_34055.GatewayTest.test_cli_status_json_is_leak_free",
+      "file": "tests/meta/test_agent_gateway.py",
       "status": "pass",
-      "seconds": 0.010431
+      "seconds": 2.42168
     },
     {
-      "id": "_lld_test_acceptance_4323.LiteralScanTest.test_historical_helper_is_conservative",
-      "file": "tests/meta/test_acceptance.py",
+      "id": "_lld_test_agent_gateway_34055.GatewayTest.test_default_deny_without_access",
+      "file": "tests/meta/test_agent_gateway.py",
       "status": "pass",
-      "seconds": 2.6e-05
+      "seconds": 0.491519
     },
     {
-      "id": "_lld_test_acceptance_4323.LiteralScanTest.test_historical_statements_are_review_not_failure",
-      "file": "tests/meta/test_acceptance.py",
+      "id": "_lld_test_agent_gateway_34055.GatewayTest.test_definitions_selfcheck",
+      "file": "tests/meta/test_agent_gateway.py",
       "status": "pass",
-      "seconds": 0.014376
+      "seconds": 3.5e-05
     },
     {
-      "id": "_lld_test_acceptance_4323.LiteralScanTest.test_stale_literals_are_all_named",
-      "file": "tests/meta/test_acceptance.py",
+      "id": "_lld_test_agent_gateway_34055.GatewayTest.test_dispatch_rejects_invalid_lesson_candidate",
+      "file": "tests/meta/test_agent_gateway.py",
       "status": "pass",
-      "seconds": 0.010826
+      "seconds": 2.569166
     },
     {
-      "id": "_lld_test_acceptance_4323.LiteralScanTest.test_unrelated_units_do_not_false_positive",
-      "file": "tests/meta/test_acceptance.py",
+      "id": "_lld_test_agent_gateway_34055.GatewayTest.test_dry_run_does_not_write",
+      "file": "tests/meta/test_agent_gateway.py",
       "status": "pass",
-      "seconds": 0.010668
+      "seconds": 2.558512
     },
     {
-      "id": "_lld_test_acceptance_4323.PreconditionTest.test_evaluate_activation_named_failures",
-      "file": "tests/meta/test_acceptance.py",
+      "id": "_lld_test_agent_gateway_34055.GatewayTest.test_lease_blocks_concurrent_agent",
+      "file": "tests/meta/test_agent_gateway.py",
       "status": "pass",
-      "seconds": 3.1e-05
+      "seconds": 2.408987
     },
     {
-      "id": "_lld_test_acceptance_4323.PreconditionTest.test_evaluate_conditional_named_failures",
-      "file": "tests/meta/test_acceptance.py",
+      "id": "_lld_test_agent_gateway_34055.GatewayTest.test_policy_point_boundary_is_declared",
+      "file": "tests/meta/test_agent_gateway.py",
       "status": "pass",
       "seconds": 1.7e-05
     },
     {
-      "id": "_lld_test_acceptance_4323.PreconditionTest.test_roadmap_consistency_pass_and_named_failures",
-      "file": "tests/meta/test_acceptance.py",
-      "status": "pass",
-      "seconds": 0.047328
-    },
-    {
-      "id": "_lld_test_agent_gateway_45032.GatewayTest.test_apply_writes_claim_audit_and_keeps_invariants",
+      "id": "_lld_test_agent_gateway_34055.GatewayTest.test_register_requires_human_and_no_self_approval",
       "file": "tests/meta/test_agent_gateway.py",
       "status": "pass",
-      "seconds": 1.094953
+      "seconds": 2.403888
     },
     {
-      "id": "_lld_test_agent_gateway_45032.GatewayTest.test_cas_required_and_mismatch",
+      "id": "_lld_test_agent_gateway_34055.GatewayTest.test_register_writes_audit_and_keeps_board_synced",
       "file": "tests/meta/test_agent_gateway.py",
       "status": "pass",
-      "seconds": 0.915898
+      "seconds": 2.541909
     },
     {
-      "id": "_lld_test_agent_gateway_45032.GatewayTest.test_cli_request_denies_unknown_agent",
+      "id": "_lld_test_agent_gateway_34055.GatewayTest.test_registry_cas_detects_concurrent_edit",
       "file": "tests/meta/test_agent_gateway.py",
       "status": "pass",
-      "seconds": 0.963029
+      "seconds": 2.434203
     },
     {
-      "id": "_lld_test_agent_gateway_45032.GatewayTest.test_cli_status_json_is_leak_free",
+      "id": "_lld_test_agent_gateway_34055.GatewayTest.test_revision_detects_intervening_write",
       "file": "tests/meta/test_agent_gateway.py",
       "status": "pass",
-      "seconds": 0.955769
+      "seconds": 2.400164
     },
     {
-      "id": "_lld_test_agent_gateway_45032.GatewayTest.test_default_deny_without_access",
+      "id": "_lld_test_agent_gateway_34055.GatewayTest.test_self_approval_and_self_register_denied",
       "file": "tests/meta/test_agent_gateway.py",
       "status": "pass",
-      "seconds": 0.138559
+      "seconds": 2.3743
     },
     {
-      "id": "_lld_test_agent_gateway_45032.GatewayTest.test_definitions_selfcheck",
+      "id": "_lld_test_agent_gateway_34055.GatewayTest.test_unregistered_and_unauthorized_denied",
       "file": "tests/meta/test_agent_gateway.py",
       "status": "pass",
-      "seconds": 3.1e-05
+      "seconds": 2.386561
     },
     {
-      "id": "_lld_test_agent_gateway_45032.GatewayTest.test_dispatch_rejects_invalid_lesson_candidate",
-      "file": "tests/meta/test_agent_gateway.py",
-      "status": "pass",
-      "seconds": 1.178677
-    },
-    {
-      "id": "_lld_test_agent_gateway_45032.GatewayTest.test_dry_run_does_not_write",
-      "file": "tests/meta/test_agent_gateway.py",
-      "status": "pass",
-      "seconds": 1.151487
-    },
-    {
-      "id": "_lld_test_agent_gateway_45032.GatewayTest.test_lease_blocks_concurrent_agent",
-      "file": "tests/meta/test_agent_gateway.py",
-      "status": "pass",
-      "seconds": 1.03448
-    },
-    {
-      "id": "_lld_test_agent_gateway_45032.GatewayTest.test_policy_point_boundary_is_declared",
-      "file": "tests/meta/test_agent_gateway.py",
-      "status": "pass",
-      "seconds": 2.8e-05
-    },
-    {
-      "id": "_lld_test_agent_gateway_45032.GatewayTest.test_register_requires_human_and_no_self_approval",
-      "file": "tests/meta/test_agent_gateway.py",
-      "status": "pass",
-      "seconds": 0.955385
-    },
-    {
-      "id": "_lld_test_agent_gateway_45032.GatewayTest.test_register_writes_audit_and_keeps_board_synced",
-      "file": "tests/meta/test_agent_gateway.py",
-      "status": "pass",
-      "seconds": 1.068058
-    },
-    {
-      "id": "_lld_test_agent_gateway_45032.GatewayTest.test_registry_cas_detects_concurrent_edit",
-      "file": "tests/meta/test_agent_gateway.py",
-      "status": "pass",
-      "seconds": 0.979329
-    },
-    {
-      "id": "_lld_test_agent_gateway_45032.GatewayTest.test_revision_detects_intervening_write",
-      "file": "tests/meta/test_agent_gateway.py",
-      "status": "pass",
-      "seconds": 1.037345
-    },
-    {
-      "id": "_lld_test_agent_gateway_45032.GatewayTest.test_self_approval_and_self_register_denied",
-      "file": "tests/meta/test_agent_gateway.py",
-      "status": "pass",
-      "seconds": 0.987654
-    },
-    {
-      "id": "_lld_test_agent_gateway_45032.GatewayTest.test_unregistered_and_unauthorized_denied",
-      "file": "tests/meta/test_agent_gateway.py",
-      "status": "pass",
-      "seconds": 1.03442
-    },
-    {
-      "id": "_lld_test_dogfood_59481.SelfHostingBoardOntology.test_board_embeds_ontology_terms",
+      "id": "_lld_test_dogfood_37098.SelfHostingBoardOntology.test_board_embeds_ontology_terms",
       "file": "tests/meta/test_dogfood.py",
       "status": "pass",
-      "seconds": 0.003148
+      "seconds": 0.003104
     },
     {
-      "id": "_lld_test_dogfood_59481.SelfHostingBoardOntology.test_template_has_ontology_terms_marker",
+      "id": "_lld_test_dogfood_37098.SelfHostingBoardOntology.test_template_has_ontology_terms_marker",
       "file": "tests/meta/test_dogfood.py",
       "status": "pass",
-      "seconds": 0.001321
+      "seconds": 0.001407
     },
     {
-      "id": "_lld_test_dogfood_59481.SelfHostingLedger.test_board_embed_matches_ledger",
+      "id": "_lld_test_dogfood_37098.SelfHostingLedger.test_board_embed_matches_ledger",
       "file": "tests/meta/test_dogfood.py",
       "status": "pass",
-      "seconds": 0.005889
+      "seconds": 0.007191
     },
     {
-      "id": "_lld_test_dogfood_59481.SelfHostingLedger.test_governance_meta_bound",
+      "id": "_lld_test_dogfood_37098.SelfHostingLedger.test_governance_meta_bound",
       "file": "tests/meta/test_dogfood.py",
       "status": "pass",
-      "seconds": 0.002617
+      "seconds": 0.002874
     },
     {
-      "id": "_lld_test_dogfood_59481.SelfHostingLedger.test_release_decisions_are_done",
+      "id": "_lld_test_dogfood_37098.SelfHostingLedger.test_release_decisions_are_done",
       "file": "tests/meta/test_dogfood.py",
       "status": "pass",
-      "seconds": 0.002901
+      "seconds": 0.002845
     },
     {
-      "id": "_lld_test_dogfood_59481.SelfHostingLedger.test_release_decisions_recorded",
+      "id": "_lld_test_dogfood_37098.SelfHostingLedger.test_release_decisions_recorded",
       "file": "tests/meta/test_dogfood.py",
       "status": "pass",
-      "seconds": 0.002626
+      "seconds": 0.00268
     },
     {
-      "id": "_lld_test_feedback_1982.AppendOnlyTest.test_existing_row_wins_over_fresh_open_row",
-      "file": "tests/meta/test_feedback.py",
-      "status": "pass",
-      "seconds": 1.9e-05
-    },
-    {
-      "id": "_lld_test_feedback_1982.AppendOnlyTest.test_export_creates_file_when_absent",
-      "file": "tests/meta/test_feedback.py",
-      "status": "pass",
-      "seconds": 0.233403
-    },
-    {
-      "id": "_lld_test_feedback_1982.AppendOnlyTest.test_export_preserves_closed_evidence_and_is_idempotent",
-      "file": "tests/meta/test_feedback.py",
-      "status": "pass",
-      "seconds": 0.310257
-    },
-    {
-      "id": "_lld_test_feedback_1982.AppendOnlyTest.test_merge_is_idempotent_and_order_stable",
+      "id": "_lld_test_feedback_16377.AppendOnlyTest.test_existing_row_wins_over_fresh_open_row",
       "file": "tests/meta/test_feedback.py",
       "status": "pass",
       "seconds": 2.2e-05
     },
     {
-      "id": "_lld_test_feedback_1982.ClosureTest.test_artifact_ref_must_exist",
+      "id": "_lld_test_feedback_16377.AppendOnlyTest.test_export_creates_file_when_absent",
       "file": "tests/meta/test_feedback.py",
       "status": "pass",
-      "seconds": 0.37848
+      "seconds": 0.600202
     },
     {
-      "id": "_lld_test_feedback_1982.ClosureTest.test_closed_without_disposition_fails_then_passes",
+      "id": "_lld_test_feedback_16377.AppendOnlyTest.test_export_preserves_closed_evidence_and_is_idempotent",
       "file": "tests/meta/test_feedback.py",
       "status": "pass",
-      "seconds": 0.381469
+      "seconds": 0.677295
     },
     {
-      "id": "_lld_test_feedback_1982.ClosureTest.test_fingerprint_blocks_manual_edit",
+      "id": "_lld_test_feedback_16377.AppendOnlyTest.test_merge_is_idempotent_and_order_stable",
       "file": "tests/meta/test_feedback.py",
       "status": "pass",
-      "seconds": 0.386563
+      "seconds": 3.3e-05
     },
     {
-      "id": "_lld_test_feedback_1982.ClosureTest.test_triage_requires_artifact_for_four_products",
+      "id": "_lld_test_feedback_16377.ClosureTest.test_artifact_ref_must_exist",
       "file": "tests/meta/test_feedback.py",
       "status": "pass",
-      "seconds": 0.38911
+      "seconds": 1.110667
     },
     {
-      "id": "_lld_test_feedback_1982.ClosureTest.test_wontfix_needs_reason_but_no_artifact",
+      "id": "_lld_test_feedback_16377.ClosureTest.test_closed_without_disposition_fails_then_passes",
       "file": "tests/meta/test_feedback.py",
       "status": "pass",
-      "seconds": 0.393383
+      "seconds": 1.113197
     },
     {
-      "id": "_lld_test_feedback_1982.ExportTest.test_read_only_and_idempotent",
+      "id": "_lld_test_feedback_16377.ClosureTest.test_fingerprint_blocks_manual_edit",
       "file": "tests/meta/test_feedback.py",
       "status": "pass",
-      "seconds": 0.361297
+      "seconds": 1.105833
     },
     {
-      "id": "_lld_test_feedback_1982.ExportTest.test_redact_is_data_driven_not_hardcoded",
+      "id": "_lld_test_feedback_16377.ClosureTest.test_triage_requires_artifact_for_four_products",
       "file": "tests/meta/test_feedback.py",
       "status": "pass",
-      "seconds": 0.164162
+      "seconds": 1.110167
     },
     {
-      "id": "_lld_test_feedback_1982.ExportTest.test_version_gap_and_legacy_verifier_are_observations",
+      "id": "_lld_test_feedback_16377.ClosureTest.test_wontfix_needs_reason_but_no_artifact",
       "file": "tests/meta/test_feedback.py",
       "status": "pass",
-      "seconds": 0.239331
+      "seconds": 1.114063
     },
     {
-      "id": "_lld_test_feedback_1982.ExportTest.test_write_requires_human_approval",
+      "id": "_lld_test_feedback_16377.ExportTest.test_read_only_and_idempotent",
       "file": "tests/meta/test_feedback.py",
       "status": "pass",
-      "seconds": 0.365617
+      "seconds": 0.710515
     },
     {
-      "id": "_lld_test_layout_21156.LayoutDefinitionTest.test_check_catches_producer_drift",
+      "id": "_lld_test_feedback_16377.ExportTest.test_redact_is_data_driven_not_hardcoded",
+      "file": "tests/meta/test_feedback.py",
+      "status": "pass",
+      "seconds": 0.517022
+    },
+    {
+      "id": "_lld_test_feedback_16377.ExportTest.test_version_gap_and_legacy_verifier_are_observations",
+      "file": "tests/meta/test_feedback.py",
+      "status": "pass",
+      "seconds": 0.585906
+    },
+    {
+      "id": "_lld_test_feedback_16377.ExportTest.test_write_requires_human_approval",
+      "file": "tests/meta/test_feedback.py",
+      "status": "pass",
+      "seconds": 0.741208
+    },
+    {
+      "id": "_lld_test_layout_9215.LayoutDefinitionTest.test_check_catches_producer_drift",
       "file": "tests/meta/test_layout.py",
       "status": "pass",
-      "seconds": 0.048125
+      "seconds": 0.04896
     },
     {
-      "id": "_lld_test_layout_21156.LayoutDefinitionTest.test_cli_check_and_json",
+      "id": "_lld_test_layout_9215.LayoutDefinitionTest.test_cli_check_and_json",
       "file": "tests/meta/test_layout.py",
       "status": "pass",
-      "seconds": 0.102735
+      "seconds": 0.101283
     },
     {
-      "id": "_lld_test_layout_21156.LayoutDefinitionTest.test_definition_passes_selfcheck",
+      "id": "_lld_test_layout_9215.LayoutDefinitionTest.test_definition_passes_selfcheck",
       "file": "tests/meta/test_layout.py",
       "status": "pass",
-      "seconds": 0.024176
+      "seconds": 0.02743
     },
     {
-      "id": "_lld_test_layout_21156.LayoutDefinitionTest.test_derived_layer_is_never_manual",
+      "id": "_lld_test_layout_9215.LayoutDefinitionTest.test_derived_layer_is_never_manual",
       "file": "tests/meta/test_layout.py",
       "status": "pass",
-      "seconds": 0.023436
+      "seconds": 0.023801
     },
     {
-      "id": "_lld_test_layout_21156.LayoutDefinitionTest.test_ledger_fields_are_not_files",
+      "id": "_lld_test_layout_9215.LayoutDefinitionTest.test_ledger_fields_are_not_files",
       "file": "tests/meta/test_layout.py",
       "status": "pass",
-      "seconds": 8.7e-05
+      "seconds": 0.0001
     },
     {
-      "id": "_lld_test_layout_21156.LayoutDefinitionTest.test_no_absolute_paths_in_definition",
+      "id": "_lld_test_layout_9215.LayoutDefinitionTest.test_no_absolute_paths_in_definition",
       "file": "tests/meta/test_layout.py",
       "status": "pass",
-      "seconds": 0.000714
+      "seconds": 0.000673
     },
     {
-      "id": "_lld_test_layout_21156.LayoutDefinitionTest.test_render_is_deterministic_and_synced",
+      "id": "_lld_test_layout_9215.LayoutDefinitionTest.test_render_is_deterministic_and_synced",
       "file": "tests/meta/test_layout.py",
       "status": "pass",
-      "seconds": 0.080478
+      "seconds": 0.105371
     },
     {
-      "id": "_lld_test_layout_21156.LayoutDiffTest.test_brownfield_draft_is_detected",
+      "id": "_lld_test_layout_9215.LayoutDiffTest.test_brownfield_draft_is_detected",
       "file": "tests/meta/test_layout.py",
       "status": "pass",
-      "seconds": 0.059573
+      "seconds": 0.123654
     },
     {
-      "id": "_lld_test_layout_21156.LayoutDiffTest.test_demo_is_governed_and_diff_is_readonly",
+      "id": "_lld_test_layout_9215.LayoutDiffTest.test_demo_is_governed_and_diff_is_readonly",
       "file": "tests/meta/test_layout.py",
       "status": "pass",
-      "seconds": 0.324111
+      "seconds": 0.676847
     },
     {
-      "id": "_lld_test_layout_21156.LayoutDiffTest.test_empty_project_is_bootstrap",
+      "id": "_lld_test_layout_9215.LayoutDiffTest.test_empty_project_is_bootstrap",
       "file": "tests/meta/test_layout.py",
       "status": "pass",
-      "seconds": 0.043755
+      "seconds": 0.061943
     },
     {
-      "id": "_lld_test_layout_21156.LayoutDiffTest.test_greenfield_bootstrap_has_eight_files",
+      "id": "_lld_test_layout_9215.LayoutDiffTest.test_greenfield_bootstrap_has_eight_files",
       "file": "tests/meta/test_layout.py",
       "status": "pass",
-      "seconds": 0.128078
+      "seconds": 0.244786
     },
     {
-      "id": "_lld_test_layout_21156.LayoutDiffTest.test_ignored_cache_is_not_unexpected",
+      "id": "_lld_test_layout_9215.LayoutDiffTest.test_ignored_cache_is_not_unexpected",
       "file": "tests/meta/test_layout.py",
       "status": "pass",
-      "seconds": 0.17228
+      "seconds": 0.552956
     },
     {
-      "id": "_lld_test_layout_21156.LayoutDiffTest.test_missing_target_fails_closed",
+      "id": "_lld_test_layout_9215.LayoutDiffTest.test_missing_target_fails_closed",
       "file": "tests/meta/test_layout.py",
       "status": "pass",
-      "seconds": 0.039045
+      "seconds": 0.038009
     },
     {
-      "id": "_lld_test_layout_21156.LayoutDiffTest.test_unexpected_governance_file_is_flagged",
+      "id": "_lld_test_layout_9215.LayoutDiffTest.test_unexpected_governance_file_is_flagged",
       "file": "tests/meta/test_layout.py",
       "status": "pass",
-      "seconds": 0.203588
+      "seconds": 0.562356
     },
     {
-      "id": "_lld_test_lifecycle_25444.LifecycleTest.test_archive_is_terminal",
+      "id": "_lld_test_lifecycle_62693.LifecycleTest.test_archive_is_terminal",
       "file": "tests/meta/test_lifecycle.py",
       "status": "pass",
-      "seconds": 6.4e-05
+      "seconds": 0.000102
     },
     {
-      "id": "_lld_test_lifecycle_25444.LifecycleTest.test_archive_without_approval_rejected",
+      "id": "_lld_test_lifecycle_62693.LifecycleTest.test_archive_without_approval_rejected",
       "file": "tests/meta/test_lifecycle.py",
       "status": "pass",
       "seconds": 9e-06
     },
     {
-      "id": "_lld_test_lifecycle_25444.LifecycleTest.test_claim_release_and_duplicate_claim_rejected",
+      "id": "_lld_test_lifecycle_62693.LifecycleTest.test_claim_release_and_duplicate_claim_rejected",
       "file": "tests/meta/test_lifecycle.py",
       "status": "pass",
-      "seconds": 2.5e-05
+      "seconds": 3.2e-05
     },
     {
-      "id": "_lld_test_lifecycle_25444.LifecycleTest.test_cli_rejects_unfreeze_without_approval",
+      "id": "_lld_test_lifecycle_62693.LifecycleTest.test_cli_rejects_unfreeze_without_approval",
       "file": "tests/meta/test_lifecycle.py",
       "status": "pass",
-      "seconds": 0.286963
+      "seconds": 0.650511
     },
     {
-      "id": "_lld_test_lifecycle_25444.LifecycleTest.test_freeze_blocks_generator",
+      "id": "_lld_test_lifecycle_62693.LifecycleTest.test_freeze_blocks_generator",
       "file": "tests/meta/test_lifecycle.py",
       "status": "pass",
-      "seconds": 0.339874
+      "seconds": 0.703967
     },
     {
-      "id": "_lld_test_lifecycle_25444.LifecycleTest.test_freeze_requires_active_and_records_reason",
+      "id": "_lld_test_lifecycle_62693.LifecycleTest.test_freeze_requires_active_and_records_reason",
       "file": "tests/meta/test_lifecycle.py",
       "status": "pass",
-      "seconds": 8.3e-05
+      "seconds": 9.3e-05
     },
     {
-      "id": "_lld_test_lifecycle_25444.LifecycleTest.test_retire_validates_code_and_deduplicates",
+      "id": "_lld_test_lifecycle_62693.LifecycleTest.test_retire_validates_code_and_deduplicates",
       "file": "tests/meta/test_lifecycle.py",
       "status": "pass",
-      "seconds": 4.1e-05
+      "seconds": 4.9e-05
     },
     {
-      "id": "_lld_test_lifecycle_25444.LifecycleTest.test_state_changes_keep_board_synced_and_history_untouched",
+      "id": "_lld_test_lifecycle_62693.LifecycleTest.test_state_changes_keep_board_synced_and_history_untouched",
       "file": "tests/meta/test_lifecycle.py",
       "status": "pass",
-      "seconds": 0.333771
+      "seconds": 0.701732
     },
     {
-      "id": "_lld_test_lifecycle_25444.LifecycleTest.test_status_cli_json",
+      "id": "_lld_test_lifecycle_62693.LifecycleTest.test_status_cli_json",
       "file": "tests/meta/test_lifecycle.py",
       "status": "pass",
-      "seconds": 0.212306
+      "seconds": 0.566502
     },
     {
-      "id": "_lld_test_lifecycle_25444.LifecycleTest.test_unfreeze_requires_human_approval",
+      "id": "_lld_test_lifecycle_62693.LifecycleTest.test_unfreeze_requires_human_approval",
       "file": "tests/meta/test_lifecycle.py",
       "status": "pass",
-      "seconds": 7.2e-05
+      "seconds": 8.4e-05
     },
     {
-      "id": "_lld_test_ontology_10363.OntologyTest.test_build_is_deterministic",
+      "id": "_lld_test_ontology_25049.OntologyTest.test_build_is_deterministic",
       "file": "tests/meta/test_ontology.py",
       "status": "pass",
-      "seconds": 0.142206
+      "seconds": 0.149323
     },
     {
-      "id": "_lld_test_ontology_10363.OntologyTest.test_check_catches_cardinality_contradiction",
+      "id": "_lld_test_ontology_25049.OntologyTest.test_check_catches_cardinality_contradiction",
       "file": "tests/meta/test_ontology.py",
       "status": "pass",
-      "seconds": 0.274074
+      "seconds": 0.632489
     },
     {
-      "id": "_lld_test_ontology_10363.OntologyTest.test_check_catches_illegal_status_and_recovers",
+      "id": "_lld_test_ontology_25049.OntologyTest.test_check_catches_illegal_status_and_recovers",
       "file": "tests/meta/test_ontology.py",
       "status": "pass",
-      "seconds": 0.382376
+      "seconds": 0.755139
     },
     {
-      "id": "_lld_test_ontology_10363.OntologyTest.test_check_catches_polyseme_and_undeclared_entity",
+      "id": "_lld_test_ontology_25049.OntologyTest.test_check_catches_polyseme_and_undeclared_entity",
       "file": "tests/meta/test_ontology.py",
       "status": "pass",
-      "seconds": 0.272616
+      "seconds": 0.635248
     },
     {
-      "id": "_lld_test_ontology_10363.OntologyTest.test_diff_emits_valid_ontology_observations",
+      "id": "_lld_test_ontology_25049.OntologyTest.test_diff_emits_valid_ontology_observations",
       "file": "tests/meta/test_ontology.py",
       "status": "pass",
-      "seconds": 0.218213
+      "seconds": 0.582574
     },
     {
-      "id": "_lld_test_ontology_10363.OntologyTest.test_generated_projection_is_read_only_and_synced",
+      "id": "_lld_test_ontology_25049.OntologyTest.test_generated_projection_is_read_only_and_synced",
       "file": "tests/meta/test_ontology.py",
       "status": "pass",
-      "seconds": 0.150694
+      "seconds": 0.16418
     },
     {
-      "id": "_lld_test_ontology_10363.OntologyTest.test_no_orphan_source_refs_and_relations",
+      "id": "_lld_test_ontology_25049.OntologyTest.test_no_orphan_source_refs_and_relations",
       "file": "tests/meta/test_ontology.py",
       "status": "pass",
-      "seconds": 0.055906
+      "seconds": 0.058333
     },
     {
-      "id": "_lld_test_ontology_10363.OntologyTest.test_polyseme_is_disambiguated_not_unified",
+      "id": "_lld_test_ontology_25049.OntologyTest.test_polyseme_is_disambiguated_not_unified",
       "file": "tests/meta/test_ontology.py",
       "status": "pass",
-      "seconds": 0.046112
+      "seconds": 0.047549
     },
     {
-      "id": "_lld_test_ontology_10363.OntologyTest.test_unupgraded_project_reports_binding_as_na",
+      "id": "_lld_test_ontology_25049.OntologyTest.test_unupgraded_project_reports_binding_as_na",
       "file": "tests/meta/test_ontology.py",
       "status": "pass",
-      "seconds": 0.2724
+      "seconds": 0.661917
     },
     {
-      "id": "_lld_test_ontology_10363.OntologyTest.test_upgrade_binds_seventh_axis",
+      "id": "_lld_test_ontology_25049.OntologyTest.test_upgrade_binds_seventh_axis",
       "file": "tests/meta/test_ontology.py",
       "status": "pass",
-      "seconds": 1.277015
+      "seconds": 2.694196
     },
     {
-      "id": "_lld_test_ontology_10363.OntologyTest.test_value_domains_match_real_code_enums",
+      "id": "_lld_test_ontology_25049.OntologyTest.test_value_domains_match_real_code_enums",
       "file": "tests/meta/test_ontology.py",
       "status": "pass",
-      "seconds": 0.047086
+      "seconds": 0.050117
     },
     {
-      "id": "_lld_test_ontology_10363.OntologyTest.test_write_requires_human_approval",
+      "id": "_lld_test_ontology_25049.OntologyTest.test_write_requires_human_approval",
       "file": "tests/meta/test_ontology.py",
       "status": "pass",
-      "seconds": 0.087603
+      "seconds": 0.09829
     },
     {
-      "id": "_lld_test_platform_contract_24430.AssetsTest.test_check_rejects_incomplete_asset_set",
+      "id": "_lld_test_platform_contract_13980.AssetsTest.test_check_rejects_incomplete_asset_set",
       "file": "tests/meta/test_platform_contract.py",
       "status": "pass",
-      "seconds": 0.016824
+      "seconds": 0.056815
     },
     {
-      "id": "_lld_test_platform_contract_24430.AssetsTest.test_digest_tracks_asset_content",
+      "id": "_lld_test_platform_contract_13980.AssetsTest.test_digest_tracks_asset_content",
       "file": "tests/meta/test_platform_contract.py",
       "status": "pass",
-      "seconds": 0.068771
+      "seconds": 0.223729
     },
     {
-      "id": "_lld_test_platform_contract_24430.AssetsTest.test_manifest_is_deterministic_and_grouped",
+      "id": "_lld_test_platform_contract_13980.AssetsTest.test_manifest_is_deterministic_and_grouped",
       "file": "tests/meta/test_platform_contract.py",
       "status": "pass",
-      "seconds": 0.213266
+      "seconds": 0.255414
     },
     {
-      "id": "_lld_test_platform_contract_24430.AssetsTest.test_post_upgrade_covers_all_three_contracts",
+      "id": "_lld_test_platform_contract_13980.AssetsTest.test_post_upgrade_covers_all_three_contracts",
       "file": "tests/meta/test_platform_contract.py",
+      "status": "pass",
+      "seconds": 2.2e-05
+    },
+    {
+      "id": "_lld_test_platform_contract_13980.AssetsTest.test_upgrade_binds_assets_and_detects_drift",
+      "file": "tests/meta/test_platform_contract.py",
+      "status": "pass",
+      "seconds": 3.797613
+    },
+    {
+      "id": "_lld_test_platform_contract_13980.BoardTest.test_cli_check_fails_on_drift",
+      "file": "tests/meta/test_platform_contract.py",
+      "status": "pass",
+      "seconds": 0.094943
+    },
+    {
+      "id": "_lld_test_platform_contract_13980.BoardTest.test_demo_board_uses_authoritative_template",
+      "file": "tests/meta/test_platform_contract.py",
+      "status": "pass",
+      "seconds": 0.006454
+    },
+    {
+      "id": "_lld_test_platform_contract_13980.BoardTest.test_digest_ignores_embed_data_but_detects_css",
+      "file": "tests/meta/test_platform_contract.py",
+      "status": "pass",
+      "seconds": 6.9e-05
+    },
+    {
+      "id": "_lld_test_platform_contract_13980.BoardTest.test_drift_is_part_of_the_upgrade_plan",
+      "file": "tests/meta/test_platform_contract.py",
+      "status": "pass",
+      "seconds": 3.28255
+    },
+    {
+      "id": "_lld_test_platform_contract_13980.BoardTest.test_missing_anchor_is_reported",
+      "file": "tests/meta/test_platform_contract.py",
+      "status": "pass",
+      "seconds": 0.054458
+    },
+    {
+      "id": "_lld_test_platform_contract_13980.BoardTest.test_normalize_defaults_to_dry_run_and_requires_approval",
+      "file": "tests/meta/test_platform_contract.py",
+      "status": "pass",
+      "seconds": 0.530519
+    },
+    {
+      "id": "_lld_test_platform_contract_13980.BoardTest.test_normalize_repairs_css_drift_without_touching_data",
+      "file": "tests/meta/test_platform_contract.py",
+      "status": "pass",
+      "seconds": 0.554337
+    },
+    {
+      "id": "_lld_test_platform_contract_13980.BudgetTest.test_demo_budget_is_clean_and_layout_is_fixed",
+      "file": "tests/meta/test_platform_contract.py",
+      "status": "pass",
+      "seconds": 0.00629
+    },
+    {
+      "id": "_lld_test_platform_contract_13980.BudgetTest.test_probe_shows_file_count_stays_fixed",
+      "file": "tests/meta/test_platform_contract.py",
+      "status": "pass",
+      "seconds": 1.126687
+    },
+    {
+      "id": "_lld_test_platform_contract_13980.BudgetTest.test_render_limit_is_read_from_template",
+      "file": "tests/meta/test_platform_contract.py",
+      "status": "pass",
+      "seconds": 0.002482
+    },
+    {
+      "id": "_lld_test_platform_contract_13980.BudgetTest.test_thresholds_flag_oversized_project",
+      "file": "tests/meta/test_platform_contract.py",
+      "status": "pass",
+      "seconds": 0.10192
+    },
+    {
+      "id": "_lld_test_upgrade_48127.UpgradeTest.test_apply_is_approved_backed_up_and_verifiable",
+      "file": "tests/meta/test_upgrade.py",
+      "status": "pass",
+      "seconds": 2.923369
+    },
+    {
+      "id": "_lld_test_upgrade_48127.UpgradeTest.test_apply_is_idempotent",
+      "file": "tests/meta/test_upgrade.py",
+      "status": "pass",
+      "seconds": 3.183332
+    },
+    {
+      "id": "_lld_test_upgrade_48127.UpgradeTest.test_apply_requires_human_approval",
+      "file": "tests/meta/test_upgrade.py",
+      "status": "pass",
+      "seconds": 0.611298
+    },
+    {
+      "id": "_lld_test_upgrade_48127.UpgradeTest.test_cli_apply_without_approval_is_rejected",
+      "file": "tests/meta/test_upgrade.py",
+      "status": "pass",
+      "seconds": 0.626079
+    },
+    {
+      "id": "_lld_test_upgrade_48127.UpgradeTest.test_cli_plan_json_is_deterministic_and_leak_free",
+      "file": "tests/meta/test_upgrade.py",
+      "status": "pass",
+      "seconds": 1.086548
+    },
+    {
+      "id": "_lld_test_upgrade_48127.UpgradeTest.test_definitions_selfcheck",
+      "file": "tests/meta/test_upgrade.py",
+      "status": "pass",
+      "seconds": 0.443183
+    },
+    {
+      "id": "_lld_test_upgrade_48127.UpgradeTest.test_plan_detects_tool_drift",
+      "file": "tests/meta/test_upgrade.py",
+      "status": "pass",
+      "seconds": 0.770078
+    },
+    {
+      "id": "_lld_test_upgrade_48127.UpgradeTest.test_plan_is_read_only_deterministic_and_leak_free",
+      "file": "tests/meta/test_upgrade.py",
+      "status": "pass",
+      "seconds": 1.054194
+    },
+    {
+      "id": "_lld_test_upgrade_48127.UpgradeTest.test_rollback_restores_state_and_writes_receipt",
+      "file": "tests/meta/test_upgrade.py",
+      "status": "pass",
+      "seconds": 2.634684
+    },
+    {
+      "id": "_lld_test_upgrade_48127.UpgradeTest.test_two_digit_minor_is_semver_not_string",
+      "file": "tests/meta/test_upgrade.py",
       "status": "pass",
       "seconds": 2.4e-05
     },
     {
-      "id": "_lld_test_platform_contract_24430.AssetsTest.test_upgrade_binds_assets_and_detects_drift",
-      "file": "tests/meta/test_platform_contract.py",
-      "status": "pass",
-      "seconds": 2.330957
-    },
-    {
-      "id": "_lld_test_platform_contract_24430.BoardTest.test_cli_check_fails_on_drift",
-      "file": "tests/meta/test_platform_contract.py",
-      "status": "pass",
-      "seconds": 0.055941
-    },
-    {
-      "id": "_lld_test_platform_contract_24430.BoardTest.test_demo_board_uses_authoritative_template",
-      "file": "tests/meta/test_platform_contract.py",
-      "status": "pass",
-      "seconds": 0.004938
-    },
-    {
-      "id": "_lld_test_platform_contract_24430.BoardTest.test_digest_ignores_embed_data_but_detects_css",
-      "file": "tests/meta/test_platform_contract.py",
-      "status": "pass",
-      "seconds": 4.1e-05
-    },
-    {
-      "id": "_lld_test_platform_contract_24430.BoardTest.test_drift_is_part_of_the_upgrade_plan",
-      "file": "tests/meta/test_platform_contract.py",
-      "status": "pass",
-      "seconds": 1.891083
-    },
-    {
-      "id": "_lld_test_platform_contract_24430.BoardTest.test_missing_anchor_is_reported",
-      "file": "tests/meta/test_platform_contract.py",
-      "status": "pass",
-      "seconds": 0.017157
-    },
-    {
-      "id": "_lld_test_platform_contract_24430.BoardTest.test_normalize_defaults_to_dry_run_and_requires_approval",
-      "file": "tests/meta/test_platform_contract.py",
-      "status": "pass",
-      "seconds": 0.175265
-    },
-    {
-      "id": "_lld_test_platform_contract_24430.BoardTest.test_normalize_repairs_css_drift_without_touching_data",
-      "file": "tests/meta/test_platform_contract.py",
-      "status": "pass",
-      "seconds": 0.202917
-    },
-    {
-      "id": "_lld_test_platform_contract_24430.BudgetTest.test_demo_budget_is_clean_and_layout_is_fixed",
-      "file": "tests/meta/test_platform_contract.py",
-      "status": "pass",
-      "seconds": 0.006902
-    },
-    {
-      "id": "_lld_test_platform_contract_24430.BudgetTest.test_probe_shows_file_count_stays_fixed",
-      "file": "tests/meta/test_platform_contract.py",
-      "status": "pass",
-      "seconds": 0.726354
-    },
-    {
-      "id": "_lld_test_platform_contract_24430.BudgetTest.test_render_limit_is_read_from_template",
-      "file": "tests/meta/test_platform_contract.py",
-      "status": "pass",
-      "seconds": 0.002699
-    },
-    {
-      "id": "_lld_test_platform_contract_24430.BudgetTest.test_thresholds_flag_oversized_project",
-      "file": "tests/meta/test_platform_contract.py",
-      "status": "pass",
-      "seconds": 0.064631
-    },
-    {
-      "id": "_lld_test_upgrade_25968.UpgradeTest.test_apply_is_approved_backed_up_and_verifiable",
+      "id": "_lld_test_upgrade_48127.UpgradeTest.test_unsupported_version_and_frozen_block",
       "file": "tests/meta/test_upgrade.py",
       "status": "pass",
-      "seconds": 1.508193
+      "seconds": 0.958955
     },
     {
-      "id": "_lld_test_upgrade_25968.UpgradeTest.test_apply_is_idempotent",
+      "id": "_lld_test_upgrade_48127.UpgradeTest.test_verify_flags_stale_evidence",
       "file": "tests/meta/test_upgrade.py",
       "status": "pass",
-      "seconds": 1.536847
+      "seconds": 2.897905
     },
     {
-      "id": "_lld_test_upgrade_25968.UpgradeTest.test_apply_requires_human_approval",
+      "id": "_lld_test_upgrade_48127.UpgradeV130Test.test_m8_writes_activation_placeholder_without_report",
       "file": "tests/meta/test_upgrade.py",
       "status": "pass",
-      "seconds": 0.251671
+      "seconds": 2.826935
     },
     {
-      "id": "_lld_test_upgrade_25968.UpgradeTest.test_cli_apply_without_approval_is_rejected",
+      "id": "_lld_test_upgrade_48127.UpgradeV130Test.test_plan_converges_without_test_report",
       "file": "tests/meta/test_upgrade.py",
       "status": "pass",
-      "seconds": 0.247801
+      "seconds": 3.163949
     },
     {
-      "id": "_lld_test_upgrade_25968.UpgradeTest.test_cli_plan_json_is_deterministic_and_leak_free",
-      "file": "tests/meta/test_upgrade.py",
-      "status": "pass",
-      "seconds": 0.696305
-    },
-    {
-      "id": "_lld_test_upgrade_25968.UpgradeTest.test_definitions_selfcheck",
-      "file": "tests/meta/test_upgrade.py",
-      "status": "pass",
-      "seconds": 0.411197
-    },
-    {
-      "id": "_lld_test_upgrade_25968.UpgradeTest.test_plan_detects_tool_drift",
-      "file": "tests/meta/test_upgrade.py",
-      "status": "pass",
-      "seconds": 0.38185
-    },
-    {
-      "id": "_lld_test_upgrade_25968.UpgradeTest.test_plan_is_read_only_deterministic_and_leak_free",
-      "file": "tests/meta/test_upgrade.py",
-      "status": "pass",
-      "seconds": 0.636861
-    },
-    {
-      "id": "_lld_test_upgrade_25968.UpgradeTest.test_rollback_restores_state_and_writes_receipt",
-      "file": "tests/meta/test_upgrade.py",
-      "status": "pass",
-      "seconds": 1.25127
-    },
-    {
-      "id": "_lld_test_upgrade_25968.UpgradeTest.test_two_digit_minor_is_semver_not_string",
-      "file": "tests/meta/test_upgrade.py",
-      "status": "pass",
-      "seconds": 2.1e-05
-    },
-    {
-      "id": "_lld_test_upgrade_25968.UpgradeTest.test_unsupported_version_and_frozen_block",
-      "file": "tests/meta/test_upgrade.py",
-      "status": "pass",
-      "seconds": 0.583512
-    },
-    {
-      "id": "_lld_test_upgrade_25968.UpgradeTest.test_verify_flags_stale_evidence",
-      "file": "tests/meta/test_upgrade.py",
-      "status": "pass",
-      "seconds": 1.445416
-    },
-    {
-      "id": "_lld_test_upgrade_25968.UpgradeV130Test.test_m8_writes_activation_placeholder_without_report",
-      "file": "tests/meta/test_upgrade.py",
-      "status": "pass",
-      "seconds": 1.397496
-    },
-    {
-      "id": "_lld_test_upgrade_25968.UpgradeV130Test.test_plan_converges_without_test_report",
-      "file": "tests/meta/test_upgrade.py",
-      "status": "pass",
-      "seconds": 1.732118
-    },
-    {
-      "id": "_lld_test_upgrade_25968.UpgradeV130Test.test_post_upgrade_report_is_generated_in_target",
+      "id": "_lld_test_upgrade_48127.UpgradeV130Test.test_post_upgrade_report_is_generated_in_target",
       "file": "tests/meta/test_upgrade.py",
       "status": "pass",
       "seconds": 1.3e-05
     },
     {
-      "id": "_lld_test_upgrade_25968.UpgradeV130Test.test_post_upgrade_steps_are_conditional",
+      "id": "_lld_test_upgrade_48127.UpgradeV130Test.test_post_upgrade_steps_are_conditional",
       "file": "tests/meta/test_upgrade.py",
       "status": "pass",
-      "seconds": 1.9e-05
+      "seconds": 9e-06
     },
     {
-      "id": "_lld_test_expert_run_54501.ClassifyCommandTest.test_approval_tokens_win",
+      "id": "_lld_test_expert_run_2840.ClassifyCommandTest.test_approval_tokens_win",
       "file": "tests/routing/test_expert_run.py",
       "status": "pass",
-      "seconds": 3.1e-05
+      "seconds": 2e-05
     },
     {
-      "id": "_lld_test_expert_run_54501.ClassifyCommandTest.test_dry_run_init_project_is_readonly",
+      "id": "_lld_test_expert_run_2840.ClassifyCommandTest.test_dry_run_init_project_is_readonly",
       "file": "tests/routing/test_expert_run.py",
       "status": "pass",
-      "seconds": 7e-06
+      "seconds": 6e-06
     },
     {
-      "id": "_lld_test_expert_run_54501.ClassifyCommandTest.test_readonly_commands",
+      "id": "_lld_test_expert_run_2840.ClassifyCommandTest.test_readonly_commands",
       "file": "tests/routing/test_expert_run.py",
       "status": "pass",
-      "seconds": 1.2e-05
+      "seconds": 1e-05
     },
     {
-      "id": "_lld_test_expert_run_54501.ClassifyCommandTest.test_unknown_command_is_manual",
+      "id": "_lld_test_expert_run_2840.ClassifyCommandTest.test_unknown_command_is_manual",
       "file": "tests/routing/test_expert_run.py",
       "status": "pass",
-      "seconds": 7e-06
+      "seconds": 6e-06
     },
     {
-      "id": "_lld_test_expert_run_54501.ClassifyCommandTest.test_write_commands_without_readonly_flag_are_approval",
+      "id": "_lld_test_expert_run_2840.ClassifyCommandTest.test_write_commands_without_readonly_flag_are_approval",
       "file": "tests/routing/test_expert_run.py",
       "status": "pass",
       "seconds": 1.1e-05
     },
     {
-      "id": "_lld_test_expert_run_54501.OrchestrateTest.test_approval_bundle_aggregates_write_commands",
+      "id": "_lld_test_expert_run_2840.OrchestrateTest.test_approval_bundle_aggregates_write_commands",
       "file": "tests/routing/test_expert_run.py",
       "status": "pass",
-      "seconds": 3.4e-05
+      "seconds": 3.6e-05
     },
     {
-      "id": "_lld_test_expert_run_54501.OrchestrateTest.test_chain_matches_route_handoff",
+      "id": "_lld_test_expert_run_2840.OrchestrateTest.test_chain_matches_route_handoff",
       "file": "tests/routing/test_expert_run.py",
       "status": "pass",
-      "seconds": 0.152385
+      "seconds": 0.167999
     },
     {
-      "id": "_lld_test_expert_run_54501.OrchestrateTest.test_deterministic_bytes",
+      "id": "_lld_test_expert_run_2840.OrchestrateTest.test_deterministic_bytes",
       "file": "tests/routing/test_expert_run.py",
       "status": "pass",
-      "seconds": 0.150062
+      "seconds": 0.164859
     },
     {
-      "id": "_lld_test_expert_run_54501.OrchestrateTest.test_fail_closed_on_meta_intent",
+      "id": "_lld_test_expert_run_2840.OrchestrateTest.test_fail_closed_on_meta_intent",
       "file": "tests/routing/test_expert_run.py",
       "status": "pass",
-      "seconds": 0.076889
+      "seconds": 0.08333
     },
     {
-      "id": "_lld_test_expert_run_54501.OrchestrateTest.test_hardcoded_placeholder_absent",
+      "id": "_lld_test_expert_run_2840.OrchestrateTest.test_hardcoded_placeholder_absent",
       "file": "tests/routing/test_expert_run.py",
       "status": "pass",
-      "seconds": 0.073916
+      "seconds": 0.081022
     },
     {
-      "id": "_lld_test_expert_run_54501.OrchestrateTest.test_intent_file_only_recorded_as_source",
+      "id": "_lld_test_expert_run_2840.OrchestrateTest.test_intent_file_only_recorded_as_source",
       "file": "tests/routing/test_expert_run.py",
       "status": "pass",
-      "seconds": 0.072947
+      "seconds": 0.079381
     },
     {
-      "id": "_lld_test_expert_run_54501.OrchestrateTest.test_no_new_judgement_authority",
+      "id": "_lld_test_expert_run_2840.OrchestrateTest.test_no_new_judgement_authority",
       "file": "tests/routing/test_expert_run.py",
       "status": "pass",
-      "seconds": 0.150662
+      "seconds": 0.16447
     },
     {
-      "id": "_lld_test_expert_run_54501.OrchestrateTest.test_ready_intent_produces_chain",
+      "id": "_lld_test_expert_run_2840.OrchestrateTest.test_ready_intent_produces_chain",
       "file": "tests/routing/test_expert_run.py",
       "status": "pass",
-      "seconds": 0.077766
+      "seconds": 0.082763
     },
     {
-      "id": "_lld_test_expert_run_54501.OrchestrateTest.test_target_display_transmitted_to_commands",
+      "id": "_lld_test_expert_run_2840.OrchestrateTest.test_target_display_transmitted_to_commands",
       "file": "tests/routing/test_expert_run.py",
       "status": "pass",
-      "seconds": 0.074915
+      "seconds": 0.07976
     },
     {
-      "id": "_lld_test_expert_run_54501.RenderTest.test_render_halt",
+      "id": "_lld_test_expert_run_2840.RenderTest.test_render_halt",
       "file": "tests/routing/test_expert_run.py",
       "status": "pass",
-      "seconds": 0.07568
+      "seconds": 0.078953
     },
     {
-      "id": "_lld_test_expert_run_54501.RenderTest.test_render_ready",
+      "id": "_lld_test_expert_run_2840.RenderTest.test_render_ready",
       "file": "tests/routing/test_expert_run.py",
       "status": "pass",
-      "seconds": 0.074852
+      "seconds": 0.079099
     },
     {
-      "id": "_lld_test_goal_loop_15795.ApprovalFlowTest.test_double_approve_denied",
+      "id": "_lld_test_goal_loop_41767.ApprovalFlowTest.test_double_approve_denied",
       "file": "tests/routing/test_goal_loop.py",
       "status": "pass",
-      "seconds": 9.8e-05
+      "seconds": 9e-05
     },
     {
-      "id": "_lld_test_goal_loop_15795.ApprovalFlowTest.test_propose_does_not_change_goal_then_human_approves",
+      "id": "_lld_test_goal_loop_41767.ApprovalFlowTest.test_propose_does_not_change_goal_then_human_approves",
       "file": "tests/routing/test_goal_loop.py",
       "status": "pass",
-      "seconds": 5.9e-05
+      "seconds": 5.2e-05
     },
     {
-      "id": "_lld_test_goal_loop_15795.ApprovalFlowTest.test_reject_keeps_goal",
+      "id": "_lld_test_goal_loop_41767.ApprovalFlowTest.test_reject_keeps_goal",
+      "file": "tests/routing/test_goal_loop.py",
+      "status": "pass",
+      "seconds": 2.7e-05
+    },
+    {
+      "id": "_lld_test_goal_loop_41767.CriteriaMetricsTest.test_method_version_and_level_progress_evaluation",
+      "file": "tests/routing/test_goal_loop.py",
+      "status": "pass",
+      "seconds": 5e-05
+    },
+    {
+      "id": "_lld_test_goal_loop_41767.CriteriaMetricsTest.test_new_metric_params_validated",
+      "file": "tests/routing/test_goal_loop.py",
+      "status": "pass",
+      "seconds": 1e-05
+    },
+    {
+      "id": "_lld_test_goal_loop_41767.CriteriaMetricsTest.test_semver_ordering_not_string_ordering",
+      "file": "tests/routing/test_goal_loop.py",
+      "status": "pass",
+      "seconds": 1.4e-05
+    },
+    {
+      "id": "_lld_test_goal_loop_41767.CriteriaMetricsTest.test_unknown_metric_rejected",
+      "file": "tests/routing/test_goal_loop.py",
+      "status": "pass",
+      "seconds": 8e-06
+    },
+    {
+      "id": "_lld_test_goal_loop_41767.CriteriaMetricsTest.test_unknown_op_is_fail_closed",
+      "file": "tests/routing/test_goal_loop.py",
+      "status": "pass",
+      "seconds": 6e-06
+    },
+    {
+      "id": "_lld_test_goal_loop_41767.EvaluateTest.test_cap_level_metric",
+      "file": "tests/routing/test_goal_loop.py",
+      "status": "pass",
+      "seconds": 2.6e-05
+    },
+    {
+      "id": "_lld_test_goal_loop_41767.EvaluateTest.test_queue_empty_metric",
+      "file": "tests/routing/test_goal_loop.py",
+      "status": "pass",
+      "seconds": 1.7e-05
+    },
+    {
+      "id": "_lld_test_goal_loop_41767.GatewayDispatchTest.test_definitions_include_goal_actions",
+      "file": "tests/routing/test_goal_loop.py",
+      "status": "pass",
+      "seconds": 1.8e-05
+    },
+    {
+      "id": "_lld_test_goal_loop_41767.GatewayDispatchTest.test_dispatch_goal_actions",
       "file": "tests/routing/test_goal_loop.py",
       "status": "pass",
       "seconds": 2.9e-05
     },
     {
-      "id": "_lld_test_goal_loop_15795.CriteriaMetricsTest.test_method_version_and_level_progress_evaluation",
+      "id": "_lld_test_goal_loop_41767.GatewayDispatchTest.test_load_json_arg",
+      "file": "tests/routing/test_goal_loop.py",
+      "status": "pass",
+      "seconds": 0.037662
+    },
+    {
+      "id": "_lld_test_goal_loop_41767.GoalObjectTest.test_budget_monotonic_and_over_budget_denied",
+      "file": "tests/routing/test_goal_loop.py",
+      "status": "pass",
+      "seconds": 0.00011
+    },
+    {
+      "id": "_lld_test_goal_loop_41767.GoalObjectTest.test_create_and_direction_lock",
+      "file": "tests/routing/test_goal_loop.py",
+      "status": "pass",
+      "seconds": 2.7e-05
+    },
+    {
+      "id": "_lld_test_goal_loop_41767.GoalObjectTest.test_create_rejects_self_approval_and_bad_input",
+      "file": "tests/routing/test_goal_loop.py",
+      "status": "pass",
+      "seconds": 1.9e-05
+    },
+    {
+      "id": "_lld_test_goal_loop_41767.GoalObjectTest.test_direction_tamper_blocks_advance",
+      "file": "tests/routing/test_goal_loop.py",
+      "status": "pass",
+      "seconds": 2.2e-05
+    },
+    {
+      "id": "_lld_test_goal_loop_41767.GoalObjectTest.test_pause_resume",
       "file": "tests/routing/test_goal_loop.py",
       "status": "pass",
       "seconds": 3.9e-05
     },
     {
-      "id": "_lld_test_goal_loop_15795.CriteriaMetricsTest.test_new_metric_params_validated",
-      "file": "tests/routing/test_goal_loop.py",
-      "status": "pass",
-      "seconds": 1e-05
-    },
-    {
-      "id": "_lld_test_goal_loop_15795.CriteriaMetricsTest.test_semver_ordering_not_string_ordering",
-      "file": "tests/routing/test_goal_loop.py",
-      "status": "pass",
-      "seconds": 1.3e-05
-    },
-    {
-      "id": "_lld_test_goal_loop_15795.CriteriaMetricsTest.test_unknown_metric_rejected",
-      "file": "tests/routing/test_goal_loop.py",
-      "status": "pass",
-      "seconds": 5e-06
-    },
-    {
-      "id": "_lld_test_goal_loop_15795.CriteriaMetricsTest.test_unknown_op_is_fail_closed",
-      "file": "tests/routing/test_goal_loop.py",
-      "status": "pass",
-      "seconds": 6e-06
-    },
-    {
-      "id": "_lld_test_goal_loop_15795.EvaluateTest.test_cap_level_metric",
+      "id": "_lld_test_goal_loop_41767.GoalObjectTest.test_terminal_states_are_final",
       "file": "tests/routing/test_goal_loop.py",
       "status": "pass",
       "seconds": 2.2e-05
     },
     {
-      "id": "_lld_test_goal_loop_15795.EvaluateTest.test_queue_empty_metric",
+      "id": "_lld_test_goal_loop_41767.InvariantTest.test_direction_tamper_fails_invariant",
       "file": "tests/routing/test_goal_loop.py",
       "status": "pass",
-      "seconds": 2.1e-05
+      "seconds": 0.042009
     },
     {
-      "id": "_lld_test_goal_loop_15795.GatewayDispatchTest.test_definitions_include_goal_actions",
+      "id": "_lld_test_goal_loop_41767.InvariantTest.test_illegal_new_metric_fails_invariant",
       "file": "tests/routing/test_goal_loop.py",
       "status": "pass",
-      "seconds": 2.4e-05
+      "seconds": 0.040059
     },
     {
-      "id": "_lld_test_goal_loop_15795.GatewayDispatchTest.test_dispatch_goal_actions",
+      "id": "_lld_test_goal_loop_41767.InvariantTest.test_no_goals_is_na",
       "file": "tests/routing/test_goal_loop.py",
       "status": "pass",
-      "seconds": 3.5e-05
+      "seconds": 0.042352
     },
     {
-      "id": "_lld_test_goal_loop_15795.GatewayDispatchTest.test_load_json_arg",
+      "id": "_lld_test_goal_loop_41767.InvariantTest.test_over_budget_and_terminal_fails_invariant",
       "file": "tests/routing/test_goal_loop.py",
       "status": "pass",
-      "seconds": 0.012674
+      "seconds": 0.040545
     },
     {
-      "id": "_lld_test_goal_loop_15795.GoalObjectTest.test_budget_monotonic_and_over_budget_denied",
+      "id": "_lld_test_goal_loop_41767.LoopScriptTest.test_gateway_command_has_apply_and_agent",
       "file": "tests/routing/test_goal_loop.py",
-      "status": "pass",
-      "seconds": 7.3e-05
-    },
-    {
-      "id": "_lld_test_goal_loop_15795.GoalObjectTest.test_create_and_direction_lock",
-      "file": "tests/routing/test_goal_loop.py",
-      "status": "pass",
-      "seconds": 2.3e-05
-    },
-    {
-      "id": "_lld_test_goal_loop_15795.GoalObjectTest.test_create_rejects_self_approval_and_bad_input",
-      "file": "tests/routing/test_goal_loop.py",
-      "status": "pass",
-      "seconds": 2.4e-05
-    },
-    {
-      "id": "_lld_test_goal_loop_15795.GoalObjectTest.test_direction_tamper_blocks_advance",
-      "file": "tests/routing/test_goal_loop.py",
-      "status": "pass",
-      "seconds": 2.2e-05
-    },
-    {
-      "id": "_lld_test_goal_loop_15795.GoalObjectTest.test_pause_resume",
-      "file": "tests/routing/test_goal_loop.py",
-      "status": "pass",
-      "seconds": 3.6e-05
-    },
-    {
-      "id": "_lld_test_goal_loop_15795.GoalObjectTest.test_terminal_states_are_final",
-      "file": "tests/routing/test_goal_loop.py",
-      "status": "pass",
-      "seconds": 2.3e-05
-    },
-    {
-      "id": "_lld_test_goal_loop_15795.InvariantTest.test_direction_tamper_fails_invariant",
-      "file": "tests/routing/test_goal_loop.py",
-      "status": "pass",
-      "seconds": 0.039232
-    },
-    {
-      "id": "_lld_test_goal_loop_15795.InvariantTest.test_illegal_new_metric_fails_invariant",
-      "file": "tests/routing/test_goal_loop.py",
-      "status": "pass",
-      "seconds": 0.038099
-    },
-    {
-      "id": "_lld_test_goal_loop_15795.InvariantTest.test_no_goals_is_na",
-      "file": "tests/routing/test_goal_loop.py",
-      "status": "pass",
-      "seconds": 0.037974
-    },
-    {
-      "id": "_lld_test_goal_loop_15795.InvariantTest.test_over_budget_and_terminal_fails_invariant",
-      "file": "tests/routing/test_goal_loop.py",
-      "status": "pass",
-      "seconds": 0.03851
-    },
-    {
-      "id": "_lld_test_goal_loop_15795.LoopScriptTest.test_gateway_command_has_apply_and_agent",
-      "file": "tests/routing/test_goal_loop.py",
-      "status": "pass",
-      "seconds": 1.7e-05
-    },
-    {
-      "id": "_lld_test_goal_loop_15795.LoopScriptTest.test_missing_goal_is_invalid",
-      "file": "tests/routing/test_goal_loop.py",
-      "status": "pass",
-      "seconds": 0.002934
-    },
-    {
-      "id": "_lld_test_goal_loop_15795.RoutingTest.test_card_has_goal_orchestrator",
-      "file": "tests/routing/test_goal_loop.py",
-      "status": "pass",
-      "seconds": 1.2e-05
-    },
-    {
-      "id": "_lld_test_goal_loop_15795.RoutingTest.test_goal_intent_routes_to_orchestrator",
-      "file": "tests/routing/test_goal_loop.py",
-      "status": "pass",
-      "seconds": 0.076492
-    },
-    {
-      "id": "_lld_test_goal_loop_15795.StagnationTest.test_fingerprint_tracks_task_level_and_version",
-      "file": "tests/routing/test_goal_loop.py",
-      "status": "pass",
-      "seconds": 3.8e-05
-    },
-    {
-      "id": "_lld_test_goal_loop_15795.StagnationTest.test_invalid_stall_limit_is_rejected",
-      "file": "tests/routing/test_goal_loop.py",
-      "status": "pass",
-      "seconds": 0.016583
-    },
-    {
-      "id": "_lld_test_intent_restate_30196.IntentRestateTest.test_collect_cap_codes_from_all_sources",
-      "file": "tests/routing/test_intent_restate.py",
-      "status": "pass",
-      "seconds": 3e-05
-    },
-    {
-      "id": "_lld_test_intent_restate_30196.IntentRestateTest.test_competing_intents_need_clarification",
-      "file": "tests/routing/test_intent_restate.py",
-      "status": "pass",
-      "seconds": 2.5e-05
-    },
-    {
-      "id": "_lld_test_intent_restate_30196.IntentRestateTest.test_deterministic",
-      "file": "tests/routing/test_intent_restate.py",
-      "status": "pass",
-      "seconds": 4e-05
-    },
-    {
-      "id": "_lld_test_intent_restate_30196.IntentRestateTest.test_gate_fail_closed_on_missing_inputs",
-      "file": "tests/routing/test_intent_restate.py",
-      "status": "pass",
-      "seconds": 6.4e-05
-    },
-    {
-      "id": "_lld_test_intent_restate_30196.IntentRestateTest.test_hallucinated_capability_is_rejected",
-      "file": "tests/routing/test_intent_restate.py",
-      "status": "pass",
-      "seconds": 1.1e-05
-    },
-    {
-      "id": "_lld_test_intent_restate_30196.IntentRestateTest.test_invalid_schema_and_intent",
-      "file": "tests/routing/test_intent_restate.py",
       "status": "pass",
       "seconds": 1.4e-05
     },
     {
-      "id": "_lld_test_intent_restate_30196.IntentRestateTest.test_meta_needs_open_questions",
-      "file": "tests/routing/test_intent_restate.py",
+      "id": "_lld_test_goal_loop_41767.LoopScriptTest.test_missing_goal_is_invalid",
+      "file": "tests/routing/test_goal_loop.py",
       "status": "pass",
-      "seconds": 9e-06
+      "seconds": 0.002777
     },
     {
-      "id": "_lld_test_intent_restate_30196.IntentRestateTest.test_readonly_intent_cannot_write",
-      "file": "tests/routing/test_intent_restate.py",
-      "status": "pass",
-      "seconds": 8e-06
-    },
-    {
-      "id": "_lld_test_intent_restate_30196.IntentRestateTest.test_real_project_anchors_real_capability",
-      "file": "tests/routing/test_intent_restate.py",
-      "status": "pass",
-      "seconds": 0.015086
-    },
-    {
-      "id": "_lld_test_intent_restate_30196.IntentRestateTest.test_restate_cannot_copy_raw",
-      "file": "tests/routing/test_intent_restate.py",
-      "status": "pass",
-      "seconds": 2.7e-05
-    },
-    {
-      "id": "_lld_test_intent_restate_30196.IntentRestateTest.test_schema_and_happy_path",
-      "file": "tests/routing/test_intent_restate.py",
-      "status": "pass",
-      "seconds": 1.2e-05
-    },
-    {
-      "id": "_lld_test_provenance_view_64000.CliTest.test_bad_ledger_path",
-      "file": "tests/routing/test_provenance_view.py",
-      "status": "pass",
-      "seconds": 0.007529
-    },
-    {
-      "id": "_lld_test_provenance_view_64000.ProjectionTest.test_decision_provenance_groups",
-      "file": "tests/routing/test_provenance_view.py",
-      "status": "pass",
-      "seconds": 2.7e-05
-    },
-    {
-      "id": "_lld_test_provenance_view_64000.ProjectionTest.test_definition_of_done_derived",
-      "file": "tests/routing/test_provenance_view.py",
+      "id": "_lld_test_goal_loop_41767.RoutingTest.test_card_has_goal_orchestrator",
+      "file": "tests/routing/test_goal_loop.py",
       "status": "pass",
       "seconds": 1.6e-05
     },
     {
-      "id": "_lld_test_provenance_view_64000.ProjectionTest.test_deterministic_bytes",
-      "file": "tests/routing/test_provenance_view.py",
+      "id": "_lld_test_goal_loop_41767.RoutingTest.test_goal_intent_routes_to_orchestrator",
+      "file": "tests/routing/test_goal_loop.py",
       "status": "pass",
-      "seconds": 6.1e-05
+      "seconds": 0.077872
     },
     {
-      "id": "_lld_test_provenance_view_64000.ProjectionTest.test_issue_provenance_groups",
+      "id": "_lld_test_goal_loop_41767.StagnationTest.test_fingerprint_tracks_task_level_and_version",
+      "file": "tests/routing/test_goal_loop.py",
+      "status": "pass",
+      "seconds": 5.1e-05
+    },
+    {
+      "id": "_lld_test_goal_loop_41767.StagnationTest.test_invalid_stall_limit_is_rejected",
+      "file": "tests/routing/test_goal_loop.py",
+      "status": "pass",
+      "seconds": 0.055633
+    },
+    {
+      "id": "_lld_test_intent_restate_11557.IntentRestateTest.test_collect_cap_codes_from_all_sources",
+      "file": "tests/routing/test_intent_restate.py",
+      "status": "pass",
+      "seconds": 3.2e-05
+    },
+    {
+      "id": "_lld_test_intent_restate_11557.IntentRestateTest.test_competing_intents_need_clarification",
+      "file": "tests/routing/test_intent_restate.py",
+      "status": "pass",
+      "seconds": 2.4e-05
+    },
+    {
+      "id": "_lld_test_intent_restate_11557.IntentRestateTest.test_deterministic",
+      "file": "tests/routing/test_intent_restate.py",
+      "status": "pass",
+      "seconds": 3.8e-05
+    },
+    {
+      "id": "_lld_test_intent_restate_11557.IntentRestateTest.test_gate_fail_closed_on_missing_inputs",
+      "file": "tests/routing/test_intent_restate.py",
+      "status": "pass",
+      "seconds": 6.6e-05
+    },
+    {
+      "id": "_lld_test_intent_restate_11557.IntentRestateTest.test_hallucinated_capability_is_rejected",
+      "file": "tests/routing/test_intent_restate.py",
+      "status": "pass",
+      "seconds": 1e-05
+    },
+    {
+      "id": "_lld_test_intent_restate_11557.IntentRestateTest.test_invalid_schema_and_intent",
+      "file": "tests/routing/test_intent_restate.py",
+      "status": "pass",
+      "seconds": 1.3e-05
+    },
+    {
+      "id": "_lld_test_intent_restate_11557.IntentRestateTest.test_meta_needs_open_questions",
+      "file": "tests/routing/test_intent_restate.py",
+      "status": "pass",
+      "seconds": 8e-06
+    },
+    {
+      "id": "_lld_test_intent_restate_11557.IntentRestateTest.test_readonly_intent_cannot_write",
+      "file": "tests/routing/test_intent_restate.py",
+      "status": "pass",
+      "seconds": 8e-06
+    },
+    {
+      "id": "_lld_test_intent_restate_11557.IntentRestateTest.test_real_project_anchors_real_capability",
+      "file": "tests/routing/test_intent_restate.py",
+      "status": "pass",
+      "seconds": 0.04024
+    },
+    {
+      "id": "_lld_test_intent_restate_11557.IntentRestateTest.test_restate_cannot_copy_raw",
+      "file": "tests/routing/test_intent_restate.py",
+      "status": "pass",
+      "seconds": 1.6e-05
+    },
+    {
+      "id": "_lld_test_intent_restate_11557.IntentRestateTest.test_schema_and_happy_path",
+      "file": "tests/routing/test_intent_restate.py",
+      "status": "pass",
+      "seconds": 9e-06
+    },
+    {
+      "id": "_lld_test_provenance_view_3423.CliTest.test_bad_ledger_path",
+      "file": "tests/routing/test_provenance_view.py",
+      "status": "pass",
+      "seconds": 0.019922
+    },
+    {
+      "id": "_lld_test_provenance_view_3423.ProjectionTest.test_decision_provenance_groups",
+      "file": "tests/routing/test_provenance_view.py",
+      "status": "pass",
+      "seconds": 3e-05
+    },
+    {
+      "id": "_lld_test_provenance_view_3423.ProjectionTest.test_definition_of_done_derived",
+      "file": "tests/routing/test_provenance_view.py",
+      "status": "pass",
+      "seconds": 1.7e-05
+    },
+    {
+      "id": "_lld_test_provenance_view_3423.ProjectionTest.test_deterministic_bytes",
+      "file": "tests/routing/test_provenance_view.py",
+      "status": "pass",
+      "seconds": 6.7e-05
+    },
+    {
+      "id": "_lld_test_provenance_view_3423.ProjectionTest.test_issue_provenance_groups",
       "file": "tests/routing/test_provenance_view.py",
       "status": "pass",
       "seconds": 9e-06
     },
     {
-      "id": "_lld_test_provenance_view_64000.ProjectionTest.test_kind_filter",
+      "id": "_lld_test_provenance_view_3423.ProjectionTest.test_kind_filter",
       "file": "tests/routing/test_provenance_view.py",
       "status": "pass",
-      "seconds": 1.3e-05
+      "seconds": 1e-05
     },
     {
-      "id": "_lld_test_provenance_view_64000.ProjectionTest.test_labels_present",
+      "id": "_lld_test_provenance_view_3423.ProjectionTest.test_labels_present",
+      "file": "tests/routing/test_provenance_view.py",
+      "status": "pass",
+      "seconds": 6e-06
+    },
+    {
+      "id": "_lld_test_provenance_view_3423.ProjectionTest.test_no_mutation_of_ledger",
+      "file": "tests/routing/test_provenance_view.py",
+      "status": "pass",
+      "seconds": 3.2e-05
+    },
+    {
+      "id": "_lld_test_provenance_view_3423.ProjectionTest.test_no_new_fields_in_ledger",
       "file": "tests/routing/test_provenance_view.py",
       "status": "pass",
       "seconds": 8e-06
     },
     {
-      "id": "_lld_test_provenance_view_64000.ProjectionTest.test_no_mutation_of_ledger",
+      "id": "_lld_test_provenance_view_3423.ProjectionTest.test_real_ledger_projects",
       "file": "tests/routing/test_provenance_view.py",
       "status": "pass",
-      "seconds": 3.7e-05
+      "seconds": 0.002988
     },
     {
-      "id": "_lld_test_provenance_view_64000.ProjectionTest.test_no_new_fields_in_ledger",
-      "file": "tests/routing/test_provenance_view.py",
-      "status": "pass",
-      "seconds": 8e-06
-    },
-    {
-      "id": "_lld_test_provenance_view_64000.ProjectionTest.test_real_ledger_projects",
-      "file": "tests/routing/test_provenance_view.py",
-      "status": "pass",
-      "seconds": 0.002586
-    },
-    {
-      "id": "_lld_test_routing_29811.RoutingTest.test_brownfield_routes_to_archaeologist",
+      "id": "_lld_test_routing_46627.RoutingTest.test_brownfield_routes_to_archaeologist",
       "file": "tests/routing/test_routing.py",
       "status": "pass",
-      "seconds": 0.097726
+      "seconds": 0.185984
     },
     {
-      "id": "_lld_test_routing_29811.RoutingTest.test_classify_intent_scores_chinese_and_english",
+      "id": "_lld_test_routing_46627.RoutingTest.test_classify_intent_scores_chinese_and_english",
       "file": "tests/routing/test_routing.py",
       "status": "pass",
-      "seconds": 2.5e-05
+      "seconds": 2.4e-05
     },
     {
-      "id": "_lld_test_routing_29811.RoutingTest.test_cli_json_is_deterministic_and_leak_free",
+      "id": "_lld_test_routing_46627.RoutingTest.test_cli_json_is_deterministic_and_leak_free",
       "file": "tests/routing/test_routing.py",
       "status": "pass",
-      "seconds": 0.241689
+      "seconds": 0.328106
     },
     {
-      "id": "_lld_test_routing_29811.RoutingTest.test_conflicting_intents_ask_for_clarification",
+      "id": "_lld_test_routing_46627.RoutingTest.test_conflicting_intents_ask_for_clarification",
       "file": "tests/routing/test_routing.py",
       "status": "pass",
-      "seconds": 0.10071
+      "seconds": 0.183349
     },
     {
-      "id": "_lld_test_routing_29811.RoutingTest.test_corrupt_ledger_is_fail_closed",
+      "id": "_lld_test_routing_46627.RoutingTest.test_corrupt_ledger_is_fail_closed",
       "file": "tests/routing/test_routing.py",
       "status": "pass",
-      "seconds": 0.07903
+      "seconds": 0.120948
     },
     {
-      "id": "_lld_test_routing_29811.RoutingTest.test_empty_intent_still_defaults",
+      "id": "_lld_test_routing_46627.RoutingTest.test_empty_intent_still_defaults",
       "file": "tests/routing/test_routing.py",
       "status": "pass",
-      "seconds": 0.095829
+      "seconds": 0.177126
     },
     {
-      "id": "_lld_test_routing_29811.RoutingTest.test_explicit_mode_conflict_asks_question",
+      "id": "_lld_test_routing_46627.RoutingTest.test_explicit_mode_conflict_asks_question",
       "file": "tests/routing/test_routing.py",
       "status": "pass",
-      "seconds": 0.078078
+      "seconds": 0.117645
     },
     {
-      "id": "_lld_test_routing_29811.RoutingTest.test_frozen_state_still_beats_meta_intent",
+      "id": "_lld_test_routing_46627.RoutingTest.test_frozen_state_still_beats_meta_intent",
       "file": "tests/routing/test_routing.py",
       "status": "pass",
-      "seconds": 0.087285
+      "seconds": 0.142828
     },
     {
-      "id": "_lld_test_routing_29811.RoutingTest.test_governed_verify_and_code_and_plan",
+      "id": "_lld_test_routing_46627.RoutingTest.test_governed_verify_and_code_and_plan",
       "file": "tests/routing/test_routing.py",
       "status": "pass",
-      "seconds": 0.487798
+      "seconds": 0.882696
     },
     {
-      "id": "_lld_test_routing_29811.RoutingTest.test_greenfield_empty_dir",
+      "id": "_lld_test_routing_46627.RoutingTest.test_greenfield_empty_dir",
       "file": "tests/routing/test_routing.py",
       "status": "pass",
-      "seconds": 0.069335
+      "seconds": 0.093966
     },
     {
-      "id": "_lld_test_routing_29811.RoutingTest.test_handoff_chain_is_multihop_and_deterministic",
+      "id": "_lld_test_routing_46627.RoutingTest.test_handoff_chain_is_multihop_and_deterministic",
       "file": "tests/routing/test_routing.py",
       "status": "pass",
-      "seconds": 0.49143
+      "seconds": 0.737557
     },
     {
-      "id": "_lld_test_routing_29811.RoutingTest.test_inspect_counts_are_bounded",
+      "id": "_lld_test_routing_46627.RoutingTest.test_inspect_counts_are_bounded",
       "file": "tests/routing/test_routing.py",
       "status": "pass",
-      "seconds": 0.011365
+      "seconds": 0.039131
     },
     {
-      "id": "_lld_test_routing_29811.RoutingTest.test_meta_intents_route_to_platform_steward",
+      "id": "_lld_test_routing_46627.RoutingTest.test_meta_intents_route_to_platform_steward",
       "file": "tests/routing/test_routing.py",
       "status": "pass",
-      "seconds": 0.297855
+      "seconds": 0.548334
     },
     {
-      "id": "_lld_test_routing_29811.RoutingTest.test_partial_state_does_not_overwrite_existing_files",
+      "id": "_lld_test_routing_46627.RoutingTest.test_partial_state_does_not_overwrite_existing_files",
       "file": "tests/routing/test_routing.py",
       "status": "pass",
-      "seconds": 0.088314
+      "seconds": 0.157894
     },
     {
-      "id": "_lld_test_routing_29811.RoutingTest.test_route_intent_goes_to_expert_router",
+      "id": "_lld_test_routing_46627.RoutingTest.test_route_intent_goes_to_expert_router",
       "file": "tests/routing/test_routing.py",
       "status": "pass",
-      "seconds": 0.097868
+      "seconds": 0.173991
     },
     {
-      "id": "_lld_test_routing_29811.RoutingTest.test_unrecognized_nonempty_intent_asks_clarification",
+      "id": "_lld_test_routing_46627.RoutingTest.test_unrecognized_nonempty_intent_asks_clarification",
       "file": "tests/routing/test_routing.py",
       "status": "pass",
-      "seconds": 0.193168
+      "seconds": 0.3544
     },
     {
-      "id": "_lld_test_scenarios_21423.ScenarioDefinitionTest.test_every_covered_scenario_has_a_probe",
+      "id": "_lld_test_scenarios_6843.ScenarioDefinitionTest.test_every_covered_scenario_has_a_probe",
       "file": "tests/routing/test_scenarios.py",
       "status": "pass",
       "seconds": 4.3e-05
     },
     {
-      "id": "_lld_test_scenarios_21423.ScenarioDefinitionTest.test_every_gap_has_an_explicit_cost",
+      "id": "_lld_test_scenarios_6843.ScenarioDefinitionTest.test_every_gap_has_an_explicit_cost",
       "file": "tests/routing/test_scenarios.py",
       "status": "pass",
       "seconds": 9e-06
     },
     {
-      "id": "_lld_test_scenarios_21423.ScenarioDefinitionTest.test_matrix_definition_is_valid",
+      "id": "_lld_test_scenarios_6843.ScenarioDefinitionTest.test_matrix_definition_is_valid",
       "file": "tests/routing/test_scenarios.py",
       "status": "pass",
-      "seconds": 3.1e-05
+      "seconds": 3.3e-05
     },
     {
-      "id": "_lld_test_scenarios_21423.ScenarioDefinitionTest.test_matrix_render_is_deterministic",
+      "id": "_lld_test_scenarios_6843.ScenarioDefinitionTest.test_matrix_render_is_deterministic",
       "file": "tests/routing/test_scenarios.py",
       "status": "pass",
-      "seconds": 0.000328
+      "seconds": 0.00034
     },
     {
-      "id": "_lld_test_scenarios_21423.ScenarioDefinitionTest.test_summary_counts_match_definition",
-      "file": "tests/routing/test_scenarios.py",
-      "status": "pass",
-      "seconds": 1.9e-05
-    },
-    {
-      "id": "_lld_test_scenarios_21423.ScenarioProbeTest.test_absolute_path_blocks",
-      "file": "tests/routing/test_scenarios.py",
-      "status": "pass",
-      "seconds": 5.3e-05
-    },
-    {
-      "id": "_lld_test_scenarios_21423.ScenarioProbeTest.test_archive_is_terminal_even_for_lifecycle_writes",
+      "id": "_lld_test_scenarios_6843.ScenarioDefinitionTest.test_summary_counts_match_definition",
       "file": "tests/routing/test_scenarios.py",
       "status": "pass",
       "seconds": 1.9e-05
     },
     {
-      "id": "_lld_test_scenarios_21423.ScenarioProbeTest.test_cas_rejects_stale_write",
+      "id": "_lld_test_scenarios_6843.ScenarioProbeTest.test_absolute_path_blocks",
       "file": "tests/routing/test_scenarios.py",
       "status": "pass",
-      "seconds": 1.6e-05
+      "seconds": 5.8e-05
     },
     {
-      "id": "_lld_test_scenarios_21423.ScenarioProbeTest.test_corrupt_ledger_blocks_writes",
+      "id": "_lld_test_scenarios_6843.ScenarioProbeTest.test_archive_is_terminal_even_for_lifecycle_writes",
       "file": "tests/routing/test_scenarios.py",
       "status": "pass",
-      "seconds": 1.5e-05
+      "seconds": 1.7e-05
     },
     {
-      "id": "_lld_test_scenarios_21423.ScenarioProbeTest.test_fingerprint_drift_detected",
+      "id": "_lld_test_scenarios_6843.ScenarioProbeTest.test_cas_rejects_stale_write",
       "file": "tests/routing/test_scenarios.py",
       "status": "pass",
-      "seconds": 0.252755
+      "seconds": 1.9e-05
     },
     {
-      "id": "_lld_test_scenarios_21423.ScenarioProbeTest.test_freshness_uses_content_not_clock",
+      "id": "_lld_test_scenarios_6843.ScenarioProbeTest.test_corrupt_ledger_blocks_writes",
       "file": "tests/routing/test_scenarios.py",
       "status": "pass",
-      "seconds": 0.299536
+      "seconds": 1.7e-05
     },
     {
-      "id": "_lld_test_scenarios_21423.ScenarioProbeTest.test_frozen_blocks_writes_but_allows_read",
+      "id": "_lld_test_scenarios_6843.ScenarioProbeTest.test_fingerprint_drift_detected",
       "file": "tests/routing/test_scenarios.py",
       "status": "pass",
-      "seconds": 9.8e-05
+      "seconds": 0.622794
     },
     {
-      "id": "_lld_test_scenarios_21423.ScenarioProbeTest.test_gap_scenarios_are_explicitly_declared",
+      "id": "_lld_test_scenarios_6843.ScenarioProbeTest.test_freshness_uses_content_not_clock",
       "file": "tests/routing/test_scenarios.py",
       "status": "pass",
-      "seconds": 2.4e-05
+      "seconds": 0.654488
     },
     {
-      "id": "_lld_test_scenarios_21423.ScenarioProbeTest.test_guard_cli_json_is_leak_free",
+      "id": "_lld_test_scenarios_6843.ScenarioProbeTest.test_frozen_blocks_writes_but_allows_read",
       "file": "tests/routing/test_scenarios.py",
       "status": "pass",
-      "seconds": 0.251432
+      "seconds": 8.6e-05
     },
     {
-      "id": "_lld_test_scenarios_21423.ScenarioProbeTest.test_guard_detects_stale_report",
+      "id": "_lld_test_scenarios_6843.ScenarioProbeTest.test_gap_scenarios_are_explicitly_declared",
       "file": "tests/routing/test_scenarios.py",
       "status": "pass",
-      "seconds": 0.253662
+      "seconds": 2.3e-05
     },
     {
-      "id": "_lld_test_scenarios_21423.ScenarioProbeTest.test_guard_is_read_only",
+      "id": "_lld_test_scenarios_6843.ScenarioProbeTest.test_guard_cli_json_is_leak_free",
       "file": "tests/routing/test_scenarios.py",
       "status": "pass",
-      "seconds": 0.255937
+      "seconds": 0.62129
     },
     {
-      "id": "_lld_test_scenarios_21423.ScenarioProbeTest.test_missing_version_warns_instead_of_blocking",
+      "id": "_lld_test_scenarios_6843.ScenarioProbeTest.test_guard_detects_stale_report",
       "file": "tests/routing/test_scenarios.py",
       "status": "pass",
-      "seconds": 7.1e-05
+      "seconds": 0.624659
     },
     {
-      "id": "_lld_test_scenarios_21423.ScenarioProbeTest.test_retired_cap_conflict_blocks",
+      "id": "_lld_test_scenarios_6843.ScenarioProbeTest.test_guard_is_read_only",
       "file": "tests/routing/test_scenarios.py",
       "status": "pass",
-      "seconds": 0.21609
+      "seconds": 0.617517
     },
     {
-      "id": "_lld_test_scenarios_21423.ScenarioProbeTest.test_stale_claim_warns",
+      "id": "_lld_test_scenarios_6843.ScenarioProbeTest.test_missing_version_warns_instead_of_blocking",
       "file": "tests/routing/test_scenarios.py",
       "status": "pass",
-      "seconds": 5.3e-05
+      "seconds": 9.9e-05
     },
     {
-      "id": "_lld_test_scenarios_21423.ScenarioProbeTest.test_stale_report_downgrades_evidence",
+      "id": "_lld_test_scenarios_6843.ScenarioProbeTest.test_retired_cap_conflict_blocks",
       "file": "tests/routing/test_scenarios.py",
       "status": "pass",
-      "seconds": 0.377122
+      "seconds": 0.580151
     },
     {
-      "id": "_lld_test_scenarios_21423.ScenarioProbeTest.test_truncated_scan_warns",
+      "id": "_lld_test_scenarios_6843.ScenarioProbeTest.test_stale_claim_warns",
       "file": "tests/routing/test_scenarios.py",
       "status": "pass",
-      "seconds": 6.1e-05
+      "seconds": 4.9e-05
     },
     {
-      "id": "_lld_test_scenarios_21423.ScenarioProbeTest.test_unbound_report_is_warned_and_rejected_in_strict_mode",
+      "id": "_lld_test_scenarios_6843.ScenarioProbeTest.test_stale_report_downgrades_evidence",
       "file": "tests/routing/test_scenarios.py",
       "status": "pass",
-      "seconds": 0.281541
+      "seconds": 0.743358
     },
     {
-      "id": "_lld_test_scenarios_21423.ScenarioProbeTest.test_unsupported_version_blocks",
+      "id": "_lld_test_scenarios_6843.ScenarioProbeTest.test_truncated_scan_warns",
       "file": "tests/routing/test_scenarios.py",
-      "status": "pass",
-      "seconds": 6.5e-05
-    },
-    {
-      "id": "_lld_test_scenarios_21423.ScenarioProbeTest.test_uri_schemes_are_not_false_absolute_paths",
-      "file": "tests/routing/test_scenarios.py",
-      "status": "pass",
-      "seconds": 0.012549
-    },
-    {
-      "id": "_lld_test_skills_54019.DecideTest.test_creates_proposed_from_queue",
-      "file": "tests/routing/test_skills.py",
-      "status": "pass",
-      "seconds": 0.002014
-    },
-    {
-      "id": "_lld_test_skills_54019.DecideTest.test_id_never_reuses",
-      "file": "tests/routing/test_skills.py",
-      "status": "pass",
-      "seconds": 0.001323
-    },
-    {
-      "id": "_lld_test_skills_54019.DecideTest.test_rejects_code_not_in_queue",
-      "file": "tests/routing/test_skills.py",
-      "status": "pass",
-      "seconds": 0.001296
-    },
-    {
-      "id": "_lld_test_skills_54019.DecideTest.test_rejects_duplicate_open_decision",
-      "file": "tests/routing/test_skills.py",
-      "status": "pass",
-      "seconds": 0.0012
-    },
-    {
-      "id": "_lld_test_skills_54019.LessonTest.test_confirm_links_back_to_candidate",
-      "file": "tests/routing/test_skills.py",
-      "status": "pass",
-      "seconds": 0.001329
-    },
-    {
-      "id": "_lld_test_skills_54019.LessonTest.test_confirm_requires_insight_and_action",
-      "file": "tests/routing/test_skills.py",
-      "status": "pass",
-      "seconds": 0.001415
-    },
-    {
-      "id": "_lld_test_skills_54019.LessonTest.test_dismiss_marks_candidate",
-      "file": "tests/routing/test_skills.py",
-      "status": "pass",
-      "seconds": 0.001425
-    },
-    {
-      "id": "_lld_test_skills_54019.LessonTest.test_dismiss_requires_reason",
-      "file": "tests/routing/test_skills.py",
-      "status": "pass",
-      "seconds": 0.001594
-    },
-    {
-      "id": "_lld_test_skills_54019.LessonTest.test_id_never_reuses",
-      "file": "tests/routing/test_skills.py",
-      "status": "pass",
-      "seconds": 0.001296
-    },
-    {
-      "id": "_lld_test_skills_54019.LessonTest.test_unknown_candidate_rejected",
-      "file": "tests/routing/test_skills.py",
-      "status": "pass",
-      "seconds": 0.001179
-    },
-    {
-      "id": "_lld_test_compare_graphs_65426.CompareGraphsTest.test_actual_only_capability_gets_steward",
-      "file": "tests/traceability/test_compare_graphs.py",
-      "status": "pass",
-      "seconds": 0.450156
-    },
-    {
-      "id": "_lld_test_compare_graphs_65426.CompareGraphsTest.test_compare_planned_and_actual",
-      "file": "tests/traceability/test_compare_graphs.py",
-      "status": "pass",
-      "seconds": 0.456242
-    },
-    {
-      "id": "_lld_test_compare_graphs_65426.CompareGraphsTest.test_execution_order_uses_next_queue_and_experts",
-      "file": "tests/traceability/test_compare_graphs.py",
-      "status": "pass",
-      "seconds": 0.457307
-    },
-    {
-      "id": "_lld_test_compare_graphs_65426.CompareGraphsTest.test_fallback_to_registry_warns",
-      "file": "tests/traceability/test_compare_graphs.py",
-      "status": "pass",
-      "seconds": 0.328644
-    },
-    {
-      "id": "_lld_test_compare_graphs_65426.CompareGraphsTest.test_outputs_are_non_destructive_and_forceable",
-      "file": "tests/traceability/test_compare_graphs.py",
-      "status": "pass",
-      "seconds": 0.567751
-    },
-    {
-      "id": "_lld_test_compare_graphs_65426.CompareGraphsTest.test_planned_only_capability_gets_archaeologist",
-      "file": "tests/traceability/test_compare_graphs.py",
-      "status": "pass",
-      "seconds": 0.466003
-    },
-    {
-      "id": "_lld_test_trace_arch_git_13286.TraceArchGitTest.test_architect_empty_docs_warns",
-      "file": "tests/traceability/test_trace_arch_git.py",
-      "status": "pass",
-      "seconds": 0.257814
-    },
-    {
-      "id": "_lld_test_trace_arch_git_13286.TraceArchGitTest.test_architect_is_non_destructive",
-      "file": "tests/traceability/test_trace_arch_git.py",
-      "status": "pass",
-      "seconds": 0.309729
-    },
-    {
-      "id": "_lld_test_trace_arch_git_13286.TraceArchGitTest.test_dependency_is_extracted_from_docs",
-      "file": "tests/traceability/test_trace_arch_git.py",
-      "status": "pass",
-      "seconds": 0.335479
-    },
-    {
-      "id": "_lld_test_trace_arch_git_13286.TraceArchGitTest.test_docs_to_target_architecture",
-      "file": "tests/traceability/test_trace_arch_git.py",
-      "status": "pass",
-      "seconds": 0.329847
-    },
-    {
-      "id": "_lld_test_trace_arch_git_13286.TraceArchGitTest.test_git_trace_maps_paths_to_capabilities_and_events",
-      "file": "tests/traceability/test_trace_arch_git.py",
-      "status": "pass",
-      "seconds": 0.386326
-    },
-    {
-      "id": "_lld_test_trace_arch_git_13286.TraceArchGitTest.test_git_trace_requires_repo_and_respects_existing",
-      "file": "tests/traceability/test_trace_arch_git.py",
-      "status": "pass",
-      "seconds": 0.473852
-    },
-    {
-      "id": "_lld_test_trace_docs_27335.TraceDocsTest.test_code_index_consumes_git_trace",
-      "file": "tests/traceability/test_trace_docs.py",
-      "status": "pass",
-      "seconds": 0.260003
-    },
-    {
-      "id": "_lld_test_trace_docs_27335.TraceDocsTest.test_code_index_maps_all_artifacts",
-      "file": "tests/traceability/test_trace_docs.py",
-      "status": "pass",
-      "seconds": 0.258629
-    },
-    {
-      "id": "_lld_test_trace_docs_27335.TraceDocsTest.test_code_index_non_destructive",
-      "file": "tests/traceability/test_trace_docs.py",
-      "status": "pass",
-      "seconds": 0.298131
-    },
-    {
-      "id": "_lld_test_trace_docs_27335.TraceDocsTest.test_rebuild_docs_creates_canonical_set",
-      "file": "tests/traceability/test_trace_docs.py",
-      "status": "pass",
-      "seconds": 0.282311
-    },
-    {
-      "id": "_lld_test_trace_docs_27335.TraceDocsTest.test_rebuild_docs_dry_run_writes_nothing",
-      "file": "tests/traceability/test_trace_docs.py",
-      "status": "pass",
-      "seconds": 0.258845
-    },
-    {
-      "id": "_lld_test_trace_docs_27335.TraceDocsTest.test_rebuild_docs_is_non_destructive_and_forceable",
-      "file": "tests/traceability/test_trace_docs.py",
-      "status": "pass",
-      "seconds": 0.384093
-    },
-    {
-      "id": "_lld_test_trace_docs_27335.TraceDocsTest.test_rebuild_docs_json_summary",
-      "file": "tests/traceability/test_trace_docs.py",
-      "status": "pass",
-      "seconds": 0.290521
-    },
-    {
-      "id": "_lld_test_assets_60877.AssetsTest.test_bundle_is_deterministic_and_complete",
-      "file": "tests/views/test_assets.py",
-      "status": "pass",
-      "seconds": 0.16929
-    },
-    {
-      "id": "_lld_test_assets_60877.AssetsTest.test_check_assets_detects_byte_drift_against_manifest",
-      "file": "tests/views/test_assets.py",
-      "status": "pass",
-      "seconds": 0.884974
-    },
-    {
-      "id": "_lld_test_assets_60877.AssetsTest.test_check_assets_digest_equals_bundle_digest",
-      "file": "tests/views/test_assets.py",
-      "status": "pass",
-      "seconds": 0.881973
-    },
-    {
-      "id": "_lld_test_assets_60877.AssetsTest.test_check_assets_without_manifest_stays_form_only",
-      "file": "tests/views/test_assets.py",
-      "status": "pass",
-      "seconds": 0.783827
-    },
-    {
-      "id": "_lld_test_assets_60877.AssetsTest.test_install_requires_human_approval_and_is_idempotent",
-      "file": "tests/views/test_assets.py",
-      "status": "pass",
-      "seconds": 1.00048
-    },
-    {
-      "id": "_lld_test_assets_60877.AssetsTest.test_installed_copy_drift_is_detected",
-      "file": "tests/views/test_assets.py",
-      "status": "pass",
-      "seconds": 1.183373
-    },
-    {
-      "id": "_lld_test_assets_60877.AssetsTest.test_manifest_binding_mismatch_is_detected",
-      "file": "tests/views/test_assets.py",
-      "status": "pass",
-      "seconds": 0.871344
-    },
-    {
-      "id": "_lld_test_assets_60877.AssetsTest.test_project_owned_skills_do_not_poison_asset_check",
-      "file": "tests/views/test_assets.py",
-      "status": "pass",
-      "seconds": 1.092003
-    },
-    {
-      "id": "_lld_test_assets_60877.AssetsTest.test_router_consumes_installed_assets",
-      "file": "tests/views/test_assets.py",
-      "status": "pass",
-      "seconds": 1.148863
-    },
-    {
-      "id": "_lld_test_assets_60877.AssetsTest.test_scoped_check_still_detects_missing_installed_asset",
-      "file": "tests/views/test_assets.py",
-      "status": "pass",
-      "seconds": 0.83053
-    },
-    {
-      "id": "_lld_test_assets_60877.AssetsTest.test_stale_edited_copy_is_protected",
-      "file": "tests/views/test_assets.py",
-      "status": "pass",
-      "seconds": 0.945607
-    },
-    {
-      "id": "_lld_test_assets_60877.AssetsTest.test_upgrade_m7_installs_and_rollback_removes_created",
-      "file": "tests/views/test_assets.py",
-      "status": "pass",
-      "seconds": 2.019256
-    },
-    {
-      "id": "_lld_test_board_views_11434.BoardViewsTest.test_board_analytics_contract",
-      "file": "tests/views/test_board_views.py",
-      "status": "pass",
-      "seconds": 0.001862
-    },
-    {
-      "id": "_lld_test_board_views_11434.BoardViewsTest.test_board_contract_and_budget_include_new_views",
-      "file": "tests/views/test_board_views.py",
-      "status": "pass",
-      "seconds": 0.009457
-    },
-    {
-      "id": "_lld_test_board_views_11434.BoardViewsTest.test_board_ux_contract",
-      "file": "tests/views/test_board_views.py",
-      "status": "pass",
-      "seconds": 0.001309
-    },
-    {
-      "id": "_lld_test_board_views_11434.BoardViewsTest.test_board_visual_contract",
-      "file": "tests/views/test_board_views.py",
-      "status": "pass",
-      "seconds": 0.001441
-    },
-    {
-      "id": "_lld_test_board_views_11434.BoardViewsTest.test_board_workbench_contract",
-      "file": "tests/views/test_board_views.py",
-      "status": "pass",
-      "seconds": 0.001672
-    },
-    {
-      "id": "_lld_test_board_views_11434.BoardViewsTest.test_local_d3_contract",
-      "file": "tests/views/test_board_views.py",
-      "status": "pass",
-      "seconds": 0.002402
-    },
-    {
-      "id": "_lld_test_board_views_11434.BoardViewsTest.test_template_has_all_work_views_and_anchors",
-      "file": "tests/views/test_board_views.py",
-      "status": "pass",
-      "seconds": 0.003299
-    },
-    {
-      "id": "_lld_test_board_views_11434.BoardViewsTest.test_work_views_degrade_without_data",
-      "file": "tests/views/test_board_views.py",
-      "status": "pass",
-      "seconds": 0.062717
-    },
-    {
-      "id": "_lld_test_test_modules_9454.TestModulesTest.test_detects_missing_module_id_and_bad_module_name",
-      "file": "tests/views/test_test_modules.py",
-      "status": "pass",
-      "seconds": 0.041017
-    },
-    {
-      "id": "_lld_test_test_modules_9454.TestModulesTest.test_map_module_id_and_discovery_agree",
-      "file": "tests/views/test_test_modules.py",
-      "status": "pass",
-      "seconds": 0.150837
-    },
-    {
-      "id": "_lld_test_test_modules_9454.TestModulesTest.test_render_is_deterministic_and_describes_modules",
-      "file": "tests/views/test_test_modules.py",
-      "status": "pass",
-      "seconds": 0.003292
-    },
-    {
-      "id": "_lld_test_test_modules_9454.TestModulesTest.test_target_report_flags_modules_without_tests",
-      "file": "tests/views/test_test_modules.py",
-      "status": "pass",
-      "seconds": 0.022355
-    },
-    {
-      "id": "_lld_test_test_modules_9454.TestModulesTest.test_two_discovery_mechanisms_find_same_files",
-      "file": "tests/views/test_test_modules.py",
-      "status": "pass",
-      "seconds": 0.001929
-    },
-    {
-      "id": "_lld_test_work_panel_42080.CloseConditionTest.test_close_requires_resolution_when_condition_present",
-      "file": "tests/views/test_work_panel.py",
-      "status": "pass",
-      "seconds": 0.253475
-    },
-    {
-      "id": "_lld_test_work_panel_42080.CloseConditionTest.test_declared_capability_allows_open",
-      "file": "tests/views/test_work_panel.py",
-      "status": "pass",
-      "seconds": 8.8e-05
-    },
-    {
-      "id": "_lld_test_work_panel_42080.CloseConditionTest.test_file_exists_uses_project_root",
-      "file": "tests/views/test_work_panel.py",
-      "status": "pass",
-      "seconds": 0.020861
-    },
-    {
-      "id": "_lld_test_work_panel_42080.CloseConditionTest.test_manual_never_auto_satisfied",
-      "file": "tests/views/test_work_panel.py",
-      "status": "pass",
-      "seconds": 6.2e-05
-    },
-    {
-      "id": "_lld_test_work_panel_42080.CloseConditionTest.test_unknown_kind_is_rejected",
-      "file": "tests/views/test_work_panel.py",
-      "status": "pass",
-      "seconds": 4.7e-05
-    },
-    {
-      "id": "_lld_test_work_panel_42080.CloseConditionTest.test_verified_capability_blocks_open",
-      "file": "tests/views/test_work_panel.py",
-      "status": "pass",
-      "seconds": 4.1e-05
-    },
-    {
-      "id": "_lld_test_work_panel_42080.ImportReportTest.test_dry_run_and_human_approval",
-      "file": "tests/views/test_work_panel.py",
-      "status": "pass",
-      "seconds": 0.06587
-    },
-    {
-      "id": "_lld_test_work_panel_42080.ImportReportTest.test_empty_report_never_green",
-      "file": "tests/views/test_work_panel.py",
-      "status": "pass",
-      "seconds": 0.045721
-    },
-    {
-      "id": "_lld_test_work_panel_42080.ImportReportTest.test_three_adapters_autodetect",
-      "file": "tests/views/test_work_panel.py",
-      "status": "pass",
-      "seconds": 0.056981
-    },
-    {
-      "id": "_lld_test_work_panel_42080.WorkPanelTest.test_add_and_close_require_approval_and_are_deterministic",
-      "file": "tests/views/test_work_panel.py",
-      "status": "pass",
-      "seconds": 0.263869
-    },
-    {
-      "id": "_lld_test_work_panel_42080.WorkPanelTest.test_node_summary_scopes_work_items",
-      "file": "tests/views/test_work_panel.py",
-      "status": "pass",
-      "seconds": 7.2e-05
-    },
-    {
-      "id": "_lld_test_work_panel_42080.WorkPanelTest.test_sync_tests_binding_and_24_invariants",
-      "file": "tests/views/test_work_panel.py",
-      "status": "pass",
-      "seconds": 0.337679
-    },
-    {
-      "id": "_lld_test_work_panel_42080.WorkPanelTest.test_tampered_projection_fails_verifier",
-      "file": "tests/views/test_work_panel.py",
-      "status": "pass",
-      "seconds": 0.328201
-    },
-    {
-      "id": "_lld_test_work_panel_42080.WorkPanelTest.test_validation_rejects_bad_scope_and_refs",
-      "file": "tests/views/test_work_panel.py",
       "status": "pass",
       "seconds": 7.7e-05
     },
     {
-      "id": "_lld_test_work_panel_42080.WorkPanelTest.test_work_panel_check_on_demo_is_clean",
+      "id": "_lld_test_scenarios_6843.ScenarioProbeTest.test_unbound_report_is_warned_and_rejected_in_strict_mode",
+      "file": "tests/routing/test_scenarios.py",
+      "status": "pass",
+      "seconds": 0.649492
+    },
+    {
+      "id": "_lld_test_scenarios_6843.ScenarioProbeTest.test_unsupported_version_blocks",
+      "file": "tests/routing/test_scenarios.py",
+      "status": "pass",
+      "seconds": 8.6e-05
+    },
+    {
+      "id": "_lld_test_scenarios_6843.ScenarioProbeTest.test_uri_schemes_are_not_false_absolute_paths",
+      "file": "tests/routing/test_scenarios.py",
+      "status": "pass",
+      "seconds": 0.012781
+    },
+    {
+      "id": "_lld_test_skills_38114.DecideTest.test_creates_proposed_from_queue",
+      "file": "tests/routing/test_skills.py",
+      "status": "pass",
+      "seconds": 0.002102
+    },
+    {
+      "id": "_lld_test_skills_38114.DecideTest.test_id_never_reuses",
+      "file": "tests/routing/test_skills.py",
+      "status": "pass",
+      "seconds": 0.00155
+    },
+    {
+      "id": "_lld_test_skills_38114.DecideTest.test_rejects_code_not_in_queue",
+      "file": "tests/routing/test_skills.py",
+      "status": "pass",
+      "seconds": 0.001308
+    },
+    {
+      "id": "_lld_test_skills_38114.DecideTest.test_rejects_duplicate_open_decision",
+      "file": "tests/routing/test_skills.py",
+      "status": "pass",
+      "seconds": 0.001464
+    },
+    {
+      "id": "_lld_test_skills_38114.LessonTest.test_confirm_links_back_to_candidate",
+      "file": "tests/routing/test_skills.py",
+      "status": "pass",
+      "seconds": 0.001697
+    },
+    {
+      "id": "_lld_test_skills_38114.LessonTest.test_confirm_requires_insight_and_action",
+      "file": "tests/routing/test_skills.py",
+      "status": "pass",
+      "seconds": 0.001511
+    },
+    {
+      "id": "_lld_test_skills_38114.LessonTest.test_dismiss_marks_candidate",
+      "file": "tests/routing/test_skills.py",
+      "status": "pass",
+      "seconds": 0.001357
+    },
+    {
+      "id": "_lld_test_skills_38114.LessonTest.test_dismiss_requires_reason",
+      "file": "tests/routing/test_skills.py",
+      "status": "pass",
+      "seconds": 0.00145
+    },
+    {
+      "id": "_lld_test_skills_38114.LessonTest.test_id_never_reuses",
+      "file": "tests/routing/test_skills.py",
+      "status": "pass",
+      "seconds": 0.001496
+    },
+    {
+      "id": "_lld_test_skills_38114.LessonTest.test_unknown_candidate_rejected",
+      "file": "tests/routing/test_skills.py",
+      "status": "pass",
+      "seconds": 0.001542
+    },
+    {
+      "id": "_lld_test_compare_graphs_27812.CompareGraphsTest.test_actual_only_capability_gets_steward",
+      "file": "tests/traceability/test_compare_graphs.py",
+      "status": "pass",
+      "seconds": 0.909797
+    },
+    {
+      "id": "_lld_test_compare_graphs_27812.CompareGraphsTest.test_compare_planned_and_actual",
+      "file": "tests/traceability/test_compare_graphs.py",
+      "status": "pass",
+      "seconds": 0.928266
+    },
+    {
+      "id": "_lld_test_compare_graphs_27812.CompareGraphsTest.test_execution_order_uses_next_queue_and_experts",
+      "file": "tests/traceability/test_compare_graphs.py",
+      "status": "pass",
+      "seconds": 0.928467
+    },
+    {
+      "id": "_lld_test_compare_graphs_27812.CompareGraphsTest.test_fallback_to_registry_warns",
+      "file": "tests/traceability/test_compare_graphs.py",
+      "status": "pass",
+      "seconds": 0.736379
+    },
+    {
+      "id": "_lld_test_compare_graphs_27812.CompareGraphsTest.test_outputs_are_non_destructive_and_forceable",
+      "file": "tests/traceability/test_compare_graphs.py",
+      "status": "pass",
+      "seconds": 1.009809
+    },
+    {
+      "id": "_lld_test_compare_graphs_27812.CompareGraphsTest.test_planned_only_capability_gets_archaeologist",
+      "file": "tests/traceability/test_compare_graphs.py",
+      "status": "pass",
+      "seconds": 0.935337
+    },
+    {
+      "id": "_lld_test_trace_arch_git_47891.TraceArchGitTest.test_architect_empty_docs_warns",
+      "file": "tests/traceability/test_trace_arch_git.py",
+      "status": "pass",
+      "seconds": 0.632348
+    },
+    {
+      "id": "_lld_test_trace_arch_git_47891.TraceArchGitTest.test_architect_is_non_destructive",
+      "file": "tests/traceability/test_trace_arch_git.py",
+      "status": "pass",
+      "seconds": 0.681436
+    },
+    {
+      "id": "_lld_test_trace_arch_git_47891.TraceArchGitTest.test_dependency_is_extracted_from_docs",
+      "file": "tests/traceability/test_trace_arch_git.py",
+      "status": "pass",
+      "seconds": 0.781153
+    },
+    {
+      "id": "_lld_test_trace_arch_git_47891.TraceArchGitTest.test_docs_to_target_architecture",
+      "file": "tests/traceability/test_trace_arch_git.py",
+      "status": "pass",
+      "seconds": 0.762923
+    },
+    {
+      "id": "_lld_test_trace_arch_git_47891.TraceArchGitTest.test_git_trace_maps_paths_to_capabilities_and_events",
+      "file": "tests/traceability/test_trace_arch_git.py",
+      "status": "pass",
+      "seconds": 0.756252
+    },
+    {
+      "id": "_lld_test_trace_arch_git_47891.TraceArchGitTest.test_git_trace_requires_repo_and_respects_existing",
+      "file": "tests/traceability/test_trace_arch_git.py",
+      "status": "pass",
+      "seconds": 0.845799
+    },
+    {
+      "id": "_lld_test_trace_docs_19577.TraceDocsTest.test_code_index_consumes_git_trace",
+      "file": "tests/traceability/test_trace_docs.py",
+      "status": "pass",
+      "seconds": 0.636476
+    },
+    {
+      "id": "_lld_test_trace_docs_19577.TraceDocsTest.test_code_index_maps_all_artifacts",
+      "file": "tests/traceability/test_trace_docs.py",
+      "status": "pass",
+      "seconds": 0.632713
+    },
+    {
+      "id": "_lld_test_trace_docs_19577.TraceDocsTest.test_code_index_non_destructive",
+      "file": "tests/traceability/test_trace_docs.py",
+      "status": "pass",
+      "seconds": 0.669797
+    },
+    {
+      "id": "_lld_test_trace_docs_19577.TraceDocsTest.test_rebuild_docs_creates_canonical_set",
+      "file": "tests/traceability/test_trace_docs.py",
+      "status": "pass",
+      "seconds": 0.7006
+    },
+    {
+      "id": "_lld_test_trace_docs_19577.TraceDocsTest.test_rebuild_docs_dry_run_writes_nothing",
+      "file": "tests/traceability/test_trace_docs.py",
+      "status": "pass",
+      "seconds": 0.618889
+    },
+    {
+      "id": "_lld_test_trace_docs_19577.TraceDocsTest.test_rebuild_docs_is_non_destructive_and_forceable",
+      "file": "tests/traceability/test_trace_docs.py",
+      "status": "pass",
+      "seconds": 0.79034
+    },
+    {
+      "id": "_lld_test_trace_docs_19577.TraceDocsTest.test_rebuild_docs_json_summary",
+      "file": "tests/traceability/test_trace_docs.py",
+      "status": "pass",
+      "seconds": 0.695837
+    },
+    {
+      "id": "_lld_test_assets_34114.AssetsTest.test_bundle_is_deterministic_and_complete",
+      "file": "tests/views/test_assets.py",
+      "status": "pass",
+      "seconds": 0.169157
+    },
+    {
+      "id": "_lld_test_assets_34114.AssetsTest.test_check_assets_detects_byte_drift_against_manifest",
+      "file": "tests/views/test_assets.py",
+      "status": "pass",
+      "seconds": 2.11477
+    },
+    {
+      "id": "_lld_test_assets_34114.AssetsTest.test_check_assets_digest_equals_bundle_digest",
+      "file": "tests/views/test_assets.py",
+      "status": "pass",
+      "seconds": 2.032466
+    },
+    {
+      "id": "_lld_test_assets_34114.AssetsTest.test_check_assets_without_manifest_stays_form_only",
+      "file": "tests/views/test_assets.py",
+      "status": "pass",
+      "seconds": 1.998045
+    },
+    {
+      "id": "_lld_test_assets_34114.AssetsTest.test_install_requires_human_approval_and_is_idempotent",
+      "file": "tests/views/test_assets.py",
+      "status": "pass",
+      "seconds": 2.404362
+    },
+    {
+      "id": "_lld_test_assets_34114.AssetsTest.test_installed_copy_drift_is_detected",
+      "file": "tests/views/test_assets.py",
+      "status": "pass",
+      "seconds": 2.652217
+    },
+    {
+      "id": "_lld_test_assets_34114.AssetsTest.test_manifest_binding_mismatch_is_detected",
+      "file": "tests/views/test_assets.py",
+      "status": "pass",
+      "seconds": 2.297205
+    },
+    {
+      "id": "_lld_test_assets_34114.AssetsTest.test_project_owned_skills_do_not_poison_asset_check",
+      "file": "tests/views/test_assets.py",
+      "status": "pass",
+      "seconds": 2.61968
+    },
+    {
+      "id": "_lld_test_assets_34114.AssetsTest.test_router_consumes_installed_assets",
+      "file": "tests/views/test_assets.py",
+      "status": "pass",
+      "seconds": 2.601439
+    },
+    {
+      "id": "_lld_test_assets_34114.AssetsTest.test_scoped_check_still_detects_missing_installed_asset",
+      "file": "tests/views/test_assets.py",
+      "status": "pass",
+      "seconds": 2.260521
+    },
+    {
+      "id": "_lld_test_assets_34114.AssetsTest.test_stale_edited_copy_is_protected",
+      "file": "tests/views/test_assets.py",
+      "status": "pass",
+      "seconds": 2.415176
+    },
+    {
+      "id": "_lld_test_assets_34114.AssetsTest.test_upgrade_m7_installs_and_rollback_removes_created",
+      "file": "tests/views/test_assets.py",
+      "status": "pass",
+      "seconds": 3.858191
+    },
+    {
+      "id": "_lld_test_board_views_21412.BoardViewsTest.test_board_analytics_contract",
+      "file": "tests/views/test_board_views.py",
+      "status": "pass",
+      "seconds": 0.00213
+    },
+    {
+      "id": "_lld_test_board_views_21412.BoardViewsTest.test_board_contract_and_budget_include_new_views",
+      "file": "tests/views/test_board_views.py",
+      "status": "pass",
+      "seconds": 0.01159
+    },
+    {
+      "id": "_lld_test_board_views_21412.BoardViewsTest.test_board_ux_contract",
+      "file": "tests/views/test_board_views.py",
+      "status": "pass",
+      "seconds": 0.001693
+    },
+    {
+      "id": "_lld_test_board_views_21412.BoardViewsTest.test_board_visual_contract",
+      "file": "tests/views/test_board_views.py",
+      "status": "pass",
+      "seconds": 0.001741
+    },
+    {
+      "id": "_lld_test_board_views_21412.BoardViewsTest.test_board_workbench_contract",
+      "file": "tests/views/test_board_views.py",
+      "status": "pass",
+      "seconds": 0.001621
+    },
+    {
+      "id": "_lld_test_board_views_21412.BoardViewsTest.test_local_d3_contract",
+      "file": "tests/views/test_board_views.py",
+      "status": "pass",
+      "seconds": 0.002842
+    },
+    {
+      "id": "_lld_test_board_views_21412.BoardViewsTest.test_template_has_all_work_views_and_anchors",
+      "file": "tests/views/test_board_views.py",
+      "status": "pass",
+      "seconds": 0.004076
+    },
+    {
+      "id": "_lld_test_board_views_21412.BoardViewsTest.test_work_views_degrade_without_data",
+      "file": "tests/views/test_board_views.py",
+      "status": "pass",
+      "seconds": 0.101708
+    },
+    {
+      "id": "_lld_test_test_modules_57014.TestModulesTest.test_detects_missing_module_id_and_bad_module_name",
+      "file": "tests/views/test_test_modules.py",
+      "status": "pass",
+      "seconds": 0.114896
+    },
+    {
+      "id": "_lld_test_test_modules_57014.TestModulesTest.test_map_module_id_and_discovery_agree",
+      "file": "tests/views/test_test_modules.py",
+      "status": "pass",
+      "seconds": 0.183556
+    },
+    {
+      "id": "_lld_test_test_modules_57014.TestModulesTest.test_render_is_deterministic_and_describes_modules",
+      "file": "tests/views/test_test_modules.py",
+      "status": "pass",
+      "seconds": 0.004439
+    },
+    {
+      "id": "_lld_test_test_modules_57014.TestModulesTest.test_target_report_flags_modules_without_tests",
+      "file": "tests/views/test_test_modules.py",
+      "status": "pass",
+      "seconds": 0.065402
+    },
+    {
+      "id": "_lld_test_test_modules_57014.TestModulesTest.test_two_discovery_mechanisms_find_same_files",
+      "file": "tests/views/test_test_modules.py",
+      "status": "pass",
+      "seconds": 0.002547
+    },
+    {
+      "id": "_lld_test_work_panel_11551.CloseConditionTest.test_close_requires_resolution_when_condition_present",
       "file": "tests/views/test_work_panel.py",
       "status": "pass",
-      "seconds": 0.002797
+      "seconds": 0.678927
+    },
+    {
+      "id": "_lld_test_work_panel_11551.CloseConditionTest.test_declared_capability_allows_open",
+      "file": "tests/views/test_work_panel.py",
+      "status": "pass",
+      "seconds": 0.000101
+    },
+    {
+      "id": "_lld_test_work_panel_11551.CloseConditionTest.test_file_exists_uses_project_root",
+      "file": "tests/views/test_work_panel.py",
+      "status": "pass",
+      "seconds": 0.062145
+    },
+    {
+      "id": "_lld_test_work_panel_11551.CloseConditionTest.test_manual_never_auto_satisfied",
+      "file": "tests/views/test_work_panel.py",
+      "status": "pass",
+      "seconds": 8.9e-05
+    },
+    {
+      "id": "_lld_test_work_panel_11551.CloseConditionTest.test_unknown_kind_is_rejected",
+      "file": "tests/views/test_work_panel.py",
+      "status": "pass",
+      "seconds": 5.7e-05
+    },
+    {
+      "id": "_lld_test_work_panel_11551.CloseConditionTest.test_verified_capability_blocks_open",
+      "file": "tests/views/test_work_panel.py",
+      "status": "pass",
+      "seconds": 5.3e-05
+    },
+    {
+      "id": "_lld_test_work_panel_11551.ImportReportTest.test_dry_run_and_human_approval",
+      "file": "tests/views/test_work_panel.py",
+      "status": "pass",
+      "seconds": 0.177573
+    },
+    {
+      "id": "_lld_test_work_panel_11551.ImportReportTest.test_empty_report_never_green",
+      "file": "tests/views/test_work_panel.py",
+      "status": "pass",
+      "seconds": 0.13205
+    },
+    {
+      "id": "_lld_test_work_panel_11551.ImportReportTest.test_three_adapters_autodetect",
+      "file": "tests/views/test_work_panel.py",
+      "status": "pass",
+      "seconds": 0.154731
+    },
+    {
+      "id": "_lld_test_work_panel_11551.WorkPanelTest.test_add_and_close_require_approval_and_are_deterministic",
+      "file": "tests/views/test_work_panel.py",
+      "status": "pass",
+      "seconds": 0.665021
+    },
+    {
+      "id": "_lld_test_work_panel_11551.WorkPanelTest.test_node_summary_scopes_work_items",
+      "file": "tests/views/test_work_panel.py",
+      "status": "pass",
+      "seconds": 8.5e-05
+    },
+    {
+      "id": "_lld_test_work_panel_11551.WorkPanelTest.test_sync_tests_binding_and_24_invariants",
+      "file": "tests/views/test_work_panel.py",
+      "status": "pass",
+      "seconds": 0.738009
+    },
+    {
+      "id": "_lld_test_work_panel_11551.WorkPanelTest.test_tampered_projection_fails_verifier",
+      "file": "tests/views/test_work_panel.py",
+      "status": "pass",
+      "seconds": 0.737723
+    },
+    {
+      "id": "_lld_test_work_panel_11551.WorkPanelTest.test_validation_rejects_bad_scope_and_refs",
+      "file": "tests/views/test_work_panel.py",
+      "status": "pass",
+      "seconds": 0.000105
+    },
+    {
+      "id": "_lld_test_work_panel_11551.WorkPanelTest.test_work_panel_check_on_demo_is_clean",
+      "file": "tests/views/test_work_panel.py",
+      "status": "pass",
+      "seconds": 0.003557
     }
   ],
   "overall": "pass",
   "raw_tail": [
     "----------------------------------------------------------------------",
-    "Ran 437 tests in 79.120s",
+    "Ran 438 tests in 178.935s",
     "",
     "OK"
   ],
@@ -2703,7 +2709,7 @@
       },
       {
         "path": "tests/core/test_verify.py",
-        "sha256": "8c81fd2f93b742d16bf3920e4241cb6cf6d30f3f04cde7fff18bbbfc9e693999"
+        "sha256": "aa993aff96e513667a1d368e672526db62ae44ebe6f4c86d48f4e026130f4404"
       },
       {
         "path": "tests/meta/test_acceptance.py",
@@ -2731,7 +2737,7 @@
       },
       {
         "path": "tests/meta/test_ontology.py",
-        "sha256": "eadac2b37e4d213edee6b64ced4fccf1fa305d7a9a2bffefa5c1b6d9902c7eca"
+        "sha256": "80eaf9a0161ddaef49f0547c9fba8d73aca730715fbaf891add200457484db9a"
       },
       {
         "path": "tests/meta/test_platform_contract.py",
@@ -2795,10 +2801,10 @@
       },
       {
         "path": "tests/views/test_work_panel.py",
-        "sha256": "e85c333c3565f62793ccb4c8bdceabfe4e7bafbcab3dc27913c40329acf5def0"
+        "sha256": "0fdc50419e81e90402f144050d3bce2a33e79bce2e48ab66f27cff46bf08d17e"
       }
     ],
-    "source_digest": "05c671a0f9a7dbd6"
+    "source_digest": "d53fa85192bc354c"
   },
   "label": "unit"
 }
