@@ -2,6 +2,36 @@
 
 本项目版本遵循语义化版本（SemVer）。
 
+## [2.19.0] - 2026-11-22
+
+**风险下降判据与关闭回路**：把「信号变旧」「风险下降」「人工裁决关闭」三件事分开。
+
+- 新增 `docs/36-风险下降判据.md`：severity 与 freshness 正交；风险下降须同主体、同口径、
+  方向改善且持续，并最终由 operator 写入显式关闭决策。衰减、跨母体、单点、猜指标一律 fail-closed。
+- `runtime_signals.py` 新增 `extract_metric_trend` / `risk_outcome` / `signal_disposition`：
+  只读对照客观指标方向与衰减方向（`divergent/aligned/n/a`），并从账本决策判定关闭状态。
+- 关闭判据复用既有决策 schema（evidence 锚点 + 有效 status + 显式关闭意图），
+  「引用但不关警报」正确判 `open`；观察器永不自动关闭。
+- 测试 446→461；真实事件实证异口径链与单点值均拒绝；方法仓与目标仓的纯函数逐字节一致。
+
+## [2.18.0] - 2026-11-22
+
+**投影新鲜度可见化**：陈旧信号不能再伪装成风险下降。
+
+- 新增 `signal_age_days` / `decay_factor`：显式 `as_of` 才启用线性衰减，7 天过期出队；
+  无时间 / 不可解析 / 过期一律 fail-closed。
+- `project_signals(..., as_of=...)` 输出 `observed_at / age_days / decay_factor` 使投影可复算；
+  不传 `as_of` 保持既有形状。
+- 目标仓投影工具 `--apply` 缺 `--as-of` 直接 BLOCK；新增只读反馈报告说明「衰减只表示信号变旧」。
+
+## [2.17.0] - 2026-11-21
+
+**运行时映射 fail-closed**：operator 警报不得变成补证据任务。
+
+- `project_signals` 过滤 `alert-operator` 类信号；COVERAGE 别名移除裸 `coverage/frontier` 字面词，
+  防止按文件名把运行时缺陷误挂到无关能力点。
+- 补两条回归测试；重建投影后两条 operator 信号从 `next_queue` 撤回，记为显式 open 警报。
+
 ## [2.16.0] - 2026-11-21
 
 **投影新鲜度不变量**：健康度明细不能再落后于测试证据。

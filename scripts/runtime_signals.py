@@ -163,6 +163,177 @@ def _domain_of_code(code: str) -> str:
     return parts[1] if len(parts) >= 2 else ""
 
 
+# Slice 4（风险下降判据）：只读观察器。判据见 docs/36。
+# 严格的「同口径序列」= 一条句子内，用箭头连接的每一段都以「数字%」结尾，
+# 段内不得含括号（括号常插入异口径数字，如 E7 的 symbol 计数链混入百分比）。
+# 这样：E4「27.3% → 31.7% → 31.9% → 32.24%」命中；E2 命中(mixed)；
+# E7「4 個 symbol → 1 個 (1.9%…) → residual 3 個」因段内有括号/段尾非 % 被排除。
+_SENTENCE = re.compile(r"[^。；;\n]+")
+_SEGMENT = re.compile(r"(?:\d+(?:\.\d+)?)\s*%")
+_THRESHOLD = re.compile(r"critical_ratio\s*[`']?\s*(0?\.\d+)", re.IGNORECASE)
+
+
+def _trend_direction(values: list[float]) -> str:
+    if len(values) < 2:
+        return "n/a"
+    if all(v >= values[i - 1] for i, v in enumerate(values) if i > 0) \
+            and values[-1] > values[0]:
+        return "rising"
+    if all(v <= values[i - 1] for i, v in enumerate(values) if i > 0) \
+            and values[-1] < values[0]:
+        return "falling"
+    return "flat" if values[-1] == values[0] else "mixed"
+
+
+def extract_metric_trend(signal: dict) -> dict | None:
+    """从 finding/evidence 抽取同口径箭头序列；只读、不推断，抽不出返回 None。
+
+    判据（见 docs/36）：同一句子内用箭头连接 >=2 段，每段含「数字%」，
+    且括号内不得含 %（防异口径插入）。不满足即返回 None——宁可不观察，
+    也不把异口径数字拼成趋势。
+    返回 {values, unit, direction, first, latest, delta, threshold, source_field}。
+    """
+    if not isinstance(signal, dict):
+        return None
+    for field in ("finding", "evidence"):
+        text = str(signal.get(field, "") or "")
+        for sentence in _SENTENCE.findall(text):
+            if "→" not in sentence and "->" not in sentence:
+                continue
+            parts = re.split(r"→|->", sentence)
+            if len(parts) < 2:
+                continue
+            # 每段必须干净地以「数字%」结尾，且段内无括号插入（防跨口径混拼）。
+            values: list[float] = []
+            valid = True
+            for part in parts:
+                seg = part.strip()
+                # 括号内若含 % 数值 = 异口径插入（如 E7 symbol 计数链混入 1.9%/8.8%），
+                # 拒绝；纯标签括号（如 (fact)）不含 %，允许。
+                for inside in re.findall(r"\([^)]*\)|（[^）]*）", seg):
+                    if _SEGMENT.search(inside):
+                        valid = False
+                        break
+                if not valid:
+                    break
+                tail = list(_SEGMENT.finditer(seg))
+                if not tail:
+                    valid = False
+                    break
+                values.append(float(tail[-1].group(0).rstrip("%").strip()))
+            if not valid or len(values) < 2:
+                continue
+            tm = _THRESHOLD.search(text)
+            return {
+                "values": values,
+                "unit": "%",
+                "direction": _trend_direction(values),
+                "first": values[0],
+                "latest": values[-1],
+                "delta": round(values[-1] - values[0], 4),
+                "threshold": float(tm.group(1)) if tm else None,
+                "source_field": field,
+            }
+    return None
+
+
+# Slice 5（关闭回路）：风险关闭必须由账本决策显式表达，不靠"有引用"推断。
+# fail-closed：只有 status ∈ EFFECTIVE_STATUS 且 decision/title 含显式关闭意图标记，
+# 才认定信号已裁决关闭。D-023 引用 E4 但写"不关警报" → 判 open（正确）。
+_EFFECTIVE_STATUS = {"done", "decided", "approved"}
+_CLOSE_MARKERS = (
+    "关闭风险", "關閉風險", "风险关闭", "風險關閉", "接受残余风险", "接受殘餘風險",
+    "close risk", "risk closed", "risk disposition", "accept residual risk",
+    "关闭信号", "關閉信號", "close signal",
+)
+_REF_SUFFIX = re.compile(r"#(E\d+)\b")
+
+
+def signal_disposition(signal: dict, decisions: list[dict] | None = None) -> dict:
+    """从账本决策判定信号是否已裁决关闭；只读、fail-closed、不推断。
+
+    判据（见 docs/36）：
+      1. 决策 evidence 含指向本信号的 `*.md#E<n>` 引用（source_file + id 双匹配）；
+      2. 决策 status ∈ {done, decided, approved}（proposed/deferred/superseded 不算）；
+      3. decision/title 含显式关闭意图标记——"有引用但不关警报"（如 D-023）判 open。
+    无匹配 / 猜不出 → open。返回 {status, decision_id, marker, note}。
+    """
+    result = {"status": "open", "decision_id": None, "marker": None,
+              "note": "无显式关闭决策（fail-closed）"}
+    if not isinstance(signal, dict):
+        return result
+    sid = str(signal.get("id", ""))
+    src = str(signal.get("source_file", ""))
+    if not sid or not src:
+        return result
+    for dec in decisions or []:
+        if not isinstance(dec, dict):
+            continue
+        if dec.get("status") not in _EFFECTIVE_STATUS:
+            continue
+        refs = [r for r in (dec.get("evidence") or []) if isinstance(r, str)]
+        linked = False
+        for ref in refs:
+            m = _REF_SUFFIX.search(ref)
+            # ref 形如 ".../2026-11-20.md#E4"：先按 # 去掉锚点，再取文件名比对。
+            if m and m.group(1) == sid and Path(ref.split("#")[0]).name == src:
+                linked = True
+                break
+        if not linked:
+            continue
+        text = f"{dec.get('decision', '')} {dec.get('title', '')}"
+        marker = next((k for k in _CLOSE_MARKERS if k.lower() in text.lower()), None)
+        if marker:
+            return {"status": "adjudicated_closed", "decision_id": dec.get("id"),
+                    "marker": marker, "note": "账本决策显式关闭（operator 裁决）"}
+    return result
+
+
+def risk_outcome(signals: list[dict], as_of: datetime | None = None,
+                 decisions: list[dict] | None = None) -> list[dict]:
+    """只读对照：把指标方向与衰减方向并列，不下"风险已下降"结论。
+
+    每条输出固定 outcome='observed_only'：观察器只提供证据，关闭必须走账本决策。
+    decisions 可选：传入时附加 disposition（信号是否已被账本决策显式关闭）。
+    decay_vs_metric:
+      divergent = 指标恶化(rising) 但分数因衰减下降 → 最需警惕的假绿灯形态
+      aligned    = 指标改善(falling) 且分数下降 → 方向一致，但仍不构成关闭
+      n/a        = 无可抽取序列 / 未启用衰减
+    """
+    if as_of is None:
+        return []
+    rows: list[dict] = []
+    for s in signals or []:
+        if not isinstance(s, dict):
+            continue
+        trend = extract_metric_trend(s)
+        age = signal_age_days(s, as_of)
+        factor = decay_factor(age, DEFAULT_MAX_AGE_DAYS) if age is not None else None
+        decayed = factor is not None and factor < 1
+        if trend is None:
+            relation = "n/a"
+        elif trend["direction"] == "rising" and decayed:
+            relation = "divergent"
+        elif trend["direction"] == "falling" and decayed:
+            relation = "aligned"
+        else:
+            relation = "n/a"
+        row = {
+            "id": str(s.get("id", "")),
+            "source_file": str(s.get("source_file", "")),
+            "metric_trend": trend,
+            "age_days": age,
+            "decay_factor": factor,
+            "score_decayed": decayed,
+            "decay_vs_metric": relation,
+            "outcome": "observed_only",
+        }
+        if decisions is not None:
+            row["disposition"] = signal_disposition(s, decisions)
+        rows.append(row)
+    return rows
+
+
 def apply_risk_signals(queue: list[dict], signals: list[dict], model: dict) -> list[dict]:
     """返回重排后的新列表；不入参不变。命中风险信号的域提升到低 completion 之前。"""
     by_domain: dict[str, tuple[float, str]] = {}

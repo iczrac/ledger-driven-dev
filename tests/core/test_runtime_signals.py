@@ -274,6 +274,135 @@ class SignalDecayTest(unittest.TestCase):
         self.assertEqual(entries[0]["risk_score"], 1.0)
 
 
+class RiskOutcomeTest(unittest.TestCase):
+    """Slice 4 风险下降判据：衰减 ≠ 风险下降（docs/36）。"""
+
+    def setUp(self):
+        self.as_of = datetime(2026, 11, 21, 12, 0, tzinfo=timezone.utc)
+
+    def _sig(self, finding="", evidence="", time="2026-11-20T09:00+08:00"):
+        return {"id": "E4", "source_file": "2026-11-20.md", "confidence": "fact",
+                "finding": finding, "evidence": evidence, "action": "none",
+                "time": time}
+
+    def test_extracts_same_unit_arrow_sequence_with_threshold(self):
+        from runtime_signals import extract_metric_trend
+        s = self._sig(finding="HK 27.3% → 11-16 31.7% → 11-19 31.9% → 今天 32.24%，"
+                      "單調上升；critical_ratio` 0.20")
+        t = extract_metric_trend(s)
+        self.assertEqual(t["values"], [27.3, 31.7, 31.9, 32.24])
+        self.assertEqual(t["direction"], "rising")
+        self.assertEqual(t["threshold"], 0.2)
+        self.assertEqual(t["source_field"], "finding")
+
+    def test_mixed_direction_is_reported_honestly(self):
+        from runtime_signals import extract_metric_trend
+        s = self._sig(evidence="80%(11-19) → 90%(11-19) → 100%(11-20) → 93% → 92%")
+        t = extract_metric_trend(s)
+        self.assertEqual(t["direction"], "mixed")
+        self.assertEqual(t["latest"], 92.0)
+
+    def test_heterogeneous_chain_with_pct_in_parens_is_rejected(self):
+        from runtime_signals import extract_metric_trend
+        # E7 形态：symbol 计数链里混入 ALEC.US 1.9% —— 异口径，必须 fail-closed
+        s = self._sig(evidence="4 個 symbol → 1 個（ALEC.US 1.9%，range 8.8%）→ residual 3 個")
+        self.assertIsNone(extract_metric_trend(s))
+
+    def test_single_point_and_no_arrow_are_rejected(self):
+        from runtime_signals import extract_metric_trend
+        self.assertIsNone(extract_metric_trend(self._sig(finding="seam 32.24%")))
+        self.assertIsNone(extract_metric_trend(self._sig(finding="覆蓋 3 個檔案")))
+
+    def test_divergent_warning_when_score_decays_but_metric_worsens(self):
+        from runtime_signals import risk_outcome
+        s = self._sig(finding="seam 27.3% → 31.7% → 31.9% → 32.24%，單調上升")
+        row = risk_outcome([s], self.as_of)[0]
+        self.assertEqual(row["decay_vs_metric"], "divergent")
+        self.assertTrue(row["score_decayed"])
+        self.assertEqual(row["metric_trend"]["direction"], "rising")
+        # 观察器绝不下"风险已下降"结论
+        self.assertEqual(row["outcome"], "observed_only")
+
+    def test_aligned_when_metric_improves(self):
+        from runtime_signals import risk_outcome
+        s = self._sig(finding="residual 32.24% → 20.65% → 8.14% → 1.02%，收斂")
+        row = risk_outcome([s], self.as_of)[0]
+        self.assertEqual(row["decay_vs_metric"], "aligned")
+
+    def test_no_as_of_yields_no_outcome(self):
+        from runtime_signals import risk_outcome
+        s = self._sig(finding="seam 27.3% → 32.24%")
+        self.assertEqual(risk_outcome([s]), [])
+
+    def test_observation_is_read_only_on_input(self):
+        from runtime_signals import risk_outcome
+        s = self._sig(finding="seam 27.3% → 32.24%")
+        before = json.dumps(s, ensure_ascii=False)
+        risk_outcome([s], self.as_of)
+        self.assertEqual(json.dumps(s, ensure_ascii=False), before)
+
+
+class RiskDispositionTest(unittest.TestCase):
+    """Slice 5 关闭回路：关闭须账本显式裁决，引用≠关闭（docs/36）。"""
+
+    def setUp(self):
+        self.as_of = datetime(2026, 11, 21, 12, 0, tzinfo=timezone.utc)
+        self.sig = {"id": "E4", "source_file": "2026-11-20.md",
+                    "finding": "seam 27.3% → 32.24%", "confidence": "fact"}
+        self.ref = "projects/sample/state/events/2026-11-20.md#E4"
+
+    def test_decision_referencing_signal_but_not_closing_is_open(self):
+        from runtime_signals import signal_disposition
+        # D-023 形态：引用 E4 但明写"不关警报" → 必须判 open（防假绿灯）
+        dec = [{"id": "D-023", "status": "done",
+                "decision": "补齐证据，不修数据、不关警报",
+                "evidence": [self.ref]}]
+        self.assertEqual(signal_disposition(self.sig, dec)["status"], "open")
+
+    def test_proposed_close_decision_is_open(self):
+        from runtime_signals import signal_disposition
+        dec = [{"id": "D-T", "status": "proposed", "decision": "关闭风险 E4",
+                "evidence": [self.ref]}]
+        self.assertEqual(signal_disposition(self.sig, dec)["status"], "open")
+
+    def test_explicit_done_close_decision_is_adjudicated(self):
+        from runtime_signals import signal_disposition
+        dec = [{"id": "D-T", "status": "done", "title": "关闭风险 E4",
+                "decision": "固定 canonical source 后接受残余风险并关闭",
+                "evidence": [self.ref]}]
+        r = signal_disposition(self.sig, dec)
+        self.assertEqual(r["status"], "adjudicated_closed")
+        self.assertEqual(r["decision_id"], "D-T")
+        self.assertIn("关闭", r["marker"])
+
+    def test_done_without_close_marker_is_open(self):
+        from runtime_signals import signal_disposition
+        dec = [{"id": "D-T", "status": "done", "decision": "补齐证据",
+                "evidence": [self.ref]}]
+        self.assertEqual(signal_disposition(self.sig, dec)["status"], "open")
+
+    def test_wrong_source_or_signal_ref_is_open(self):
+        from runtime_signals import signal_disposition
+        dec = [{"id": "D-T", "status": "done", "decision": "关闭风险",
+                "evidence": ["projects/sample/state/events/2026-11-19.md#E4"]}]
+        self.assertEqual(signal_disposition(self.sig, dec)["status"], "open")
+        dec[0]["evidence"] = ["projects/sample/state/events/2026-11-20.md#E9"]
+        self.assertEqual(signal_disposition(self.sig, dec)["status"], "open")
+
+    def test_no_decisions_yields_open(self):
+        from runtime_signals import signal_disposition
+        self.assertEqual(signal_disposition(self.sig)["status"], "open")
+        self.assertEqual(signal_disposition(self.sig, [])["status"], "open")
+
+    def test_risk_outcome_attaches_disposition_when_decisions_passed(self):
+        from runtime_signals import risk_outcome
+        dec = [{"id": "D-T", "status": "done", "title": "关闭风险 E4",
+                "evidence": [self.ref]}]
+        row = risk_outcome([self.sig], self.as_of, dec)[0]
+        self.assertEqual(row["disposition"]["status"], "adjudicated_closed")
+        self.assertNotIn("disposition", risk_outcome([self.sig], self.as_of)[0])
+
+
 class GeneratorIntegrationTest(unittest.TestCase):
     def setUp(self):
         def cap(code, level, completion):
