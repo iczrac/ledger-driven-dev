@@ -94,7 +94,8 @@ class _Recorder(unittest.TextTestResult):
         super().addSkip(test, reason)
 
 
-def run(test_dir: Path, pattern: str = "test_*.py", top_dir: Path | None = None) -> dict:
+def run(test_dir: Path, pattern: str = "test_*.py", top_dir: Path | None = None,
+        source_dirs: list[str] | None = None) -> dict:
     """发现并运行测试，返回结构化报告。
 
     top_dir 是 import 根（测试里 from src.xxx 时的 src 所在目录）；默认取测试目录
@@ -161,16 +162,34 @@ def run(test_dir: Path, pattern: str = "test_*.py", top_dir: Path | None = None)
         test_dir_display = test_dir.name
     # 源码绑定摘要：把「这次通过」绑定到具体文件内容，而不是文件名或时间戳。
     # 生成器会在重跑时逐个重算；任一变化即判 stale，verified 自动回落 declared。
+    # v2.20.0（B 项）：source_dirs 显式给出时一并绑定被测源码，口径对齐
+    # work_panel import-report --source-dir；缺省仍只绑定测试，保持旧报告兼容。
+    root = (top_dir or test_dir.parent).resolve()
+    scan_bases = [test_dir]
+    for rel in source_dirs or []:
+        base = root / rel
+        if not base.is_dir():
+            raise ValueError(f"源码绑定目录不存在：{rel}")
+        scan_bases.append(base)
     digest_inputs: list[dict] = []
-    for path in sorted(test_dir.rglob(pattern)):
-        if not path.is_file():
-            continue
-        try:
-            rel = path.resolve().relative_to(Path.cwd().resolve()).as_posix()
-        except ValueError:
-            rel = path.name
-        digest_inputs.append({"path": rel,
-                              "sha256": hashlib.sha256(path.read_bytes()).hexdigest()})
+    seen_paths: set[str] = set()
+    for base in scan_bases:
+        for path in sorted(base.rglob(pattern if base == test_dir else "*")):
+            if not path.is_file():
+                continue
+            if base != test_dir and path.suffix not in {
+                    ".py", ".js", ".jsx", ".ts", ".tsx", ".go", ".rs", ".java",
+                    ".c", ".cc", ".cpp", ".h", ".hpp", ".cs", ".scala", ".sql"}:
+                continue
+            try:
+                rel = path.resolve().relative_to(Path.cwd().resolve()).as_posix()
+            except ValueError:
+                rel = path.name
+            if rel in seen_paths:
+                continue
+            seen_paths.add(rel)
+            digest_inputs.append({"path": rel,
+                                  "sha256": hashlib.sha256(path.read_bytes()).hexdigest()})
     binding = {
         "algorithm": "sha256-files-v1",
         "inputs": digest_inputs,
@@ -204,12 +223,17 @@ def main() -> None:
     ap.add_argument("--dir", default="tests", help="测试目录（默认 tests）")
     ap.add_argument("--top", help="import 根（测试里 from src.xxx 时的 src 所在目录，默认测试目录的父目录）")
     ap.add_argument("--pattern", default="test_*.py", help="用例文件模式")
+    ap.add_argument("--source-dir", dest="source_dirs", default=None,
+                    help="逗号分隔的源码绑定目录（如 src,tests）；缺省只绑定测试文件")
     ap.add_argument("--out", required=True, help="报告输出 JSON 路径")
     ap.add_argument("--label", default="unit", help="报告标签（如 unit/integration）")
     args = ap.parse_args()
 
+    source_dirs = ([d.strip() for d in args.source_dirs.split(",") if d.strip()]
+                   if args.source_dirs else None)
     report = run(Path(args.dir), args.pattern,
-                 top_dir=Path(args.top) if args.top else None)
+                 top_dir=Path(args.top) if args.top else None,
+                 source_dirs=source_dirs)
     report["label"] = args.label
 
     out = Path(args.out)

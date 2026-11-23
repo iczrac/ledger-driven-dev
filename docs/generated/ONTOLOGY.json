@@ -16,7 +16,7 @@
     {
       "path": "scripts/scenario_matrix.py",
       "role": "value_domains",
-      "sha256": "7ecc9c5a058eaf4f20319df79bc670fe7c99387596bad6eaf259e59384454ef8"
+      "sha256": "3c30655fb1b3c58db65bfe8c6fff4a9b230f239dc035ed928ee2e96019b5e095"
     },
     {
       "path": "scripts/ledger_feedback.py",
@@ -26,7 +26,7 @@
     {
       "path": "scripts/agent_gateway.py",
       "role": "value_domains",
-      "sha256": "2feb4818bc21bb7e2a4b584f4c600db336a6a753e6554a92840d886d08a831cd"
+      "sha256": "2102eb6e80cee3d236da4dbf0d4e48e28ef37b1ac6045257602e943b7e554403"
     },
     {
       "path": "templates/build_capability_model.py",
@@ -786,5 +786,5 @@
     "polyseme_terms": 3,
     "drift_count": 0
   },
-  "ontology_digest": "ac81b5b49ab125b035592fb5f1c4b8d6dafa8521aacf6954df4cf84123e98bce"
+  "ontology_digest": "72b9e5bb96da3ad0b16e1caa08aaa0f38506c8d0e5e71747cfcd1ccc47dc8916"
 }
