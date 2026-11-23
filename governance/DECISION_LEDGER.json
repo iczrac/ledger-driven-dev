@@ -11717,7 +11717,7 @@
   ],
   "governance_meta": {
     "schema_version": "1.0",
-    "method_version": "2.20.0",
+    "method_version": "2.20.1",
     "upgraded_from": "pre-1.0.0",
     "ledger_version": "1.0",
     "migrations_applied": [
@@ -12008,10 +12008,27 @@
         "risk": "low",
         "assets_digest": "5c1e275a20b4e337",
         "board_skeleton": "b6f5d4583cca01c6"
+      },
+      {
+        "seq": 18,
+        "at": "2026-11-23T13:06:54Z",
+        "action": "apply",
+        "from": "2.20.0",
+        "to": "2.20.1",
+        "approved_by": "user-approved-v2.20.1",
+        "migrations": [
+          "M3-tool-sync",
+          "M4-method-version",
+          "M5-method-assets"
+        ],
+        "backup": "20261123T130653Z-f8984bba",
+        "risk": "medium",
+        "assets_digest": "8630eced4a8c9a4d",
+        "board_skeleton": "b6f5d4583cca01c6"
       }
     ],
     "tools": {
-      "governance/build_capability_model.py": "6b98770075764edbade9c74d99179eb123130559ab2502b5bf416595ae86c707",
+      "governance/build_capability_model.py": "c297944e7c4c927519de2eae248264677993d1c70119fd23219b43d8217977ae",
       "governance/binding_advisory.py": "e5368433f594854857fff87002430ee692401ec4b7125168b7699cb00f1dde0b",
       "governance/derived_issues.py": "4ff4097765996071e256302f91439a9464a5203840d2df64fb5d93df6ea13a21",
       "governance/verify_ledger.py": "29936363e119ba65f0244bc41287d67c25b48fab9dd6b5d40c532c20fc781cbe",
@@ -12027,7 +12044,7 @@
     },
     "method_assets": {
       "algorithm": "sha256-files-v1",
-      "digest": "5c1e275a20b4e337b3603e5b8c86c3710509dadf5a323a9aae52339ab0c2b58e",
+      "digest": "8630eced4a8c9a4dc44044955dc944d8e50a8f6740e4cf58423fd45bf6b6d5c2",
       "file_count": 111,
       "counts": {
         "experts": 9,
@@ -12039,7 +12056,7 @@
       },
       "source": "方法论仓库 tag（权威源，不复制；只读副本由 M7 安装）"
     },
-    "ontology_digest": "72b9e5bb96da3ad0b16e1caa08aaa0f38506c8d0e5e71747cfcd1ccc47dc8916",
+    "ontology_digest": "137fb6cdab5b7b80f971631c095e8a441bacda1f805d5f511e5c99d049183a60",
     "board_skeleton": {
       "digest": "b6f5d4583cca01c68ee99d6076dfe7f3896ab2a27881c7fe87fab8b7a06d81d5",
       "source": "templates/index.html.template",

@@ -493,7 +493,7 @@ def diff_projects(old_projects: list, new_projects: list) -> list[str]:
 
 
 def diff_queue_risk(ledger: dict, model: dict) -> list[str]:
-    """显式提供 --runtime-signals 时，队列风险注解也必须可复算。"""
+    """队列成员与风险注解都必须可复算（含暂停范围：成员缺失也算漂移）。"""
     def index(cm: dict) -> dict[str, tuple]:
         return {
             str(t.get("code")): (t.get("risk_score"), t.get("risk_signal"),
@@ -1255,9 +1255,28 @@ def _runtime_risk_index(entries: list[dict] | None) -> dict[str, tuple]:
     return idx
 
 
+def paused_project_codes(ledger: dict) -> set[str]:
+    """从生效裁决的结构化字段抽取暂停范围；不从散文猜，避免假绿灯/假红灯。
+
+    只有 ``status=done`` 且未被 ``superseded_by`` 取代的条目生效。
+    字段缺失（历史账本）返回空集：旧账本保持原顺序，逐步迁移而不是静默改口径。
+    """
+    out: set[str] = set()
+    for entry in (ledger.get("entries") or []):
+        if not isinstance(entry, dict):
+            continue
+        if entry.get("status") != "done" or entry.get("superseded_by"):
+            continue
+        for scope in (entry.get("paused_scopes") or []):
+            if isinstance(scope, str) and scope.strip():
+                out.add(scope.strip().upper())
+    return out
+
+
 def build_next_queue(model: dict, limit: int = 10, lessons: dict | None = None,
                      health_gain: dict[str, float] | None = None,
-                     runtime_signals: list[dict] | None = None) -> list[dict]:
+                     runtime_signals: list[dict] | None = None,
+                     paused_projects: set[str] | None = None) -> list[dict]:
     """把循环协议的 SELECT 步骤机器化：输出可直接消费的任务队列。
 
     排序规则（可机读、可复算，免除每次重新解释）：
@@ -1265,9 +1284,11 @@ def build_next_queue(model: dict, limit: int = 10, lessons: dict | None = None,
       2. 显式提供 runtime_signals 时，命中的精确能力点按 risk 降序优先；
       3. 其余按 completion 升序（最低完成度优先）；
       4. 同级按 code 排序，保证稳定可复现。
+      5. 已由生效裁决结构化暂停的 project 整段排除，不给暂停范围派活。
     风险只改排序与任务卡注解，不写 level/completion，不替代证据判定。
     """
     risk_idx = _runtime_risk_index(runtime_signals)
+    paused = {str(x).upper() for x in (paused_projects or set())}
     evidence_order = ("contracts", "impl", "unit_tests", "test_records")
     evidence_label = {
         "contracts": "契约(L1)", "impl": "实现(L2)",
@@ -1275,6 +1296,8 @@ def build_next_queue(model: dict, limit: int = 10, lessons: dict | None = None,
     }
     tasks: list[dict] = []
     for p in model["projects"]:
+        if str(p.get("code", "")).upper() in paused:
+            continue
         for m in p["modules"]:
             for c in m["caps"]:
                 if c.get("level", 0) >= 5:
@@ -1676,7 +1699,8 @@ def apply_analytics(model: dict, ledger: dict,
             for a in analytics["recommended_actions"]}
     model["next_queue"] = build_next_queue(
         model, lessons=ledger.get("lessons"), health_gain=gain,
-        runtime_signals=runtime_signals)
+        runtime_signals=runtime_signals,
+        paused_projects=paused_project_codes(ledger))
     return health
 
 

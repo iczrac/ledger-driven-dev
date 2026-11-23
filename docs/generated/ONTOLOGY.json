@@ -31,7 +31,7 @@
     {
       "path": "templates/build_capability_model.py",
       "role": "value_domains",
-      "sha256": "6b98770075764edbade9c74d99179eb123130559ab2502b5bf416595ae86c707"
+      "sha256": "c297944e7c4c927519de2eae248264677993d1c70119fd23219b43d8217977ae"
     },
     {
       "path": "templates/verify_ledger.py",
@@ -786,5 +786,5 @@
     "polyseme_terms": 3,
     "drift_count": 0
   },
-  "ontology_digest": "72b9e5bb96da3ad0b16e1caa08aaa0f38506c8d0e5e71747cfcd1ccc47dc8916"
+  "ontology_digest": "137fb6cdab5b7b80f971631c095e8a441bacda1f805d5f511e5c99d049183a60"
 }

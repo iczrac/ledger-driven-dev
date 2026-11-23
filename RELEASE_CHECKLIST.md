@@ -582,3 +582,23 @@ E7 `cardinality_contradiction`（`ontology.py check --target P` 仍 `ok=false`�
 - `run_tests.py --source-dir` 是显式 opt-in；缺省仍只绑定测试文件，源码变更不会让旧报告过期。
 - `literal_drift` 对“不变量条数”保留「第 N 条」序号与小于 20 的子集计数排除，避免把历史序号误判成当前总数；真正权威仍是 `verify()` 派生值。
 - 方法仓自举已重绑；主仓推广仍需单独批准，不在本版范围内。
+
+## v2.20.1 发布检查（结构化暂停范围）
+
+> 由来：主仓 `D-028` 已裁决“HELM 暂停，不补测试刷分”，但 `next_queue` 仍把 HELM 排在前两位。裁决是事实源，队列是唯一入口；两者不一致时执行者按队列干活就是在制造假绿灯。
+
+- [x] **判定**：不是 HELM 能力需要补测试，而是暂停裁决缺机器可消费字段；不从散文猜“暂停”，猜错比不猜更危险。
+- [x] **实现**：`entries[].paused_scopes` 为唯一结构化暂停字段；只认 `status=done` 且未被 `superseded_by` 取代的条目，按 project code 整段排除；字段缺失的历史账本保持原顺序。
+- [x] **可复算**：`diff_queue_risk` 同时校验队列成员与风险注解；暂停导致成员缺失也算漂移，禁止手删账本绕过。
+- [x] **测试**：新增 3 条 TDD 用例（结构化暂停排除、散文不猜、proposed/superseded 不生效）；476/476 单测通过。
+- [x] **文档与副本**：`docs/05-循环协议.md` 写入 SELECT 暂停规则；`templates/build_capability_model.py` 与 `examples/demo-shop/governance/build_capability_model.py` 同步。
+- [x] **权威源重绑**：`METHOD_VERSION=2.20.1`；官方 upgrade 执行 M3/M4/M5，`method_assets=8630eced4a8c9a4d`；本体投影重生成，自举账本与看板 EMBED 同步。
+- [x] **全量门禁**：`bash scripts/check.sh` EXIT=0，16 阶段全绿；476/476 用例，验收契约 full / preconditions PASS，literal_drift 108 文件 0 漂移 10 历史复核，31 条不变量 28 pass / 0 fail / 3 na。
+- [x] **`feedback_closed = 7`**：观察包 13 行，7 closed / 6 open；本次未改 `feedback/`。
+- [x] **发版**：附注 tag `v2.20.1` + push `origin/main` 与 tag；GitHub Release `v2.20.1` 以本版 CHANGELOG 为说明。
+
+### 边界
+
+- 本版只提供机制，不为任何目标项目写入 `paused_scopes`；主仓 D-028 结构化与队列重排须单独批准执行。
+- 暂停按 project 粒度，不支持模块/能力粒度； finer-grained pause 需另立契约。
+- 字段缺失时不改变历史账本顺序，迁移是显式批准的动作，不是生成器猜测。

@@ -14,7 +14,8 @@ from pathlib import Path
 
 import _base  # noqa: F401 — 触发 scripts/ 路径注入（与其他 core 测试一致）
 
-from build_capability_model import build_next_queue  # noqa: E402
+from build_capability_model import (build_next_queue,  # noqa: E402
+                                    paused_project_codes)
 from runtime_signals import (  # noqa: E402
     apply_risk_signals,
     apply_risk_signals_exact,
@@ -432,6 +433,36 @@ class GeneratorIntegrationTest(unittest.TestCase):
         self.assertEqual(queue[0]["risk_evidence"], "x.md#E4")
         self.assertEqual(queue[1]["code"], "P.RS.RSCOV.04")
         self.assertNotIn("risk_score", queue[1])
+
+    def test_structured_pause_excludes_project_from_queue(self):
+        """人工裁决的暂停必须结构化；队列不得继续给暂停范围派活。"""
+        ledger = {"entries": [{
+            "id": "D-X", "status": "done",
+            "decision": "HELM 暂停，不补测试刷分",
+            "paused_scopes": ["P"],
+        }]}
+        self.assertEqual(paused_project_codes(ledger), {"P"})
+        self.assertEqual(build_next_queue(
+            self.model, paused_projects=paused_project_codes(ledger)), [])
+
+    def test_free_text_pause_does_not_silently_change_queue(self):
+        """没有结构化字段时不得从散文猜暂停：猜错比不猜更危险。"""
+        ledger = {"entries": [{
+            "id": "D-X", "status": "done", "decision": "P 暂停，不补测试刷分",
+        }]}
+        self.assertEqual(paused_project_codes(ledger), set())
+        self.assertEqual([t["code"] for t in build_next_queue(
+            self.model, paused_projects=paused_project_codes(ledger))],
+            ["P.RS.RSCOV.04", "P.DATA.ADJUSTED.03", "P.DATA.PROVIDER.05"])
+
+    def test_superseded_or_proposed_pause_is_ignored(self):
+        """只有生效且未被取代的裁决能暂停队列。"""
+        ledger = {"entries": [
+            {"id": "D-1", "status": "proposed", "paused_scopes": ["P"]},
+            {"id": "D-2", "status": "done", "superseded_by": "D-3",
+             "paused_scopes": ["P"]},
+        ]}
+        self.assertEqual(paused_project_codes(ledger), set())
 
     def test_malformed_entry_is_ignored(self):
         entries = [{"id": "bad", "risk_score": "n/a",
