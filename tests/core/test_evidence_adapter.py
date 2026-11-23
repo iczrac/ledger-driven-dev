@@ -114,5 +114,49 @@ class NoRegressTest(unittest.TestCase):
         self.assertEqual(gen.LEVELS_CODE(2), 2)
 
 
+class RunTestsSourceBindingTest(unittest.TestCase):
+    """v2.20.0（B 项）：run_tests.py 必须能像 import-report 一样绑定源码目录。"""
+
+    def setUp(self):
+        self.td = tempfile.mkdtemp()
+        self.root = Path(self.td)
+        (self.root / "src").mkdir()
+        (self.root / "tests").mkdir()
+        self.src = self.root / "src" / "calc.py"
+        self.src.write_text("def add(a, b):\n    return a + b\n")
+        self.test = self.root / "tests" / "test_calc.py"
+        self.test.write_text("def test_add():\n    assert 1 + 1 == 2\n")
+
+    def _report(self, source_dirs=None):
+        import run_tests
+        old = Path.cwd()
+        try:
+            __import__("os").chdir(self.root)
+            return run_tests.run(Path("tests"), "test_*.py", Path("."),
+                                 source_dirs=source_dirs)
+        finally:
+            __import__("os").chdir(old)
+
+    def test_default_binding_is_tests_only(self):
+        r = self._report()
+        paths = [x["path"] for x in r["evidence_binding"]["inputs"]]
+        self.assertEqual(paths, ["tests/test_calc.py"])
+
+    def test_source_dir_binding_tracks_source_changes(self):
+        r1 = self._report(["src", "tests"])
+        paths = {x["path"] for x in r1["evidence_binding"]["inputs"]}
+        self.assertIn("src/calc.py", paths)
+        self.assertIn("tests/test_calc.py", paths)
+        digest1 = r1["evidence_binding"]["source_digest"]
+        self.src.write_text("def add(a, b):\n    return a + b + 1\n")
+        r2 = self._report(["src", "tests"])
+        self.assertNotEqual(digest1, r2["evidence_binding"]["source_digest"])
+
+    def test_missing_source_dir_fails_closed(self):
+        with self.assertRaises(ValueError) as ctx:
+            self._report(["does-not-exist"])
+        self.assertIn("does-not-exist", str(ctx.exception))
+
+
 if __name__ == "__main__":
     unittest.main()

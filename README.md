@@ -257,7 +257,7 @@ python3 governance/build_capability_model.py --root . \
   --expect-fingerprint "$FP" --strict-evidence
 ```
 
-`verified` 现在绑定到**当前源码的内容摘要**：跑过测试后再改代码，徽章会自动回落 `declared`。
+`verified` 绑定到**报告里 `evidence_binding.inputs` 的内容摘要**：用 `run_tests.py --source-dir src,tests`（或 `work_panel.py import-report --source-dir src,tests`）把被测源码纳入绑定后，跑过测试再改代码，徽章会自动回落 `declared`；缺省的 `run_tests.py --dir tests` 只绑定测试文件，源码变更不会使报告过期。
 冻结/归档期间生成器直接拒绝写入；解冻与归档必须有人批准。详见 [14-场景矩阵](docs/14-场景矩阵.md)。
 
 ### 升级治理骨架 + 让多个 Agent 接入控制开发
