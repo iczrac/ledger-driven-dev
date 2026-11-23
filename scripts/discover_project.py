@@ -39,11 +39,17 @@ ROOT_HINTS = ("src", "app", "lib", "packages", "internal", "services", "modules"
 
 
 def sanitize_code(name: str, fallback: str = "ITEM") -> str:
-    code = re.sub(r"[^A-Za-z0-9]+", "_", name).strip("_").upper()
+    """把任意文件名收敛为契约合法的单段码（[A-Z][A-Z0-9]*）。
+
+    v2.20.0（A 项）：旧实现把非法字符替换成下划线，产出 ``SECRET_SYNC``
+    这类违反四段码契约的草稿，生成器随后抛裸 ValueError。契约是跨三处
+    的稳定身份，不放宽；这里改生产者——直接剔除非法字符，保留可读大写。
+    """
+    code = re.sub(r"[^A-Za-z0-9]+", "", name).upper()
     if not code:
-        code = fallback
+        code = re.sub(r"[^A-Za-z0-9]+", "", fallback).upper() or "ITEM"
     if code[0].isdigit():
-        code = "X_" + code
+        code = "X" + code
     return code[:24]
 
 
@@ -114,7 +120,7 @@ def discover(target: Path, max_files: int = 3000, max_caps: int = 8) -> dict:
         code = base_code
         n = 2
         while code in used_codes:
-            code = f"{base_code}_{n:02d}"
+            code = f"{base_code}{n:02d}"
             n += 1
         used_codes.add(code)
 
@@ -124,7 +130,7 @@ def discover(target: Path, max_files: int = 3000, max_caps: int = 8) -> dict:
             stem = Path(rel).stem
             domain = sanitize_code(stem, "ITEM")
             if domain in used_domains:
-                domain = f"{domain}_{len(used_domains) + 1:02d}"
+                domain = f"{domain}{len(used_domains) + 1:02d}"
             used_domains.add(domain)
             caps.append({
                 "name": stem.replace("_", " ").strip().title() or stem,

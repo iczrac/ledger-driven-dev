@@ -1,6 +1,7 @@
 """存量项目发现：只读、确定性、非破坏性。"""
 MODULE_ID = "adoption"
 import json
+import re
 import shutil
 import subprocess
 import sys
@@ -32,9 +33,25 @@ class DiscoveryTest(unittest.TestCase):
             shutil.rmtree(path, ignore_errors=True)
 
     def test_sanitize_code(self):
-        self.assertEqual(sanitize_code("order-api"), "ORDER_API")
-        self.assertEqual(sanitize_code("123abc"), "X_123ABC")
+        self.assertEqual(sanitize_code("order-api"), "ORDERAPI")
+        self.assertEqual(sanitize_code("123abc"), "X123ABC")
         self.assertEqual(sanitize_code("###"), "ITEM")
+        # 生成的每个段都必须满足四段码契约（A 项：不透传下划线）。
+        segment = re.compile(r"[A-Z][A-Z0-9]*")
+        for raw in ("order-api", "secret_sync", "123abc", "a b/c", "###"):
+            self.assertTrue(segment.fullmatch(sanitize_code(raw)), raw)
+
+    def test_discover_draft_codes_obey_contract(self):
+        root = make_project({
+            "src/shadow/secret_sync.py": "def sync(): return 1\n",
+            "tests/test_a.py": "def test_a(): pass\n",
+        })
+        draft = discover(root)
+        self.assertEqual(draft["modules"][0]["code"], "SHADOW")
+        self.assertEqual(draft["modules"][0]["caps"][0]["domain"], "SECRETSYNC")
+        code = f"{draft['project']['code']}.{draft['modules'][0]['code']}." \
+               f"{draft['modules'][0]['caps'][0]['domain']}.01"
+        self.assertRegex(code, r"^[A-Z][A-Z0-9]*\.[A-Z][A-Z0-9]*\.[A-Z][A-Z0-9]*\.\d{2}$")
 
     def test_discover_groups_by_source_root(self):
         root = make_project({

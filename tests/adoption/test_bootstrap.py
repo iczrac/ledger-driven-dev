@@ -97,6 +97,26 @@ class BootstrapTest(unittest.TestCase):
         self.assertIn("discover_project.py", proc.stderr + proc.stdout)
         self.assertFalse((root / "governance" / "registry.json").exists())
 
+    def test_adopt_illegal_code_fails_closed_with_actionable_message(self):
+        root = make_dir()
+        gov = root / "governance"
+        gov.mkdir()
+        draft = {
+            "project": {"code": "LEG", "name": "Legacy", "root": "."},
+            "modules": [{"code": "SHADOW", "name": "Shadow", "src": ["src/shadow/"],
+                         "caps": [{"name": "Secret Sync", "domain": "SECRET_SYNC",
+                                   "impl": ["src/shadow/secret_sync.py"]}]}],
+        }
+        (gov / "registry.draft.json").write_text(json.dumps(draft))
+        proc = run(INIT, "--target", root, "--mode", "adopt", "--code", "LEG")
+        self.assertEqual(proc.returncode, 2)
+        msg = proc.stderr + proc.stdout
+        self.assertIn("registry.draft.json", msg)
+        self.assertIn("SECRET_SYNC", msg)
+        self.assertIn("SECRETSYNC", msg)
+        self.assertIn("四段式", msg)
+        self.assertFalse((gov / "registry.json").exists())
+
     def test_existing_files_are_not_overwritten(self):
         root = make_dir()
         gov = root / "governance"

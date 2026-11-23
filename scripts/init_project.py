@@ -26,6 +26,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import shutil
 import sys
 from datetime import datetime
@@ -33,6 +34,10 @@ from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 TEMPLATES = HERE.parent / "templates"
+# v2.20.0（A 项）：落盘前用唯一 codec 校验草稿，绝不复制第二套编码规则。
+sys.path.insert(0, str(TEMPLATES))
+from registry_codec import cap_code as codec_cap_code  # noqa: E402
+from discover_project import sanitize_code  # noqa: E402
 
 
 def _source_label(path: Path, target: Path) -> str:
@@ -90,6 +95,43 @@ def load_registry_source(target: Path, gov: Path, mode: str,
     merged["project"] = project
     return merged, {"source": _source_label(src, target),
                     "discovery": raw.get("_discovery") or {}}
+
+
+def validate_registry_codes(reg: dict, source: str) -> None:
+    """adopt 落盘前 fail-closed：非法码必须带文件、位置与建议改法。
+
+    生成器在很下游才抛裸 ValueError；接入时提前拦住，才能告诉人「改哪个文件、
+    改成什么」。校验复用唯一 codec，不在本脚本复制正则。
+    """
+    sys.path.insert(0, str(TEMPLATES))
+    from registry_codec import CODE_RE  # noqa: PLC0415
+    segment = re.compile(r"[A-Z][A-Z0-9]*")
+    errors: list[str] = []
+    modules = reg.get("modules") or []
+    for mi, module in enumerate(modules, 1):
+        mcode = str(module.get("code", ""))
+        if not segment.fullmatch(mcode):
+            errors.append(f"modules[{mi}].code={mcode!r} 建议改为 {sanitize_code(mcode, 'CORE')}")
+        for ci, cap in enumerate(module.get("caps") or [], 1):
+            domain = str(cap.get("domain", ""))
+            explicit = str(cap.get("code", "")).strip()
+            try:
+                codec_cap_code(str((reg.get("project") or {}).get("code", "")),
+                               mcode, domain, ci, explicit or None)
+            except ValueError as exc:
+                suggestion = sanitize_code(explicit or domain, "ITEM")
+                full = (f"{reg['project']['code']}.{sanitize_code(mcode, 'CORE')}."
+                        f"{suggestion}.{ci:02d}")
+                errors.append(
+                    f"modules[{mi}].caps[{ci}].domain={domain!r} "
+                    f"（{exc}）→ 请把 domain 改为 {suggestion}，"
+                    f"或把 code 显式写为 {full}")
+    if errors:
+        detail = "\n  - ".join(errors)
+        raise ValueError(
+            f"registry 草稿 {source} 的能力码违反四段式契约：\n  - {detail}\n"
+            "契约：^[A-Z][A-Z0-9]*.[A-Z][A-Z0-9]*.[A-Z][A-Z0-9]*.\\d{2}$；"
+            "草稿与源码均未被修改。")
 
 
 def build_ledger(name: str, code: str, mode: str, provenance: dict,
@@ -178,6 +220,13 @@ def main() -> int:
     reg["project"]["code"] = code
     reg["project"]["name"] = name
     reg["project"]["root"] = "."
+
+    if args.mode == "adopt":
+        try:
+            validate_registry_codes(reg, provenance.get("source", "registry 草稿"))
+        except ValueError as exc:
+            print(str(exc), file=sys.stderr)
+            return 2
 
     files: list[tuple[Path, str]] = [
         (gov / "registry.json", json.dumps(reg, ensure_ascii=False, indent=2)),
