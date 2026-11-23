@@ -76,6 +76,41 @@ class TraceArchGitTest(unittest.TestCase):
             self.assertEqual(data["confidence"], "low")
             self.assertTrue(any("rebuild_docs" in w for w in data["warnings"]))
 
+    def test_module_map_empty_caps_column_infers_codes_without_crash(self):
+        """人写规划稿常把能力编码列留空；应回退到 CAPABILITY_INDEX，而不是 unpack 崩溃。"""
+        with demo_copy() as (tmp, _ledger, _reg, _board):
+            proj = tmp / "examples" / "demo-shop"
+            self.assertEqual(run(REBUILD, "--target", proj).returncode, 0)
+            mod = proj / "docs" / "generated" / "MODULE_MAP.md"
+            lines = mod.read_text(encoding="utf-8").splitlines()
+            idx = next(i for i, line in enumerate(lines) if line.startswith("| CORE |"))
+            lines[idx] = "| CORE | 核心 | （无） |  |"
+            mod.write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+            proc = run(ARCHITECT, "--target", proj, "--force", "--json")
+            self.assertEqual(proc.returncode, 0, proc.stderr)
+            data = json.loads(proc.stdout)
+            core = next(m for m in data["modules"] if m["code"] == "CORE")
+            self.assertIn("DEMO.CORE.PRICE.02", core["caps"])
+
+    def test_malformed_capability_code_fails_closed_with_actionable_hint(self):
+        """下划线码不得被静默丢弃；必须报出文件、原码与唯一 codec 的合法写法。"""
+        with demo_copy() as (tmp, _ledger, _reg, _board):
+            proj = tmp / "examples" / "demo-shop"
+            self.assertEqual(run(REBUILD, "--target", proj).returncode, 0)
+            mod = proj / "docs" / "generated" / "MODULE_MAP.md"
+            mod.write_text(mod.read_text(encoding="utf-8")
+                           .replace("DEMO.CORE.PRICE.02", "DEMO.CORE.PRICE_02.02"),
+                           encoding="utf-8")
+
+            proc = run(ARCHITECT, "--target", proj, "--force", "--json")
+            self.assertEqual(proc.returncode, 2, proc.stdout + proc.stderr)
+            msg = proc.stderr
+            self.assertIn("MODULE_MAP.md", msg)
+            self.assertIn("DEMO.CORE.PRICE_02.02", msg)
+            self.assertIn("DEMO.CORE.PRICE02.02", msg)
+            self.assertIn("四段式", msg)
+
     def test_git_trace_maps_paths_to_capabilities_and_events(self):
         with demo_copy() as (tmp, _ledger, _reg, _board):
             proj = tmp / "examples" / "demo-shop"

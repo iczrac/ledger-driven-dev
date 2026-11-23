@@ -91,6 +91,38 @@ class CompareGraphsTest(unittest.TestCase):
             ordered = next(e for e in diff["execution_order"] if e["code"] == "DEMO.CORE.ORDER.01")
             self.assertEqual(ordered["expert"], "ledger-steward")
 
+    def test_similar_codes_get_shadow_hint_without_relaxing_status(self):
+        """同义异码仍按字面给出 planned_only/actual_only，但必须显式标注疑似同一能力。"""
+        with demo_copy() as (tmp, _ledger, _reg, _board):
+            proj = tmp / "examples" / "demo-shop"
+            prepare(proj)
+            arch = proj / "governance" / "TARGET_ARCHITECTURE.json"
+            led = proj / "governance" / "DECISION_LEDGER.json"
+            arch.write_text(arch.read_text(encoding="utf-8")
+                            .replace("DEMO.CORE.PRICE.02", "DEMO.CORE.PRICE_02.02"),
+                            encoding="utf-8")
+            led.write_text(led.read_text(encoding="utf-8")
+                           .replace("DEMO.CORE.PRICE.02", "DEMO.CORE.PRICE02.02"),
+                           encoding="utf-8")
+
+            proc = run(COMPARE, "--target", proj, "--force", "--json")
+            self.assertEqual(proc.returncode, 0, proc.stderr)
+            diff = json.loads(proc.stdout)
+            planned = next(r for r in diff["comparison"]
+                           if r["code"] == "DEMO.CORE.PRICE_02.02")
+            actual = next(r for r in diff["comparison"]
+                          if r["code"] == "DEMO.CORE.PRICE02.02")
+            self.assertEqual(planned["status"], "planned_only")
+            self.assertEqual(actual["status"], "actual_only")
+            self.assertEqual(planned["shadow_match"], "DEMO.CORE.PRICE02.02")
+            self.assertEqual(actual["shadow_match"], "DEMO.CORE.PRICE_02.02")
+            self.assertEqual(diff["summary"]["shadow_pairs"], 1)
+            self.assertTrue(any("疑似同一能力" in w for w in diff["warnings"]))
+            ordered = next(e for e in diff["execution_order"]
+                           if e["code"] == "DEMO.CORE.PRICE02.02")
+            self.assertEqual(ordered["expert"], "ledger-steward")
+            self.assertIn("疑似同一能力", "；".join(actual["gaps"]))
+
     def test_outputs_are_non_destructive_and_forceable(self):
         with demo_copy() as (tmp, _ledger, _reg, _board):
             proj = tmp / "examples" / "demo-shop"

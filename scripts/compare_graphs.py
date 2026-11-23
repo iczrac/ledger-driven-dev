@@ -16,7 +16,8 @@ import json
 import sys
 from pathlib import Path
 
-from trace_common import artifact_paths, iter_caps, load_json, rel_path, write_if_absent
+from trace_common import (artifact_paths, canonical_code, iter_caps, load_json,
+                          rel_path, write_if_absent)
 
 try:
     from route_expert import build as route_build
@@ -73,6 +74,34 @@ def build(target: Path, registry: dict, ledger: dict, target_arch: dict | None,
                 if c.get("code"):
                     actual_by_code[c["code"]] = c
 
+    # shadow 对齐只做提示：字面码仍分别是 planned_only / actual_only，
+    # 不自动合并、不改等级、不放宽任何硬门禁。
+    plan_canonical: dict[str, list[str]] = {}
+    actual_canonical: dict[str, list[str]] = {}
+    for code in plan_by_code:
+        key = canonical_code(code)
+        if key:
+            plan_canonical.setdefault(key, []).append(code)
+    for code in actual_by_code:
+        key = canonical_code(code)
+        if key:
+            actual_canonical.setdefault(key, []).append(code)
+    shadow_pairs: list[dict] = []
+    for key in sorted(set(plan_canonical) & set(actual_canonical)):
+        for planned_code in plan_canonical[key]:
+            for actual_code in actual_canonical[key]:
+                if planned_code != actual_code:
+                    shadow_pairs.append({"canonical": key, "planned": planned_code,
+                                         "actual": actual_code})
+    shadow_by_code: dict[str, list[str]] = {}
+    for pair in shadow_pairs:
+        shadow_by_code.setdefault(pair["planned"], []).append(pair["actual"])
+        shadow_by_code.setdefault(pair["actual"], []).append(pair["planned"])
+    if shadow_pairs:
+        described = "；".join(f"{p['planned']} ↔ {p['actual']}" for p in shadow_pairs)
+        warnings.append(f"发现 {len(shadow_pairs)} 组疑似同一能力（仅编码写法不同）："
+                        f"{described}；仅提示，不自动合并。")
+
     commits_by_code: dict[str, list[str]] = {}
     for commit in git_trace.get("commits", []):
         for code in commit.get("cap_codes", []):
@@ -100,6 +129,10 @@ def build(target: Path, registry: dict, ledger: dict, target_arch: dict | None,
                 status, gaps = "aligned", []
             if live.get("evidence_tier") == "declared" and level >= 3:
                 gaps.append("证据仍为声明级，需通过的测试报告")
+        shadows = sorted(set(shadow_by_code.get(code, [])))
+        if shadows:
+            gaps.append("疑似同一能力：" + "；".join(shadows)
+                        + " 仅编码写法不同，人工确认后统一")
         art = artifact_paths(live or {})
         comparison.append({
             "code": code,
@@ -118,6 +151,8 @@ def build(target: Path, registry: dict, ledger: dict, target_arch: dict | None,
             "entry_ids": sorted({x.get("id") for x in ((live or {}).get("doc_index", {}) or {})
                                  .get("decisions", []) if isinstance(x, dict) and x.get("id")}),
             "commits": sorted(set(commits_by_code.get(code, []))),
+            "shadow_match": shadows[0] if shadows else None,
+            "shadow_matches": shadows,
             "gaps": [g for g in gaps if g],
         })
 
@@ -164,7 +199,8 @@ def build(target: Path, registry: dict, ledger: dict, target_arch: dict | None,
                               "planned_only", "actual_only")}
     summary.update({"planned": len(plan_by_code), "actual": len(actual_by_code),
                     "gaps": sum(1 for r in comparison if r["gaps"]),
-                    "with_commits": sum(1 for r in comparison if r["commits"])})
+                    "with_commits": sum(1 for r in comparison if r["commits"]),
+                    "shadow_pairs": len(shadow_pairs)})
     return {
         "schema": "graph-diff/1",
         "project": {
@@ -198,7 +234,8 @@ def render_report(diff: dict) -> str:
         f"git：{diff['sources']['git']}。",
         "",
         f"对齐 {s['aligned']} / 进行中 {s['in_progress']} / 未启动 {s['not_started']} / "
-        f"仅规划 {s['planned_only']} / 仅实际 {s['actual_only']}。",
+        f"仅规划 {s['planned_only']} / 仅实际 {s['actual_only']} / "
+        f"疑似同码 {s['shadow_pairs']}（仅提示）。",
         "",
         "## 能力比对",
         "",

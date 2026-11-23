@@ -17,9 +17,9 @@ import re
 import sys
 from pathlib import Path
 
-from trace_common import load_json, rel_path, write_if_absent
+from trace_common import (STRICT_CODE_RE, canonical_code, iter_code_candidates,
+                          load_json, rel_path, write_if_absent)
 
-CODE_RE = re.compile(r"\b([A-Z][A-Z0-9]*)\.([A-Z][A-Z0-9]*)\.([A-Z][A-Z0-9]*)\.(\d{2})\b")
 DEP_RE = re.compile(r"依赖\s*[:：]\s*((?:[A-Z][A-Z0-9]*\.){3}\d{2}(?:\s*[,，、]\s*(?:[A-Z][A-Z0-9]*\.){3}\d{2})*)")
 TARGET_RE = re.compile(r"目标\s*[:：]\s*L([0-5])")
 
@@ -45,30 +45,42 @@ def build(target: Path, docs_dir: Path, registry: dict) -> dict:
         warnings.append("未发现文档；目标架构为空，请先运行 rebuild_docs.py 或手工写规划文档。")
 
     codes: dict[str, dict] = {}
+
+    def valid_code(src: str, lineno: int, token: str) -> str:
+        """唯一抽码口径：候选先过严格 codec，非法则给出可操作的改法并 fail-closed。"""
+        if STRICT_CODE_RE.fullmatch(token):
+            return token
+        suggestion = canonical_code(token)
+        hint = suggestion or "大写四段式，段内只用字母/数字，序号两位"
+        raise ValueError(f"{src}:{lineno} 发现非四段式能力码 {token}；"
+                         f"请改为 {hint}（registry_codec 是唯一 codec）")
+
     for src, text in texts.items():
-        for m in CODE_RE.finditer(text):
-            code = m.group(0)
+        lines = text.splitlines()
+        for lineno, token in iter_code_candidates(text):
+            code = valid_code(src, lineno, token)
             entry = codes.setdefault(code, {"code": code, "sources": [], "name": "",
                                             "depends_on": [], "target_level": None})
             if src not in entry["sources"]:
                 entry["sources"].append(src)
-            for line in text.splitlines():
+            for line in lines:
                 if code in line and (tl := TARGET_RE.search(line)):
                     entry["target_level"] = f"L{tl.group(1)}"
             # 表格行中的第二列常是能力名
-            row = next((l for l in text.splitlines() if l.startswith("| " + code + " |")), "")
+            row = next((l for l in lines if l.startswith("| " + code + " |")), "")
             if row:
                 cells = [c.strip() for c in row.strip("|").split("|")]
                 if len(cells) > 2 and cells[2] and not entry["name"]:
                     entry["name"] = cells[2]
         for dep in DEP_RE.finditer(text):
             parent = None
-            for m in CODE_RE.finditer(text[:dep.start()]):
-                parent = m.group(0)
+            for _, token in iter_code_candidates(text[:dep.start()]):
+                candidate = valid_code(src, 1, token)
+                if candidate in codes:
+                    parent = candidate
             if parent and parent in codes:
-                found = CODE_RE.findall(dep.group(1))
-                for a, b, c, n in found:
-                    child = f"{a}.{b}.{c}.{n}"
+                for _, token in iter_code_candidates(dep.group(1)):
+                    child = valid_code(src, 1, token)
                     if child != parent and child not in codes[parent]["depends_on"]:
                         codes[parent]["depends_on"].append(child)
 
@@ -79,22 +91,27 @@ def build(target: Path, docs_dir: Path, registry: dict) -> dict:
         goals = [f"覆盖能力 {len(codes)} 项（由文档编码推断）"] if codes else []
 
     modules: dict[str, dict] = {}
-    map_text = next((v for k, v in texts.items() if k.endswith("MODULE_MAP.md")), "")
-    for line in map_text.splitlines():
+    map_src = next((k for k in texts if k.endswith("MODULE_MAP.md")), "MODULE_MAP.md")
+    map_text = texts.get(map_src, "")
+    for lineno, line in enumerate(map_text.splitlines(), 1):
         if not line.startswith("| "):
             continue
         cells = [c.strip() for c in line.strip("|").split("|")]
         if len(cells) < 4 or not re.fullmatch(r"[A-Z][A-Z0-9]*", cells[0]) or cells[0] == "模块":
             continue
         mcode, name, src, cap_cells = cells[0], cells[1], cells[2], cells[3]
+        if cap_cells.strip() in ("", "（无）", "—", "-"):
+            # 能力列留空是合法的人写缺口：从同一份文档已抽取的编码按模块回退。
+            caps = [c["code"] for c in codes.values()
+                    if c["code"].split(".")[1] == mcode]
+        else:
+            caps = [valid_code(map_src, lineno, token)
+                    for _, token in iter_code_candidates(cap_cells)]
         modules[mcode] = {
             "code": mcode, "name": name,
             "src": [x.strip("` ") for x in src.split(",") if x.strip() and x.strip() != "（无）"],
-            "caps": [c["code"] for c in codes.values()
-                     if c["code"].split(".")[1] == mcode] if cap_cells == "" else
-                    CODE_RE.findall(cap_cells.replace("(", "").replace(")", "")),
+            "caps": caps,
         }
-        modules[mcode]["caps"] = [f"{a}.{b}.{c}.{n}" for a, b, c, n in modules[mcode]["caps"]]
 
     if not modules and codes:
         for code, info in codes.items():
@@ -139,7 +156,11 @@ def main(argv: list[str] | None = None) -> int:
     gov = target / "governance"
     reg_path = gov / "registry.json"
     registry = load_json(reg_path, "registry") if reg_path.exists() else {}
-    result = build(target, docs, registry)
+    try:
+        result = build(target, docs, registry)
+    except ValueError as exc:
+        print(str(exc), file=sys.stderr)
+        return 2
     out = Path(args.out).expanduser().resolve() if args.out else gov / "TARGET_ARCHITECTURE.json"
 
     if not args.dry_run:

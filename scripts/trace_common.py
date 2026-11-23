@@ -6,13 +6,23 @@
 from __future__ import annotations
 
 import json
+import re
 import sys
 from pathlib import Path
 
 # v2.0.1：可追溯投影器只消费唯一 registry codec，不再裸拼五段码。
 _TEMPLATES = Path(__file__).resolve().parents[1] / "templates"
 sys.path.insert(0, str(_TEMPLATES))
+from registry_codec import CODE_RE as STRICT_CODE_RE  # noqa: E402
 from registry_codec import iter_caps as registry_iter_caps  # noqa: E402
+
+# 候选码比严格 codec 宽：允许段内下划线/连字符和一位序号，供 fail-closed 提示与
+# shadow 对齐使用；真正落盘的合法码仍以 registry_codec.CODE_RE 为唯一判据。
+CODE_CANDIDATE_RE = re.compile(
+    r"(?<![A-Za-z0-9_])"
+    r"([A-Za-z][A-Za-z0-9_-]*(?:\.[A-Za-z][A-Za-z0-9_-]*){2}\.\d{1,2})"
+    r"(?![A-Za-z0-9_])"
+)
 
 
 def load_json(path: Path, label: str = "文件") -> dict:
@@ -23,6 +33,36 @@ def load_json(path: Path, label: str = "文件") -> dict:
     if not isinstance(data, dict):
         raise SystemExit(f"{label}必须是 JSON 对象：{path}")
     return data
+
+
+def iter_code_candidates(text: str):
+    """逐行产出 (行号, 候选码)；候选合法与否由 STRICT_CODE_RE 决定。"""
+    for lineno, line in enumerate(text.splitlines(), 1):
+        for match in CODE_CANDIDATE_RE.finditer(line):
+            yield lineno, match.group(1)
+
+
+def canonical_code(code: str) -> str | None:
+    """把同义异码归一成用于 shadow 对齐的键，不用于落盘、不替代严格 codec。
+
+    只做两件确定性的事：段内去掉非字母数字（``PRICE_02`` → ``PRICE02``），
+    序号补零（``.2`` → ``.02``）。返回 None 表示无法安全归一。
+    """
+    parts = str(code or "").strip().split(".")
+    if len(parts) != 4:
+        return None
+    cleaned: list[str] = []
+    for index, part in enumerate(parts):
+        value = re.sub(r"[^A-Za-z0-9]", "", part).upper()
+        if not value:
+            return None
+        if index == 3:
+            if not value.isdigit():
+                return None
+            value = f"{int(value):02d}"
+        cleaned.append(value)
+    candidate = ".".join(cleaned)
+    return candidate if STRICT_CODE_RE.fullmatch(candidate) else None
 
 
 def rel_path(path: str | Path, root: Path) -> str:
