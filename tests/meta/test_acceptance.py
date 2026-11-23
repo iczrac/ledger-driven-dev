@@ -24,7 +24,7 @@ from acceptance import (AXIS_KEYS, TOKEN, build, check_derived, classify,  # noq
                         roadmap_consistency, scan_literals, to_int)
 
 EXPECT = {"axis": 7, "pre_steps": 1, "post_steps": 19,
-          "verify_checks": 12, "gate_criteria": 9}
+          "verify_checks": 12, "gate_criteria": 9, "invariants": 31}
 
 
 def source_version() -> str:
@@ -49,6 +49,8 @@ class ConstantsTest(unittest.TestCase):
         self.assertEqual(c["version"], source_version())
         self.assertEqual(len(c["verify_ids"]), 12)
         self.assertEqual(len(c["gate_ids"]), 9)
+        self.assertEqual(len(c["invariant_ids"]), 31)
+        self.assertIn("verify_ledger.py", c["basis"])
         self.assertEqual(len(AXIS_KEYS), 7)
         src = (ROOT / "scripts" / "upgrade.py").read_text(encoding="utf-8")
         for key in AXIS_KEYS:
@@ -77,6 +79,25 @@ class ConstantsTest(unittest.TestCase):
             self.assertEqual(c["version"], "9.9.9")
             # POST_UPGRADE 末尾追加一步后应为 20；若源码替换未命中则说明夹具失效
             self.assertEqual(c["expect"]["post_steps"], 20)
+
+    def test_invariant_count_follows_verify_source(self):
+        """第 31 条来自 verify_ledger.py 的 add() 去重 id，不是 acceptance 里的手抄常量。"""
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            (root / "scripts").mkdir()
+            (root / "templates").mkdir()
+            (root / "scripts" / "upgrade.py").write_text(
+                (ROOT / "scripts" / "upgrade.py").read_text(encoding="utf-8"), encoding="utf-8")
+            vsrc = (ROOT / "templates" / "verify_ledger.py").read_text(encoding="utf-8")
+            marker = '    add("entry_ids_unique"'
+            self.assertIn(marker, vsrc, "夹具失效：找不到 verify_ledger 的首个 add()")
+            mutated = vsrc.replace(marker,
+                                   '    add("fixture_extra", True, "fixture")\n' + marker, 1)
+            (root / "templates" / "verify_ledger.py").write_text(mutated, encoding="utf-8")
+
+            c = constants(root)
+            self.assertEqual(c["expect"]["invariants"], 32)
+            self.assertIn("fixture_extra", c["invariant_ids"])
 
     def test_chinese_and_arabic_numerals(self):
         self.assertEqual(to_int("六"), 6)
@@ -120,16 +141,31 @@ class LiteralScanTest(unittest.TestCase):
                              {"axis", "post_steps", "verify_checks", "gate_criteria"})
             self.assertTrue(all(x["expected"] == EXPECT[x["kind"]] for x in r["drifts"]))
 
+    def test_invariant_count_drift_is_named(self):
+        """回归：README 的「30 条不变量」必须被 literal_drift 点名，不再因「条」不在词表而漏网。"""
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            self._mini(root, "verify_ledger.py 机器化 31 条不变量\n")
+            self.assertEqual(scan_literals(root, EXPECT)["drift_count"], 0)
+            self._mini(root, (root / "docs" / "01-test.md").read_text(encoding="utf-8")
+                       + "\n旧文档仍写 30 条不变量\n")
+            r = scan_literals(root, EXPECT)
+            self.assertEqual(r["drift_count"], 1, r["drifts"])
+            self.assertEqual(r["drifts"][0]["kind"], "invariants")
+            self.assertEqual(r["drifts"][0]["actual"], 30)
+            self.assertEqual(r["drifts"][0]["expected"], 31)
+
     def test_historical_statements_are_review_not_failure(self):
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)
             self._mini(root,
                        "`upgrade.py` 从版本五轴扩到**六轴**（新增 `installed_assets`）\n"
                        "迁移 M1–M6 → **M1–M8**，`post_upgrade` 11 → **18 步**，verify 9 → **11 项**\n"
-                       "| U1 | 版本三轴（v1.1.0 起五轴，v1.2.0 起六轴）+ post_upgrade 8 步（现 18 步） |\n")
+                       "| U1 | 版本三轴（v1.1.0 起五轴，v1.2.0 起六轴）+ post_upgrade 8 步（现 18 步） |\n"
+                       "账本不变量 30 → 31 条不变量（v2.16.0 起）\n")
             r = scan_literals(root, EXPECT)
             self.assertEqual(r["drift_count"], 0, r["drifts"])
-            self.assertGreaterEqual(r["review_count"], 4)
+            self.assertGreaterEqual(r["review_count"], 5)
             # 同一棵树里加一句无版本限定的当前陈述，必须重新变成硬失败
             self._mini(root,
                        (root / "docs" / "01-test.md").read_text(encoding="utf-8")
@@ -147,6 +183,10 @@ class LiteralScanTest(unittest.TestCase):
             "`scenario-preflight/1`：facts、14 项 checks（pass/warn/block）",
             "1 步升级前基线与 19 步升级后 SOP",
             "第 12–18 步是 v1.2.0 新增的七步",
+            "需求池有 30 条待澄清条目（与账本不变量无关）",
+            "第 30 条不变量是 goal_loop_valid，属序号不是总数",
+            "对应第 28/29 条不变量与对应测试一并更新",
+            "工作态子集只调用 3 条不变量做自洽校验",
         ]
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)
@@ -166,6 +206,7 @@ class LiteralScanTest(unittest.TestCase):
         self.assertIn(("post_steps", 18), hits("按 post_upgrade 的 18 步重新取证"))
         self.assertIn(("verify_checks", 11), hits("11 项 checks"))
         self.assertIn(("gate_criteria", 8), hits("八项全 pass"))
+        self.assertIn(("invariants", 31), hits("verify_ledger.py 校验 31 条不变量"))
 
 
 class DerivedTest(unittest.TestCase):

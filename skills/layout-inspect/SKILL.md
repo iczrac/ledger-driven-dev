@@ -80,7 +80,7 @@ unexpected 非空  → 不要直接删；先确认是不是人工报告，裁决
 
 ## 边界
 
-- 只判断「文件在不在、有没有越界」，**不判断内容真实性**：内容靠 24 条不变量与场景预检。
+- 只判断「文件在不在、有没有越界」，**不判断内容真实性**：内容靠 31 条不变量与场景预检。
 - 不搬迁、不重命名、不删除任何项目文件；`--diff` 全程只读。
 - 方法论仓库的 `experts/` / `skills/` / `scripts/` / `docs/01-21` 不属于被治理项目，不要在目标项目里找它们；整包摘要进 `governance_meta.method_assets`。v1.2.0 起例外是 M7 安装的**只读副本** `.workbuddy/`，由 `ASSET_MANIFEST.json` 与 `installed_assets` 绑定，`--diff` 标为 `on-demand`（不出现也正常）。
 - `.ledger-upgrade/` 与 `.ledger-write.lock` 是运行时层（升级备份 / 写入互斥），不在 `governance/`，不是事实源。

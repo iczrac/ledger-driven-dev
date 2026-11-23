@@ -73,7 +73,7 @@ HANDOFF   交回 expert-router，附 method_version / audit 条数 / 残差
   逐文件副本摘要任一漂移，`verify` 的 `method_assets` / `board_skeleton` /
   `installed_assets` 变 warn，`upgrade_complete=false`；资产/版面/可用性不是装饰。
 - `work_panel.py check` 与 `test_modules.py --check` 是 M8 / 测试架构的复验项；
-  手填 `test_results.source_sha256` 会被 24 条不变量中的 `test_results_binding_valid` 拦下。
+  手填 `test_results.source_sha256` 会被 31 条不变量中的 `test_results_binding_valid` 拦下。
 - `scale_budget.py` 只读报预算，超阈值由人决定拆项目或归档；AI 不得静默降级或删历史。
 
 ## 交接卡模板

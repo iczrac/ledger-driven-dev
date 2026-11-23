@@ -49,6 +49,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 SCHEMA = "acceptance/1"
 UPGRADE = "scripts/upgrade.py"
+VERIFY_LEDGER = "templates/verify_ledger.py"
 
 # governance_meta 的七个版本轴。这是「契约声明」，由 constants() 自检每个键
 # 确实被 upgrade.py 消费，避免变成凭空手写的第二份清单。
@@ -122,7 +123,7 @@ L7_ANCHORS = ("registry/2", "dual_read", "stable_code", "single_codec")
 
 CN = {"零": 0, "一": 1, "二": 2, "三": 3, "四": 4, "五": 5,
       "六": 6, "七": 7, "八": 8, "九": 9}
-TOKEN = re.compile(r"([0-9]+|[一二三四五六七八九十]+)\s*(轴|步|项)")
+TOKEN = re.compile(r"([0-9]+|[一二三四五六七八九十]+)\s*(轴|步|项|条)")
 VERSION_RE = re.compile(r"v?\d+\.\d+\.\d+")
 EVOLVE_RE = re.compile(
     r"扩到|起[一二三四五六七八九十0-9]+轴|新增的|从版本|曾为|旧版"
@@ -198,13 +199,33 @@ def constants(root: Path = ROOT) -> dict:
                                          if isinstance(e, ast.Constant)
                                          and isinstance(e.value, str)}
 
-    basis_errors = []
+    # 不变量条数来自 verify_ledger.py 的 add() 去重 id：分支里的同名检查只算一条，
+    # 新增不变量时无需改本检测器（避免 README / check.sh 手抄形成第二事实源）。
+    invariant_ids: set[str] = set()
+    basis_errors: list[str] = []
+    vpath = root / VERIFY_LEDGER
+    if not vpath.is_file():
+        basis_errors.append(f"缺少 {VERIFY_LEDGER}，无法派生不变量条数")
+    else:
+        try:
+            vtree = ast.parse(vpath.read_text(encoding="utf-8"))
+            for sub in ast.walk(vtree):
+                if (isinstance(sub, ast.Call) and isinstance(sub.func, ast.Name)
+                        and sub.func.id == "add" and sub.args
+                        and isinstance(sub.args[0], ast.Constant)
+                        and isinstance(sub.args[0].value, str)):
+                    invariant_ids.add(sub.args[0].value)
+        except (OSError, SyntaxError, ValueError):
+            invariant_ids = set()
+            basis_errors.append(f"无法从 {VERIFY_LEDGER} AST 抽取不变量 id")
+
     for key in AXIS_KEYS:
         if key not in src:
             basis_errors.append(f"轴 {key} 未被 upgrade.py 消费，契约声明失效")
     for label, val in (("version", version), ("pre_steps", pre_steps),
                        ("post_steps", post_steps), ("verify_checks", len(verify_ids) or None),
-                       ("gate_criteria", len(gate_ids) or None)):
+                       ("gate_criteria", len(gate_ids) or None),
+                       ("invariants", len(invariant_ids) or None)):
         if val is None:
             basis_errors.append(f"无法从 AST 抽取 {label}")
 
@@ -212,11 +233,13 @@ def constants(root: Path = ROOT) -> dict:
         "version": version,
         "expect": {"axis": len(AXIS_KEYS), "pre_steps": pre_steps,
                    "post_steps": post_steps, "verify_checks": len(verify_ids),
-                   "gate_criteria": len(gate_ids)},
+                   "gate_criteria": len(gate_ids), "invariants": len(invariant_ids)},
         "verify_ids": sorted(verify_ids), "gate_ids": sorted(gate_ids),
+        "invariant_ids": sorted(invariant_ids),
         "post_upgrade_cmds": post_cmds,
         "basis": f"{UPGRADE} AST：METHOD_VERSION / PRE_UPGRADE / POST_UPGRADE 长度 / "
-                 f"verify() 内 add() 去重 id / c['id'] in (...) 判据元组",
+                 f"verify() 内 add() 去重 id / c['id'] in (...) 判据元组；"
+                 f"{VERIFY_LEDGER} AST：add() 去重 id（不变量条数）",
         "basis_errors": basis_errors,
     }
 
@@ -259,6 +282,16 @@ def classify(line: str, m: re.Match) -> tuple[str, int] | None:
             return ("verify_checks", n)
         if re.search(r"upgrade_complete|全\s*`?pass|全部\s*`?pass", local):
             return ("gate_criteria", n)
+    if unit == "条":
+        # 只认「N 条（账本）不变量」这类当前总数陈述：
+        # 排除「第 N 条」序号、小于 20 的子集计数，以及「30 条待澄清条目」。
+        if not str(m.group(1)).isdigit() or n < 20:
+            return None
+        if re.search(r"第\s*(?:\d+\s*[/\-–]\s*)*$", line[:m.start()]):
+            return None
+        if not re.match(r"(?:账本|的)?不变量", line[m.end():]):
+            return None
+        return ("invariants", n)
     return None
 
 
@@ -905,7 +938,8 @@ def render(result: dict, full: bool = False) -> str:
              f"pre={result['constants']['pre_steps']} "
              f"post={result['constants']['post_steps']} "
              f"verify={result['constants']['verify_checks']} "
-             f"判据={result['constants']['gate_criteria']}",
+             f"判据={result['constants']['gate_criteria']} "
+             f"不变量={result['constants']['invariants']}",
              f"依据：{result['basis']}"]
     for c in result["checks"]:
         lines.append(f"  [{c['status'].upper():4}] {c['id']}")

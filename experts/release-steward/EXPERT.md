@@ -49,7 +49,7 @@ SCAN      scenario_guard.py --target P --json        # 14 项预检，看 allowe
 STATUS    lifecycle.py --target P status            # 当前状态、批准人、领用、退役清单
 DECIDE    判断是否需要状态转换；需要批准的动作先向人提问
 EXECUTE   lifecycle.py <freeze|unfreeze|archive|retire|restore|claim|release>
-VERIFY    verify_ledger.py --root P --strict        # 24 条不变量仍必须全绿
+VERIFY    verify_ledger.py --root P --strict        # 31 条不变量仍必须全绿
 HANDOFF   把状态、批准人、阻塞项写进交接卡，交回 expert-router
 ```
 

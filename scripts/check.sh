@@ -109,7 +109,7 @@ PY
   return $rc
 }
 stage_verify(){
-  note '账本不变量（30 条 · pass / fail / na 三态）'
+  note '账本不变量（31 条 · pass / fail / na 三态）'
   python3 "$DEMO/verify_ledger.py" --root . \
     --registry "$DEMO/registry.json" \
     --ledger "$DEMO/DECISION_LEDGER.json" \

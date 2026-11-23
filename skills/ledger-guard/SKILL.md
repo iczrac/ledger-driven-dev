@@ -1,7 +1,7 @@
 ---
 name: ledger-guard
 description: |
-  统一质量门禁：一条命令跑完单元测试、24 条账本不变量、生成器幂等、看板 EMBED 一致、
+  统一质量门禁：一条命令跑完单元测试、31 条账本不变量、生成器幂等、看板 EMBED 一致、
   模板与示例同步、脱敏扫描。提交前、CI、发布前都用它，不允许只跑其中一部分。
   Triggers: "提交前检查", "全量验证", "CI", "发布前检查", "check",
   "测试都过了吗", "门禁", "guard", "quality gate"
@@ -37,7 +37,7 @@ bash scripts/check.sh
 
 # 等价的显式分解（排错时用）
 python3 -m unittest discover -s tests -v          # 1. 单元与集成测试
-python3 governance/verify_ledger.py --root . --strict   # 2. 24 条不变量
+python3 governance/verify_ledger.py --root . --strict   # 2. 31 条不变量
 bash scripts/check.sh --only-idempotence           # 3. 连续重跑幂等
 ```
 

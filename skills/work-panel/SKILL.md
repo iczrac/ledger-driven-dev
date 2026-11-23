@@ -46,7 +46,7 @@ python3 scripts/work_panel.py --target P add --kind todo \
     --apply --approved-by "审批人姓名" --json
 python3 scripts/work_panel.py --target P close --id W-TODO-001 \
     --apply --approved-by "审批人姓名" --json
-cd P && python3 governance/verify_ledger.py --root . --strict   # 24 条不变量
+cd P && python3 governance/verify_ledger.py --root . --strict   # 31 条不变量
 ```
 
 所有写动作默认 dry-run；`--apply` 必须 `--approved-by`。写盘走
@@ -64,7 +64,7 @@ cd P && python3 governance/verify_ledger.py --root . --strict   # 24 条不变�
 ## 禁止
 
 - 手改 `work_items` / `test_results` 或看板 HTML 里的数值；
-- 为了让徽章变绿手填 `source_sha256`（24 条不变量里 `test_results_binding_valid` 会拦）；
+- 为了让徽章变绿手填 `source_sha256`（31 条不变量里 `test_results_binding_valid` 会拦）；
 - 把 TODO 写进聊天记录、issue 系统或第二份 Markdown 台账；
 - 删除 `history.events` 或旧工作项来「减小体积」（append-only 是历史可信前提）。
 
