@@ -24,6 +24,9 @@ try:
 except ImportError:  # 单独复制脚本到项目时使用
     route_build = None  # type: ignore[assignment]
 
+# warnings 是人读摘要，避免几十组同义异码把 stdout 撑爆；JSON 保留全量 pairs。
+MAX_WARN_SHADOW_PAIRS = 5
+
 
 def _short_module(code: str) -> str:
     parts = str(code).split(".")
@@ -98,7 +101,10 @@ def build(target: Path, registry: dict, ledger: dict, target_arch: dict | None,
         shadow_by_code.setdefault(pair["planned"], []).append(pair["actual"])
         shadow_by_code.setdefault(pair["actual"], []).append(pair["planned"])
     if shadow_pairs:
-        described = "；".join(f"{p['planned']} ↔ {p['actual']}" for p in shadow_pairs)
+        shown = shadow_pairs[:MAX_WARN_SHADOW_PAIRS]
+        described = "；".join(f"{p['planned']} ↔ {p['actual']}" for p in shown)
+        if len(shadow_pairs) > len(shown):
+            described += f"；其余 {len(shadow_pairs) - len(shown)} 组见 JSON.shadow_pairs"
         warnings.append(f"发现 {len(shadow_pairs)} 组疑似同一能力（仅编码写法不同）："
                         f"{described}；仅提示，不自动合并。")
 
@@ -218,6 +224,7 @@ def build(target: Path, registry: dict, ledger: dict, target_arch: dict | None,
             "actual": [{"code": k, **v} for k, v in sorted(actual_modules.items())],
         },
         "comparison": comparison,
+        "shadow_pairs": shadow_pairs,
         "summary": summary,
         "execution_order": execution_order,
         "overall_expert": overall,
@@ -248,6 +255,12 @@ def render_report(diff: dict) -> str:
             f"{', '.join(r['entry_ids']) or '—'} | {', '.join(r['commits']) or '—'} | "
             f"{'；'.join(r['gaps']) or '—'} |"
         )
+    if diff.get("shadow_pairs"):
+        lines.extend(["", "## 疑似同一能力", "",
+                      "> 仅编码写法不同；状态与专家分派仍按字面码，须人工确认后统一。", "",
+                      "| 归一键 | 规划码 | 实际码 |", "|---|---|---|"])
+        for pair in diff["shadow_pairs"]:
+            lines.append(f"| {pair['canonical']} | {pair['planned']} | {pair['actual']} |")
     lines.extend(["", "## 开发顺序（专家规划）", "",
                   "| 序 | 编码 | 跃迁 | 动作 | 专家 | 前置 |", "|---|---|---|---|---|---|"])
     for e in diff["execution_order"]:

@@ -199,7 +199,8 @@ def constants(root: Path = ROOT) -> dict:
                                          if isinstance(e, ast.Constant)
                                          and isinstance(e.value, str)}
 
-    # 不变量条数来自 verify_ledger.py 的 add() 去重 id：分支里的同名检查只算一条，
+    # 不变量条数来自 verify_ledger.py 的 verify() 内 add() 去重 id：分支里的同名
+    # 检查只算一条，模块层/辅助函数里的 add() 不算（避免夹具或日志调用污染权威计数）。
     # 新增不变量时无需改本检测器（避免 README / check.sh 手抄形成第二事实源）。
     invariant_ids: set[str] = set()
     basis_errors: list[str] = []
@@ -209,12 +210,18 @@ def constants(root: Path = ROOT) -> dict:
     else:
         try:
             vtree = ast.parse(vpath.read_text(encoding="utf-8"))
-            for sub in ast.walk(vtree):
-                if (isinstance(sub, ast.Call) and isinstance(sub.func, ast.Name)
-                        and sub.func.id == "add" and sub.args
-                        and isinstance(sub.args[0], ast.Constant)
-                        and isinstance(sub.args[0].value, str)):
-                    invariant_ids.add(sub.args[0].value)
+            verify_ledger_fn = next((n for n in vtree.body
+                                     if isinstance(n, ast.FunctionDef)
+                                     and n.name == "verify"), None)
+            if verify_ledger_fn is None:
+                basis_errors.append(f"{VERIFY_LEDGER} 缺少 verify()，无法界定不变量权威范围")
+            else:
+                for sub in ast.walk(verify_ledger_fn):
+                    if (isinstance(sub, ast.Call) and isinstance(sub.func, ast.Name)
+                            and sub.func.id == "add" and sub.args
+                            and isinstance(sub.args[0], ast.Constant)
+                            and isinstance(sub.args[0].value, str)):
+                        invariant_ids.add(sub.args[0].value)
         except (OSError, SyntaxError, ValueError):
             invariant_ids = set()
             basis_errors.append(f"无法从 {VERIFY_LEDGER} AST 抽取不变量 id")
@@ -239,7 +246,7 @@ def constants(root: Path = ROOT) -> dict:
         "post_upgrade_cmds": post_cmds,
         "basis": f"{UPGRADE} AST：METHOD_VERSION / PRE_UPGRADE / POST_UPGRADE 长度 / "
                  f"verify() 内 add() 去重 id / c['id'] in (...) 判据元组；"
-                 f"{VERIFY_LEDGER} AST：add() 去重 id（不变量条数）",
+                 f"{VERIFY_LEDGER} AST：verify() 内 add() 去重 id（不变量条数）",
         "basis_errors": basis_errors,
     }
 

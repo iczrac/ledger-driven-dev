@@ -99,6 +99,26 @@ class ConstantsTest(unittest.TestCase):
             self.assertEqual(c["expect"]["invariants"], 32)
             self.assertIn("fixture_extra", c["invariant_ids"])
 
+    def test_invariant_ids_only_come_from_verify_function(self):
+        """add() 出现在模块层或辅助函数里不算不变量；权威是 verify() 的 add()。"""
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            (root / "scripts").mkdir()
+            (root / "templates").mkdir()
+            (root / "scripts" / "upgrade.py").write_text(
+                (ROOT / "scripts" / "upgrade.py").read_text(encoding="utf-8"), encoding="utf-8")
+            vsrc = (ROOT / "templates" / "verify_ledger.py").read_text(encoding="utf-8")
+            marker = "def verify("
+            self.assertIn(marker, vsrc, "夹具失效：找不到 verify() 定义")
+            mutated = vsrc.replace(
+                marker,
+                'add("fixture_outside", True, "fixture")\n\n' + marker, 1)
+            (root / "templates" / "verify_ledger.py").write_text(mutated, encoding="utf-8")
+
+            c = constants(root)
+            self.assertEqual(c["expect"]["invariants"], 31)
+            self.assertNotIn("fixture_outside", c["invariant_ids"])
+
     def test_chinese_and_arabic_numerals(self):
         self.assertEqual(to_int("六"), 6)
         self.assertEqual(to_int("18"), 18)

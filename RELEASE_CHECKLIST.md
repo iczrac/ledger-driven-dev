@@ -564,3 +564,21 @@ E7 `cardinality_contradiction`（`ontology.py check --target P` 仍 `ok=false`�
   残留）由方法仓侧 `asset_bundle verify` 才能发现；
 - no_impl 能力（声明了测试但 impl 为空）只告警不阻断——映射修正属人批准
   迁移，本版不动 registry 数据。
+
+## v2.20.0 发布检查（证据口径收口 / shadow 可解释 / 不变量派生）
+
+> 由来：四项疑似缺陷先独立复现再判定，A/B/C 部分成立、D 已证实；共同根因是权威源与消费端断开，而非“写得不够多”。
+
+- [x] **判定与分提交**：A `ad13c5d`、B `8c0bc62`、C `8abd095`、D `494f62d`，每笔提交写明判定与复现依据；未放宽既有判据，未改 `feedback/`，未加第三方依赖。
+- [x] **发布前完善**：`shadow_pairs` 从 warning 文案升级为 JSON 全量对 + 人读报告独立小节；warnings 只显示前 5 组并指向 JSON。`acceptance.constants` 只从 `verify_ledger.py::verify()` 内 `add()` 派生不变量，排除模块层/辅助函数污染。新增 2 条专项测试。
+- [x] **权威源重绑**：`METHOD_VERSION=2.20.0`；按官方 upgrade 流程执行 M3/M4/M5/M7 与同版 M5 增量重绑，`method_assets=5c1e275a20b4e337`、`installed_assets=145683f532bc89ab`、`ontology_digest=72b9e5bb96da3ad0`；自举账本与看板 EMBED 同步。
+- [x] **全量门禁**：`bash scripts/check.sh` EXIT=0，16 阶段全绿；单测 473/473（绑定 38 个测试文件）；验收契约 full / preconditions 均 PASS；literal_drift 扫描 108 文件、0 漂移、10 处历史复核；31 条不变量 28 pass / 0 fail / 3 na。
+- [x] **`feedback_closed = 7`**：`feedback/observations.jsonl` 13 行，7 closed / 6 open；本次未新增或改写观察包。
+- [x] **发版**：附注 tag `v2.20.0` + push `origin/main` 与 tag；GitHub Release `v2.20.0` 以本版 CHANGELOG 为说明。
+
+### 本版边界（不掩盖）
+
+- shadow 只提示同义异码，不自动合并；是否合并/废弃仍由人工裁决。
+- `run_tests.py --source-dir` 是显式 opt-in；缺省仍只绑定测试文件，源码变更不会让旧报告过期。
+- `literal_drift` 对“不变量条数”保留「第 N 条」序号与小于 20 的子集计数排除，避免把历史序号误判成当前总数；真正权威仍是 `verify()` 派生值。
+- 方法仓自举已重绑；主仓推广仍需单独批准，不在本版范围内。

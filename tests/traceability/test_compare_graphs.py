@@ -123,6 +123,32 @@ class CompareGraphsTest(unittest.TestCase):
             self.assertEqual(ordered["expert"], "ledger-steward")
             self.assertIn("疑似同一能力", "；".join(actual["gaps"]))
 
+    def test_shadow_pairs_are_machine_readable_and_report_visible(self):
+        """shadow 不能只藏在 warnings 文案里：JSON 给全量对，人读报告给独立小节。"""
+        with demo_copy() as (tmp, _ledger, _reg, _board):
+            proj = tmp / "examples" / "demo-shop"
+            prepare(proj)
+            arch = proj / "governance" / "TARGET_ARCHITECTURE.json"
+            led = proj / "governance" / "DECISION_LEDGER.json"
+            arch.write_text(arch.read_text(encoding="utf-8")
+                            .replace("DEMO.CORE.PRICE.02", "DEMO.CORE.PRICE_02.02"),
+                            encoding="utf-8")
+            led.write_text(led.read_text(encoding="utf-8")
+                           .replace("DEMO.CORE.PRICE.02", "DEMO.CORE.PRICE02.02"),
+                           encoding="utf-8")
+
+            proc = run(COMPARE, "--target", proj, "--force")
+            self.assertEqual(proc.returncode, 0, proc.stderr)
+            diff = json.loads((proj / "governance" / "GRAPH_DIFF.json").read_text(encoding="utf-8"))
+            self.assertEqual(diff["shadow_pairs"], [{
+                "canonical": "DEMO.CORE.PRICE02.02",
+                "planned": "DEMO.CORE.PRICE_02.02",
+                "actual": "DEMO.CORE.PRICE02.02",
+            }])
+            report = (proj / "docs" / "generated" / "GRAPH_DIFF.md").read_text(encoding="utf-8")
+            self.assertIn("## 疑似同一能力", report)
+            self.assertIn("DEMO.CORE.PRICE_02.02 ↔ DEMO.CORE.PRICE02.02", report)
+
     def test_outputs_are_non_destructive_and_forceable(self):
         with demo_copy() as (tmp, _ledger, _reg, _board):
             proj = tmp / "examples" / "demo-shop"

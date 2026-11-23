@@ -9,9 +9,9 @@
 - 第一性原理：本项目的承诺是“完成度不是写出来的，是从证据里算出来的”。四组现象的共同根因都是**权威源与消费端断开**：草稿码绕开 codec、测试报告不绑定源码、文档抽码另起规则、人写数字不回读校验器。因此修法是“权威处严格、比对处可解释、计数只从代码派生”，不放宽既有判据。
 - A（部分成立，commit `ad13c5d`）：`discover_project.sanitize_code` 收敛段内非字母数字字符，`init_project.py` 在 adopt 落盘前用唯一 codec 校验草稿；非法码返回 2 并报出草稿文件、原码、建议码与“四段式”口径。声称的“必须人工精简草稿”属既定设计，未采纳。
 - B（部分成立，commit `8c0bc62`）：`run_tests.py --source-dir` 把被测源码纳入 `evidence_binding.inputs`；README 改为按绑定内容陈述承诺，缺省仍只绑测试文件，避免改变既有 38 文件口径。实测仅改源码即触发 `changed:ledger_feedback.py`，verified 回落 declared。
-- C（部分成立，commit `8abd095`）：反向双报复现；畸形码并非“静默接受后落盘失败”，而是被宽松抽码静默丢弃或触发空列 unpack 崩溃。`trace_common` 统一候选扫描与四段式归一，`architect_from_docs.py` 对非法码 fail-closed 并给出文件/行号/合法写法，空能力列回退到已抽编码；`compare_graphs.py` 新增 `shadow_pairs` / `shadow_match`，同义异码仍保留 planned_only / actual_only 与专家口径，只加“疑似同一能力”提示，不自动合并。
+- C（部分成立，commit `8abd095`）：反向双报复现；畸形码并非“静默接受后落盘失败”，而是被宽松抽码静默丢弃或触发空列 unpack 崩溃。`trace_common` 统一候选扫描与四段式归一，`architect_from_docs.py` 对非法码 fail-closed 并给出文件/行号/合法写法，空能力列回退到已抽编码；`compare_graphs.py` 新增 `shadow_pairs` / `shadow_match`，同义异码仍保留 planned_only / actual_only 与专家口径，只加“疑似同一能力”提示，不自动合并。发布前完善：`shadow_pairs` 全量对进 JSON、人读报告单列小节，warnings 仅显示前 5 组并指向 JSON，避免大批量同义异码淹没摘要。
 - D（已证实，commit `494f62d`）：README 7 处写 30 条，而 `verify_ledger.py` 的 `add()` 去重后是 31 条；`literal_drift` 因词表不认“条”且 expect 无该键而漏检。现在 `expect.invariants` 由该文件的 AST 派生，词表纳入“条”但排除“第 N 条”序号与小于 20 的子集计数。新旧门禁对齐后共修正 52 处字面量（含 README 7 处与首次暴露的 24/26/27/30 条历史口径），派生文档由既有生成器重算；最终扫描 108 文件、0 漂移、10 处历史复核。`feedback/` 未改。
-- 实测代价：单测 461 → 471（+10），最终门禁内单测 471/471 passed、耗时 438 秒；版本重绑按官方升级流程执行 M3/M4/M5/M7，`method_assets` / `installed_assets` / `ontology_digest` 分别更新为 `d32a4b328b6533b8` / `145683f532bc89ab` / `72b9e5bb96da3ad0`，自举账本与看板 EMBED 同步。全量门禁 16 阶段全绿。
+- 实测代价：单测 461 → 473（+12），发布前门禁内单测 473/473 passed、耗时约 220 秒；版本重绑按官方升级流程执行 M3/M4/M5/M7 与一次同版 M5 增量重绑，`method_assets` / `installed_assets` / `ontology_digest` 最终为 `5c1e275a20b4e337` / `145683f532bc89ab` / `72b9e5bb96da3ad0`，自举账本与看板 EMBED 同步。全量门禁 16 阶段全绿；`feedback/` 未改，`feedback_closed = 7`。
 
 ## [2.19.0] - 2026-11-22
 

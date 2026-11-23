@@ -11993,6 +11993,21 @@
         "risk": "medium",
         "assets_digest": "d32a4b328b6533b8",
         "board_skeleton": "b6f5d4583cca01c6"
+      },
+      {
+        "seq": 17,
+        "at": "2026-11-23T12:49:08Z",
+        "action": "apply",
+        "from": "2.20.0",
+        "to": "2.20.0",
+        "approved_by": "user-approved-v2.20.0",
+        "migrations": [
+          "M5-method-assets"
+        ],
+        "backup": "20261123T124908Z-f21f65ec",
+        "risk": "low",
+        "assets_digest": "5c1e275a20b4e337",
+        "board_skeleton": "b6f5d4583cca01c6"
       }
     ],
     "tools": {
@@ -12012,7 +12027,7 @@
     },
     "method_assets": {
       "algorithm": "sha256-files-v1",
-      "digest": "d32a4b328b6533b8848471fa1e1212abec6fd67986f4df6064caffcf7cb721d5",
+      "digest": "5c1e275a20b4e337b3603e5b8c86c3710509dadf5a323a9aae52339ab0c2b58e",
       "file_count": 111,
       "counts": {
         "experts": 9,
