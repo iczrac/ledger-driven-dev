@@ -33,7 +33,7 @@
 10. **可升级 + 可授权** —— 治理骨架升级有人批准的 plan/备份/回滚、1 步升级前基线与 19 步升级后 SOP；多 Agent 经唯一写入网关接入，默认拒绝、最小权限、CAS、租约与 append-only 审计。
 11. **文件架构清单** —— 引入后多出哪些目录、每层归谁写、哪些能改、哪些是账本内字段，由 `file_layout.py` 定义并与产出脚本源码交叉验证；`--diff` 只读检查任意项目的现状。
 12. **资产 / 版面 / 规模契约** —— 专家与技能整包摘要绑定进账本（升级 M5），看板 CSS/DOM/JS 骨架与模板强一致（M6），大规模项目有只读预算、统一分页与可复现基准；治理层文件数不随项目规模增长。
-13. **专家 / 技能真正可用** —— 升级 M7 把 8 份 `EXPERT.md`、20 份 `SKILL.md` 以**只读部署副本**装进项目 `.workbuddy/`，逐文件摘要写进 `ASSET_MANIFEST.json` 与账本 `governance_meta.installed_assets`；路由改为真实读取资产正文，项目内手改即判 drift。权威源仍是方法论仓库，副本不是第二事实源。
+13. **专家 / 技能真正可用** —— 升级 M7 把 9 份 `EXPERT.md`、24 份 `SKILL.md` 以**只读部署副本**装进项目 `.workbuddy/`，逐文件摘要写进 `ASSET_MANIFEST.json` 与账本 `governance_meta.installed_assets`；路由改为真实读取资产正文，项目内手改即判 drift。权威源仍是方法论仓库，副本不是第二事实源。
 14. **测试按开发模块组织** —— `tests/MODULES.json` 定义开发模块与测试文件的归属（数量以该文件为准，不在文档里写死），文件内 `MODULE_ID` 自证归属，`rglob` 与 `unittest discover` 双口径交叉验证；`--target P` 能列出目标项目缺单测的能力模块。
 15. **节点工作台** —— 账本内 `work_items` / `test_results` 让每个项目、模块、组件、能力点直接显示 TODO、issue、逐用例测试结果与健康度；看板新增工作台 / 工作项两个视图和节点工作条。
 16. **本体投影** —— 18 个 `<Type>.field` 分型取值域、6 个有界上下文、7 条关系与 31 条公理从事实源确定性抽取；`ontology.py check` 抓三类漂移（同形异义 / 基数违例 / 未声明实体），`governance_meta.ontology_digest` 作为第七轴由升级 M5 绑定。派生只读、删光可复算，**不是第二事实源**；不做词表归一。`registry/2` 容器与 code 契约已由 v2.0.1 落地。
@@ -339,7 +339,7 @@ bash scripts/check.sh
 ### AI 接手：专家路由与技能
 
 - **八个专家**：`expert-router`（调度）、`greenfield-architect`（新建）、`project-archaeologist`（存量）、`ledger-steward`（账本治理）、`evidence-auditor`（只读审计）、`loop-executor`（一条任务卡的编码）、`release-steward`（冻结/归档/退役与批准门）、`platform-steward`（升级与接入的规划协调）。每个都有权限矩阵、停止条件与交接模板。
-- **二十二个技能**：`intent-restate` / `expert-route` / `expert-run` / `project-discover` / `project-bootstrap` 覆盖复述门、路由、自动编排、盘点、初始化；`doc-rebuild` / `graph-compare` 覆盖规范文档、编码索引与图比对；`scenario-guard` 覆盖写入前预检；`layout-inspect` 覆盖引入后文件架构；`ledger-upgrade` / `agent-gate` 覆盖升级与多 Agent 接入；`method-assets` / `board-layout` / `scale-budget` 覆盖资产摘要、统一版面与规模预算；`asset-install` / `test-map` / `work-panel` 覆盖只读资产安装、测试模块映射与节点工作台；原有五个技能覆盖扫描、校验、立项、经验与门禁。
+- **24 个技能**：`intent-restate` / `expert-route` / `expert-run` / `project-discover` / `project-bootstrap` 覆盖复述门、路由、自动编排、盘点、初始化；`doc-rebuild` / `graph-compare` 覆盖规范文档、编码索引与图比对；`scenario-guard` 覆盖写入前预检；`layout-inspect` 覆盖引入后文件架构；`ledger-upgrade` / `agent-gate` 覆盖升级与多 Agent 接入；`method-assets` / `board-layout` / `scale-budget` 覆盖资产摘要、统一版面与规模预算；`asset-install` / `test-map` / `work-panel` 覆盖只读资产安装、测试模块映射与节点工作台；原有五个技能覆盖扫描、校验、立项、经验与门禁。
 - 纪律不只写在文档里：`route_expert.py` 对冲突 fail-closed，`discover_project.py` 默认不覆盖草稿，`init_project.py` 跳过既有治理文件，`ledger_decide.py` / `ledger_lesson.py` 在代码层拒绝重复立项与缺行动的经验，`agent_gateway.py` 把权限变成默认拒绝的写入执行点。
 
 详见 [12-专家路由](docs/12-专家路由.md)、[13-可追溯性](docs/13-可追溯性.md)、[14-场景矩阵](docs/14-场景矩阵.md)、[15-文件架构](docs/15-文件架构.md)、[16-升级与迁移](docs/16-升级与迁移.md)、[17-多Agent接入控制](docs/17-多Agent接入控制.md)、[18-规模化与版面契约](docs/18-规模化与版面契约.md)、[19-专家与技能可用](docs/19-专家与技能可用.md)、[20-测试架构与模块映射](docs/20-测试架构与模块映射.md)、[21-节点工作台与看板视图](docs/21-节点工作台与看板视图.md)、[22-反向回流](docs/22-反向回流.md) 与 [10-AI集成](docs/10-AI集成.md)。
@@ -386,7 +386,7 @@ bash scripts/check.sh
 8. [可信性校验](docs/08-可信性校验.md) —— 31 条不变量，让「可信」可被验证
 9. [历史与经验](docs/09-历史与经验.md) —— 状态指纹驱动的演进历史，以及可被任务卡消费的经验层
 10. [文档规范](docs/STANDARD.md) —— 命名、章节、状态词与更新触发点
-11. [AI 集成](docs/10-AI集成.md) —— 专家、二十二个技能与平台无关的最小消费路径
+11. [AI 集成](docs/10-AI集成.md) —— 专家、24 个技能与平台无关的最小消费路径
 12. [证据分层](docs/11-证据分层.md) —— 区分声明级与验证级证据，消除假绿灯
 13. [专家路由](docs/12-专家路由.md) —— 多专家协作、历史/新建双路径与交接协议
 14. [可追溯性](docs/13-可追溯性.md) —— 五项反问、文档/架构/git/图比对闭环
@@ -405,6 +405,15 @@ bash scripts/check.sh
 27. [可视化分析层](docs/31-可视化分析层.md) —— 热力图、趋势、证据链、健康度与 What-if
 28. [本地 D3 可视化](docs/32-本地D3可视化.md) —— vendor 文件维护、追溯树/热力图/趋势图的 D3 用法与离线降级
 29. [目标编排监督者](docs/33-目标编排监督者.md) —— goals/1 目标对象、方向锁、max_loops 预算、受控循环与人批准调整
+30. [复述门：让意图被听懂之后再路由](docs/24-复述门.md)
+31. [专家团自动编排（Expert Run）](docs/25-专家团自动编排.md)
+32. [来源投影与完成定义（Provenance View）](docs/26-来源投影与完成定义.md)
+33. [自举闭环（用 ledger 开发 ledger）](docs/27-自举闭环.md)
+34. [看板体验（从看得见到用得顺）](docs/28-看板体验.md)
+35. [架构图与数据流（让结构也能被看见）](docs/29-架构图与数据流.md)
+36. [运行时风险入口（v2.15.0）](docs/34-运行时风险入口.md)
+37. [投影新鲜度不变量](docs/35-投影新鲜度不变量.md)
+38. [风险下降判据（v2.19.0）](docs/36-风险下降判据.md)
 
 ## License
 

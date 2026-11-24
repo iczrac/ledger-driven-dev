@@ -2,6 +2,16 @@
 
 本项目版本遵循语义化版本（SemVer）。
 
+## [2.23.0] - 2026-11-24
+
+**docs 文件架构规范化**：三类分层不动，修四处口径漂移，索引与权威源对齐。
+
+- 独立复现：编号文档 01–36 连续无缺口；三层物理隔离（人工编号文档 / STANDARD / generated 派生）已规范化，不动。发现四处真实漂移：`scaffold` 示例用单数 `docs/plan/`（与 `file_layout` 的 `docs/plans/` 冲突）、STANDARD 第六节混列双作用域 generated、file_layout 与 `15-文件架构` 残留 `docs/01-21`、README 人工索引漏列 9 篇且计数过时。
+- 修复：`doc_lifecycle.py` 路径统一 `docs/plans/`；STANDARD 第六节改为双作用域表（目标项目 4 份 / 方法仓自身 5 份 + 指向 FILE_LAYOUT 权威清单）；file_layout 与 15 改为 `docs/NN-方法论文档`；README 补列 24–29/34–36 并从代码派生修正技能 24/专家 9 计数。
+- 权威链：`METHOD_VERSION=2.23.0`，`upgrade plan`（M4/M5，无 blocks）→ `apply --approved-by user-approved-v2.23.0` → `verify` 全 pass → `plan` noop；ontology 投影按 `ontology.py build --apply` 重建并绑 1aa0f02348e0178b。
+- 资产：`method_assets=71dc5673ccd5b50e`、`installed_assets=3ae603cad0acad77`；method_docs 36 篇不变；新增 `tests/meta/test_doc_architecture.py`（6 用例：编号连续/三层隔离/双作用域/路径口径/01-21 残留/README 覆盖）；单测 517→523。
+- 边界：不新增第 10 专家、不改 feedback/、不加依赖、不放宽判据；不重构已规范化的编号与分层。
+
 ## [2.22.0] - 2026-11-24
 
 **文档生命周期维度**：路由、六份专家契约与技能三层同步补齐，文档从"人肉同步"升为可复算的裁决对象。

@@ -94,12 +94,19 @@
 - 路径必须真实存在，`verify_ledger.py` 会逐条检查；不写空链占位。
 - **证据报告**：`governance/test_report.json` 用相对路径（相对运行 cwd），不写机器绝对路径；schema 固定 `ledger-test-report/1`。
 
-## 六、生成文档目录
+## 六、生成文档目录（双作用域）
 
-`docs/generated/` 下的 `PROJECT_BRIEF.md` / `MODULE_MAP.md` / `CAPABILITY_INDEX.md` / `GRAPH_DIFF.md` / `SCENARIO_MATRIX.md` / `FILE_LAYOUT.md`
-由 `scripts/rebuild_docs.py` / `compare_graphs.py` / `scenario_matrix.py` / `file_layout.py` 从事实源渲染，
-**不是人工文档**：不要长期手改，改事实源后重跑；需要保留人工补充时用不同文件名。
+`docs/generated/` 在两个作用域下都有，但**内容不同，不能混列**——这是「区分」的关键：
+
+| 作用域 | 目录 | 生成物 | 生产者 | 是否入方法资产摘要 |
+|---|---|---|---|---|
+| 目标项目 | `<project>/docs/generated/` | `PROJECT_BRIEF.md` / `MODULE_MAP.md` / `CAPABILITY_INDEX.md` / `GRAPH_DIFF.md` | `rebuild_docs.py` / `compare_graphs.py` | 否（项目派生层） |
+| 方法论仓库自身 | `ledger-driven-dev/docs/generated/` | `SCENARIO_MATRIX.md` / `FILE_LAYOUT.md` / `TEST_MODULES.md` / `ONTOLOGY.md` / `ONTOLOGY.json` | `scenario_matrix.py` / `file_layout.py` / `test_modules.py` / `ontology.py` | 否（派生不纳入） |
+
+两类都**不是人工文档**：不要长期手改，改事实源后重跑；需要保留人工补充时用不同文件名。
 生成文档必须无机器绝对路径、可逐字节复现，并默认跳过既有文件（`--force` 才覆盖）。
+权威的全量目录清单在 [`generated/FILE_LAYOUT.md`](generated/FILE_LAYOUT.md)，由 `scripts/file_layout.py --emit-md` 渲染，
+不要在本节手抄第二份清单。
 
 ## 七、反模式
 

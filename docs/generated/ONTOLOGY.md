@@ -1,6 +1,6 @@
 # 本体投影（generated，只读）
 
-schema `ledger-ontology/1` · digest `137fb6cdab5b7b80f971631c095e8a441bacda1f805d5f511e5c99d049183a60`
+schema `ledger-ontology/1` · digest `1aa0f02348e0178b6b58349692eaaf529896ad4335fa18c0ba8efeba0baf9373`
 
 由 `python3 scripts/ontology.py build --apply --approved-by <人>` 从事实源渲染。
 **不是人工文档，也不是第二事实源**：删掉本文件后 build 可逐字节复原。
@@ -108,7 +108,7 @@ schema `ledger-ontology/1` · digest `137fb6cdab5b7b80f971631c095e8a441bacda1f80
 
 | 文件 | 角色 | sha256 |
 |---|---|---|
-| `docs/STANDARD.md` | ubiquitous_language | `3a47b1872dc491da…` |
+| `docs/STANDARD.md` | ubiquitous_language | `98a6fe19e7dadb68…` |
 | `scripts/work_panel.py` | value_domains | `106a91b55b35abb8…` |
 | `scripts/scenario_matrix.py` | value_domains | `3c30655fb1b3c58d…` |
 | `scripts/ledger_feedback.py` | value_domains | `ee3d577f0a600e05…` |

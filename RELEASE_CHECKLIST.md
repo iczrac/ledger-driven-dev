@@ -639,3 +639,19 @@ E7 `cardinality_contradiction`（`ontology.py check --target P` 仍 `ok=false`�
 
 - 五项文档不变量 shadow 期时长；升硬门前需确认 `docs.registry` 存量条目已覆盖。
 - `declared_no_impact` 的批准人名单由人指定，AI 不得自批。
+
+## v2.23.0 发布检查（docs 文件架构规范化）
+
+> 由来：docs 内文件架构是否该规范化。独立核实：编号 01–36 连续、三层隔离已规范化，不动；四处口径漂移属实证，修权威源。
+
+- [x] **判定**：编号/分层 = 已规范化（不动）；`docs/plan/` 路径冲突 = 已证实；generated 双作用域混列 = 已证实；`01-21` 残留 = 已证实；README 漏列 9 篇 = 已证实。
+- [x] **修复**：doc_lifecycle 路径 → `docs/plans/`；STANDARD 第六节双作用域表；file_layout + 15 → `docs/NN-方法论文档`；README 补列并从代码派生计数（专家 9 / 技能 24 / 文档 36）。
+- [x] **TDD**：新增 `tests/meta/test_doc_architecture.py` 6 用例，红灯 4 项 → 全绿；单测 517→523（只增不减）。
+- [x] **权威链**：2.22.0→2.23.0，M4/M5，verify 全 pass、plan noop；ontology 重建绑定 1aa0f02348e0178b；method_assets 71dc5673ccd5b50e / installed_assets 3ae603cad0acad77。
+- [x] **门禁**：`bash scripts/check.sh` 全绿；干净克隆复验通过。
+- [x] **边界**：不改既有判据、不新增专家、不改 feedback/、不加依赖；目标项目需重新批准升级。
+
+### 人类拍板
+
+- 五项文档不变量仍为 shadow（v2.22.0 决定），本版未升硬门。
+- `docs.registry` 存量登记仍需人决定是否首批入库。

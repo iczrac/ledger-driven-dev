@@ -20,10 +20,10 @@
 
 用法
 ----
-    python3 scripts/doc_lifecycle.py scaffold --target P --doc docs/plan/x.md --kind plan [--json]
+    python3 scripts/doc_lifecycle.py scaffold --target P --doc docs/plans/x_PLAN.md --kind plan [--json]
     python3 scripts/doc_lifecycle.py lint --target P [--json]
-    python3 scripts/doc_lifecycle.py mark-stale --target P --doc docs/plan/x.md --reason <r> [--json]
-    python3 scripts/doc_lifecycle.py clear-suspect --target P --doc docs/plan/x.md --signed-by <人> --reason <r> [--json]
+    python3 scripts/doc_lifecycle.py mark-stale --target P --doc docs/plans/x_PLAN.md --reason <r> [--json]
+    python3 scripts/doc_lifecycle.py clear-suspect --target P --doc docs/plans/x_PLAN.md --signed-by <人> --reason <r> [--json]
     python3 scripts/doc_lifecycle.py check --target P [--json]
 
 退出码：0 全部通过；1 存在 suspect/stale/incomplete/unreadable；2 输入错误。

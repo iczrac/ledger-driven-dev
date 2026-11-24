@@ -11717,7 +11717,7 @@
   ],
   "governance_meta": {
     "schema_version": "1.0",
-    "method_version": "2.22.0",
+    "method_version": "2.23.0",
     "upgraded_from": "pre-1.0.0",
     "ledger_version": "1.0",
     "migrations_applied": [
@@ -12089,6 +12089,22 @@
         "risk": "low",
         "assets_digest": "5a7a02203d937fb8",
         "board_skeleton": "b6f5d4583cca01c6"
+      },
+      {
+        "seq": 23,
+        "at": "2026-11-24T09:55:07Z",
+        "action": "apply",
+        "from": "2.22.0",
+        "to": "2.23.0",
+        "approved_by": "user-approved-v2.23.0",
+        "migrations": [
+          "M4-method-version",
+          "M5-method-assets"
+        ],
+        "backup": "20261124T095507Z-907978b4",
+        "risk": "low",
+        "assets_digest": "71dc5673ccd5b50e",
+        "board_skeleton": "b6f5d4583cca01c6"
       }
     ],
     "tools": {
@@ -12108,7 +12124,7 @@
     },
     "method_assets": {
       "algorithm": "sha256-files-v1",
-      "digest": "5a7a02203d937fb8020c7c4b1de74cb27e1632c2f8adbcae386197770d326720",
+      "digest": "71dc5673ccd5b50e82692b43f8540c0816a7841e24545fcf7396c75c61d5e4bf",
       "file_count": 113,
       "counts": {
         "experts": 9,
@@ -12120,7 +12136,7 @@
       },
       "source": "方法论仓库 tag（权威源，不复制；只读副本由 M7 安装）"
     },
-    "ontology_digest": "137fb6cdab5b7b80f971631c095e8a441bacda1f805d5f511e5c99d049183a60",
+    "ontology_digest": "1aa0f02348e0178b6b58349692eaaf529896ad4335fa18c0ba8efeba0baf9373",
     "board_skeleton": {
       "digest": "b6f5d4583cca01c68ee99d6076dfe7f3896ab2a27881c7fe87fab8b7a06d81d5",
       "source": "templates/index.html.template",

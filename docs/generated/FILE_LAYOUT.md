@@ -81,7 +81,7 @@
 |---|---|
 | `experts/、skills/（权威源）` | 方法论仓库里的专家与技能**原文**不进项目源码；v1.2.0 起由 asset_bundle.py 把逐字节只读副本装到 .workbuddy/，整包摘要写进 governance_meta.method_assets、副本清单写进 installed_assets。 |
 | `scripts/、templates/、tests/` | 方法论自身的工具、模板与测试；只有 3 个脚本副本落到 governance/。 |
-| `docs/01-21、docs/STANDARD.md` | 方法论文档，属于本仓库而非被治理项目。 |
+| `docs/NN-方法论文档、docs/STANDARD.md` | 方法论文档，属于本仓库而非被治理项目。 |
 | `docs/generated/SCENARIO_MATRIX.md、FILE_LAYOUT.md、TEST_MODULES.md` | 本仓库的机器渲染矩阵；目标项目只会得到 docs/generated/ 下那 4 份项目级文档。 |
 | `examples/、.github/workflows/、CHANGELOG.md、RELEASE_CHECKLIST.md` | 示例、CI 与发布资产，属于方法论仓库。 |
 | `全仓 .git/` | git 元数据；trace_git.py 只读取证，不写入、不重写历史。 |

@@ -12,7 +12,7 @@
   - ``tests/test_layout.py`` 对以上行为做负向与幂等证明。
 
 关键边界：本清单描述的是**被治理项目（target）**，不是方法论仓库自身。
-scripts/ / templates/ / tests/ / docs/01-21 等不会复制进目标项目；
+scripts/ / templates/ / tests/ / docs/NN-方法论文档 等不会复制进目标项目；
 只有 6 个工具脚本副本以 governance/*.py 落地。
 v1.2.0 起例外是专家与技能：由 asset_bundle.py 装成 .workbuddy/ 下的
 **只读部署副本**（权威源仍在方法论仓库，逐文件 sha256 + 账本绑定）。
@@ -345,7 +345,7 @@ NOT_IN_TARGET: list[dict] = [
                                    "v1.2.0 起由 asset_bundle.py 把逐字节只读副本装到 .workbuddy/，"
                                    "整包摘要写进 governance_meta.method_assets、副本清单写进 installed_assets。"),
     dict(path="scripts/、templates/、tests/", reason="方法论自身的工具、模板与测试；只有 3 个脚本副本落到 governance/。"),
-    dict(path="docs/01-21、docs/STANDARD.md", reason="方法论文档，属于本仓库而非被治理项目。"),
+    dict(path="docs/NN-方法论文档、docs/STANDARD.md", reason="方法论文档，属于本仓库而非被治理项目。"),
     dict(path="docs/generated/SCENARIO_MATRIX.md、FILE_LAYOUT.md、TEST_MODULES.md",
          reason="本仓库的机器渲染矩阵；目标项目只会得到 docs/generated/ 下那 4 份项目级文档。"),
     dict(path="examples/、.github/workflows/、CHANGELOG.md、RELEASE_CHECKLIST.md",

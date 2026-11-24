@@ -85,15 +85,16 @@
         "scripts/acceptance.py"
       ],
       "files": [
-        "tests/meta/test_upgrade.py",
-        "tests/meta/test_agent_gateway.py",
-        "tests/meta/test_lifecycle.py",
-        "tests/meta/test_layout.py",
-        "tests/meta/test_platform_contract.py",
-        "tests/meta/test_feedback.py",
-        "tests/meta/test_ontology.py",
         "tests/meta/test_acceptance.py",
-        "tests/meta/test_dogfood.py"
+        "tests/meta/test_agent_gateway.py",
+        "tests/meta/test_doc_architecture.py",
+        "tests/meta/test_dogfood.py",
+        "tests/meta/test_feedback.py",
+        "tests/meta/test_layout.py",
+        "tests/meta/test_lifecycle.py",
+        "tests/meta/test_ontology.py",
+        "tests/meta/test_platform_contract.py",
+        "tests/meta/test_upgrade.py"
       ]
     },
     {
