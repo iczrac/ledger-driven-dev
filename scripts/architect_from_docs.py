@@ -55,34 +55,49 @@ def build(target: Path, docs_dir: Path, registry: dict) -> dict:
         raise ValueError(f"{src}:{lineno} 发现非四段式能力码 {token}；"
                          f"请改为 {hint}（registry_codec 是唯一 codec）")
 
+    # B 项：规划码唯一来源是 CAPABILITY_INDEX.md（账本的确定性投影，无讲解示例）。
+    # 手写文档里出现的码一律不新增规划条目，只能补充已存在码的 target_level/depends_on，
+    # 从根上消除「文档示例码 → 假 planned_only」的结构性噪音。
+    index_src = next((k for k in texts if k.endswith("CAPABILITY_INDEX.md")),
+                     "docs/generated/CAPABILITY_INDEX.md")
+    index_text = texts.get(index_src, "")
+    if not index_text:
+        warnings.append("缺少 CAPABILITY_INDEX.md；规划码集合为空，请先运行 rebuild_docs.py。")
+    for lineno, token in iter_code_candidates(index_text):
+        code = valid_code(index_src, lineno, token)
+        entry = codes.setdefault(code, {"code": code, "sources": [index_src], "name": "",
+                                        "depends_on": [], "target_level": None})
+        row = next((l for l in index_text.splitlines()
+                    if l.startswith("| " + code + " |")), "")
+        if row:
+            cells = [c.strip() for c in row.strip("|").split("|")]
+            if len(cells) > 2 and cells[2] and not entry["name"]:
+                entry["name"] = cells[2]
+
+    # 手写文档只做增强：目标：Lx / 依赖：CODE 只对已存在的规划码生效。
     for src, text in texts.items():
+        if src == index_src:
+            continue
         lines = text.splitlines()
-        for lineno, token in iter_code_candidates(text):
-            code = valid_code(src, lineno, token)
-            entry = codes.setdefault(code, {"code": code, "sources": [], "name": "",
-                                            "depends_on": [], "target_level": None})
-            if src not in entry["sources"]:
-                entry["sources"].append(src)
-            for line in lines:
-                if code in line and (tl := TARGET_RE.search(line)):
-                    entry["target_level"] = f"L{tl.group(1)}"
-            # 表格行中的第二列常是能力名
-            row = next((l for l in lines if l.startswith("| " + code + " |")), "")
-            if row:
-                cells = [c.strip() for c in row.strip("|").split("|")]
-                if len(cells) > 2 and cells[2] and not entry["name"]:
-                    entry["name"] = cells[2]
-        for dep in DEP_RE.finditer(text):
-            parent = None
-            for _, token in iter_code_candidates(text[:dep.start()]):
-                candidate = valid_code(src, 1, token)
-                if candidate in codes:
-                    parent = candidate
-            if parent and parent in codes:
-                for _, token in iter_code_candidates(dep.group(1)):
-                    child = valid_code(src, 1, token)
-                    if child != parent and child not in codes[parent]["depends_on"]:
-                        codes[parent]["depends_on"].append(child)
+        for lineno, line in enumerate(lines, 1):
+            present = [t for _, t in iter_code_candidates(line) if t in codes]
+            if not present:
+                continue
+            tl = TARGET_RE.search(line)
+            for code in present:
+                if src not in codes[code]["sources"]:
+                    codes[code]["sources"].append(src)
+                if tl:
+                    codes[code]["target_level"] = f"L{tl.group(1)}"
+            dep = DEP_RE.search(line)
+            if dep:
+                for parent_token in present:
+                    for _, child_token in iter_code_candidates(dep.group(1)):
+                        child = valid_code(src, lineno, child_token)
+                        if child not in codes:
+                            continue  # 未知码只提示，不新增规划条目
+                        if child != parent_token and child not in codes[parent_token]["depends_on"]:
+                            codes[parent_token]["depends_on"].append(child)
 
     brief = next((v for k, v in texts.items() if k.endswith("PROJECT_BRIEF.md")), "")
     goals = _section(brief, "目标")
@@ -105,8 +120,13 @@ def build(target: Path, docs_dir: Path, registry: dict) -> dict:
             caps = [c["code"] for c in codes.values()
                     if c["code"].split(".")[1] == mcode]
         else:
-            caps = [valid_code(map_src, lineno, token)
-                    for _, token in iter_code_candidates(cap_cells)]
+            # B 项：合法性仍经唯一 codec 校验（generated 投影里的坏码必须 fail-closed），
+            # 但只纳入规划集内已存在的码，手写表格的示例码不得反向污染规划图。
+            caps = []
+            for _, token in iter_code_candidates(cap_cells):
+                checked = valid_code(map_src, lineno, token)
+                if checked in codes:
+                    caps.append(checked)
         modules[mcode] = {
             "code": mcode, "name": name,
             "src": [x.strip("` ") for x in src.split(",") if x.strip() and x.strip() != "（无）"],

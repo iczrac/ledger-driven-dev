@@ -3,7 +3,7 @@
 > 由 `scripts/test_modules.py` 从 `tests/MODULES.json` 渲染。
 > **不要手改**；增删测试请改清单并重跑 `--emit-md`。
 
-共 6 个开发模块 · 38 个 `test_*.py` · 发现口径 `scripts/run_tests.py 的 sorted(tests.rglob('test_*.py'))；unittest discover 作为第二套交叉验证。`。
+共 6 个开发模块 · 40 个 `test_*.py` · 发现口径 `scripts/run_tests.py 的 sorted(tests.rglob('test_*.py'))；unittest discover 作为第二套交叉验证。`。
 
 | 模块 id | 名称 | 覆盖域 | 所属脚本 | 测试文件 |
 |---|---|---|---|---|
@@ -11,7 +11,7 @@
 | `adoption` | 新建与存量接入 | greenfield bootstrap / brownfield discovery | `scripts/init_project.py`, `scripts/discover_project.py` | `tests/adoption/test_bootstrap.py`, `tests/adoption/test_discovery.py` |
 | `routing` | 专家路由与纪律 | route_expert / intent_restate / expert_run / provenance_view / skills / scenario_matrix | `scripts/route_expert.py`, `scripts/intent_restate.py`, `scripts/expert_run.py`, `scripts/provenance_view.py`, `scripts/scenario_matrix.py`, `scripts/ledger_decide.py`, `scripts/ledger_lesson.py`, `scripts/goal_ledger.py`, `scripts/goal_loop.py` | `tests/routing/test_routing.py`, `tests/routing/test_skills.py`, `tests/routing/test_scenarios.py`, `tests/routing/test_intent_restate.py`, `tests/routing/test_expert_run.py`, `tests/routing/test_provenance_view.py`, `tests/routing/test_goal_loop.py` |
 | `meta` | 元层：升级、接入、生命周期 | upgrade / agent_gateway / lifecycle / file_layout / platform contracts / feedback / ontology / acceptance | `scripts/upgrade.py`, `scripts/agent_gateway.py`, `scripts/lifecycle.py`, `scripts/file_layout.py`, `scripts/ledger_feedback.py`, `scripts/ontology.py`, `scripts/acceptance.py` | `tests/meta/test_upgrade.py`, `tests/meta/test_agent_gateway.py`, `tests/meta/test_lifecycle.py`, `tests/meta/test_layout.py`, `tests/meta/test_platform_contract.py`, `tests/meta/test_feedback.py`, `tests/meta/test_ontology.py`, `tests/meta/test_acceptance.py`, `tests/meta/test_dogfood.py` |
-| `traceability` | 可追溯闭环 | doc rebuild / architecture from docs / git trace / graph compare | `scripts/rebuild_docs.py`, `scripts/architect_from_docs.py`, `scripts/trace_git.py`, `scripts/compare_graphs.py` | `tests/traceability/test_trace_docs.py`, `tests/traceability/test_trace_arch_git.py`, `tests/traceability/test_compare_graphs.py` |
+| `traceability` | 可追溯闭环 | doc rebuild / architecture from docs / git trace / graph compare | `scripts/rebuild_docs.py`, `scripts/architect_from_docs.py`, `scripts/trace_git.py`, `scripts/compare_graphs.py` | `tests/traceability/test_compare_graphs.py`, `tests/traceability/test_plan_input_scope.py`, `tests/traceability/test_plan_status.py`, `tests/traceability/test_trace_arch_git.py`, `tests/traceability/test_trace_docs.py` |
 | `views` | 资产可用、工作台与看板视图 | asset_bundle / work_panel / index.html.template / test_modules | `scripts/asset_bundle.py`, `scripts/work_panel.py`, `scripts/board_contract.py`, `scripts/test_modules.py` | `tests/views/test_assets.py`, `tests/views/test_work_panel.py`, `tests/views/test_board_views.py`, `tests/views/test_test_modules.py` |
 
 ## 纪律

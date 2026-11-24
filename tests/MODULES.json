@@ -104,9 +104,11 @@
         "scripts/compare_graphs.py"
       ],
       "files": [
-        "tests/traceability/test_trace_docs.py",
+        "tests/traceability/test_compare_graphs.py",
+        "tests/traceability/test_plan_input_scope.py",
+        "tests/traceability/test_plan_status.py",
         "tests/traceability/test_trace_arch_git.py",
-        "tests/traceability/test_compare_graphs.py"
+        "tests/traceability/test_trace_docs.py"
       ]
     },
     {
