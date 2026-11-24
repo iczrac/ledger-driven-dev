@@ -179,11 +179,84 @@ def build(target: Path, registry: dict, ledger: dict, target_arch: dict | None,
 
     queue = cm.get("next_queue", []) or []
     queue_codes = {q.get("code") for q in queue}
-    execution_order: list[dict] = []
+    queue_items: list[dict] = []
     for item in queue:
         code = item.get("code", "")
         if code not in plan_by_code and plan_by_code:
             continue
+        queue_items.append(item)
+
+    # A 项：depends_on 的唯一消费点。仅在「同层」（同一 from→to 跃迁）内做稳定
+    # 拓扑重排；depends_on 稀疏/全空时保持 next_queue 原序（等价当前行为）。
+    dep_by_code = {code: [d for d in (plan.get("depends_on") or [])
+                          if d in plan_by_code]
+                   for code, plan in plan_by_code.items()}
+    dep_cycles: list[list[str]] = []
+
+    def _detect_cycles(codes: set[str]) -> list[list[str]]:
+        color: dict[str, int] = {}
+        found: list[list[str]] = []
+
+        def visit(node: str, stack: list[str]) -> None:
+            color[node] = 1
+            stack.append(node)
+            for nxt in dep_by_code.get(node, []):
+                if nxt not in codes:
+                    continue
+                if color.get(nxt) == 1:
+                    found.append(stack[stack.index(nxt):] + [nxt])
+                elif color.get(nxt, 0) == 0:
+                    visit(nxt, stack)
+            stack.pop()
+            color[node] = 2
+
+        for code in sorted(codes):
+            if color.get(code, 0) == 0:
+                visit(code, [])
+        return found
+
+    dep_cycles = _detect_cycles(set(dep_by_code))
+    if dep_cycles:
+        # shadow 纪律：只告警，不改状态、不改退出码、不重排跨层顺序。
+        shown = "；".join(" → ".join(c) for c in dep_cycles[:MAX_WARN_SHADOW_PAIRS])
+        warnings.append(f"发现 {len(dep_cycles)} 组依赖环（仅提示，不影响队列顺序与状态）："
+                        f"{shown}")
+
+    layer_index: dict[str, int] = {}
+    for index, item in enumerate(queue_items):
+        key = (str(item.get("level", "L0")), str(item.get("target_level", "L5")))
+        layer_index.setdefault(str(item.get("code", "")), index)
+        item["_layer"] = key
+        item["_index"] = index
+
+    def _topo_sort(items: list[dict]) -> list[dict]:
+        if not any(dep_by_code.get(str(i.get("code", ""))) for i in items):
+            return items  # 全空：原序退化
+        remaining = list(items)
+        result: list[dict] = []
+        done: set[str] = set()
+        while remaining:
+            ready = [i for i in remaining
+                     if all(d in done or d not in {str(x.get("code", "")) for x in remaining}
+                            for d in dep_by_code.get(str(i.get("code", "")), []))]
+            if not ready:
+                ready = remaining  # 环：保持原序，不卡死
+            for item in ready:
+                result.append(item)
+                done.add(str(item.get("code", "")))
+                remaining.remove(item)
+        return result
+
+    layers: dict[tuple, list[dict]] = {}
+    for item in queue_items:
+        layers.setdefault(item["_layer"], []).append(item)
+    ordered_items: list[dict] = []
+    for key in sorted(layers, key=lambda k: min(i["_index"] for i in layers[k])):
+        ordered_items.extend(_topo_sort(layers[key]))
+
+    execution_order: list[dict] = []
+    for item in ordered_items:
+        code = item.get("code", "")
         execution_order.append({
             "rank": len(execution_order) + 1,
             "code": code,
@@ -255,6 +328,7 @@ def build(target: Path, registry: dict, ledger: dict, target_arch: dict | None,
         },
         "comparison": comparison,
         "shadow_pairs": shadow_pairs,
+        "dep_cycles": dep_cycles,
         "summary": summary,
         "execution_order": execution_order,
         "overall_expert": overall,

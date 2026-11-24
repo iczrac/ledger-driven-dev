@@ -105,6 +105,7 @@
       ],
       "files": [
         "tests/traceability/test_compare_graphs.py",
+        "tests/traceability/test_dep_topology.py",
         "tests/traceability/test_plan_input_scope.py",
         "tests/traceability/test_plan_status.py",
         "tests/traceability/test_trace_arch_git.py",
