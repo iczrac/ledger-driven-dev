@@ -76,6 +76,27 @@ def build(target: Path, registry: dict, ledger: dict, target_arch: dict | None,
             "请先用 architect_from_docs.py 生成有效规划图后再复核。")
     plan_trustworthy = plan_status == "present"
 
+    # E2：registry 的人工声明是规划图的独立来源；CAPABILITY_INDEX 只是现状投影。
+    # 显式 committed 的能力即使尚未进入账本，也必须出现在规划侧（planned_only）。
+    for m in registry.get("modules", []):
+        for c in m.get("caps", []) or []:
+            if c.get("committed") is not True or not c.get("code"):
+                continue
+            code = str(c["code"]).upper()
+            if plan_status == "absent":
+                plan_status = "partial"
+            if "registry.json (committed 声明)" not in plan_source:
+                plan_source += " + registry.json (committed 声明)"
+            if code in {str(x.get("code", "")) for x in planned_caps}:
+                continue
+            planned_caps.append({
+                "code": code, "name": c.get("name", code),
+                "target_level": c.get("target_level"),
+                "depends_on": list(c.get("depends_on") or []),
+                "sources": ["registry.json"],
+                "impl_hint": [], "declared_only": True,
+            })
+
     plan_by_code = {str(c.get("code", "")): c for c in planned_caps if c.get("code")}
     cm = ledger.get("capability_model", {})
     actual_by_code: dict[str, dict] = {}
@@ -182,13 +203,17 @@ def build(target: Path, registry: dict, ledger: dict, target_arch: dict | None,
     for code in all_codes:
         plan = plan_by_code.get(code)
         live = actual_by_code.get(code)
-        target_level = str((plan or {}).get("target_level") or "L5")
-        target_num = _level_num(target_level)
+        raw_target = (plan or {}).get("target_level")
+        target_level = str(raw_target) if raw_target else "no_target"
         if plan and not live:
             status, gaps = "planned_only", ["尚未被生成器识别", "补 impl / hints 或先实现证据"]
         elif live and not plan:
             status, gaps = "actual_only", ["实际存在但规划图未声明", "补文档或裁决是否废弃"]
+        elif target_level == "no_target":
+            # E1：未声明目标不猜 L5，不参与对齐、也不计入完成度。
+            status, gaps = "no_target", ["未声明目标等级，不参与对齐与完成度"]
         else:
+            target_num = _level_num(target_level)
             level = int(live.get("level", 0) or 0)
             if level == 0:
                 status, gaps = "not_started", ["无 L1 契约证据"]
@@ -353,7 +378,7 @@ def build(target: Path, registry: dict, ledger: dict, target_arch: dict | None,
             pass
 
     summary = {status: sum(1 for r in comparison if r["status"] == status)
-               for status in ("aligned", "in_progress", "not_started",
+               for status in ("aligned", "in_progress", "not_started", "no_target",
                               "planned_only", "actual_only")}
     summary.update({"planned": len(plan_by_code), "actual": len(actual_by_code),
                     "gaps": sum(1 for r in comparison if r["gaps"]),
@@ -401,6 +426,7 @@ def render_report(diff: dict) -> str:
         f"git：{diff['sources']['git']}。",
         "",
         f"对齐 {s['aligned']} / 进行中 {s['in_progress']} / 未启动 {s['not_started']} / "
+        f"无目标 {s['no_target']}（不参与对齐） / "
         f"仅规划 {s['planned_only']} / 仅实际 {s['actual_only']} / "
         f"疑似同码 {s['shadow_pairs']}（仅提示）。",
         "",

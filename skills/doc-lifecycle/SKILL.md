@@ -40,16 +40,19 @@ metadata:
 | `mark-stale` | `--target P --doc <rel> --reason <r>` | status=suspect + 原因 + 时间 | 无（状态裁决交 ledger-steward 写账本） |
 | `clear-suspect` | `--target P --doc <rel> --signed-by <人> --reason <r>` | status=cleared + 签名 | 无（须签名与理由，缺一即拒绝） |
 | `check` | `--target P` | 五项文档不变量只读报告（mode=shadow） | 无（只读，供 CI） |
+| `gate` | `--target P [--strict]` | orphan/suspect/stale/信任告警计数 + 具体文件清单 | 无；默认 warn 退出码 0，`--strict` 才阻断 |
+| `seed` | `--target P --approved-by <人>` | 确定性初判并写 `governance/DECISION_LEDGER.json#docs.registry` + 历史事件 | 写账本字段；全部 draft、verified 为空，重复执行 noop |
+| `approve` | `--target P --doc <rel> --status current --signed-by <人> --reason <r> [--source-hash <h>]` | 带签名与可复算摘要的 current 裁决 + 历史事件 | 写账本字段；无签名/摘要不符一律拒绝 |
 
 ## 五项文档不变量（先 shadow，只告警不改状态）
 
 1. **覆盖完整**：`docs.registry` 声明的每篇文档都存在；
 2. **派生可复算**：每篇文档的状态词与 `source_hash` 可从文件复算；
-3. **信任一致**：`verified` 状态必须同时具备 `source_hash` 与 `generated_at`；
+3. **信任一致**：`verified` 必须同时具备 `source_hash` 与 `generated_from`（当前正文由何来源复核）；
 4. **义务已声明**：非骨架文档必须在 `docs.registry` 有 owner/role/stale_after；
 5. **无孤儿**：`docs/**` 中无未登记文档。
 
-新判据先 shadow：报告告警但不改账本状态、不升硬门；升硬门须人批准。
+新判据先 shadow：报告告警但不改账本状态、不升硬门。升硬门的可判定条件：连续 10 次 CI 运行 orphan=0 且 warn=0，且人工书面批准后才允许 `--strict` 进 CI 阻断。`seed` 只做 draft 初判，禁止批量标 current。
 
 ## 允许动作
 
@@ -57,7 +60,10 @@ metadata:
 - `lint` 调既有 `registry_codec` 四段码校验与 `ontology.py` 词表，核对链接存在性与状态词合法；
 - `mark-stale` 在上游 `source_hash` 变化时给 suspect 建议；
 - `clear-suspect` 取得签名与理由后给 cleared 建议；
-- `check` 输出只读报告给 CI。
+- `check` 输出只读报告给 CI；
+- `gate` 给统一门禁节提供可机读计数与文件清单（默认不阻断）；
+- `seed` 仅在 ledger-steward 批准下做确定性 draft 初判并进历史链；
+- `approve` 仅在人工签名 + 可复算摘要同时存在时把单篇升为 current。
 
 ## 禁止动作
 

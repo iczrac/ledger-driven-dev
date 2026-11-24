@@ -7,6 +7,8 @@ cd "$ROOT"
 MODE="${1:-all}"
 DEMO="examples/demo-shop/governance"
 FAILURES=0
+DOC_STRICT=0
+if [ "$MODE" = "--strict" ]; then DOC_STRICT=1; MODE=all; fi
 
 note(){ printf '\n== %s ==\n' "$1"; }
 pass(){ printf '[PASS] %s\n' "$1"; }
@@ -207,6 +209,40 @@ stage_layout(){
   cmp -s scripts/run_tests.py "$DEMO/run_tests.py" || return 1
   echo '  布局定义、渲染同步、示例骨架与第 4 个工具副本均一致'
 }
+stage_doc_lifecycle(){
+  note '文档生命周期（shadow）：登记 / 过期 / 信任 / 派生只读'
+  local tmp gate_rc derived_rc
+  tmp="$(mktemp -d)"
+  python3 scripts/doc_lifecycle.py gate --target . --json >"$tmp/gate.json"
+  gate_rc=$?
+  python3 scripts/rebuild_docs.py --target . --check --doc PROJECT_STATE.md --json >"$tmp/derived.json"
+  derived_rc=$?
+  python3 - "$tmp/gate.json" "$tmp/derived.json" <<'PY'
+import json, sys
+gate = json.load(open(sys.argv[1]))
+derived = json.load(open(sys.argv[2]))
+c = gate.get("counts", {})
+print(f"  orphan={c.get('orphan', 0)} suspect={c.get('suspect', 0)} "
+      f"stale={c.get('stale', 0)} incomplete={c.get('incomplete', 0)} "
+      f"信任告警={c.get('trust', 0)} 派生漂移={len(derived.get('mismatches', []))}")
+seen = set()
+for item in gate.get("issues", []):
+    key = (item.get("path"), item.get("status"))
+    if key in seen:
+        continue
+    seen.add(key)
+    print(f"  [文档告警] {item.get('status')} {item.get('path')} — {item.get('reason', '')}")
+for item in derived.get("mismatches", []):
+    print(f"  [派生手改] {item.get('path')} — {item.get('reason', '')}")
+PY
+  local rc=$?
+  rm -rf "$tmp"
+  if [ "$DOC_STRICT" -eq 1 ] && { [ "$rc" -ne 0 ] || [ "$gate_rc" -ne 0 ] || [ "$derived_rc" -ne 0 ]; }; then
+    return 1
+  fi
+  return 0
+}
+
 stage_upgrade_access(){
   note '升级与多 Agent 接入（端到端，临时副本）'
   python3 scripts/upgrade.py check || return 1
@@ -327,7 +363,8 @@ run(){ name="$1"; shift; if "$@"; then pass "$name"; else fail "$name" '见上�
 if [ "$MODE" = "--only-idempotence" ]; then
   run '幂等' stage_idempotence
 elif [ "$MODE" = "--help" ]; then
-  echo "用法: bash scripts/check.sh [all|--only-idempotence|--help]"
+  echo "用法: bash scripts/check.sh [all|--strict|--only-idempotence|--help]"
+  echo "  --strict  把文档生命周期 shadow 告警升为阻断（须人工批准后使用）"
 else
   run '测试' stage_tests
   run '测试架构' stage_test_modules
@@ -335,6 +372,7 @@ else
   run '账本校验' stage_verify
   run '场景矩阵' stage_scenarios
   run '文件布局' stage_layout
+  run '文档生命周期（shadow）' stage_doc_lifecycle
   run '升级与接入' stage_upgrade_access
   run '资产与版面契约' stage_contracts
   run '幂等' stage_idempotence
@@ -351,4 +389,4 @@ if [ "$FAILURES" -gt 0 ]; then
   printf '质量门禁失败：%d 个阶段未通过\n' "$FAILURES"
   exit 1
 fi
-printf '质量门禁全绿：测试 / 测试架构 / 证据分层 / 31 条三态不变量 / 场景矩阵 / 文件布局 / 升级与接入 / 资产与工作台契约 / 幂等 / 同步 / 反向回流 / 本体层 / 脱敏 / 文档链接 / 验收契约 / 前置条件\n'
+printf '质量门禁全绿：测试 / 测试架构 / 证据分层 / 31 条三态不变量 / 场景矩阵 / 文件布局 / 文档生命周期（shadow） / 升级与接入 / 资产与工作台契约 / 幂等 / 同步 / 反向回流 / 本体层 / 脱敏 / 文档链接 / 验收契约 / 前置条件\n'

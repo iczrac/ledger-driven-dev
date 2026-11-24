@@ -2,6 +2,20 @@
 
 本项目版本遵循语义化版本（SemVer）。
 
+## [2.24.0] - 2026-11-24
+
+**第一性原理**：文档的信任只能由可复算的指纹、登记与人工签名派生；事实源只有账本与 registry，任何"看起来绿了"的批量标记都是伪造信任。派生文档只允许由事实源重算，不允许手改；规划图只允许来自人的声明，不允许拿账本现状投影自证。
+
+**对外宣称澄清（不改写历史条目）**：v2.22.0 的 CHANGELOG 写了"修订 doc-rebuild（PROJECT_STATE + `--check`）"与"ledger-guard 串起 doc lint 与义务门禁"，实测当时只改了技能文案，代码没有落地——`rebuild_docs.py` 中 `PROJECT_STATE` 出现 0 次，`check.sh` 无文档节，`scripts/` 与 `.github/` 中除 `doc_lifecycle.py` 自身外无调用点。本版把两处承诺真正实装，并补上可复现的负向测试。
+
+- 复现判定：孤岛调用点 = 已证实；`check.sh` 无文档节 = 已证实；`PROJECT_STATE` 缺失与 41 篇全 orphan = 已证实；"verify_ledger 无文档类判据" = 部分成立（有一条 `doc_paths_exist`，校验能力 `doc_index` 路径，非文档生命周期信任判据）。
+- 工作流 A：`scripts/check.sh` 新增「文档生命周期（shadow）」节，输出 orphan / suspect / stale / 信任告警 / 派生漂移的数量与具体文件清单；默认退出码 0，仅 `--strict` 阻断；收尾汇总由 16 节增至 17 节。`doc_lifecycle.py` 新增 `gate` 子命令；`skills/ledger-verify` 的五条文档不变量逐条标注实现来源；升硬门条件写为"连续 10 次 CI orphan=0 且 warn=0 + 人工批准"。
+- 工作流 B：`scripts/rebuild_docs.py` 真正生成 `docs/generated/PROJECT_STATE.md`（能力等级/证据分层、待复核与过期文档、`next_queue` 前 5 条、最近变更），全部取自账本与 `docs.registry`；新增 `--check` 只读比对，手改即点名文件并返回非 0；生成物无时间戳，连续两次逐字节相同；账本为空时给 fail-closed 提示而不崩。`scripts/file_layout.py` 纳入单一事实源并重新渲染 `FILE_LAYOUT.md`，README / STANDARD / 08 / 10 / 15 / 28 同步。
+- 工作流 C：`doc_lifecycle.py` 新增 `seed`（确定性初判：generated→derived、plans/计划→plan、编号文档/STANDARD→rationale；`covers` 从正文能力码与决策 id 抽取；全部 `status=draft`、`verified` 为空）与 `approve`（无签名或无可复算 `source_hash` 一律拒绝升 current）；登记写入 `governance/DECISION_LEDGER.json#docs.registry`，并追加 ledger-steward 历史事件，未新建第二登记表。自身仓 42 篇（原 41 + PROJECT_STATE）全部登记，lint orphan 归零、draft=42、verified=0。
+- 工作流 D：README / STANDARD / 08 / 10 的专家、技能、路径与字段计数改为从代码派生；`literal_drift` 0 漂移；单测 523 → 535（只增不减，新增 12 条覆盖门禁 warn/strict、幂等、手改、播种、无签名拒绝、E1/E2）。
+- 工作流 E1：`compare_graphs.py` 取消"未声明目标默认 L5"，新增 `no_target`，不参与对齐与完成度；回测：自身仓 16 条 `in_progress` → 16 条 `no_target`，`in_progress=0`。E2：规划码唯一来源改为 registry 人工声明（`committed` / `target_level` / `depends_on`），CAPABILITY_INDEX 仅作现状投影；自身仓声明一条未实现能力后 `planned=17 / actual=16 / planned_only=1`，不再恒等。
+- 实测代价：`check.sh` 增加一节（16→17），单测多 12 条；`PROJECT_STATE.md` 的"最近变更"排除文档登记记账事件，避免与 registry 自指漂移；`method_assets=9873b08f850e7c77…`、`installed_assets=648c282a990b1a77…`、`ontology=beb2146190093602…`，按 M4/M5/M7 重绑，目标项目需重新批准升级。
+
 ## [2.23.0] - 2026-11-24
 
 **docs 文件架构规范化**：三类分层不动，修四处口径漂移，索引与权威源对齐。

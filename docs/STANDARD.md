@@ -36,6 +36,7 @@
 | 改节点工作台 / `work_items` / `test_results` | `21-节点工作台与看板视图`、`work_panel.py`、`verify_ledger.py` 三条不变量、`scale_budget.py` 的 `work_items` 阈值 |
 | 改技能 / 专家 | `10-AI集成`、`README` 目录结构 |
 | 新增不变量 | `08-可信性校验` 表格 + 负向测试 |
+| 文档生命周期升硬门 | `skills/ledger-verify`、`docs/08`、`RELEASE_CHECKLIST`；条件：连续 10 次 CI orphan=0 且 warn=0 + 人工批准 |
 | 新增 / 改名产物路径 | `15-文件架构`、`scripts/file_layout.py`、重新 `--emit-md`、`CHANGELOG` |
 | 改账本字段结构 | `02-决策账本`、`15-文件架构` 的 LEDGER_FIELDS、`09-历史与经验` |
 | 改工具副本 / 版本契约 | `16-升级与迁移`、`upgrade.py` 的 TOOLING / MIGRATIONS、`CHANGELOG` |
@@ -100,7 +101,7 @@
 
 | 作用域 | 目录 | 生成物 | 生产者 | 是否入方法资产摘要 |
 |---|---|---|---|---|
-| 目标项目 | `<project>/docs/generated/` | `PROJECT_BRIEF.md` / `MODULE_MAP.md` / `CAPABILITY_INDEX.md` / `GRAPH_DIFF.md` | `rebuild_docs.py` / `compare_graphs.py` | 否（项目派生层） |
+| 目标项目 | `<project>/docs/generated/` | `PROJECT_BRIEF.md` / `MODULE_MAP.md` / `CAPABILITY_INDEX.md` / `PROJECT_STATE.md` / `GRAPH_DIFF.md` | `rebuild_docs.py` / `compare_graphs.py` | 否（项目派生层） |
 | 方法论仓库自身 | `ledger-driven-dev/docs/generated/` | `SCENARIO_MATRIX.md` / `FILE_LAYOUT.md` / `TEST_MODULES.md` / `ONTOLOGY.md` / `ONTOLOGY.json` | `scenario_matrix.py` / `file_layout.py` / `test_modules.py` / `ontology.py` | 否（派生不纳入） |
 
 两类都**不是人工文档**：不要长期手改，改事实源后重跑；需要保留人工补充时用不同文件名。

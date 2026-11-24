@@ -5118,6 +5118,1851 @@
         },
         "trigger": "derive",
         "note": "证据 / 等级 / 文档索引变化，由生成器自动侦测。"
+      },
+      {
+        "seq": 22,
+        "ts": "2026-11-22 10:33 HKT",
+        "type": "doc_registry_seed",
+        "fingerprint_before": "3b3634be53d68dfb",
+        "fingerprint_after": "3b3634be53d68dfb",
+        "changes": {
+          "approved_by": "user-approved-execution-chain",
+          "role": "ledger-steward",
+          "added": [
+            "docs/01-问题与原则.md",
+            "docs/02-决策账本.md",
+            "docs/03-编码与成熟度.md",
+            "docs/04-嵌套组件与文档索引.md",
+            "docs/05-循环协议.md",
+            "docs/06-落地指南.md",
+            "docs/07-反模式与边界.md",
+            "docs/08-可信性校验.md",
+            "docs/09-历史与经验.md",
+            "docs/10-AI集成.md",
+            "docs/11-证据分层.md",
+            "docs/12-专家路由.md",
+            "docs/13-可追溯性.md",
+            "docs/14-场景矩阵.md",
+            "docs/15-文件架构.md",
+            "docs/16-升级与迁移.md",
+            "docs/17-多Agent接入控制.md",
+            "docs/18-规模化与版面契约.md",
+            "docs/19-专家与技能可用.md",
+            "docs/20-测试架构与模块映射.md",
+            "docs/21-节点工作台与看板视图.md",
+            "docs/22-反向回流.md",
+            "docs/23-本体投影.md",
+            "docs/24-复述门.md",
+            "docs/25-专家团自动编排.md",
+            "docs/26-来源投影与完成定义.md",
+            "docs/27-自举闭环.md",
+            "docs/28-看板体验.md",
+            "docs/29-架构图与数据流.md",
+            "docs/30-工作台视角.md",
+            "docs/31-可视化分析层.md",
+            "docs/32-本地D3可视化.md",
+            "docs/33-目标编排监督者.md",
+            "docs/34-运行时风险入口.md",
+            "docs/35-投影新鲜度不变量.md",
+            "docs/36-风险下降判据.md",
+            "docs/STANDARD.md",
+            "docs/generated/CAPABILITY_INDEX.md",
+            "docs/generated/FILE_LAYOUT.md",
+            "docs/generated/GRAPH_DIFF.md",
+            "docs/generated/MODULE_MAP.md",
+            "docs/generated/ONTOLOGY.md",
+            "docs/generated/PROJECT_BRIEF.md",
+            "docs/generated/PROJECT_STATE.md",
+            "docs/generated/SCENARIO_MATRIX.md",
+            "docs/generated/TEST_MODULES.md"
+          ],
+          "removed": [],
+          "initial_status": "draft",
+          "current_count": 0
+        },
+        "state_digest": {
+          "METHOD.GOV.FEEDBACK.01": {
+            "l": 3,
+            "c": 0.6,
+            "t": "verified",
+            "e": [
+              "scripts/ledger_feedback.py",
+              "tests/meta/test_feedback.py"
+            ],
+            "d": [
+              "scripts/ledger_feedback.py",
+              "tests/meta/test_feedback.py"
+            ],
+            "dec": [
+              "D-002",
+              "D-003",
+              "D-004",
+              "D-005",
+              "D-006",
+              "D-007",
+              "D-008",
+              "D-009"
+            ]
+          },
+          "METHOD.GOV.UPGRADE.02": {
+            "l": 3,
+            "c": 0.6,
+            "t": "verified",
+            "e": [
+              "scripts/upgrade.py",
+              "tests/meta/test_upgrade.py"
+            ],
+            "d": [
+              "scripts/upgrade.py",
+              "tests/meta/test_upgrade.py"
+            ],
+            "dec": [
+              "D-009",
+              "D-010"
+            ]
+          },
+          "METHOD.GOV.PANEL.03": {
+            "l": 3,
+            "c": 0.6,
+            "t": "verified",
+            "e": [
+              "scripts/work_panel.py",
+              "tests/views/test_work_panel.py"
+            ],
+            "d": [
+              "scripts/work_panel.py",
+              "tests/views/test_work_panel.py"
+            ],
+            "dec": []
+          },
+          "METHOD.GOV.LAYOUT.04": {
+            "l": 3,
+            "c": 0.6,
+            "t": "verified",
+            "e": [
+              "scripts/file_layout.py",
+              "tests/meta/test_layout.py"
+            ],
+            "d": [
+              "docs/generated/FILE_LAYOUT.md",
+              "scripts/file_layout.py",
+              "tests/meta/test_layout.py"
+            ],
+            "dec": [
+              "D-009"
+            ]
+          },
+          "METHOD.GOV.ASSETS.05": {
+            "l": 3,
+            "c": 0.6,
+            "t": "verified",
+            "e": [
+              "scripts/method_assets.py",
+              "tests/meta/test_platform_contract.py"
+            ],
+            "d": [
+              "scripts/method_assets.py",
+              "tests/meta/test_platform_contract.py"
+            ],
+            "dec": []
+          },
+          "METHOD.GOV.TESTMAP.06": {
+            "l": 3,
+            "c": 0.6,
+            "t": "verified",
+            "e": [
+              "scripts/test_modules.py",
+              "tests/views/test_test_modules.py"
+            ],
+            "d": [
+              "scripts/test_modules.py",
+              "tests/views/test_test_modules.py"
+            ],
+            "dec": []
+          },
+          "METHOD.GOV.BINDING.07": {
+            "l": 3,
+            "c": 0.6,
+            "t": "declared",
+            "e": [
+              "templates/binding_advisory.py",
+              "tests/core/test_binding_advisory.py"
+            ],
+            "d": [
+              "templates/binding_advisory.py",
+              "tests/core/test_binding_advisory.py"
+            ],
+            "dec": []
+          },
+          "METHOD.GOV.RESTATE.08": {
+            "l": 3,
+            "c": 0.6,
+            "t": "verified",
+            "e": [
+              "scripts/intent_restate.py",
+              "tests/routing/test_intent_restate.py"
+            ],
+            "d": [
+              "scripts/intent_restate.py",
+              "tests/routing/test_intent_restate.py"
+            ],
+            "dec": [
+              "D-002"
+            ]
+          },
+          "METHOD.GOV.ORCH.09": {
+            "l": 3,
+            "c": 0.6,
+            "t": "verified",
+            "e": [
+              "scripts/expert_run.py",
+              "tests/routing/test_expert_run.py"
+            ],
+            "d": [
+              "scripts/expert_run.py",
+              "tests/routing/test_expert_run.py"
+            ],
+            "dec": [
+              "D-010"
+            ]
+          },
+          "METHOD.GOV.ANNOT.10": {
+            "l": 3,
+            "c": 0.6,
+            "t": "verified",
+            "e": [
+              "scripts/provenance_view.py",
+              "tests/routing/test_provenance_view.py"
+            ],
+            "d": [
+              "scripts/provenance_view.py",
+              "tests/routing/test_provenance_view.py"
+            ],
+            "dec": []
+          },
+          "METHOD.GOV.BOARD.11": {
+            "l": 3,
+            "c": 0.6,
+            "t": "verified",
+            "e": [
+              "scripts/board_contract.py",
+              "tests/views/test_board_views.py"
+            ],
+            "d": [
+              "scripts/board_contract.py",
+              "tests/views/test_board_views.py"
+            ],
+            "dec": [
+              "D-005",
+              "D-006",
+              "D-007",
+              "D-008",
+              "D-009"
+            ]
+          },
+          "METHOD.GOV.VISUAL.12": {
+            "l": 3,
+            "c": 0.6,
+            "t": "verified",
+            "e": [
+              "scripts/board_contract.py",
+              "tests/views/test_board_views.py"
+            ],
+            "d": [
+              "scripts/board_contract.py",
+              "tests/views/test_board_views.py"
+            ],
+            "dec": []
+          },
+          "METHOD.GOV.WORKBENCH.13": {
+            "l": 3,
+            "c": 0.6,
+            "t": "verified",
+            "e": [
+              "scripts/board_contract.py",
+              "tests/views/test_board_views.py"
+            ],
+            "d": [
+              "scripts/board_contract.py",
+              "tests/views/test_board_views.py"
+            ],
+            "dec": []
+          },
+          "METHOD.GOV.ANALYTICS.14": {
+            "l": 3,
+            "c": 0.6,
+            "t": "declared",
+            "e": [
+              "scripts/ontology.py",
+              "templates/build_capability_model.py",
+              "tests/core/test_maturity_analytics.py",
+              "tests/views/test_board_views.py"
+            ],
+            "d": [
+              "scripts/ontology.py",
+              "templates/build_capability_model.py",
+              "tests/core/test_maturity_analytics.py",
+              "tests/views/test_board_views.py"
+            ],
+            "dec": [
+              "D-008",
+              "D-009",
+              "D-013"
+            ]
+          },
+          "METHOD.GOV.D3.15": {
+            "l": 3,
+            "c": 0.6,
+            "t": "verified",
+            "e": [
+              "scripts/file_layout.py",
+              "scripts/upgrade.py",
+              "templates/build_capability_model.py",
+              "templates/index.html.template",
+              "tests/core/test_maturity_analytics.py",
+              "tests/core/test_verify.py",
+              "tests/meta/test_upgrade.py",
+              "tests/views/test_board_views.py"
+            ],
+            "d": [
+              "docs/32-本地D3可视化.md",
+              "scripts/file_layout.py",
+              "scripts/upgrade.py",
+              "templates/build_capability_model.py",
+              "templates/index.html.template",
+              "tests/core/test_maturity_analytics.py",
+              "tests/core/test_verify.py",
+              "tests/meta/test_upgrade.py",
+              "tests/views/test_board_views.py"
+            ],
+            "dec": [
+              "D-009"
+            ]
+          },
+          "METHOD.GOV.RUNTIME.16": {
+            "l": 3,
+            "c": 0.6,
+            "t": "verified",
+            "e": [
+              "scripts/runtime_signals.py",
+              "templates/build_capability_model.py",
+              "tests/core/test_runtime_signals.py"
+            ],
+            "d": [
+              "scripts/runtime_signals.py",
+              "templates/build_capability_model.py",
+              "tests/core/test_runtime_signals.py"
+            ],
+            "dec": [
+              "D-012",
+              "D-014"
+            ]
+          }
+        },
+        "trigger": "user-approved-execution-chain",
+        "note": "文档生命周期写入：能力模型未变，指纹与末事件保持一致"
+      },
+      {
+        "seq": 23,
+        "ts": "2026-11-22 10:33 HKT",
+        "type": "doc_registry_seed",
+        "fingerprint_before": "3b3634be53d68dfb",
+        "fingerprint_after": "3b3634be53d68dfb",
+        "changes": {
+          "approved_by": "user-approved-execution-chain",
+          "role": "ledger-steward",
+          "added": [],
+          "removed": [
+            "docs/generated/CAPABILITY_INDEX.md",
+            "docs/generated/GRAPH_DIFF.md",
+            "docs/generated/MODULE_MAP.md",
+            "docs/generated/PROJECT_BRIEF.md"
+          ],
+          "initial_status": "draft",
+          "current_count": 0
+        },
+        "state_digest": {
+          "METHOD.GOV.FEEDBACK.01": {
+            "l": 3,
+            "c": 0.6,
+            "t": "verified",
+            "e": [
+              "scripts/ledger_feedback.py",
+              "tests/meta/test_feedback.py"
+            ],
+            "d": [
+              "scripts/ledger_feedback.py",
+              "tests/meta/test_feedback.py"
+            ],
+            "dec": [
+              "D-002",
+              "D-003",
+              "D-004",
+              "D-005",
+              "D-006",
+              "D-007",
+              "D-008",
+              "D-009"
+            ]
+          },
+          "METHOD.GOV.UPGRADE.02": {
+            "l": 3,
+            "c": 0.6,
+            "t": "verified",
+            "e": [
+              "scripts/upgrade.py",
+              "tests/meta/test_upgrade.py"
+            ],
+            "d": [
+              "scripts/upgrade.py",
+              "tests/meta/test_upgrade.py"
+            ],
+            "dec": [
+              "D-009",
+              "D-010"
+            ]
+          },
+          "METHOD.GOV.PANEL.03": {
+            "l": 3,
+            "c": 0.6,
+            "t": "verified",
+            "e": [
+              "scripts/work_panel.py",
+              "tests/views/test_work_panel.py"
+            ],
+            "d": [
+              "scripts/work_panel.py",
+              "tests/views/test_work_panel.py"
+            ],
+            "dec": []
+          },
+          "METHOD.GOV.LAYOUT.04": {
+            "l": 3,
+            "c": 0.6,
+            "t": "verified",
+            "e": [
+              "scripts/file_layout.py",
+              "tests/meta/test_layout.py"
+            ],
+            "d": [
+              "docs/generated/FILE_LAYOUT.md",
+              "scripts/file_layout.py",
+              "tests/meta/test_layout.py"
+            ],
+            "dec": [
+              "D-009"
+            ]
+          },
+          "METHOD.GOV.ASSETS.05": {
+            "l": 3,
+            "c": 0.6,
+            "t": "verified",
+            "e": [
+              "scripts/method_assets.py",
+              "tests/meta/test_platform_contract.py"
+            ],
+            "d": [
+              "scripts/method_assets.py",
+              "tests/meta/test_platform_contract.py"
+            ],
+            "dec": []
+          },
+          "METHOD.GOV.TESTMAP.06": {
+            "l": 3,
+            "c": 0.6,
+            "t": "verified",
+            "e": [
+              "scripts/test_modules.py",
+              "tests/views/test_test_modules.py"
+            ],
+            "d": [
+              "scripts/test_modules.py",
+              "tests/views/test_test_modules.py"
+            ],
+            "dec": []
+          },
+          "METHOD.GOV.BINDING.07": {
+            "l": 3,
+            "c": 0.6,
+            "t": "declared",
+            "e": [
+              "templates/binding_advisory.py",
+              "tests/core/test_binding_advisory.py"
+            ],
+            "d": [
+              "templates/binding_advisory.py",
+              "tests/core/test_binding_advisory.py"
+            ],
+            "dec": []
+          },
+          "METHOD.GOV.RESTATE.08": {
+            "l": 3,
+            "c": 0.6,
+            "t": "verified",
+            "e": [
+              "scripts/intent_restate.py",
+              "tests/routing/test_intent_restate.py"
+            ],
+            "d": [
+              "scripts/intent_restate.py",
+              "tests/routing/test_intent_restate.py"
+            ],
+            "dec": [
+              "D-002"
+            ]
+          },
+          "METHOD.GOV.ORCH.09": {
+            "l": 3,
+            "c": 0.6,
+            "t": "verified",
+            "e": [
+              "scripts/expert_run.py",
+              "tests/routing/test_expert_run.py"
+            ],
+            "d": [
+              "scripts/expert_run.py",
+              "tests/routing/test_expert_run.py"
+            ],
+            "dec": [
+              "D-010"
+            ]
+          },
+          "METHOD.GOV.ANNOT.10": {
+            "l": 3,
+            "c": 0.6,
+            "t": "verified",
+            "e": [
+              "scripts/provenance_view.py",
+              "tests/routing/test_provenance_view.py"
+            ],
+            "d": [
+              "scripts/provenance_view.py",
+              "tests/routing/test_provenance_view.py"
+            ],
+            "dec": []
+          },
+          "METHOD.GOV.BOARD.11": {
+            "l": 3,
+            "c": 0.6,
+            "t": "verified",
+            "e": [
+              "scripts/board_contract.py",
+              "tests/views/test_board_views.py"
+            ],
+            "d": [
+              "scripts/board_contract.py",
+              "tests/views/test_board_views.py"
+            ],
+            "dec": [
+              "D-005",
+              "D-006",
+              "D-007",
+              "D-008",
+              "D-009"
+            ]
+          },
+          "METHOD.GOV.VISUAL.12": {
+            "l": 3,
+            "c": 0.6,
+            "t": "verified",
+            "e": [
+              "scripts/board_contract.py",
+              "tests/views/test_board_views.py"
+            ],
+            "d": [
+              "scripts/board_contract.py",
+              "tests/views/test_board_views.py"
+            ],
+            "dec": []
+          },
+          "METHOD.GOV.WORKBENCH.13": {
+            "l": 3,
+            "c": 0.6,
+            "t": "verified",
+            "e": [
+              "scripts/board_contract.py",
+              "tests/views/test_board_views.py"
+            ],
+            "d": [
+              "scripts/board_contract.py",
+              "tests/views/test_board_views.py"
+            ],
+            "dec": []
+          },
+          "METHOD.GOV.ANALYTICS.14": {
+            "l": 3,
+            "c": 0.6,
+            "t": "declared",
+            "e": [
+              "scripts/ontology.py",
+              "templates/build_capability_model.py",
+              "tests/core/test_maturity_analytics.py",
+              "tests/views/test_board_views.py"
+            ],
+            "d": [
+              "scripts/ontology.py",
+              "templates/build_capability_model.py",
+              "tests/core/test_maturity_analytics.py",
+              "tests/views/test_board_views.py"
+            ],
+            "dec": [
+              "D-008",
+              "D-009",
+              "D-013"
+            ]
+          },
+          "METHOD.GOV.D3.15": {
+            "l": 3,
+            "c": 0.6,
+            "t": "verified",
+            "e": [
+              "scripts/file_layout.py",
+              "scripts/upgrade.py",
+              "templates/build_capability_model.py",
+              "templates/index.html.template",
+              "tests/core/test_maturity_analytics.py",
+              "tests/core/test_verify.py",
+              "tests/meta/test_upgrade.py",
+              "tests/views/test_board_views.py"
+            ],
+            "d": [
+              "docs/32-本地D3可视化.md",
+              "scripts/file_layout.py",
+              "scripts/upgrade.py",
+              "templates/build_capability_model.py",
+              "templates/index.html.template",
+              "tests/core/test_maturity_analytics.py",
+              "tests/core/test_verify.py",
+              "tests/meta/test_upgrade.py",
+              "tests/views/test_board_views.py"
+            ],
+            "dec": [
+              "D-009"
+            ]
+          },
+          "METHOD.GOV.RUNTIME.16": {
+            "l": 3,
+            "c": 0.6,
+            "t": "verified",
+            "e": [
+              "scripts/runtime_signals.py",
+              "templates/build_capability_model.py",
+              "tests/core/test_runtime_signals.py"
+            ],
+            "d": [
+              "scripts/runtime_signals.py",
+              "templates/build_capability_model.py",
+              "tests/core/test_runtime_signals.py"
+            ],
+            "dec": [
+              "D-012",
+              "D-014"
+            ]
+          }
+        },
+        "trigger": "user-approved-execution-chain",
+        "note": "文档生命周期写入：能力模型未变，指纹与末事件保持一致"
+      },
+      {
+        "seq": 24,
+        "ts": "2026-11-22 10:33 HKT",
+        "type": "doc_registry_seed",
+        "fingerprint_before": "3b3634be53d68dfb",
+        "fingerprint_after": "3b3634be53d68dfb",
+        "changes": {
+          "approved_by": "user-approved-execution-chain",
+          "role": "ledger-steward",
+          "added": [
+            "docs/generated/CAPABILITY_INDEX.md",
+            "docs/generated/MODULE_MAP.md",
+            "docs/generated/PROJECT_BRIEF.md"
+          ],
+          "removed": [],
+          "initial_status": "draft",
+          "current_count": 0
+        },
+        "state_digest": {
+          "METHOD.GOV.FEEDBACK.01": {
+            "l": 3,
+            "c": 0.6,
+            "t": "verified",
+            "e": [
+              "scripts/ledger_feedback.py",
+              "tests/meta/test_feedback.py"
+            ],
+            "d": [
+              "scripts/ledger_feedback.py",
+              "tests/meta/test_feedback.py"
+            ],
+            "dec": [
+              "D-002",
+              "D-003",
+              "D-004",
+              "D-005",
+              "D-006",
+              "D-007",
+              "D-008",
+              "D-009"
+            ]
+          },
+          "METHOD.GOV.UPGRADE.02": {
+            "l": 3,
+            "c": 0.6,
+            "t": "verified",
+            "e": [
+              "scripts/upgrade.py",
+              "tests/meta/test_upgrade.py"
+            ],
+            "d": [
+              "scripts/upgrade.py",
+              "tests/meta/test_upgrade.py"
+            ],
+            "dec": [
+              "D-009",
+              "D-010"
+            ]
+          },
+          "METHOD.GOV.PANEL.03": {
+            "l": 3,
+            "c": 0.6,
+            "t": "verified",
+            "e": [
+              "scripts/work_panel.py",
+              "tests/views/test_work_panel.py"
+            ],
+            "d": [
+              "scripts/work_panel.py",
+              "tests/views/test_work_panel.py"
+            ],
+            "dec": []
+          },
+          "METHOD.GOV.LAYOUT.04": {
+            "l": 3,
+            "c": 0.6,
+            "t": "verified",
+            "e": [
+              "scripts/file_layout.py",
+              "tests/meta/test_layout.py"
+            ],
+            "d": [
+              "docs/generated/FILE_LAYOUT.md",
+              "scripts/file_layout.py",
+              "tests/meta/test_layout.py"
+            ],
+            "dec": [
+              "D-009"
+            ]
+          },
+          "METHOD.GOV.ASSETS.05": {
+            "l": 3,
+            "c": 0.6,
+            "t": "verified",
+            "e": [
+              "scripts/method_assets.py",
+              "tests/meta/test_platform_contract.py"
+            ],
+            "d": [
+              "scripts/method_assets.py",
+              "tests/meta/test_platform_contract.py"
+            ],
+            "dec": []
+          },
+          "METHOD.GOV.TESTMAP.06": {
+            "l": 3,
+            "c": 0.6,
+            "t": "verified",
+            "e": [
+              "scripts/test_modules.py",
+              "tests/views/test_test_modules.py"
+            ],
+            "d": [
+              "scripts/test_modules.py",
+              "tests/views/test_test_modules.py"
+            ],
+            "dec": []
+          },
+          "METHOD.GOV.BINDING.07": {
+            "l": 3,
+            "c": 0.6,
+            "t": "declared",
+            "e": [
+              "templates/binding_advisory.py",
+              "tests/core/test_binding_advisory.py"
+            ],
+            "d": [
+              "templates/binding_advisory.py",
+              "tests/core/test_binding_advisory.py"
+            ],
+            "dec": []
+          },
+          "METHOD.GOV.RESTATE.08": {
+            "l": 3,
+            "c": 0.6,
+            "t": "verified",
+            "e": [
+              "scripts/intent_restate.py",
+              "tests/routing/test_intent_restate.py"
+            ],
+            "d": [
+              "scripts/intent_restate.py",
+              "tests/routing/test_intent_restate.py"
+            ],
+            "dec": [
+              "D-002"
+            ]
+          },
+          "METHOD.GOV.ORCH.09": {
+            "l": 3,
+            "c": 0.6,
+            "t": "verified",
+            "e": [
+              "scripts/expert_run.py",
+              "tests/routing/test_expert_run.py"
+            ],
+            "d": [
+              "scripts/expert_run.py",
+              "tests/routing/test_expert_run.py"
+            ],
+            "dec": [
+              "D-010"
+            ]
+          },
+          "METHOD.GOV.ANNOT.10": {
+            "l": 3,
+            "c": 0.6,
+            "t": "verified",
+            "e": [
+              "scripts/provenance_view.py",
+              "tests/routing/test_provenance_view.py"
+            ],
+            "d": [
+              "scripts/provenance_view.py",
+              "tests/routing/test_provenance_view.py"
+            ],
+            "dec": []
+          },
+          "METHOD.GOV.BOARD.11": {
+            "l": 3,
+            "c": 0.6,
+            "t": "verified",
+            "e": [
+              "scripts/board_contract.py",
+              "tests/views/test_board_views.py"
+            ],
+            "d": [
+              "scripts/board_contract.py",
+              "tests/views/test_board_views.py"
+            ],
+            "dec": [
+              "D-005",
+              "D-006",
+              "D-007",
+              "D-008",
+              "D-009"
+            ]
+          },
+          "METHOD.GOV.VISUAL.12": {
+            "l": 3,
+            "c": 0.6,
+            "t": "verified",
+            "e": [
+              "scripts/board_contract.py",
+              "tests/views/test_board_views.py"
+            ],
+            "d": [
+              "scripts/board_contract.py",
+              "tests/views/test_board_views.py"
+            ],
+            "dec": []
+          },
+          "METHOD.GOV.WORKBENCH.13": {
+            "l": 3,
+            "c": 0.6,
+            "t": "verified",
+            "e": [
+              "scripts/board_contract.py",
+              "tests/views/test_board_views.py"
+            ],
+            "d": [
+              "scripts/board_contract.py",
+              "tests/views/test_board_views.py"
+            ],
+            "dec": []
+          },
+          "METHOD.GOV.ANALYTICS.14": {
+            "l": 3,
+            "c": 0.6,
+            "t": "declared",
+            "e": [
+              "scripts/ontology.py",
+              "templates/build_capability_model.py",
+              "tests/core/test_maturity_analytics.py",
+              "tests/views/test_board_views.py"
+            ],
+            "d": [
+              "scripts/ontology.py",
+              "templates/build_capability_model.py",
+              "tests/core/test_maturity_analytics.py",
+              "tests/views/test_board_views.py"
+            ],
+            "dec": [
+              "D-008",
+              "D-009",
+              "D-013"
+            ]
+          },
+          "METHOD.GOV.D3.15": {
+            "l": 3,
+            "c": 0.6,
+            "t": "verified",
+            "e": [
+              "scripts/file_layout.py",
+              "scripts/upgrade.py",
+              "templates/build_capability_model.py",
+              "templates/index.html.template",
+              "tests/core/test_maturity_analytics.py",
+              "tests/core/test_verify.py",
+              "tests/meta/test_upgrade.py",
+              "tests/views/test_board_views.py"
+            ],
+            "d": [
+              "docs/32-本地D3可视化.md",
+              "scripts/file_layout.py",
+              "scripts/upgrade.py",
+              "templates/build_capability_model.py",
+              "templates/index.html.template",
+              "tests/core/test_maturity_analytics.py",
+              "tests/core/test_verify.py",
+              "tests/meta/test_upgrade.py",
+              "tests/views/test_board_views.py"
+            ],
+            "dec": [
+              "D-009"
+            ]
+          },
+          "METHOD.GOV.RUNTIME.16": {
+            "l": 3,
+            "c": 0.6,
+            "t": "verified",
+            "e": [
+              "scripts/runtime_signals.py",
+              "templates/build_capability_model.py",
+              "tests/core/test_runtime_signals.py"
+            ],
+            "d": [
+              "scripts/runtime_signals.py",
+              "templates/build_capability_model.py",
+              "tests/core/test_runtime_signals.py"
+            ],
+            "dec": [
+              "D-012",
+              "D-014"
+            ]
+          }
+        },
+        "trigger": "user-approved-execution-chain",
+        "note": "文档生命周期写入：能力模型未变，指纹与末事件保持一致"
+      },
+      {
+        "seq": 25,
+        "ts": "2026-11-22 10:33 HKT",
+        "type": "doc_registry_seed",
+        "fingerprint_before": "3b3634be53d68dfb",
+        "fingerprint_after": "3b3634be53d68dfb",
+        "changes": {
+          "approved_by": "user-approved-execution-chain",
+          "role": "ledger-steward",
+          "added": [],
+          "removed": [
+            "docs/generated/CAPABILITY_INDEX.md",
+            "docs/generated/MODULE_MAP.md",
+            "docs/generated/PROJECT_BRIEF.md"
+          ],
+          "initial_status": "draft",
+          "current_count": 0
+        },
+        "state_digest": {
+          "METHOD.GOV.FEEDBACK.01": {
+            "l": 3,
+            "c": 0.6,
+            "t": "verified",
+            "e": [
+              "scripts/ledger_feedback.py",
+              "tests/meta/test_feedback.py"
+            ],
+            "d": [
+              "scripts/ledger_feedback.py",
+              "tests/meta/test_feedback.py"
+            ],
+            "dec": [
+              "D-002",
+              "D-003",
+              "D-004",
+              "D-005",
+              "D-006",
+              "D-007",
+              "D-008",
+              "D-009"
+            ]
+          },
+          "METHOD.GOV.UPGRADE.02": {
+            "l": 3,
+            "c": 0.6,
+            "t": "verified",
+            "e": [
+              "scripts/upgrade.py",
+              "tests/meta/test_upgrade.py"
+            ],
+            "d": [
+              "scripts/upgrade.py",
+              "tests/meta/test_upgrade.py"
+            ],
+            "dec": [
+              "D-009",
+              "D-010"
+            ]
+          },
+          "METHOD.GOV.PANEL.03": {
+            "l": 3,
+            "c": 0.6,
+            "t": "verified",
+            "e": [
+              "scripts/work_panel.py",
+              "tests/views/test_work_panel.py"
+            ],
+            "d": [
+              "scripts/work_panel.py",
+              "tests/views/test_work_panel.py"
+            ],
+            "dec": []
+          },
+          "METHOD.GOV.LAYOUT.04": {
+            "l": 3,
+            "c": 0.6,
+            "t": "verified",
+            "e": [
+              "scripts/file_layout.py",
+              "tests/meta/test_layout.py"
+            ],
+            "d": [
+              "docs/generated/FILE_LAYOUT.md",
+              "scripts/file_layout.py",
+              "tests/meta/test_layout.py"
+            ],
+            "dec": [
+              "D-009"
+            ]
+          },
+          "METHOD.GOV.ASSETS.05": {
+            "l": 3,
+            "c": 0.6,
+            "t": "verified",
+            "e": [
+              "scripts/method_assets.py",
+              "tests/meta/test_platform_contract.py"
+            ],
+            "d": [
+              "scripts/method_assets.py",
+              "tests/meta/test_platform_contract.py"
+            ],
+            "dec": []
+          },
+          "METHOD.GOV.TESTMAP.06": {
+            "l": 3,
+            "c": 0.6,
+            "t": "verified",
+            "e": [
+              "scripts/test_modules.py",
+              "tests/views/test_test_modules.py"
+            ],
+            "d": [
+              "scripts/test_modules.py",
+              "tests/views/test_test_modules.py"
+            ],
+            "dec": []
+          },
+          "METHOD.GOV.BINDING.07": {
+            "l": 3,
+            "c": 0.6,
+            "t": "declared",
+            "e": [
+              "templates/binding_advisory.py",
+              "tests/core/test_binding_advisory.py"
+            ],
+            "d": [
+              "templates/binding_advisory.py",
+              "tests/core/test_binding_advisory.py"
+            ],
+            "dec": []
+          },
+          "METHOD.GOV.RESTATE.08": {
+            "l": 3,
+            "c": 0.6,
+            "t": "verified",
+            "e": [
+              "scripts/intent_restate.py",
+              "tests/routing/test_intent_restate.py"
+            ],
+            "d": [
+              "scripts/intent_restate.py",
+              "tests/routing/test_intent_restate.py"
+            ],
+            "dec": [
+              "D-002"
+            ]
+          },
+          "METHOD.GOV.ORCH.09": {
+            "l": 3,
+            "c": 0.6,
+            "t": "verified",
+            "e": [
+              "scripts/expert_run.py",
+              "tests/routing/test_expert_run.py"
+            ],
+            "d": [
+              "scripts/expert_run.py",
+              "tests/routing/test_expert_run.py"
+            ],
+            "dec": [
+              "D-010"
+            ]
+          },
+          "METHOD.GOV.ANNOT.10": {
+            "l": 3,
+            "c": 0.6,
+            "t": "verified",
+            "e": [
+              "scripts/provenance_view.py",
+              "tests/routing/test_provenance_view.py"
+            ],
+            "d": [
+              "scripts/provenance_view.py",
+              "tests/routing/test_provenance_view.py"
+            ],
+            "dec": []
+          },
+          "METHOD.GOV.BOARD.11": {
+            "l": 3,
+            "c": 0.6,
+            "t": "verified",
+            "e": [
+              "scripts/board_contract.py",
+              "tests/views/test_board_views.py"
+            ],
+            "d": [
+              "scripts/board_contract.py",
+              "tests/views/test_board_views.py"
+            ],
+            "dec": [
+              "D-005",
+              "D-006",
+              "D-007",
+              "D-008",
+              "D-009"
+            ]
+          },
+          "METHOD.GOV.VISUAL.12": {
+            "l": 3,
+            "c": 0.6,
+            "t": "verified",
+            "e": [
+              "scripts/board_contract.py",
+              "tests/views/test_board_views.py"
+            ],
+            "d": [
+              "scripts/board_contract.py",
+              "tests/views/test_board_views.py"
+            ],
+            "dec": []
+          },
+          "METHOD.GOV.WORKBENCH.13": {
+            "l": 3,
+            "c": 0.6,
+            "t": "verified",
+            "e": [
+              "scripts/board_contract.py",
+              "tests/views/test_board_views.py"
+            ],
+            "d": [
+              "scripts/board_contract.py",
+              "tests/views/test_board_views.py"
+            ],
+            "dec": []
+          },
+          "METHOD.GOV.ANALYTICS.14": {
+            "l": 3,
+            "c": 0.6,
+            "t": "declared",
+            "e": [
+              "scripts/ontology.py",
+              "templates/build_capability_model.py",
+              "tests/core/test_maturity_analytics.py",
+              "tests/views/test_board_views.py"
+            ],
+            "d": [
+              "scripts/ontology.py",
+              "templates/build_capability_model.py",
+              "tests/core/test_maturity_analytics.py",
+              "tests/views/test_board_views.py"
+            ],
+            "dec": [
+              "D-008",
+              "D-009",
+              "D-013"
+            ]
+          },
+          "METHOD.GOV.D3.15": {
+            "l": 3,
+            "c": 0.6,
+            "t": "verified",
+            "e": [
+              "scripts/file_layout.py",
+              "scripts/upgrade.py",
+              "templates/build_capability_model.py",
+              "templates/index.html.template",
+              "tests/core/test_maturity_analytics.py",
+              "tests/core/test_verify.py",
+              "tests/meta/test_upgrade.py",
+              "tests/views/test_board_views.py"
+            ],
+            "d": [
+              "docs/32-本地D3可视化.md",
+              "scripts/file_layout.py",
+              "scripts/upgrade.py",
+              "templates/build_capability_model.py",
+              "templates/index.html.template",
+              "tests/core/test_maturity_analytics.py",
+              "tests/core/test_verify.py",
+              "tests/meta/test_upgrade.py",
+              "tests/views/test_board_views.py"
+            ],
+            "dec": [
+              "D-009"
+            ]
+          },
+          "METHOD.GOV.RUNTIME.16": {
+            "l": 3,
+            "c": 0.6,
+            "t": "verified",
+            "e": [
+              "scripts/runtime_signals.py",
+              "templates/build_capability_model.py",
+              "tests/core/test_runtime_signals.py"
+            ],
+            "d": [
+              "scripts/runtime_signals.py",
+              "templates/build_capability_model.py",
+              "tests/core/test_runtime_signals.py"
+            ],
+            "dec": [
+              "D-012",
+              "D-014"
+            ]
+          }
+        },
+        "trigger": "user-approved-execution-chain",
+        "note": "文档生命周期写入：能力模型未变，指纹与末事件保持一致"
+      },
+      {
+        "seq": 26,
+        "ts": "2026-11-22 10:33 HKT",
+        "type": "doc_registry_seed",
+        "fingerprint_before": "3b3634be53d68dfb",
+        "fingerprint_after": "3b3634be53d68dfb",
+        "changes": {
+          "approved_by": "user-approved-execution-chain",
+          "role": "ledger-steward",
+          "added": [],
+          "removed": [],
+          "initial_status": "draft",
+          "current_count": 0
+        },
+        "state_digest": {
+          "METHOD.GOV.FEEDBACK.01": {
+            "l": 3,
+            "c": 0.6,
+            "t": "verified",
+            "e": [
+              "scripts/ledger_feedback.py",
+              "tests/meta/test_feedback.py"
+            ],
+            "d": [
+              "scripts/ledger_feedback.py",
+              "tests/meta/test_feedback.py"
+            ],
+            "dec": [
+              "D-002",
+              "D-003",
+              "D-004",
+              "D-005",
+              "D-006",
+              "D-007",
+              "D-008",
+              "D-009"
+            ]
+          },
+          "METHOD.GOV.UPGRADE.02": {
+            "l": 3,
+            "c": 0.6,
+            "t": "verified",
+            "e": [
+              "scripts/upgrade.py",
+              "tests/meta/test_upgrade.py"
+            ],
+            "d": [
+              "scripts/upgrade.py",
+              "tests/meta/test_upgrade.py"
+            ],
+            "dec": [
+              "D-009",
+              "D-010"
+            ]
+          },
+          "METHOD.GOV.PANEL.03": {
+            "l": 3,
+            "c": 0.6,
+            "t": "verified",
+            "e": [
+              "scripts/work_panel.py",
+              "tests/views/test_work_panel.py"
+            ],
+            "d": [
+              "scripts/work_panel.py",
+              "tests/views/test_work_panel.py"
+            ],
+            "dec": []
+          },
+          "METHOD.GOV.LAYOUT.04": {
+            "l": 3,
+            "c": 0.6,
+            "t": "verified",
+            "e": [
+              "scripts/file_layout.py",
+              "tests/meta/test_layout.py"
+            ],
+            "d": [
+              "docs/generated/FILE_LAYOUT.md",
+              "scripts/file_layout.py",
+              "tests/meta/test_layout.py"
+            ],
+            "dec": [
+              "D-009"
+            ]
+          },
+          "METHOD.GOV.ASSETS.05": {
+            "l": 3,
+            "c": 0.6,
+            "t": "verified",
+            "e": [
+              "scripts/method_assets.py",
+              "tests/meta/test_platform_contract.py"
+            ],
+            "d": [
+              "scripts/method_assets.py",
+              "tests/meta/test_platform_contract.py"
+            ],
+            "dec": []
+          },
+          "METHOD.GOV.TESTMAP.06": {
+            "l": 3,
+            "c": 0.6,
+            "t": "verified",
+            "e": [
+              "scripts/test_modules.py",
+              "tests/views/test_test_modules.py"
+            ],
+            "d": [
+              "scripts/test_modules.py",
+              "tests/views/test_test_modules.py"
+            ],
+            "dec": []
+          },
+          "METHOD.GOV.BINDING.07": {
+            "l": 3,
+            "c": 0.6,
+            "t": "declared",
+            "e": [
+              "templates/binding_advisory.py",
+              "tests/core/test_binding_advisory.py"
+            ],
+            "d": [
+              "templates/binding_advisory.py",
+              "tests/core/test_binding_advisory.py"
+            ],
+            "dec": []
+          },
+          "METHOD.GOV.RESTATE.08": {
+            "l": 3,
+            "c": 0.6,
+            "t": "verified",
+            "e": [
+              "scripts/intent_restate.py",
+              "tests/routing/test_intent_restate.py"
+            ],
+            "d": [
+              "scripts/intent_restate.py",
+              "tests/routing/test_intent_restate.py"
+            ],
+            "dec": [
+              "D-002"
+            ]
+          },
+          "METHOD.GOV.ORCH.09": {
+            "l": 3,
+            "c": 0.6,
+            "t": "verified",
+            "e": [
+              "scripts/expert_run.py",
+              "tests/routing/test_expert_run.py"
+            ],
+            "d": [
+              "scripts/expert_run.py",
+              "tests/routing/test_expert_run.py"
+            ],
+            "dec": [
+              "D-010"
+            ]
+          },
+          "METHOD.GOV.ANNOT.10": {
+            "l": 3,
+            "c": 0.6,
+            "t": "verified",
+            "e": [
+              "scripts/provenance_view.py",
+              "tests/routing/test_provenance_view.py"
+            ],
+            "d": [
+              "scripts/provenance_view.py",
+              "tests/routing/test_provenance_view.py"
+            ],
+            "dec": []
+          },
+          "METHOD.GOV.BOARD.11": {
+            "l": 3,
+            "c": 0.6,
+            "t": "verified",
+            "e": [
+              "scripts/board_contract.py",
+              "tests/views/test_board_views.py"
+            ],
+            "d": [
+              "scripts/board_contract.py",
+              "tests/views/test_board_views.py"
+            ],
+            "dec": [
+              "D-005",
+              "D-006",
+              "D-007",
+              "D-008",
+              "D-009"
+            ]
+          },
+          "METHOD.GOV.VISUAL.12": {
+            "l": 3,
+            "c": 0.6,
+            "t": "verified",
+            "e": [
+              "scripts/board_contract.py",
+              "tests/views/test_board_views.py"
+            ],
+            "d": [
+              "scripts/board_contract.py",
+              "tests/views/test_board_views.py"
+            ],
+            "dec": []
+          },
+          "METHOD.GOV.WORKBENCH.13": {
+            "l": 3,
+            "c": 0.6,
+            "t": "verified",
+            "e": [
+              "scripts/board_contract.py",
+              "tests/views/test_board_views.py"
+            ],
+            "d": [
+              "scripts/board_contract.py",
+              "tests/views/test_board_views.py"
+            ],
+            "dec": []
+          },
+          "METHOD.GOV.ANALYTICS.14": {
+            "l": 3,
+            "c": 0.6,
+            "t": "declared",
+            "e": [
+              "scripts/ontology.py",
+              "templates/build_capability_model.py",
+              "tests/core/test_maturity_analytics.py",
+              "tests/views/test_board_views.py"
+            ],
+            "d": [
+              "scripts/ontology.py",
+              "templates/build_capability_model.py",
+              "tests/core/test_maturity_analytics.py",
+              "tests/views/test_board_views.py"
+            ],
+            "dec": [
+              "D-008",
+              "D-009",
+              "D-013"
+            ]
+          },
+          "METHOD.GOV.D3.15": {
+            "l": 3,
+            "c": 0.6,
+            "t": "verified",
+            "e": [
+              "scripts/file_layout.py",
+              "scripts/upgrade.py",
+              "templates/build_capability_model.py",
+              "templates/index.html.template",
+              "tests/core/test_maturity_analytics.py",
+              "tests/core/test_verify.py",
+              "tests/meta/test_upgrade.py",
+              "tests/views/test_board_views.py"
+            ],
+            "d": [
+              "docs/32-本地D3可视化.md",
+              "scripts/file_layout.py",
+              "scripts/upgrade.py",
+              "templates/build_capability_model.py",
+              "templates/index.html.template",
+              "tests/core/test_maturity_analytics.py",
+              "tests/core/test_verify.py",
+              "tests/meta/test_upgrade.py",
+              "tests/views/test_board_views.py"
+            ],
+            "dec": [
+              "D-009"
+            ]
+          },
+          "METHOD.GOV.RUNTIME.16": {
+            "l": 3,
+            "c": 0.6,
+            "t": "verified",
+            "e": [
+              "scripts/runtime_signals.py",
+              "templates/build_capability_model.py",
+              "tests/core/test_runtime_signals.py"
+            ],
+            "d": [
+              "scripts/runtime_signals.py",
+              "templates/build_capability_model.py",
+              "tests/core/test_runtime_signals.py"
+            ],
+            "dec": [
+              "D-012",
+              "D-014"
+            ]
+          }
+        },
+        "trigger": "user-approved-execution-chain",
+        "note": "文档生命周期写入：能力模型未变，指纹与末事件保持一致"
+      },
+      {
+        "seq": 27,
+        "ts": "2026-11-22 10:33 HKT",
+        "type": "doc_registry_seed",
+        "fingerprint_before": "3b3634be53d68dfb",
+        "fingerprint_after": "3b3634be53d68dfb",
+        "changes": {
+          "approved_by": "user-approved-execution-chain",
+          "role": "ledger-steward",
+          "added": [],
+          "removed": [],
+          "modified": [
+            "docs/08-可信性校验.md",
+            "docs/10-AI集成.md",
+            "docs/15-文件架构.md",
+            "docs/28-看板体验.md",
+            "docs/STANDARD.md",
+            "docs/generated/ONTOLOGY.md",
+            "docs/generated/TEST_MODULES.md"
+          ],
+          "initial_status": "draft",
+          "current_count": 0
+        },
+        "state_digest": {
+          "METHOD.GOV.FEEDBACK.01": {
+            "l": 3,
+            "c": 0.6,
+            "t": "verified",
+            "e": [
+              "scripts/ledger_feedback.py",
+              "tests/meta/test_feedback.py"
+            ],
+            "d": [
+              "scripts/ledger_feedback.py",
+              "tests/meta/test_feedback.py"
+            ],
+            "dec": [
+              "D-002",
+              "D-003",
+              "D-004",
+              "D-005",
+              "D-006",
+              "D-007",
+              "D-008",
+              "D-009"
+            ]
+          },
+          "METHOD.GOV.UPGRADE.02": {
+            "l": 3,
+            "c": 0.6,
+            "t": "verified",
+            "e": [
+              "scripts/upgrade.py",
+              "tests/meta/test_upgrade.py"
+            ],
+            "d": [
+              "scripts/upgrade.py",
+              "tests/meta/test_upgrade.py"
+            ],
+            "dec": [
+              "D-009",
+              "D-010"
+            ]
+          },
+          "METHOD.GOV.PANEL.03": {
+            "l": 3,
+            "c": 0.6,
+            "t": "verified",
+            "e": [
+              "scripts/work_panel.py",
+              "tests/views/test_work_panel.py"
+            ],
+            "d": [
+              "scripts/work_panel.py",
+              "tests/views/test_work_panel.py"
+            ],
+            "dec": []
+          },
+          "METHOD.GOV.LAYOUT.04": {
+            "l": 3,
+            "c": 0.6,
+            "t": "verified",
+            "e": [
+              "scripts/file_layout.py",
+              "tests/meta/test_layout.py"
+            ],
+            "d": [
+              "docs/generated/FILE_LAYOUT.md",
+              "scripts/file_layout.py",
+              "tests/meta/test_layout.py"
+            ],
+            "dec": [
+              "D-009"
+            ]
+          },
+          "METHOD.GOV.ASSETS.05": {
+            "l": 3,
+            "c": 0.6,
+            "t": "verified",
+            "e": [
+              "scripts/method_assets.py",
+              "tests/meta/test_platform_contract.py"
+            ],
+            "d": [
+              "scripts/method_assets.py",
+              "tests/meta/test_platform_contract.py"
+            ],
+            "dec": []
+          },
+          "METHOD.GOV.TESTMAP.06": {
+            "l": 3,
+            "c": 0.6,
+            "t": "verified",
+            "e": [
+              "scripts/test_modules.py",
+              "tests/views/test_test_modules.py"
+            ],
+            "d": [
+              "scripts/test_modules.py",
+              "tests/views/test_test_modules.py"
+            ],
+            "dec": []
+          },
+          "METHOD.GOV.BINDING.07": {
+            "l": 3,
+            "c": 0.6,
+            "t": "declared",
+            "e": [
+              "templates/binding_advisory.py",
+              "tests/core/test_binding_advisory.py"
+            ],
+            "d": [
+              "templates/binding_advisory.py",
+              "tests/core/test_binding_advisory.py"
+            ],
+            "dec": []
+          },
+          "METHOD.GOV.RESTATE.08": {
+            "l": 3,
+            "c": 0.6,
+            "t": "verified",
+            "e": [
+              "scripts/intent_restate.py",
+              "tests/routing/test_intent_restate.py"
+            ],
+            "d": [
+              "scripts/intent_restate.py",
+              "tests/routing/test_intent_restate.py"
+            ],
+            "dec": [
+              "D-002"
+            ]
+          },
+          "METHOD.GOV.ORCH.09": {
+            "l": 3,
+            "c": 0.6,
+            "t": "verified",
+            "e": [
+              "scripts/expert_run.py",
+              "tests/routing/test_expert_run.py"
+            ],
+            "d": [
+              "scripts/expert_run.py",
+              "tests/routing/test_expert_run.py"
+            ],
+            "dec": [
+              "D-010"
+            ]
+          },
+          "METHOD.GOV.ANNOT.10": {
+            "l": 3,
+            "c": 0.6,
+            "t": "verified",
+            "e": [
+              "scripts/provenance_view.py",
+              "tests/routing/test_provenance_view.py"
+            ],
+            "d": [
+              "scripts/provenance_view.py",
+              "tests/routing/test_provenance_view.py"
+            ],
+            "dec": []
+          },
+          "METHOD.GOV.BOARD.11": {
+            "l": 3,
+            "c": 0.6,
+            "t": "verified",
+            "e": [
+              "scripts/board_contract.py",
+              "tests/views/test_board_views.py"
+            ],
+            "d": [
+              "scripts/board_contract.py",
+              "tests/views/test_board_views.py"
+            ],
+            "dec": [
+              "D-005",
+              "D-006",
+              "D-007",
+              "D-008",
+              "D-009"
+            ]
+          },
+          "METHOD.GOV.VISUAL.12": {
+            "l": 3,
+            "c": 0.6,
+            "t": "verified",
+            "e": [
+              "scripts/board_contract.py",
+              "tests/views/test_board_views.py"
+            ],
+            "d": [
+              "scripts/board_contract.py",
+              "tests/views/test_board_views.py"
+            ],
+            "dec": []
+          },
+          "METHOD.GOV.WORKBENCH.13": {
+            "l": 3,
+            "c": 0.6,
+            "t": "verified",
+            "e": [
+              "scripts/board_contract.py",
+              "tests/views/test_board_views.py"
+            ],
+            "d": [
+              "scripts/board_contract.py",
+              "tests/views/test_board_views.py"
+            ],
+            "dec": []
+          },
+          "METHOD.GOV.ANALYTICS.14": {
+            "l": 3,
+            "c": 0.6,
+            "t": "declared",
+            "e": [
+              "scripts/ontology.py",
+              "templates/build_capability_model.py",
+              "tests/core/test_maturity_analytics.py",
+              "tests/views/test_board_views.py"
+            ],
+            "d": [
+              "scripts/ontology.py",
+              "templates/build_capability_model.py",
+              "tests/core/test_maturity_analytics.py",
+              "tests/views/test_board_views.py"
+            ],
+            "dec": [
+              "D-008",
+              "D-009",
+              "D-013"
+            ]
+          },
+          "METHOD.GOV.D3.15": {
+            "l": 3,
+            "c": 0.6,
+            "t": "verified",
+            "e": [
+              "scripts/file_layout.py",
+              "scripts/upgrade.py",
+              "templates/build_capability_model.py",
+              "templates/index.html.template",
+              "tests/core/test_maturity_analytics.py",
+              "tests/core/test_verify.py",
+              "tests/meta/test_upgrade.py",
+              "tests/views/test_board_views.py"
+            ],
+            "d": [
+              "docs/32-本地D3可视化.md",
+              "scripts/file_layout.py",
+              "scripts/upgrade.py",
+              "templates/build_capability_model.py",
+              "templates/index.html.template",
+              "tests/core/test_maturity_analytics.py",
+              "tests/core/test_verify.py",
+              "tests/meta/test_upgrade.py",
+              "tests/views/test_board_views.py"
+            ],
+            "dec": [
+              "D-009"
+            ]
+          },
+          "METHOD.GOV.RUNTIME.16": {
+            "l": 3,
+            "c": 0.6,
+            "t": "verified",
+            "e": [
+              "scripts/runtime_signals.py",
+              "templates/build_capability_model.py",
+              "tests/core/test_runtime_signals.py"
+            ],
+            "d": [
+              "scripts/runtime_signals.py",
+              "templates/build_capability_model.py",
+              "tests/core/test_runtime_signals.py"
+            ],
+            "dec": [
+              "D-012",
+              "D-014"
+            ]
+          }
+        },
+        "trigger": "user-approved-execution-chain",
+        "note": "文档生命周期写入：能力模型未变，指纹与末事件保持一致"
       }
     ]
   },
@@ -11717,7 +13562,7 @@
   ],
   "governance_meta": {
     "schema_version": "1.0",
-    "method_version": "2.23.0",
+    "method_version": "2.24.0",
     "upgraded_from": "pre-1.0.0",
     "ledger_version": "1.0",
     "migrations_applied": [
@@ -12105,6 +13950,39 @@
         "risk": "low",
         "assets_digest": "71dc5673ccd5b50e",
         "board_skeleton": "b6f5d4583cca01c6"
+      },
+      {
+        "seq": 24,
+        "at": "2026-11-24T12:43:59Z",
+        "action": "apply",
+        "from": "2.23.0",
+        "to": "2.24.0",
+        "approved_by": "user-approved-v2.24.0",
+        "migrations": [
+          "M4-method-version",
+          "M5-method-assets",
+          "M7-asset-install"
+        ],
+        "backup": "20261124T124358Z-74eda4cb",
+        "risk": "medium",
+        "assets_digest": "957b52cf47b871d4",
+        "board_skeleton": "b6f5d4583cca01c6"
+      },
+      {
+        "seq": 25,
+        "at": "2026-11-24T12:49:58Z",
+        "action": "apply",
+        "from": "2.24.0",
+        "to": "2.24.0",
+        "approved_by": "user-approved-v2.24.0",
+        "migrations": [
+          "M5-method-assets",
+          "M7-asset-install"
+        ],
+        "backup": "20261124T124957Z-67d9f5e2",
+        "risk": "medium",
+        "assets_digest": "9873b08f850e7c77",
+        "board_skeleton": "b6f5d4583cca01c6"
       }
     ],
     "tools": {
@@ -12124,7 +14002,7 @@
     },
     "method_assets": {
       "algorithm": "sha256-files-v1",
-      "digest": "71dc5673ccd5b50e82692b43f8540c0816a7841e24545fcf7396c75c61d5e4bf",
+      "digest": "9873b08f850e7c779aed48dd71708fda4abedf91a5f1a66c2b3d739fa6534dac",
       "file_count": 113,
       "counts": {
         "experts": 9,
@@ -12136,7 +14014,7 @@
       },
       "source": "方法论仓库 tag（权威源，不复制；只读副本由 M7 安装）"
     },
-    "ontology_digest": "1aa0f02348e0178b6b58349692eaaf529896ad4335fa18c0ba8efeba0baf9373",
+    "ontology_digest": "beb2146190093602718d88c82577c9c40b1e3e0177bb006707e720baacf48f6a",
     "board_skeleton": {
       "digest": "b6f5d4583cca01c68ee99d6076dfe7f3896ab2a27881c7fe87fab8b7a06d81d5",
       "source": "templates/index.html.template",
@@ -12144,7 +14022,7 @@
     },
     "installed_assets": {
       "schema": "installed-assets-binding/1",
-      "digest": "3ae603cad0acad77d95e6e687fb2f5055ca104fc3c4d56a958e32717c126583f",
+      "digest": "648c282a990b1a77785fe909ea8a08e095ba1731978c6273b8a11187c5ffc402",
       "file_count": 33,
       "counts": {
         "experts": 9,
@@ -14947,5 +16825,659 @@
   "goals": {
     "schema": "goals/1",
     "items": []
+  },
+  "docs": {
+    "registry": {
+      "docs/01-问题与原则.md": {
+        "kind": "rationale",
+        "status": "draft",
+        "source_hash": "1923157cab03ab3f",
+        "generated_from": null,
+        "verified": [],
+        "covers": {
+          "codes": [],
+          "decisions": []
+        },
+        "owner": null,
+        "stale_after": null,
+        "approved_by": "user-approved-execution-chain"
+      },
+      "docs/02-决策账本.md": {
+        "kind": "rationale",
+        "status": "draft",
+        "source_hash": "e62820f4839ca2d2",
+        "generated_from": null,
+        "verified": [],
+        "covers": {
+          "codes": [],
+          "decisions": [
+            "D-001",
+            "D-002"
+          ]
+        },
+        "owner": null,
+        "stale_after": null,
+        "approved_by": "user-approved-execution-chain"
+      },
+      "docs/03-编码与成熟度.md": {
+        "kind": "rationale",
+        "status": "draft",
+        "source_hash": "e9d432aa87dce405",
+        "generated_from": null,
+        "verified": [],
+        "covers": {
+          "codes": [
+            "DEMO.CORE.ORDER.01"
+          ],
+          "decisions": []
+        },
+        "owner": null,
+        "stale_after": null,
+        "approved_by": "user-approved-execution-chain"
+      },
+      "docs/04-嵌套组件与文档索引.md": {
+        "kind": "rationale",
+        "status": "draft",
+        "source_hash": "906ab7508137a80c",
+        "generated_from": null,
+        "verified": [],
+        "covers": {
+          "codes": [],
+          "decisions": []
+        },
+        "owner": null,
+        "stale_after": null,
+        "approved_by": "user-approved-execution-chain"
+      },
+      "docs/05-循环协议.md": {
+        "kind": "rationale",
+        "status": "draft",
+        "source_hash": "f39e16cd3cf532c5",
+        "generated_from": null,
+        "verified": [],
+        "covers": {
+          "codes": [
+            "DEMO.API.QUERY.01",
+            "DEMO.CORE.PRICE.02"
+          ],
+          "decisions": [
+            "D-002"
+          ]
+        },
+        "owner": null,
+        "stale_after": null,
+        "approved_by": "user-approved-execution-chain"
+      },
+      "docs/06-落地指南.md": {
+        "kind": "rationale",
+        "status": "draft",
+        "source_hash": "75f15d842f03677d",
+        "generated_from": null,
+        "verified": [],
+        "covers": {
+          "codes": [],
+          "decisions": []
+        },
+        "owner": null,
+        "stale_after": null,
+        "approved_by": "user-approved-execution-chain"
+      },
+      "docs/07-反模式与边界.md": {
+        "kind": "rationale",
+        "status": "draft",
+        "source_hash": "91b2890de4f138aa",
+        "generated_from": null,
+        "verified": [],
+        "covers": {
+          "codes": [],
+          "decisions": []
+        },
+        "owner": null,
+        "stale_after": null,
+        "approved_by": "user-approved-execution-chain"
+      },
+      "docs/08-可信性校验.md": {
+        "kind": "rationale",
+        "status": "draft",
+        "source_hash": "54f4f503c86c5d42",
+        "generated_from": null,
+        "verified": [],
+        "covers": {
+          "codes": [],
+          "decisions": []
+        },
+        "owner": null,
+        "stale_after": null,
+        "approved_by": "user-approved-execution-chain"
+      },
+      "docs/09-历史与经验.md": {
+        "kind": "rationale",
+        "status": "draft",
+        "source_hash": "48395a8581f120f7",
+        "generated_from": null,
+        "verified": [],
+        "covers": {
+          "codes": [
+            "DEMO.API.QUERY.01",
+            "DEMO.CORE.PRICE.02"
+          ],
+          "decisions": [
+            "D-002",
+            "D-003"
+          ]
+        },
+        "owner": null,
+        "stale_after": null,
+        "approved_by": "user-approved-execution-chain"
+      },
+      "docs/10-AI集成.md": {
+        "kind": "rationale",
+        "status": "draft",
+        "source_hash": "ecb0ecfbbf557b57",
+        "generated_from": null,
+        "verified": [],
+        "covers": {
+          "codes": [],
+          "decisions": []
+        },
+        "owner": null,
+        "stale_after": null,
+        "approved_by": "user-approved-execution-chain"
+      },
+      "docs/11-证据分层.md": {
+        "kind": "rationale",
+        "status": "draft",
+        "source_hash": "12dd2c6076370818",
+        "generated_from": null,
+        "verified": [],
+        "covers": {
+          "codes": [],
+          "decisions": []
+        },
+        "owner": null,
+        "stale_after": null,
+        "approved_by": "user-approved-execution-chain"
+      },
+      "docs/12-专家路由.md": {
+        "kind": "rationale",
+        "status": "draft",
+        "source_hash": "0fbf47c6e2fd13be",
+        "generated_from": null,
+        "verified": [],
+        "covers": {
+          "codes": [],
+          "decisions": [
+            "D-001"
+          ]
+        },
+        "owner": null,
+        "stale_after": null,
+        "approved_by": "user-approved-execution-chain"
+      },
+      "docs/13-可追溯性.md": {
+        "kind": "rationale",
+        "status": "draft",
+        "source_hash": "194d4a75a3d0090b",
+        "generated_from": null,
+        "verified": [],
+        "covers": {
+          "codes": [
+            "DEMO.CORE.PRICE.02",
+            "X.Y.Z.01"
+          ],
+          "decisions": [
+            "D-003"
+          ]
+        },
+        "owner": null,
+        "stale_after": null,
+        "approved_by": "user-approved-execution-chain"
+      },
+      "docs/14-场景矩阵.md": {
+        "kind": "rationale",
+        "status": "draft",
+        "source_hash": "bb9daa1b8efa15d3",
+        "generated_from": null,
+        "verified": [],
+        "covers": {
+          "codes": [
+            "MYPROJ.CORE.X.01"
+          ],
+          "decisions": []
+        },
+        "owner": null,
+        "stale_after": null,
+        "approved_by": "user-approved-execution-chain"
+      },
+      "docs/15-文件架构.md": {
+        "kind": "rationale",
+        "status": "draft",
+        "source_hash": "c488c98a2de74f92",
+        "generated_from": null,
+        "verified": [],
+        "covers": {
+          "codes": [
+            "DEMO.CORE.PRICE.02"
+          ],
+          "decisions": []
+        },
+        "owner": null,
+        "stale_after": null,
+        "approved_by": "user-approved-execution-chain"
+      },
+      "docs/16-升级与迁移.md": {
+        "kind": "rationale",
+        "status": "draft",
+        "source_hash": "522398be24a4d721",
+        "generated_from": null,
+        "verified": [],
+        "covers": {
+          "codes": [],
+          "decisions": []
+        },
+        "owner": null,
+        "stale_after": null,
+        "approved_by": "user-approved-execution-chain"
+      },
+      "docs/17-多Agent接入控制.md": {
+        "kind": "rationale",
+        "status": "draft",
+        "source_hash": "1fd003abdc5526e0",
+        "generated_from": null,
+        "verified": [],
+        "covers": {
+          "codes": [
+            "DEMO.API.QUERY.01"
+          ],
+          "decisions": []
+        },
+        "owner": null,
+        "stale_after": null,
+        "approved_by": "user-approved-execution-chain"
+      },
+      "docs/18-规模化与版面契约.md": {
+        "kind": "rationale",
+        "status": "draft",
+        "source_hash": "0d85c204ac29374a",
+        "generated_from": null,
+        "verified": [],
+        "covers": {
+          "codes": [],
+          "decisions": []
+        },
+        "owner": null,
+        "stale_after": null,
+        "approved_by": "user-approved-execution-chain"
+      },
+      "docs/19-专家与技能可用.md": {
+        "kind": "rationale",
+        "status": "draft",
+        "source_hash": "8981c4d81e50af5d",
+        "generated_from": null,
+        "verified": [],
+        "covers": {
+          "codes": [],
+          "decisions": []
+        },
+        "owner": null,
+        "stale_after": null,
+        "approved_by": "user-approved-execution-chain"
+      },
+      "docs/20-测试架构与模块映射.md": {
+        "kind": "rationale",
+        "status": "draft",
+        "source_hash": "f813ab7a484d973d",
+        "generated_from": null,
+        "verified": [],
+        "covers": {
+          "codes": [],
+          "decisions": []
+        },
+        "owner": null,
+        "stale_after": null,
+        "approved_by": "user-approved-execution-chain"
+      },
+      "docs/21-节点工作台与看板视图.md": {
+        "kind": "rationale",
+        "status": "draft",
+        "source_hash": "41f293a592a2995b",
+        "generated_from": null,
+        "verified": [],
+        "covers": {
+          "codes": [
+            "DEMO.CORE.ORDER.01",
+            "X.Y.Z.01"
+          ],
+          "decisions": []
+        },
+        "owner": null,
+        "stale_after": null,
+        "approved_by": "user-approved-execution-chain"
+      },
+      "docs/22-反向回流.md": {
+        "kind": "rationale",
+        "status": "draft",
+        "source_hash": "713c9cb8b6315a57",
+        "generated_from": null,
+        "verified": [],
+        "covers": {
+          "codes": [],
+          "decisions": []
+        },
+        "owner": null,
+        "stale_after": null,
+        "approved_by": "user-approved-execution-chain"
+      },
+      "docs/23-本体投影.md": {
+        "kind": "rationale",
+        "status": "draft",
+        "source_hash": "b6fc69d8414baeb4",
+        "generated_from": null,
+        "verified": [],
+        "covers": {
+          "codes": [],
+          "decisions": []
+        },
+        "owner": null,
+        "stale_after": null,
+        "approved_by": "user-approved-execution-chain"
+      },
+      "docs/24-复述门.md": {
+        "kind": "rationale",
+        "status": "draft",
+        "source_hash": "b131234b3702497a",
+        "generated_from": null,
+        "verified": [],
+        "covers": {
+          "codes": [],
+          "decisions": []
+        },
+        "owner": null,
+        "stale_after": null,
+        "approved_by": "user-approved-execution-chain"
+      },
+      "docs/25-专家团自动编排.md": {
+        "kind": "rationale",
+        "status": "draft",
+        "source_hash": "51fea6f072559e9f",
+        "generated_from": null,
+        "verified": [],
+        "covers": {
+          "codes": [],
+          "decisions": []
+        },
+        "owner": null,
+        "stale_after": null,
+        "approved_by": "user-approved-execution-chain"
+      },
+      "docs/26-来源投影与完成定义.md": {
+        "kind": "rationale",
+        "status": "draft",
+        "source_hash": "5d1ad0141d4fbe9f",
+        "generated_from": null,
+        "verified": [],
+        "covers": {
+          "codes": [],
+          "decisions": []
+        },
+        "owner": null,
+        "stale_after": null,
+        "approved_by": "user-approved-execution-chain"
+      },
+      "docs/27-自举闭环.md": {
+        "kind": "rationale",
+        "status": "draft",
+        "source_hash": "c5708749fbeb42bf",
+        "generated_from": null,
+        "verified": [],
+        "covers": {
+          "codes": [],
+          "decisions": [
+            "D-001"
+          ]
+        },
+        "owner": null,
+        "stale_after": null,
+        "approved_by": "user-approved-execution-chain"
+      },
+      "docs/28-看板体验.md": {
+        "kind": "rationale",
+        "status": "draft",
+        "source_hash": "9d005b038219c753",
+        "generated_from": null,
+        "verified": [],
+        "covers": {
+          "codes": [],
+          "decisions": []
+        },
+        "owner": null,
+        "stale_after": null,
+        "approved_by": "user-approved-execution-chain"
+      },
+      "docs/29-架构图与数据流.md": {
+        "kind": "rationale",
+        "status": "draft",
+        "source_hash": "0c519fd68d23c055",
+        "generated_from": null,
+        "verified": [],
+        "covers": {
+          "codes": [],
+          "decisions": []
+        },
+        "owner": null,
+        "stale_after": null,
+        "approved_by": "user-approved-execution-chain"
+      },
+      "docs/30-工作台视角.md": {
+        "kind": "rationale",
+        "status": "draft",
+        "source_hash": "23080e4310c7ff94",
+        "generated_from": null,
+        "verified": [],
+        "covers": {
+          "codes": [],
+          "decisions": []
+        },
+        "owner": null,
+        "stale_after": null,
+        "approved_by": "user-approved-execution-chain"
+      },
+      "docs/31-可视化分析层.md": {
+        "kind": "rationale",
+        "status": "draft",
+        "source_hash": "3417db39f552e4dd",
+        "generated_from": null,
+        "verified": [],
+        "covers": {
+          "codes": [],
+          "decisions": []
+        },
+        "owner": null,
+        "stale_after": null,
+        "approved_by": "user-approved-execution-chain"
+      },
+      "docs/32-本地D3可视化.md": {
+        "kind": "rationale",
+        "status": "draft",
+        "source_hash": "3b3148b20f0275c3",
+        "generated_from": null,
+        "verified": [],
+        "covers": {
+          "codes": [],
+          "decisions": []
+        },
+        "owner": null,
+        "stale_after": null,
+        "approved_by": "user-approved-execution-chain"
+      },
+      "docs/33-目标编排监督者.md": {
+        "kind": "rationale",
+        "status": "draft",
+        "source_hash": "748513bbd1f7c85c",
+        "generated_from": null,
+        "verified": [],
+        "covers": {
+          "codes": [
+            "METHOD.GOV.D3.15"
+          ],
+          "decisions": []
+        },
+        "owner": null,
+        "stale_after": null,
+        "approved_by": "user-approved-execution-chain"
+      },
+      "docs/34-运行时风险入口.md": {
+        "kind": "rationale",
+        "status": "draft",
+        "source_hash": "1e6a39f9acf76ecf",
+        "generated_from": null,
+        "verified": [],
+        "covers": {
+          "codes": [],
+          "decisions": []
+        },
+        "owner": null,
+        "stale_after": null,
+        "approved_by": "user-approved-execution-chain"
+      },
+      "docs/35-投影新鲜度不变量.md": {
+        "kind": "rationale",
+        "status": "draft",
+        "source_hash": "7cacc9e952fa5593",
+        "generated_from": null,
+        "verified": [],
+        "covers": {
+          "codes": [],
+          "decisions": []
+        },
+        "owner": null,
+        "stale_after": null,
+        "approved_by": "user-approved-execution-chain"
+      },
+      "docs/36-风险下降判据.md": {
+        "kind": "rationale",
+        "status": "draft",
+        "source_hash": "612eba140e46560c",
+        "generated_from": null,
+        "verified": [],
+        "covers": {
+          "codes": [],
+          "decisions": [
+            "D-023"
+          ]
+        },
+        "owner": null,
+        "stale_after": null,
+        "approved_by": "user-approved-execution-chain"
+      },
+      "docs/STANDARD.md": {
+        "kind": "plan",
+        "status": "draft",
+        "source_hash": "4dcc0619370de6bc",
+        "generated_from": null,
+        "verified": [],
+        "covers": {
+          "codes": [
+            "DEMO.CORE.PRICE.02"
+          ],
+          "decisions": [
+            "D-003"
+          ]
+        },
+        "owner": null,
+        "stale_after": null,
+        "approved_by": "user-approved-execution-chain"
+      },
+      "docs/generated/FILE_LAYOUT.md": {
+        "kind": "derived",
+        "status": "draft",
+        "source_hash": "c65c39166ea801b3",
+        "generated_from": null,
+        "verified": [],
+        "covers": {
+          "codes": [],
+          "decisions": []
+        },
+        "owner": null,
+        "stale_after": null,
+        "approved_by": "user-approved-execution-chain"
+      },
+      "docs/generated/ONTOLOGY.md": {
+        "kind": "derived",
+        "status": "draft",
+        "source_hash": "b98481c1e0724b7d",
+        "generated_from": null,
+        "verified": [],
+        "covers": {
+          "codes": [],
+          "decisions": []
+        },
+        "owner": null,
+        "stale_after": null,
+        "approved_by": "user-approved-execution-chain"
+      },
+      "docs/generated/PROJECT_STATE.md": {
+        "kind": "derived",
+        "status": "draft",
+        "source_hash": "962f08991e0a34a3",
+        "generated_from": null,
+        "verified": [],
+        "covers": {
+          "codes": [
+            "METHOD.GOV.ANALYTICS.14",
+            "METHOD.GOV.ANNOT.10",
+            "METHOD.GOV.ASSETS.05",
+            "METHOD.GOV.BINDING.07",
+            "METHOD.GOV.BOARD.11",
+            "METHOD.GOV.D3.15",
+            "METHOD.GOV.DOCLIFE.17",
+            "METHOD.GOV.FEEDBACK.01",
+            "METHOD.GOV.LAYOUT.04",
+            "METHOD.GOV.ORCH.09",
+            "METHOD.GOV.PANEL.03",
+            "METHOD.GOV.RESTATE.08",
+            "METHOD.GOV.RUNTIME.16",
+            "METHOD.GOV.TESTMAP.06",
+            "METHOD.GOV.UPGRADE.02",
+            "METHOD.GOV.VISUAL.12",
+            "METHOD.GOV.WORKBENCH.13"
+          ],
+          "decisions": []
+        },
+        "owner": null,
+        "stale_after": null,
+        "approved_by": "user-approved-execution-chain"
+      },
+      "docs/generated/SCENARIO_MATRIX.md": {
+        "kind": "derived",
+        "status": "draft",
+        "source_hash": "5900f56a6565c675",
+        "generated_from": null,
+        "verified": [],
+        "covers": {
+          "codes": [
+            "DEMO.CORE.ORDER.01"
+          ],
+          "decisions": []
+        },
+        "owner": null,
+        "stale_after": null,
+        "approved_by": "user-approved-execution-chain"
+      },
+      "docs/generated/TEST_MODULES.md": {
+        "kind": "derived",
+        "status": "draft",
+        "source_hash": "c066afb5a9e8efb4",
+        "generated_from": null,
+        "verified": [],
+        "covers": {
+          "codes": [],
+          "decisions": []
+        },
+        "owner": null,
+        "stale_after": null,
+        "approved_by": "user-approved-execution-chain"
+      }
+    }
   }
 }

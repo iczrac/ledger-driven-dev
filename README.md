@@ -81,6 +81,7 @@ ledger-driven-dev/
 │   ├── generated/SCENARIO_MATRIX.md  机器渲染的覆盖矩阵（勿手改）
 │   ├── generated/FILE_LAYOUT.md      机器渲染的目录全量表（勿手改）
 │   ├── generated/TEST_MODULES.md     机器渲染的测试模块映射（勿手改）
+│   ├── generated/PROJECT_STATE.md    账本与 docs.registry 的状态投影（勿手改）
 │   └── STANDARD.md                   文档命名/章节/状态词规范
 ├── experts/
 │   ├── expert-router/EXPERT.md        路由决策与交接契约（只读调度）
@@ -334,11 +335,11 @@ python3 governance/verify_ledger.py --root . --strict
 bash scripts/check.sh
 ```
 
-一条命令跑完：标准库单元测试（双发现口径）→ 测试架构映射 → 证据分层（生成实测报告并确认 verified 判定）→ 31 条不变量 → 场景矩阵 → 文件布局清单与只读 diff → 升级与多 Agent 接入端到端 → 资产/骨架/规模/节点工作台契约 → 生成器幂等 → 模板/示例同步与看板 EMBED → 脱敏与文档内链。本地与 CI 用同一份脚本，口径一致。单个能力校验用 `verify_ledger.py`，完整交付用 `check.sh`。
+一条命令跑完：标准库单元测试（双发现口径）→ 测试架构映射 → 证据分层（生成实测报告并确认 verified 判定）→ 31 条不变量 → 场景矩阵 → 文件布局清单与只读 diff → 文档生命周期（shadow：orphan / 过期 / 信任 / 派生只读） → 升级与多 Agent 接入端到端 → 资产/骨架/规模/节点工作台契约 → 生成器幂等 → 模板/示例同步与看板 EMBED → 脱敏与文档内链。本地与 CI 用同一份脚本，口径一致。单个能力校验用 `verify_ledger.py`，完整交付用 `check.sh`；文档告警默认 shadow，升硬门须连续 10 次 CI orphan=0 且 warn=0 并经人工批准。
 
 ### AI 接手：专家路由与技能
 
-- **八个专家**：`expert-router`（调度）、`greenfield-architect`（新建）、`project-archaeologist`（存量）、`ledger-steward`（账本治理）、`evidence-auditor`（只读审计）、`loop-executor`（一条任务卡的编码）、`release-steward`（冻结/归档/退役与批准门）、`platform-steward`（升级与接入的规划协调）。每个都有权限矩阵、停止条件与交接模板。
+- **9 位专家**：`expert-router`（调度）、`greenfield-architect`（新建）、`project-archaeologist`（存量）、`ledger-steward`（账本治理）、`evidence-auditor`（只读审计）、`loop-executor`（一条任务卡的编码）、`release-steward`（冻结/归档/退役与批准门）、`platform-steward`（升级与接入的规划协调）。每个都有权限矩阵、停止条件与交接模板。
 - **24 个技能**：`intent-restate` / `expert-route` / `expert-run` / `project-discover` / `project-bootstrap` 覆盖复述门、路由、自动编排、盘点、初始化；`doc-rebuild` / `graph-compare` 覆盖规范文档、编码索引与图比对；`scenario-guard` 覆盖写入前预检；`layout-inspect` 覆盖引入后文件架构；`ledger-upgrade` / `agent-gate` 覆盖升级与多 Agent 接入；`method-assets` / `board-layout` / `scale-budget` 覆盖资产摘要、统一版面与规模预算；`asset-install` / `test-map` / `work-panel` 覆盖只读资产安装、测试模块映射与节点工作台；原有五个技能覆盖扫描、校验、立项、经验与门禁。
 - 纪律不只写在文档里：`route_expert.py` 对冲突 fail-closed，`discover_project.py` 默认不覆盖草稿，`init_project.py` 跳过既有治理文件，`ledger_decide.py` / `ledger_lesson.py` 在代码层拒绝重复立项与缺行动的经验，`agent_gateway.py` 把权限变成默认拒绝的写入执行点。
 

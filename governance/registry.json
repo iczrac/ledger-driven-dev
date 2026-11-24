@@ -123,6 +123,16 @@
           "domain": "RUNTIME",
           "impl": ["scripts/runtime_signals.py", "templates/build_capability_model.py"],
           "tests": ["tests/core/test_runtime_signals.py"]
+        },
+        {
+          "code": "METHOD.GOV.DOCLIFE.17",
+          "name": "文档信任硬门（已声明、待人工批准升硬门；尚无证据，不计入完成度）",
+          "domain": "DOCLIFE",
+          "committed": true,
+          "target_level": "L5",
+          "depends_on": [],
+          "impl": [],
+          "tests": []
         }
       ]
     }

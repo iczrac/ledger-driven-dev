@@ -12,11 +12,13 @@
 
 纪律
 ----
-1. 不制造第二事实源：状态写在账本内 `docs.registry`（由 ledger-steward 裁决），
-   本工具只写草稿/骨架文件与只读报告；
+1. 不制造第二事实源：状态写在账本内 `docs.registry`（由 ledger-steward 裁决）；
+   `seed` / `approve` 是唯一经人批准写该账本字段的入口，其余命令只读；
 2. 零第三方依赖；只认 UTF-8 文本；遇到不可读文件 fail-closed 标 unreadable；
-3. 不自动撰写"为什么"类正文，不覆盖既有正文，不绕过账本改 ledger；
-4. clear-suspect 必须有签名与理由，否则拒绝。
+3. 不自动撰写"为什么"类正文，不覆盖既有正文；`seed` 初判一律 draft/verified 为空，
+   绝不批量标 current；
+4. clear-suspect 与 `approve --status current` 必须有人工签名与理由，且后者还要
+   有可复算 source_hash，否则拒绝。
 
 用法
 ----
@@ -25,8 +27,12 @@
     python3 scripts/doc_lifecycle.py mark-stale --target P --doc docs/plans/x_PLAN.md --reason <r> [--json]
     python3 scripts/doc_lifecycle.py clear-suspect --target P --doc docs/plans/x_PLAN.md --signed-by <人> --reason <r> [--json]
     python3 scripts/doc_lifecycle.py check --target P [--json]
+    python3 scripts/doc_lifecycle.py gate --target P [--strict] [--json]
+    python3 scripts/doc_lifecycle.py seed --target P --approved-by ledger-steward [--json]
+    python3 scripts/doc_lifecycle.py approve --target P --doc D --status current --signed-by <人> --reason <r> [--json]
 
 退出码：0 全部通过；1 存在 suspect/stale/incomplete/unreadable；2 输入错误。
+`gate` 默认只告警（exit 0），`--strict` 才阻断；`seed` / `approve` 写入账本并进历史链。
 """
 from __future__ import annotations
 
@@ -44,6 +50,10 @@ VALID_KINDS = {"plan", "rationale", "reference", "record"}
 VALID_STATUS = {"draft", "incomplete", "suspect", "stale", "verified", "unbound"}
 # 状态词来自既有 ontology 词表（此处为白名单，不新增第二词表）
 STATUS_WORDS = ("draft", "incomplete", "suspect", "stale", "verified", "unbound")
+# 规划语义：仓库没有单独的 PLAN_RE 常量，这里以既有路径/标题口径作确定性初判。
+PLAN_HINTS = ("/plans/", "_PLAN.md", "计划：")
+CODE_RE = re.compile(r"\b[A-Z][A-Z0-9]*\.[A-Z][A-Z0-9]*\.[A-Z][A-Z0-9]*\.\d{2}\b")
+DECISION_RE = re.compile(r"\bD-\d+\b")
 
 TEMPLATES = {
     "plan": "# 计划：<标题>\n\n" + PLACEHOLDER + "\n\n## 目标\n\n" + PLACEHOLDER +
@@ -76,6 +86,146 @@ def _load_registry(root: Path) -> dict:
     except (OSError, json.JSONDecodeError):
         return {}
     return data.get("docs", {}).get("registry", {})
+
+
+def _load_ledger(root: Path) -> dict:
+    data = json.loads(_registry_path(root).read_text(encoding="utf-8"))
+    return data
+
+
+def _history_append(ledger: dict, kind: str, detail: dict) -> None:
+    """只追加事件，不改能力模型状态：沿用末事件 state_digest 与指纹。"""
+    hist = ledger.setdefault("history", {})
+    events = hist.setdefault("events", [])
+    last = events[-1] if events else {}
+    fp = last.get("fingerprint_after") or "0000000000000000"
+    events.append({
+        "seq": int(last.get("seq", 0)) + 1,
+        "ts": str(ledger.get("last_updated") or last.get("ts") or "1970-01-01T00:00:00Z"),
+        "type": kind,
+        "fingerprint_before": fp,
+        "fingerprint_after": fp,
+        "changes": detail,
+        "state_digest": json.loads(json.dumps(last.get("state_digest") or {})),
+        "trigger": detail.get("approved_by", "doc-lifecycle"),
+        "note": "文档生命周期写入：能力模型未变，指纹与末事件保持一致",
+    })
+
+
+def _save_ledger(root: Path, ledger: dict) -> None:
+    _registry_path(root).write_text(
+        json.dumps(ledger, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+
+
+def _classify(path: str, text: str) -> str:
+    if path.startswith("docs/generated/"):
+        return "derived"
+    if any(h in path or h in text[:400] for h in PLAN_HINTS):
+        return "plan"
+    if path.endswith("STANDARD.md") or re.match(r"docs/\d\d-", path):
+        return "rationale"
+    return "reference"
+
+
+def seed(root: Path, approved_by: str) -> dict:
+    """确定性初判并写入账本 docs.registry；不写 current、不新建第二登记表。"""
+    if not approved_by.strip():
+        return {"schema": SCHEMA, "command": "seed", "status": "error",
+                "reason": "seed 必须给出批准人（--approved-by），禁止匿名播种"}
+    docs = _scan(root)
+    ledger = _load_ledger(root)
+    existing = (ledger.get("docs", {}) or {}).get("registry", {}) or {}
+    wanted: dict[str, dict] = {}
+    for doc in docs:
+        path = doc["path"]
+        text = (root / path).read_text(encoding="utf-8")
+        wanted[path] = {
+            "kind": _classify(path, text),
+            "status": "draft",
+            "source_hash": doc.get("source_hash", ""),
+            "generated_from": None,
+            "verified": [],
+            "covers": {"codes": sorted(set(CODE_RE.findall(text))),
+                       "decisions": sorted(set(DECISION_RE.findall(text)))},
+            "owner": None,
+            "stale_after": None,
+            "approved_by": approved_by,
+        }
+    if existing == wanted:
+        return {"schema": SCHEMA, "command": "seed", "status": "noop", "draft": len(wanted),
+                "reason": "登记已一致，未写账本、未追加事件"}
+    added = sorted(set(wanted) - set(existing))
+    removed = sorted(set(existing) - set(wanted))
+    modified = sorted(p for p in set(wanted) & set(existing) if wanted[p] != existing[p])
+    ledger.setdefault("docs", {})["registry"] = wanted
+    _history_append(ledger, "doc_registry_seed", {
+        "approved_by": approved_by, "role": "ledger-steward",
+        "added": added, "removed": removed, "modified": modified,
+        "initial_status": "draft", "current_count": 0,
+    })
+    _save_ledger(root, ledger)
+    return {"schema": SCHEMA, "command": "seed", "status": "seeded",
+            "draft": len(wanted), "added": len(added), "removed": len(removed),
+            "modified": len(modified),
+            "approved_by": approved_by, "registry": "governance/DECISION_LEDGER.json#docs.registry"}
+
+
+def approve(root: Path, doc: str, status: str, signed_by: str,
+            reason: str, source_hash: str = "") -> dict:
+    """把登记状态改为 current 必须同时有人工签名与可复算 source_hash。"""
+    if status != "current":
+        return {"schema": SCHEMA, "command": "approve", "status": "error",
+                "reason": "仅允许人工把 draft/suspect 升为 current；不得直接写 verified"}
+    if not signed_by.strip() or not reason.strip():
+        return {"schema": SCHEMA, "command": "approve", "status": "error",
+                "reason": "升 current 必须同时给出签名与理由，无签名一律拒绝"}
+    ledger = _load_ledger(root)
+    reg = (ledger.get("docs", {}) or {}).get("registry", {}) or {}
+    meta = reg.get(doc)
+    if not isinstance(meta, dict):
+        return {"schema": SCHEMA, "command": "approve", "status": "error",
+                "reason": "文档未登记于 docs.registry，请先 seed"}
+    p = root / doc
+    if not p.exists():
+        return {"schema": SCHEMA, "command": "approve", "status": "error",
+                "reason": "文档不存在"}
+    actual = _sha(p.read_text(encoding="utf-8"))
+    if source_hash and source_hash != actual:
+        return {"schema": SCHEMA, "command": "approve", "status": "error",
+                "reason": "source_hash 与当前正文不一致，禁止凭空批准"}
+    meta["status"] = "current"
+    meta["source_hash"] = actual
+    meta["generated_from"] = meta.get("generated_from") or "人工复核正文（签名背书）"
+    meta["verified"] = {"signed_by": signed_by, "reason": reason, "at": _now(),
+                        "source_hash": actual}
+    _history_append(ledger, "doc_registry_approve", {
+        "approved_by": signed_by, "role": "ledger-steward",
+        "doc": doc, "status": "current", "reason": reason,
+    })
+    _save_ledger(root, ledger)
+    return {"schema": SCHEMA, "command": "approve", "status": "current",
+            "path": doc, "signed_by": signed_by, "source_hash": actual}
+
+
+def gate(root: Path, strict: bool = False) -> dict:
+    """统一门禁节：默认 warn 不阻断；--strict 才让退出码非 0。"""
+    report = check(root)
+    issues = report["issues"]
+    counts: dict[str, int] = {}
+    for item in issues:
+        counts[item["status"]] = counts.get(item["status"], 0) + 1
+    counts["trust"] = sum(1 for c in report["checks"]
+                          if c["id"] in ("doc_trust", "doc_coverage", "doc_obligation")
+                          and c["status"] == "warn")
+    has_problem = bool(issues) or counts["trust"] > 0
+    return {"schema": SCHEMA, "command": "gate", "mode": "strict" if strict else "shadow",
+            "status": "fail" if (strict and has_problem) else ("warn" if has_problem else "ok"),
+            "counts": counts,
+            "issues": [{"path": i.get("path", ""), "status": i["status"],
+                        "reason": i.get("reason", "")} for i in issues],
+            "trust_warnings": [c for c in report["checks"]
+                               if c["status"] == "warn" and c["id"] in
+                               ("doc_trust", "doc_coverage", "doc_obligation")]}
 
 
 def _scan(root: Path) -> list[dict]:
@@ -175,6 +325,15 @@ def check(root: Path) -> dict:
     report = lint(root)
     docs = report["docs"]
     reg = _load_registry(root)
+    issues = list(report["issues"])
+    # 登记后正文被手改：source_hash 不再复算得出，标 suspect（不改账本状态）。
+    for path, meta in reg.items():
+        if not isinstance(meta, dict) or not meta.get("source_hash"):
+            continue
+        live = next((d for d in docs if d["path"] == path), None)
+        if live and live.get("source_hash") != meta["source_hash"]:
+            issues.append({"path": path, "status": "suspect",
+                           "reason": "正文与登记 source_hash 不一致，需人工复核"})
     checks = []
     # 1 覆盖完整：registry 声明的文档必须存在
     missing = [p for p in reg if not (root / p).exists()]
@@ -187,6 +346,10 @@ def check(root: Path) -> dict:
     # 3 信任一致：verified 必须同时具备 source_hash 与 generated_at
     bad_trust = [d["path"] for d in docs if d["status"] == "verified"
                  and not (d.get("source_hash") and d.get("generated_at"))]
+    for path, meta in reg.items():
+        v = meta.get("verified") if isinstance(meta, dict) else None
+        if v and not (meta.get("source_hash") and meta.get("generated_from")):
+            bad_trust.append(path)
     checks.append({"id": "doc_trust", "status": "pass" if not bad_trust else "warn",
                    "detail": "信任一致" if not bad_trust else f"异常：{bad_trust}"})
     # 4 义务已声明：非骨架文档应在 registry 中有义务声明
@@ -199,7 +362,6 @@ def check(root: Path) -> dict:
     checks.append({"id": "doc_no_orphan", "status": "pass" if not orphans else "warn",
                    "detail": "无孤儿" if not orphans else f"孤儿：{orphans}"})
     # stale：stale_after 过期或未复核的 plan 文档（只告警，不改账本状态）
-    issues = list(report["issues"])
     for path, meta in reg.items():
         if not isinstance(meta, dict):
             continue
@@ -219,16 +381,20 @@ def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("command", choices=["scaffold", "lint", "mark-stale",
-                                        "clear-suspect", "check"])
+                                        "clear-suspect", "check", "gate", "seed", "approve"])
     ap.add_argument("--target", default=".", help="项目根目录")
     ap.add_argument("--doc", help="文档相对路径")
     ap.add_argument("--kind", help="骨架类型：plan/rationale/reference/record")
     ap.add_argument("--reason", default="", help="原因")
-    ap.add_argument("--signed-by", default="", help="清除 suspect 的签名人")
+    ap.add_argument("--signed-by", default="", help="清除 suspect / 批准 current 的签名人")
+    ap.add_argument("--approved-by", default="", help="ledger-steward 批准人")
+    ap.add_argument("--status", default="", help="approve 的目标状态（仅 current）")
+    ap.add_argument("--source-hash", default="", help="批准 current 时可复算的正文摘要")
+    ap.add_argument("--strict", action="store_true", help="gate 遇告警时阻断（默认只告警）")
     ap.add_argument("--json", action="store_true", help="输出 JSON")
     args = ap.parse_args(argv)
     root = Path(args.target).resolve()
-    if args.command in ("scaffold", "mark-stale", "clear-suspect") and not args.doc:
+    if args.command in ("scaffold", "mark-stale", "clear-suspect", "approve") and not args.doc:
         print("doc-lifecycle: --doc 必填", file=sys.stderr)
         return 2
     fn = {
@@ -237,6 +403,10 @@ def main(argv: list[str] | None = None) -> int:
         "mark-stale": lambda: mark_stale(root, args.doc, args.reason),
         "clear-suspect": lambda: clear_suspect(root, args.doc, args.signed_by, args.reason),
         "check": lambda: check(root),
+        "gate": lambda: gate(root, args.strict),
+        "seed": lambda: seed(root, args.approved_by),
+        "approve": lambda: approve(root, args.doc, args.status, args.signed_by,
+                                   args.reason, args.source_hash),
     }[args.command]
     result = fn()
     if args.json:
@@ -245,6 +415,8 @@ def main(argv: list[str] | None = None) -> int:
         print(json.dumps(result, ensure_ascii=False))
     if result.get("status") == "error":
         return 2
+    if args.command == "gate":
+        return 1 if result.get("status") == "fail" else 0
     if args.command in ("lint", "check") and result.get("issues"):
         return 1
     return 0

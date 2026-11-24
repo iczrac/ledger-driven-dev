@@ -55,14 +55,18 @@ python3 governance/verify_ledger.py --root . --strict        # CI 门禁
 
 ## 文档信任不变量（先 shadow，只告警不改状态）
 
-在既有账本不变量之外，纳入 5 条文档不变量（由 `doc-lifecycle check --json` 只读复算）：
-1. **覆盖完整**：`docs.registry` 声明的文档都存在；
-2. **派生可复算**：状态词与 `source_hash` 可从文件复算；
-3. **信任一致**：verified 必须同时具备 source_hash 与 generated_at；
-4. **义务已声明**：非骨架文档有 owner/role/stale_after；
-5. **无孤儿**：`docs/**` 无未登记文档。
+在既有账本不变量之外，纳入 5 条文档不变量。每条必须指向真实实现位置，禁止只留在文案里：
 
-新判据先 shadow：报告 warn 不改账本状态；升硬门须人批准。
+| 不变量 | 判据 | 实现来源 |
+|---|---|---|
+| 覆盖完整 | `docs.registry` 声明的文档都存在 | `scripts/doc_lifecycle.py::check()` → `doc_coverage`（读 `governance/DECISION_LEDGER.json#docs.registry`） |
+| 派生可复算 | 状态词与 `source_hash` 可从文件逐字节复算 | `scripts/doc_lifecycle.py::_scan()` → `doc_derived`；`scripts/rebuild_docs.py --check --doc PROJECT_STATE.md` 比对生成物 |
+| 信任一致 | verified 必须同时具备 `source_hash` 与 `generated_from` | `scripts/doc_lifecycle.py::check()` → `doc_trust`；`approve --status current` 校验签名与摘要 |
+| 义务已声明 | 非 draft 文档须登记 owner / stale_after | `scripts/doc_lifecycle.py::check()` → `doc_obligation`（读同一账本登记） |
+| 无孤儿 | `docs/**` 无未登记文档 | `scripts/doc_lifecycle.py::lint()` → `orphan` issue；`gate` 汇总数量与文件清单 |
+
+新判据先 shadow：`scripts/check.sh` 的文档生命周期节与 `gate` 默认只告警、退出码 0；`--strict` 才阻断。
+升硬门条件：连续 10 次 CI 运行 orphan=0 且 warn=0，且人工书面批准后方可把 `--strict` 接入 CI。
 
 ## 禁止
 

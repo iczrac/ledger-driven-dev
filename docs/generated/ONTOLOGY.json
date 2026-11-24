@@ -6,7 +6,7 @@
     {
       "path": "docs/STANDARD.md",
       "role": "ubiquitous_language",
-      "sha256": "98a6fe19e7dadb6831af953fad55d3be56740f548919bc96362c639dd987385e"
+      "sha256": "4dcc0619370de6bc494dce030681f0239a2d3f7a524a940ecd8bec31bd0bbf52"
     },
     {
       "path": "scripts/work_panel.py",
@@ -786,5 +786,5 @@
     "polyseme_terms": 3,
     "drift_count": 0
   },
-  "ontology_digest": "1aa0f02348e0178b6b58349692eaaf529896ad4335fa18c0ba8efeba0baf9373"
+  "ontology_digest": "beb2146190093602718d88c82577c9c40b1e3e0177bb006707e720baacf48f6a"
 }

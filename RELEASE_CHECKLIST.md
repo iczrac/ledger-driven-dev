@@ -655,3 +655,23 @@ E7 `cardinality_contradiction`（`ontology.py check --target P` 仍 `ok=false`�
 
 - 五项文档不变量仍为 shadow（v2.22.0 决定），本版未升硬门。
 - `docs.registry` 存量登记仍需人决定是否首批入库。
+
+## v2.24.0 发布检查（文档生命周期接进执行链）
+
+> 第一性原理：信任必须由指纹与人工签名复算；规划只能来自人的声明，不能由账本现状自证。
+> 澄清：v2.22.0 对 `PROJECT_STATE` / `--check` / ledger-guard 串接的宣称当时只改了文案，本版才落地。
+
+- [x] **复现**：三条指控原始命令已贴；孤岛调用点、check.sh 无文档节、PROJECT_STATE 为 0、41 篇全 orphan 均实证。`verify_ledger` 有一条 `doc_paths_exist`（校验能力 `doc_index` 路径），评估者"无文档类不变量"的说法部分成立。
+- [x] **工作流 A**：`check.sh` 新增 shadow 节并输出具体文件清单；默认退出码 0，`--strict` 阻断；收尾 16→17 节；五条不变量在 `skills/ledger-verify` 逐条对应实现位置。
+- [x] **工作流 B**：`PROJECT_STATE.md` 从账本与 registry 渲染，连续两次逐字节相同；`--check` 抓手改并返回非 0；空账本给提示不崩；`file_layout` 与 README / STANDARD / 08 / 10 / 15 / 28 同步。
+- [x] **工作流 C**：42 篇确定性播种进账本 `docs.registry`（唯一事实源），`status=draft`、`verified` 为空；`approve` 无签名拒绝；lint orphan=0、draft=42、verified=0；播种幂等。
+- [x] **工作流 D**：计数从代码派生，历史条目未改写，`literal_drift` 0；单测 523→535。
+- [x] **工作流 E**：E1 回测 16 `in_progress` → 16 `no_target`；E2 规划源改为 registry 声明，自身仓 `planned=17 / actual=16 / planned_only=1`。
+- [x] **权威链**：M4/M5/M7 重绑，`verify` 全 pass、`plan` noop；`method_assets=9873b08f850e7c77` / `installed_assets=648c282a990b1a77` / `ontology=beb2146190093602`。
+- [x] **门禁**：`bash scripts/check.sh` 全绿（535 tests / 漂移 0 / 17 节）；干净克隆复验通过。
+- [x] **边界**：专家 9 / 技能 24 不变；未新增专家、未改看板版面、未改 `feedback/`、无第三方依赖、未放宽既有判据。
+
+### 人类拍板（本版新增）
+
+1. **shadow 升硬门条件**：连续 10 次 CI 运行 orphan=0 且 warn=0，且人工书面批准后才允许 `--strict` 进 CI 阻断；未满足前不得批量把 draft/suspect 置 current。
+2. **docs.registry 批准人**：`seed` / `approve` 必须由 ledger-steward 角色签名；本版以 `user-approved-execution-chain` 作为批准标识由执行会话代录，需人类确认该批准人是否长期有效。

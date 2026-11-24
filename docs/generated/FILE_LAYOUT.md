@@ -1,7 +1,7 @@
 # FILE_LAYOUT · 引入方案后的文件布局
 
 > 本文件由 `scripts/file_layout.py` 从布局定义渲染；请勿手改。
-> schema `file-layout/1` · 条目 36 · 引入后新增 31 项 · 账本内字段 12 项。
+> schema `file-layout/1` · 条目 37 · 引入后新增 32 项 · 账本内字段 12 项。
 
 ## 分层含义
 
@@ -41,6 +41,7 @@
 | `docs/generated/PROJECT_BRIEF.md` | 派生层 | 引入方案后新增 | 跑对应命令后才出现（不出现属正常） | rebuild_docs.py | `write-if-absent` | 禁 | 建议提交 git | 规范化项目简报：目标、范围、现状、状态词、边界。　保护：默认不覆盖。 |
 | `docs/generated/MODULE_MAP.md` | 派生层 | 引入方案后新增 | 跑对应命令后才出现（不出现属正常） | rebuild_docs.py | `write-if-absent` | 禁 | 建议提交 git | 模块地图：模块 → 目录 → 能力编码，回答「东西在哪」。　保护：默认不覆盖。 |
 | `docs/generated/CAPABILITY_INDEX.md` | 派生层 | 引入方案后新增 | 跑对应命令后才出现（不出现属正常） | rebuild_docs.py | `write-if-absent` | 禁 | 建议提交 git | 能力索引：编码 → 文档 / 测试 / 代码 / 决策 / 等级。　保护：默认不覆盖。 |
+| `docs/generated/PROJECT_STATE.md` | 派生层 | 引入方案后新增 | 跑对应命令后才出现（不出现属正常） | rebuild_docs.py | `write-if-absent` | 禁 | 建议提交 git | 账本与 docs.registry 的只读状态投影：能力等级/证据分层、待复核文档、队列与最近变更。　保护：可逐字节复现 / --check 只读比对。　注：派生文档禁止手改；从账本与登记重算。 |
 | `docs/generated/GRAPH_DIFF.md` | 派生层 | 引入方案后新增 | 跑对应命令后才出现（不出现属正常） | compare_graphs.py | `write-if-absent` | 禁 | 建议提交 git | 规划图与实际图差异的人类可读报告与开发顺序。　保护：默认不覆盖。 |
 | `governance/registry.draft.json` | 草稿层 | 引入方案后新增 | 仅存量接入路径出现 | discover_project.py / 人 | `write-if-absent` | 禁 | 可提交（便于离线审计）或 CI 重跑 | 存量项目盘点草稿，schema registry-draft/1。人工确认后才被 adopt 消费。　保护：只读发现 / 默认不覆盖 / 需人工精简。　注：草稿不是事实源；重复跑 discover 不会覆盖它。 |
 | `governance/ADOPTION_REPORT.md` | 草稿层 | 引入方案后新增 | 仅存量接入路径出现 | discover_project.py | `write-if-absent` | 禁 | 可提交（便于离线审计）或 CI 重跑 | 人类可读的接入盘点报告：候选模块、能力点、置信度、风险与下一步。　保护：只读发现 / 截断与无测试告警。 |
@@ -82,7 +83,7 @@
 | `experts/、skills/（权威源）` | 方法论仓库里的专家与技能**原文**不进项目源码；v1.2.0 起由 asset_bundle.py 把逐字节只读副本装到 .workbuddy/，整包摘要写进 governance_meta.method_assets、副本清单写进 installed_assets。 |
 | `scripts/、templates/、tests/` | 方法论自身的工具、模板与测试；只有 3 个脚本副本落到 governance/。 |
 | `docs/NN-方法论文档、docs/STANDARD.md` | 方法论文档，属于本仓库而非被治理项目。 |
-| `docs/generated/SCENARIO_MATRIX.md、FILE_LAYOUT.md、TEST_MODULES.md` | 本仓库的机器渲染矩阵；目标项目只会得到 docs/generated/ 下那 4 份项目级文档。 |
+| `docs/generated/SCENARIO_MATRIX.md、FILE_LAYOUT.md、TEST_MODULES.md` | 本仓库的机器渲染矩阵；目标项目只会得到 docs/generated/ 下那 5 份项目级文档。 |
 | `examples/、.github/workflows/、CHANGELOG.md、RELEASE_CHECKLIST.md` | 示例、CI 与发布资产，属于方法论仓库。 |
 | `全仓 .git/` | git 元数据；trace_git.py 只读取证，不写入、不重写历史。 |
 

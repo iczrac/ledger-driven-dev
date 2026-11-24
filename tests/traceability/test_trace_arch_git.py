@@ -73,8 +73,10 @@ class TraceArchGitTest(unittest.TestCase):
             proj = tmp / "examples" / "demo-shop"
             proc = run(ARCHITECT, "--target", proj, "--docs-dir", proj / "empty", "--json")
             data = json.loads(proc.stdout)
-            self.assertEqual(data["confidence"], "low")
-            self.assertTrue(any("rebuild_docs" in w for w in data["warnings"]))
+            # E2：规划码来自 registry 声明，空文档不再让规划图失效；警告仍显式存在。
+            self.assertEqual(data["confidence"], "high")
+            self.assertTrue(any("未发现文档" in w for w in data["warnings"]))
+            self.assertEqual(len(data["capabilities"]), 4)
 
     def test_module_map_empty_caps_column_infers_codes_without_crash(self):
         """人写规划稿常把能力编码列留空；应回退到 CAPABILITY_INDEX，而不是 unpack 崩溃。"""

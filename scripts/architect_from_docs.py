@@ -2,8 +2,9 @@
 """从规范化文档抽取目标架构（文档 → 规划图）。
 
 与 discover_project.py（文件系统 → 现状草稿）互补：本脚本读的是人写下的目标——
-PROJECT_BRIEF 的目标、MODULE_MAP 的模块、CAPABILITY_INDEX 的编码与依赖，产出
-TARGET_ARCHITECTURE.json，供 compare_graphs.py 与实际能力图比对。
+registry 的能力声明（code / committed / target_level / depends_on）为规划码唯一来源，
+PROJECT_BRIEF / MODULE_MAP 只增强目标与模块，CAPABILITY_INDEX 仅作现状投影，
+产出 TARGET_ARCHITECTURE.json，供 compare_graphs.py 与实际能力图比对。
 
 用法：
     python3 scripts/architect_from_docs.py --target /path/to/project --dry-run
@@ -18,7 +19,7 @@ import sys
 from pathlib import Path
 
 from trace_common import (STRICT_CODE_RE, canonical_code, iter_code_candidates,
-                          load_json, rel_path, write_if_absent)
+                          load_json, registry_iter_caps, rel_path, write_if_absent)
 
 DEP_RE = re.compile(r"依赖\s*[:：]\s*((?:[A-Z][A-Z0-9]*\.){3}\d{2}(?:\s*[,，、]\s*(?:[A-Z][A-Z0-9]*\.){3}\d{2})*)")
 TARGET_RE = re.compile(r"目标\s*[:：]\s*L([0-5])")
@@ -55,26 +56,44 @@ def build(target: Path, docs_dir: Path, registry: dict) -> dict:
         raise ValueError(f"{src}:{lineno} 发现非四段式能力码 {token}；"
                          f"请改为 {hint}（registry_codec 是唯一 codec）")
 
-    # B 项：规划码唯一来源是 CAPABILITY_INDEX.md（账本的确定性投影，无讲解示例）。
-    # 手写文档里出现的码一律不新增规划条目，只能补充已存在码的 target_level/depends_on，
-    # 从根上消除「文档示例码 → 假 planned_only」的结构性噪音。
+    # E2：规划码唯一来源是 registry 的人工声明（committed / target_level / depends_on）。
+    # CAPABILITY_INDEX 是账本现状投影，只能补充已知码的名称与 impl_hint，
+    # 不得反向定义规划集——否则「账本投影 → 规划 → 与实际账本比对」就是自证。
+    declared = 0
+    # 与 CAPABILITY_INDEX 完全同一套 codec：显式 code 优先，否则按 registry 顺序派生。
+    declared_caps = registry_iter_caps(registry)
+    pos = 0
+    for m in registry.get("modules", []):
+        for c in m.get("caps", []) or []:
+            raw = declared_caps[pos] if pos < len(declared_caps) else None
+            pos += 1
+            if not raw:
+                continue
+            code = valid_code("registry.json", 0, str(raw["code"]).upper())
+            codes[code] = {
+                "code": code, "sources": ["registry.json"], "name": str(c.get("name", "")),
+                "depends_on": [str(x) for x in (c.get("depends_on") or [])],
+                "target_level": c.get("target_level"),
+                "impl_hint": [], "committed": bool(c.get("committed")),
+            }
+            declared += 1
+    if not declared:
+        warnings.append("registry 未声明任何能力码；规划集为空，请先在唯一手写清单中声明。")
+
     index_src = next((k for k in texts if k.endswith("CAPABILITY_INDEX.md")),
                      "docs/generated/CAPABILITY_INDEX.md")
     index_text = texts.get(index_src, "")
-    if not index_text:
-        warnings.append("缺少 CAPABILITY_INDEX.md；规划码集合为空，请先运行 rebuild_docs.py。")
     for lineno, token in iter_code_candidates(index_text):
         code = valid_code(index_src, lineno, token)
-        entry = codes.setdefault(code, {"code": code, "sources": [index_src], "name": "",
-                                        "depends_on": [], "target_level": None,
-                                        "impl_hint": []})
+        if code not in codes:
+            continue  # 现状投影不得新增规划条目
+        entry = codes[code]
         row = next((l for l in index_text.splitlines()
                     if l.startswith("| " + code + " |")), "")
         if row:
             cells = [c.strip() for c in row.strip("|").split("|")]
             if len(cells) > 2 and cells[2] and not entry["name"]:
                 entry["name"] = cells[2]
-            # D 项：第 6 列「代码」来自账本投影，作为语义别名配对的 impl 依据。
             if len(cells) > 5 and cells[5] and cells[5] != "—":
                 entry["impl_hint"] = sorted({x.strip("` ")
                                              for x in cells[5].split(",") if x.strip("` ")})
@@ -151,7 +170,7 @@ def build(target: Path, docs_dir: Path, registry: dict) -> dict:
     confidence = "high" if goals and modules and codes else ("medium" if codes else "low")
     return {
         "schema": "target-arch/1",
-        "source": "documentation",
+        "source": "registry-declaration",
         "project": {
             "code": project_code,
             "name": str(registry.get("project", {}).get("name", project_code)),

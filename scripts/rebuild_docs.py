@@ -12,6 +12,7 @@
 用法：
     python3 scripts/rebuild_docs.py --target /path/to/project --dry-run
     python3 scripts/rebuild_docs.py --target /path/to/project
+    python3 scripts/rebuild_docs.py --target . --check --json   # 只读比对，不写盘
     python3 scripts/rebuild_docs.py --target . --force --json
 """
 from __future__ import annotations
@@ -19,9 +20,92 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+from datetime import date
 from pathlib import Path
 
 from trace_common import artifact_paths, iter_caps, load_json, rel_path, write_if_absent
+
+
+def _stale(value: object) -> bool:
+    """stale_after 早于今天即过期；占位/非法值不猜（fail-closed 为未过期）。"""
+    if not isinstance(value, str) or not value.strip():
+        return False
+    try:
+        return date.fromisoformat(value.strip()[:10]) < date.today()
+    except ValueError:
+        return False
+
+
+def build_project_state(target: Path, registry: dict, ledger: dict) -> str:
+    """账本与 docs.registry 的只读投影：不得含任何需人工维护的正文。"""
+    code = str(registry.get("project", {}).get("code", "PROJ")).upper()
+    name = registry.get("project", {}).get("name", code)
+    caps = iter_caps(registry, ledger)
+    cm = ledger.get("capability_model", {})
+    queue = cm.get("next_queue", []) or []
+    targets = {str(q.get("code", "")): str(q.get("target_level") or "no_target")
+               for q in queue}
+    reg = (ledger.get("docs", {}) or {}).get("registry", {}) or {}
+    # 登记播种/批准是文档账本自身的记账事件，不是能力变更；排除它们避免自指漂移。
+    events = [e for e in ((ledger.get("history", {}) or {}).get("events", []) or [])
+              if str(e.get("type", "")) not in ("doc_registry_seed", "doc_registry_approve")]
+
+    lines = [
+        f"# PROJECT_STATE · {code} {name}",
+        "",
+        "> 由 `scripts/rebuild_docs.py` 从账本与 `docs.registry` 渲染；派生文档禁止手改。",
+        "",
+        "## 能力清单与等级/证据分层",
+        "",
+        "| 编码 | 名称 | 当前等级 | 证据分层 | 目标等级 |",
+        "|---|---|---|---|---|",
+    ]
+    for cap in caps:
+        lines.append(
+            f"| {cap['code']} | {cap['name']} | L{cap['level']} | {cap['tier']} | "
+            f"{targets.get(cap['code'], 'no_target')} |")
+    if not caps:
+        lines.append("| （无） | — | — | — | — |")
+
+    lines += ["", "## 待复核与过期文档", "", "| 文档 | 原因 |", "|---|---|"]
+    # 派生文档由机器复算，不承担人工复核义务；排除它也避免与 registry 自指漂移。
+    pending = []
+    for path in sorted(reg):
+        meta = reg[path] if isinstance(reg[path], dict) else {}
+        if meta.get("kind") == "derived":
+            continue
+        status = str(meta.get("status", ""))
+        reasons = []
+        if _stale(meta.get("stale_after")):
+            reasons.append(f"stale_after={meta.get('stale_after')} 已过期")
+        if status in ("draft", "incomplete", "suspect", "stale"):
+            reasons.append(f"status={status} 待人工复核")
+        if reasons:
+            pending.append(f"| {path} | {'；'.join(reasons)} |")
+    lines.extend(pending or ["| （无） | — |"])
+    if not reg:
+        lines += ["| （尚未播种） | docs.registry 尚未播种；先运行 "
+                  "`scripts/doc_lifecycle.py seed` |"]
+
+    lines += ["", "## next_queue（前 5 条）", "", "| 编码 | 动作 | 等级 | 目标等级 |",
+              "|---|---|---|---|"]
+    for item in queue[:5]:
+        lines.append(f"| {item.get('code', '')} | {item.get('action', '')} | "
+                     f"{item.get('level', '')} | {item.get('target_level') or 'no_target'} |")
+    if not queue:
+        lines.append("| （空） | — | — | — |")
+
+    lines += ["", "## 最近变更", "", "| seq | 类型 | 摘要 |", "|---|---|---|"]
+    for ev in events[-3:]:
+        changes = ev.get("changes", {}) or {}
+        keys = sorted(k for k, v in changes.items() if v)
+        summary = ", ".join(f"{k}={len(changes[k]) if isinstance(changes[k], list) else 1}"
+                            for k in keys) or "无结构化变更"
+        lines.append(f"| {ev.get('seq', '')} | {ev.get('type', '')} | {summary} |")
+    if not events:
+        lines.append("| （无） | — | — |")
+    lines.append("")
+    return "\n".join(lines)
 
 
 def build_docs(target: Path, registry: dict, ledger: dict) -> dict[str, str]:
@@ -121,6 +205,7 @@ def build_docs(target: Path, registry: dict, ledger: dict) -> dict[str, str]:
         "PROJECT_BRIEF.md": "\n".join(brief),
         "MODULE_MAP.md": "\n".join(module_lines),
         "CAPABILITY_INDEX.md": "\n".join(cap_lines),
+        "PROJECT_STATE.md": build_project_state(target, registry, ledger),
     }
 
 
@@ -130,6 +215,10 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--target", default=".", help="项目根目录")
     ap.add_argument("--out-dir", help="文档输出目录（默认 <target>/docs/generated）")
     ap.add_argument("--force", action="store_true", help="覆盖已存在文档")
+    ap.add_argument("--check", action="store_true",
+                    help="只读比对：与重算结果不一致即列出文件并返回非 0，不写盘")
+    ap.add_argument("--doc", action="append", default=[],
+                    help="--check 时只比对指定文件名（可重复）；默认比对全部")
     ap.add_argument("--dry-run", action="store_true", help="只打印摘要，不写文件")
     ap.add_argument("--json", action="store_true", help="输出机器可读摘要")
     args = ap.parse_args(argv)
@@ -144,6 +233,23 @@ def main(argv: list[str] | None = None) -> int:
     ledger = load_json(ledger_path, "账本") if ledger_path.exists() else {}
     docs = build_docs(target, registry, ledger)
     out = Path(args.out_dir).expanduser().resolve() if args.out_dir else target / "docs" / "generated"
+
+    if args.check:
+        mismatches = []
+        wanted_docs = set(args.doc) or set(docs)
+        for name, content in sorted(docs.items()):
+            if name not in wanted_docs:
+                continue
+            path = out / name
+            if not path.exists():
+                mismatches.append({"path": f"docs/generated/{name}", "reason": "文件缺失"})
+            elif path.read_text(encoding="utf-8") != content:
+                mismatches.append({"path": f"docs/generated/{name}",
+                                   "reason": "与重算结果不一致：派生文档禁止手改"})
+        report = {"schema": "doc-rebuild-check/1", "ok": not mismatches,
+                  "mismatches": mismatches, "files": len(docs)}
+        print(json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True))
+        return 0 if not mismatches else 1
 
     statuses = {}
     for name, content in docs.items():

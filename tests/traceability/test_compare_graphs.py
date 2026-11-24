@@ -34,8 +34,10 @@ class CompareGraphsTest(unittest.TestCase):
             self.assertEqual(data["schema"], "graph-diff/1")
             self.assertEqual(data["summary"]["planned"], 4)
             self.assertEqual(data["summary"]["actual"], 4)
-            self.assertEqual(data["summary"]["aligned"], 3)
-            self.assertEqual(data["summary"]["in_progress"], 1)
+            # E1：未声明目标等级不再默认 L5，全部落 no_target，不计入完成度。
+            self.assertEqual(data["summary"]["aligned"], 0)
+            self.assertEqual(data["summary"]["no_target"], 4)
+            self.assertEqual(data["summary"]["in_progress"], 0)
             self.assertEqual(data["summary"]["planned_only"], 0)
             self.assertEqual(data["summary"]["actual_only"], 0)
             api = next(r for r in data["comparison"] if r["code"] == "DEMO.API.QUERY.01")

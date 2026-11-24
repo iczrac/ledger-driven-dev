@@ -63,7 +63,8 @@ class TraceDocsTest(unittest.TestCase):
             self.assertEqual(data["schema"], "doc-rebuild/1")
             self.assertEqual(data["capabilities"], 4)
             self.assertEqual(set(data["files"]),
-                             {"PROJECT_BRIEF.md", "MODULE_MAP.md", "CAPABILITY_INDEX.md"})
+                             {"PROJECT_BRIEF.md", "MODULE_MAP.md", "CAPABILITY_INDEX.md",
+                              "PROJECT_STATE.md"})
 
     def test_code_index_maps_all_artifacts(self):
         with demo_copy() as (tmp, _ledger, _reg, _board):
