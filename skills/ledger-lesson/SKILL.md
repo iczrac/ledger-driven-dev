@@ -15,6 +15,17 @@ metadata:
 
 # Ledger Lesson
 
+## 执行语境（先读）
+
+本文命令示例中的 `scripts/xxx.py` 是**方法论仓库**（`ledger-driven-dev/`）内的权威工具路径，只在该仓库根目录执行才成立。
+
+在已安装本体系的目标项目根目录下：
+
+- 专家路由与资产/账本校验走唯一入口：`python3 scripts/ledger_entry.py --intent "任务描述"` 或 `--check-all`；任一门禁失败即退出码 1（fail-closed）。
+- 目标项目的 `scripts/` 下没有方法仓工具副本；照抄 `python3 scripts/route_expert.py` 一类命令会 file not found，不要照抄。
+- 需要方法仓工具本体时，切到方法仓根目录执行。
+
+
 经验层的"人工确认"入口。机器只识别信号，意义由人/AI 赋予。
 
 ## When to Use
