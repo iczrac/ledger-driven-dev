@@ -43,11 +43,20 @@ def _level_num(value: str | int | None) -> int:
 def build(target: Path, registry: dict, ledger: dict, target_arch: dict | None,
           git_trace: dict) -> dict:
     warnings: list[str] = []
+    # plan_status 让下游一眼区分「无规划 / 空规划 / 部分规划 / 有效规划」。
+    # absent 与 empty 时漂移结论不可采信，必须显式告知，不得静默当成有效规划。
     if target_arch:
         planned_caps = target_arch.get("capabilities", [])
         planned_modules = target_arch.get("modules", [])
         plan_source = "TARGET_ARCHITECTURE.json"
+        if not planned_caps:
+            plan_status = "empty" if not planned_modules else "partial"
+        elif not planned_modules:
+            plan_status = "partial"
+        else:
+            plan_status = "present"
     else:
+        plan_status = "absent"
         planned_caps = [
             {"code": c["code"], "name": c["name"], "target_level": None,
              "depends_on": [], "sources": ["registry.json"]}
@@ -60,6 +69,12 @@ def build(target: Path, registry: dict, ledger: dict, target_arch: dict | None,
         ]
         plan_source = "registry.json (fallback)"
         warnings.append("未找到目标架构；以 registry 作为规划图，建议先运行 architect_from_docs.py。")
+
+    if plan_status in ("absent", "empty", "partial"):
+        warnings.append(
+            f"目标规划图状态为 {plan_status}（缺失/为空/不完整），本报告的漂移结论不可采信；"
+            "请先用 architect_from_docs.py 生成有效规划图后再复核。")
+    plan_trustworthy = plan_status == "present"
 
     plan_by_code = {str(c.get("code", "")): c for c in planned_caps if c.get("code")}
     cm = ledger.get("capability_model", {})
@@ -181,14 +196,28 @@ def build(target: Path, registry: dict, ledger: dict, target_arch: dict | None,
         })
     for row in comparison:
         if row["status"] in ("planned_only", "actual_only") and row["code"] not in queue_codes:
+            if not plan_trustworthy:
+                # 规划图不可信时不派 archaeologist 去「校准规划图」——
+                # 根因是规划图本身缺失，应先跑生成器，而不是逐条伪校准。
+                action = "先运行 architect_from_docs.py 生成有效目标规划图，再复核此条"
+                expert = "loop-executor"
+                preconditions = ["目标规划图缺失/不完整，漂移结论不可采信"]
+            elif row["status"] == "actual_only":
+                action = "先校准 registry 与证据路径，再补契约与测试"
+                expert = "ledger-steward"
+                preconditions = ["人工确认该能力是否应保留"]
+            else:
+                action = "先校准规划图与证据路径，再补契约与测试"
+                expert = "project-archaeologist"
+                preconditions = ["人工确认该能力是否应保留"]
             execution_order.append({
                 "rank": len(execution_order) + 1,
                 "code": row["code"],
                 "from": row["level"],
                 "to": row["target_level"],
-                "action": "先校准规划图/registry 与证据路径，再补契约与测试",
-                "expert": "ledger-steward" if row["status"] == "actual_only" else "project-archaeologist",
-                "preconditions": ["人工确认该能力是否应保留"],
+                "action": action,
+                "expert": expert,
+                "preconditions": preconditions,
                 "lessons": [],
             })
 
@@ -209,6 +238,7 @@ def build(target: Path, registry: dict, ledger: dict, target_arch: dict | None,
                     "shadow_pairs": len(shadow_pairs)})
     return {
         "schema": "graph-diff/1",
+        "plan_status": plan_status,
         "project": {
             "code": str(registry.get("project", {}).get("code", "PROJ")).upper(),
             "name": registry.get("project", {}).get("name", ""),
@@ -234,8 +264,14 @@ def build(target: Path, registry: dict, ledger: dict, target_arch: dict | None,
 
 def render_report(diff: dict) -> str:
     s = diff["summary"]
+    status = diff.get("plan_status", "present")
+    if status != "present":
+        lead = (f"# 规划图 vs 实际图 · 规划图{status}：本报告的漂移结论不可采信，"
+                "先运行 architect_from_docs.py 生成有效规划图")
+    else:
+        lead = "# 规划图 vs 实际图"
     lines = [
-        "# 规划图 vs 实际图",
+        lead,
         "",
         f"> 规划来源：{diff['sources']['plan']}；实际来源：{diff['sources']['actual']}；"
         f"git：{diff['sources']['git']}。",
