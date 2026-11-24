@@ -602,3 +602,23 @@ E7 `cardinality_contradiction`（`ontology.py check --target P` 仍 `ok=false`�
 - 本版只提供机制，不为任何目标项目写入 `paused_scopes`；主仓 D-028 结构化与队列重排须单独批准执行。
 - 暂停按 project 粒度，不支持模块/能力粒度； finer-grained pause 需另立契约。
 - 字段缺失时不改变历史账本顺序，迁移是显式批准的动作，不是生成器猜测。
+
+## v2.21.0 发布检查（目标架构对账链可信度收口）
+
+> 由来：`TARGET_ARCHITECTURE.json` → `compare_graphs.py` 的规划图 vs 实际图链存在四项缺口。先独立复现、再判定、再分笔修复，不以「看起来像 bug」直接放宽判据。
+
+- [x] **判定与分提交**：A 部分成立 `579ac0c`、B 已证实 `ec94fdc`、C 部分成立 `f702cad`、D 部分成立 `4338a7d`；技能执行语境 `5667bb1`、权威口径文档 `247c003`。每笔写明复现依据，未改 `feedback/`，未加第三方依赖。
+- [x] **权威口径**：规划码唯一来源 `CAPABILITY_INDEX.md`（示例码污染 5/21=23.8% 归零）；`plan_status` 四态显式声明，规划图不可信时报告首行写明漂移结论不可采信；同层依赖稳定拓扑排序 + `dep_cycles` shadow；`alias_matches` → `shadow_pairs(kind=alias_suspect)` 只提示不裁决。
+- [x] **测试**：新增 4 个专项 TDD 模块（`test_plan_status` / `test_plan_input_scope` / `test_dep_topology` / `test_alias_suspect`），单测 476 → 495（+19）；`tests/MODULES.json` 与 `docs/generated/TEST_MODULES.md` 同步。
+- [x] **文档与技能**：`docs/13-可追溯性.md` 同步四项权威口径与实测代价；17 份 `SKILL.md` 补「执行语境（先读）」，目标项目内统一走单一入口，消除断链路径。
+- [x] **权威源重绑**：`METHOD_VERSION=2.21.0`；官方 upgrade 执行 M4/M5/M7（工具副本已在同步状态，无 M3），`method_assets=476fb36e597eb6866`、`installed_assets=a344b3e9c84d3494`、`ontology_digest=137fb6cdab5b7b80f`；`upgrade verify` 全 pass、`plan` 为 noop，自举账本与看板 EMBED 同步。
+- [x] **全量门禁**：`bash scripts/check.sh` EXIT=0，16 阶段全绿；单测 495/495，31 条不变量三态保持，literal_drift 无漂移。
+- [x] **`feedback_closed = 7`**：本次未新增或改写观察包。
+- [x] **发版**：附注 tag `v2.21.0` + push `origin/main` 与 tag；GitHub Release `v2.21.0` 以本版 CHANGELOG 为说明。
+
+### 本版边界（不掩盖）
+
+- shadow 只晒不裁决：同义异码是否合并/废弃、依赖环是否成真，仍由人工裁决；`status` / `level` 不受影响。
+- 规划图缺失或为空时，diff 报告首行声明漂移结论不可采信，禁止拿空图反向证明「无缺口」。
+- 规划码唯一来源是账本投影；手写文档只增强已有码，讲解示例不再污染规划集。
+- 方法仓自举已重绑；主仓仍绑定 2.20.1，升级到 2.21.0 须单独批准，不在本版范围内。

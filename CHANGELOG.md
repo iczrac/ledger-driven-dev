@@ -2,6 +2,20 @@
 
 本项目版本遵循语义化版本（SemVer）。
 
+## [2.21.0] - 2026-11-24
+
+**目标架构对账链可信度收口**：四项缺口先独立复现再分笔修复；规划图不再拿讲解示例当目标，规划图缺失不再反向假警，同层顺序与同义异码只晒不裁决。
+
+- 第一性原理：`compare_graphs.py` 的结论要能回答「图纸是否可信」。若规划码混入文档示例、规划图为空却给出确定 diff、开发顺序靠字典序、同义异码被当成两个能力，那么报告越漂亮越是在制造假绿灯。修法是「权威源唯一、缺证据就声明不可采信、不确定只给 shadow、不改 status/level」。
+- C（部分成立，commit `f702cad`）：`build()` 输出 `plan_status=absent|empty|partial|present`；规划图缺失/为空/部分时给 warning，报告首行明确「漂移结论不可采信」；`execution_order` 的权威指向 `architect_from_docs.py`，不再让读者误以为是比对器现场算出的顺序。
+- B（已证实，commit `ec94fdc`）：规划码唯一来源改为 `CAPABILITY_INDEX.md`（账本确定性投影）；其他手写文档里的四段码只增强 `target_level` / `depends_on`，`MODULE_MAP` 保持 codec fail-closed。实测此前 21 个规划码混入 5 个示例码（23.8%：`DEMO.*` / `MYPROJ.*` / `X1`），改为唯一来源后规划码 16 个全为 `METHOD.*`，污染归零。
+- A（部分成立，commit `579ac0c`）：`depends_on` 同层稳定拓扑排序，环检测写入 `dep_cycles` 作 shadow warning；稀疏/全空依赖退化为原 `next_queue` 顺序，不改能力等级与证据。
+- D（部分成立，commit `4338a7d`）：`impl_hint` 与实际 `artifact_paths()` 按路径末 3 段归一化；同模块且实现相同或交集写双向 `alias_matches`，进入 `shadow_pairs(kind=alias_suspect)`；不改 `status` / `level`，不自动合并同义码。
+- 技能权威源：17 份 `SKILL.md` 补「执行语境（先读）」，目标项目内不要照抄 `scripts/xxx.py`，统一走单一入口；消除文档里的断链路径。
+- 文档：`docs/13-可追溯性.md` 同步四项权威口径与实测代价；`tests/MODULES.json` 与 `docs/generated/TEST_MODULES.md` 随新增 4 个测试模块同步。
+- 实测代价：单测 476 → 495（+19）；`method_assets=476fb36e597eb6866`、`installed_assets=a344b3e9c84d3494`、`ontology_digest=137fb6cdab5b7b80f`；`feedback/` 未改。
+- 边界：本版只改判定与报告口径，不改账本事实、不改能力等级；主仓推广与账本重绑须单独批准，不随本版自动生效。
+
 ## [2.20.1] - 2026-11-23
 
 **结构化暂停范围**：让人工裁决的“暂停”真正约束 `next_queue`。
