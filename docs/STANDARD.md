@@ -36,7 +36,7 @@
 | 改节点工作台 / `work_items` / `test_results` | `21-节点工作台与看板视图`、`work_panel.py`、`verify_ledger.py` 三条不变量、`scale_budget.py` 的 `work_items` 阈值 |
 | 改技能 / 专家 | `10-AI集成`、`README` 目录结构 |
 | 新增不变量 | `08-可信性校验` 表格 + 负向测试 |
-| 文档生命周期升硬门 | `skills/ledger-verify`、`docs/08`、`RELEASE_CHECKLIST`；条件：连续 10 次 CI orphan=0 且 warn=0 + 人工批准 |
+| 文档生命周期升硬门 | `skills/ledger-verify`、`skills/doc-lifecycle`、`docs/08`、`RELEASE_CHECKLIST`；唯一条件：连续 10 次 CI 中 orphan / uncovered / obligation_missing / stale_unknown / suspect / stale / 信任告警 / 派生漂移 全为 0，任一指标不得为 n/a，且人工书面批准 |
 | 新增 / 改名产物路径 | `15-文件架构`、`scripts/file_layout.py`、重新 `--emit-md`、`CHANGELOG` |
 | 改账本字段结构 | `02-决策账本`、`15-文件架构` 的 LEDGER_FIELDS、`09-历史与经验` |
 | 改工具副本 / 版本契约 | `16-升级与迁移`、`upgrade.py` 的 TOOLING / MIGRATIONS、`CHANGELOG` |

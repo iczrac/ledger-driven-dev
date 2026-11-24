@@ -675,3 +675,13 @@ E7 `cardinality_contradiction`（`ontology.py check --target P` 仍 `ok=false`�
 
 1. **shadow 升硬门条件**：连续 10 次 CI 运行 orphan=0 且 warn=0，且人工书面批准后才允许 `--strict` 进 CI 阻断；未满足前不得批量把 draft/suspect 置 current。
 2. **docs.registry 批准人**：`seed` / `approve` 必须由 ledger-steward 角色签名；本版以 `user-approved-execution-chain` 作为批准标识由执行会话代录，需人类确认该批准人是否长期有效。
+
+## v2.25.1 发布检查（四项拍板落盘）
+
+> 第一性原理：拍板必须缩小解释空间，而不是增加一句更漂亮的文案。硬门条件、批准人、派生文档去留、会话授权边界都要能被脚本或目录清单复算。
+
+- [x] **唯一升硬门条件**：连续 10 次 CI 运行中 `orphan=0`、`uncovered=0`、`obligation_missing=0`、`stale_unknown=0`、`suspect=0`、`stale=0`、`信任告警=0`、`派生漂移=0`，且任一指标不是 `n/a`，并经人工书面批准后才允许 `--strict` 进 CI；当前保持 shadow。
+- [x] **owners 批准规则**：`owner` / `role` / `stale_after` 只能由人逐篇批准；禁止批量填充占位值或批量置 current。长期批准人为仓库维护者 `iczrac`，AI 不得自批。
+- [x] **会话授权边界**：`user-approved-execution-chain` 仅作历史一次性会话授权，不作为长期 current 签名或 owner 指派身份；本版升级写入使用明确批准人。
+- [x] **派生文档去留**：五份 `docs/generated/` 派生文档全部保持 `presence=on-demand`；`PROJECT_STATE.md` 不改为 required，删除后落入 `not_applicable`，手改落入 `hand-edited`；不为了让检查通过而提交其余四份。
+- [x] **同步点**：`skills/ledger-verify`、`skills/doc-lifecycle`、`docs/08`、`docs/STANDARD`、`docs/10`、`docs/15`、`README` 与本节使用同一组硬门指标；新增三项回归测试锁定口径。

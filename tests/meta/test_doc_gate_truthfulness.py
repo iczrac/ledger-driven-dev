@@ -171,6 +171,44 @@ class DocGateTruthfulnessTest(unittest.TestCase):
         self.assertEqual(fresh["metrics"]["stale"]["count"], 0)
         self.assertEqual(fresh["metrics"]["stale"]["fresh"], 1)
 
+    def test_pending_decisions_have_one_exact_hard_gate_criterion(self):
+        metrics = ("orphan", "uncovered", "obligation_missing", "stale_unknown",
+                   "suspect", "stale", "信任告警", "派生漂移")
+        files = (
+            "skills/ledger-verify/SKILL.md",
+            "skills/doc-lifecycle/SKILL.md",
+            "docs/08-可信性校验.md",
+            "docs/STANDARD.md",
+            "RELEASE_CHECKLIST.md",
+            "README.md",
+        )
+        for rel in files:
+            text = (ROOT / rel).read_text(encoding="utf-8")
+            self.assertIn("连续 10 次 CI", text, rel + " 未写连续 10 次 CI")
+            self.assertIn("人工书面批准", text, rel + " 未写人工书面批准")
+            missing = [name for name in metrics if name not in text]
+            self.assertEqual(missing, [], rel + " 缺少硬门指标：" + ", ".join(missing))
+
+    def test_owner_and_approval_decision_is_recorded_without_bulk_fill(self):
+        text = (ROOT / "docs/08-可信性校验.md").read_text(encoding="utf-8")
+        for phrase in (
+            "owner / role / stale_after 只能由人逐篇批准",
+            "禁止批量填充占位值或批量置 current",
+            "长期批准人：`iczrac`",
+            "user-approved-execution-chain 仅作历史一次性会话授权",
+        ):
+            self.assertIn(phrase, text)
+
+    def test_derived_document_final_decision_stays_on_demand(self):
+        text = (ROOT / "docs/15-文件架构.md").read_text(encoding="utf-8")
+        for phrase in (
+            "最终去留：`docs/generated/` 五份派生文档全部保持 `presence=on-demand`",
+            "PROJECT_STATE.md 不改为 required",
+            "不为了让检查通过而提交其余四份",
+            "删除后落入 not_applicable",
+        ):
+            self.assertIn(phrase, text)
+
 
 if __name__ == "__main__":
     unittest.main()

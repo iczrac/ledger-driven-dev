@@ -2,6 +2,17 @@
 
 本项目版本遵循语义化版本（SemVer）。
 
+## [2.25.1] - 2026-11-24
+
+**决策依据（第一性原理）**：拍板的作用不是再写一句口号，而是把解释空间收敛成可复算条件。硬门条件必须列出全部指标与 `n/a` 约束；批准人必须是明确的人；派生文档去留必须由布局 presence 裁决；一次性会话授权不能升格为长期身份。
+
+- 裁决一：升硬门采用唯一可判定条件——连续 10 次 CI 中 `orphan`、`uncovered`、`obligation_missing`、`stale_unknown`、`suspect`、`stale`、`信任告警`、`派生漂移` 全为 0，任一指标不得为 `n/a`，且人工书面批准；当前继续保持 shadow，`--strict` 不进 CI。
+- 裁决二：`owner` / `role` / `stale_after` 只能由人逐篇批准，禁止批量填充占位值或批量置 current；长期批准人为仓库维护者 `iczrac`。本轮未补写任何 owner、role、stale_after，也未修改任何 docs.registry status。
+- 裁决三：五份 `docs/generated/` 派生文档最终全部保持 `presence=on-demand`；`PROJECT_STATE.md` 不改为 required，删除后由生成器重建；不为了让门禁变绿而提交其余四份。
+- 裁决四：`user-approved-execution-chain` 仅作历史一次性会话授权，不作为长期 current 签名或 owner 指派身份。
+- 同步：`skills/ledger-verify`、`skills/doc-lifecycle`、`docs/08`、`docs/STANDARD`、`docs/10`、`docs/15`、`README`、`RELEASE_CHECKLIST` 统一口径；新增三项回归测试锁定裁决，单测 544 → 547（+3）。
+- 实测代价：为了让本体投影与 STANDARD 新口径同步，`ontology_digest` 重算为 `768c3e5f9884255...`；`owner` / `coverage` 告警保持原样，不通过批量补值归零。权威链按 M4/M5/M7 重绑：`method_assets=5e6eeef7f62a523...`、`installed_assets=4791beea74879c0e...`，`upgrade verify` 12 pass / 0 warn / `upgrade_complete=true`；账本复验 30/31 pass、1 na（目标项目需重新批准升级）。最终 `bash scripts/check.sh`：`Ran 547 tests`、`OK`、`CHECK_EXIT=0`；文档节 `orphan=0 / suspect=7 / stale=n/a / 信任告警=2 / uncovered=26 / obligation_missing=42 / stale_unknown=42 / 派生漂移=0`。
+
 ## [2.25.0] - 2026-11-24
 
 **决策依据（第一性原理）**：门禁里的数字必须回答「判据执行了几篇、命中几篇、判据是否适用」。把未生成的 on-demand 派生文档报成「文件缺失」，和把 owner/stale_after 全空的文档报成 `stale=0`，都是用口径不一致制造假绿；缺 `stale_after` 被当作「不过期」则是 fail-open。修复只能来自共享事实源、真实判据和三态语义，不能靠缩范围、批量补值或批量 current。

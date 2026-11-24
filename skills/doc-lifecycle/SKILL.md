@@ -52,7 +52,7 @@ metadata:
 4. **义务已声明**：非骨架文档必须在 `docs.registry` 有 owner/role/stale_after；
 5. **无孤儿**：`docs/**` 中无未登记文档。
 
-新判据先 shadow：报告告警但不改账本状态、不升硬门。升硬门的可判定条件：连续 10 次 CI 运行 orphan=0 且 warn=0，且人工书面批准后才允许 `--strict` 进 CI 阻断。`seed` 只做 draft 初判，禁止批量标 current。
+新判据先 shadow：报告告警但不改账本状态、不升硬门。唯一升硬门条件：连续 10 次 CI 运行中 `orphan=0`、`uncovered=0`、`obligation_missing=0`、`stale_unknown=0`、`suspect=0`、`stale=0`、`信任告警=0`、`派生漂移=0`，且任一指标不是 `n/a`，并经人工书面批准后，才允许 `--strict` 进 CI 阻断。`seed` 只做 draft 初判，禁止批量标 current；`owner` / `role` / `stale_after` 只能由人逐篇批准，禁止批量填充占位值。
 
 ## 允许动作
 

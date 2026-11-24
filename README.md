@@ -335,7 +335,7 @@ python3 governance/verify_ledger.py --root . --strict
 bash scripts/check.sh
 ```
 
-一条命令跑完：标准库单元测试（双发现口径）→ 测试架构映射 → 证据分层（生成实测报告并确认 verified 判定）→ 31 条不变量 → 场景矩阵 → 文件布局清单与只读 diff → 文档生命周期（shadow：orphan / suspect / 义务 / 覆盖 / 过期三态 / 信任 / 派生只读） → 升级与多 Agent 接入端到端 → 资产/骨架/规模/节点工作台契约 → 生成器幂等 → 模板/示例同步与看板 EMBED → 脱敏与文档内链。本地与 CI 用同一份脚本，口径一致。单个能力校验用 `verify_ledger.py`，完整交付用 `check.sh`；文档指标同时显示判据名与已判篇数，`0` 与 `n/a` 不混用，派生文档全量比对不缩范围。文档告警默认 shadow，升硬门须连续 10 次 CI 中 orphan / uncovered / obligation_missing / stale_unknown / suspect / stale / 信任告警 / 派生漂移全为 0，并经人工批准。
+一条命令跑完：标准库单元测试（双发现口径）→ 测试架构映射 → 证据分层（生成实测报告并确认 verified 判定）→ 31 条不变量 → 场景矩阵 → 文件布局清单与只读 diff → 文档生命周期（shadow：orphan / suspect / 义务 / 覆盖 / 过期三态 / 信任 / 派生只读） → 升级与多 Agent 接入端到端 → 资产/骨架/规模/节点工作台契约 → 生成器幂等 → 模板/示例同步与看板 EMBED → 脱敏与文档内链。本地与 CI 用同一份脚本，口径一致。单个能力校验用 `verify_ledger.py`，完整交付用 `check.sh`；文档指标同时显示判据名与已判篇数，`0` 与 `n/a` 不混用，派生文档全量比对不缩范围。文档告警默认 shadow，升硬门须连续 10 次 CI 中 orphan / uncovered / obligation_missing / stale_unknown / suspect / stale / 信任告警 / 派生漂移全为 0，任一指标不得为 n/a，并经人工书面批准。
 
 ### AI 接手：专家路由与技能
 
