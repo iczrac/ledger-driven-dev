@@ -66,13 +66,18 @@ def build(target: Path, docs_dir: Path, registry: dict) -> dict:
     for lineno, token in iter_code_candidates(index_text):
         code = valid_code(index_src, lineno, token)
         entry = codes.setdefault(code, {"code": code, "sources": [index_src], "name": "",
-                                        "depends_on": [], "target_level": None})
+                                        "depends_on": [], "target_level": None,
+                                        "impl_hint": []})
         row = next((l for l in index_text.splitlines()
                     if l.startswith("| " + code + " |")), "")
         if row:
             cells = [c.strip() for c in row.strip("|").split("|")]
             if len(cells) > 2 and cells[2] and not entry["name"]:
                 entry["name"] = cells[2]
+            # D 项：第 6 列「代码」来自账本投影，作为语义别名配对的 impl 依据。
+            if len(cells) > 5 and cells[5] and cells[5] != "—":
+                entry["impl_hint"] = sorted({x.strip("` ")
+                                             for x in cells[5].split(",") if x.strip("` ")})
 
     # 手写文档只做增强：目标：Lx / 依赖：CODE 只对已存在的规划码生效。
     for src, text in texts.items():

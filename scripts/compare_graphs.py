@@ -123,6 +123,55 @@ def build(target: Path, registry: dict, ledger: dict, target_arch: dict | None,
         warnings.append(f"发现 {len(shadow_pairs)} 组疑似同一能力（仅编码写法不同）："
                         f"{described}；仅提示，不自动合并。")
 
+    # D 项：语义别名（同义异码）配对。canonical_code 只覆盖格式变体，
+    # 这里用 impl 路径集合做「疑似同一能力」的 shadow 配对：
+    # - 规划侧 impl_hint 来自 CAPABILITY_INDEX 代码列（账本投影，非第二事实源）
+    # - 实际侧用 artifact_paths 的 code 集合
+    # - 仅当同模块且 impl 集合相同/有交集时配对
+    # 硬约束：只写入 shadow_pairs / warnings / alias_matches，
+    # 不改 status / level / 不自动合并（语义推断误报风险高，按 shadow 纪律只晒不否决）。
+    impl_planned: dict[str, set[str]] = {}
+    impl_actual: dict[str, set[str]] = {}
+    for code, plan in plan_by_code.items():
+        paths = {"/".join(str(x).strip("` ").split("/")[-3:])
+                 for x in (plan.get("impl_hint") or [])}
+        if paths:
+            impl_planned[code] = paths
+    for code, live in actual_by_code.items():
+        # 实际侧 doc_index 路径可能带「examples/<项目>/」等仓库相对前缀，
+        # 而 CAPABILITY_INDEX 的路径相对项目根。用「保留最后 3 段」归一化：
+        # 任一路径都可与其后缀对齐，避免依赖具体项目目录名。
+        paths = {"/".join(str(rel_path(x, target)).split("/")[-3:])
+                 for x in artifact_paths(live).get("code", [])}
+        if paths:
+            impl_actual[code] = paths
+
+    # 已被 canonical 配对的（格式变体）不再重复报 alias，避免同一对双报。
+    canonical_pairs = {(p["planned"], p["actual"]) for p in shadow_pairs}
+    alias_pairs: list[dict] = []
+    alias_by_code: dict[str, list[str]] = {}
+    for pcode, pimpl in sorted(impl_planned.items()):
+        pmodule = _short_module(pcode)
+        for acode, aimpl in sorted(impl_actual.items()):
+            if pcode == acode or (pcode, acode) in canonical_pairs:
+                continue
+            if _short_module(acode) != pmodule:
+                continue
+            if not (pimpl == aimpl or pimpl & aimpl):
+                continue
+            pair = {"kind": "alias_suspect", "planned": pcode, "actual": acode,
+                    "impl": sorted(pimpl & aimpl or pimpl),
+                    "reason": "同模块且 impl 路径相同/有交集，疑似同义异码；仅提示，不自动合并"}
+            alias_pairs.append(pair)
+            alias_by_code.setdefault(pcode, []).append(acode)
+            alias_by_code.setdefault(acode, []).append(pcode)
+    if alias_pairs:
+        shadow_pairs.extend(alias_pairs)
+        shown = "；".join(f"{p['planned']} ↔ {p['actual']}"
+                         for p in alias_pairs[:MAX_WARN_SHADOW_PAIRS])
+        warnings.append(f"发现 {len(alias_pairs)} 组同义异码疑似（_impl 路径相同/交集）："
+                        f"{shown}；仅提示，不自动合并、不改状态与等级。")
+
     commits_by_code: dict[str, list[str]] = {}
     for commit in git_trace.get("commits", []):
         for code in commit.get("cap_codes", []):
@@ -174,6 +223,7 @@ def build(target: Path, registry: dict, ledger: dict, target_arch: dict | None,
             "commits": sorted(set(commits_by_code.get(code, []))),
             "shadow_match": shadows[0] if shadows else None,
             "shadow_matches": shadows,
+            "alias_matches": sorted(set(alias_by_code.get(code, []))),
             "gaps": [g for g in gaps if g],
         })
 
@@ -367,10 +417,13 @@ def render_report(diff: dict) -> str:
         )
     if diff.get("shadow_pairs"):
         lines.extend(["", "## 疑似同一能力", "",
-                      "> 仅编码写法不同；状态与专家分派仍按字面码，须人工确认后统一。", "",
-                      "| 归一键 | 规划码 | 实际码 |", "|---|---|---|"])
+                      "> 含格式变体与同义异码（alias_suspect，impl 路径相同/交集）；"
+                      "状态与专家分派仍按字面码，须人工确认后统一。", "",
+                      "| 归一键/类型 | 规划码 | 实际码 | 证据 |", "|---|---|---|---|"])
         for pair in diff["shadow_pairs"]:
-            lines.append(f"| {pair['canonical']} | {pair['planned']} | {pair['actual']} |")
+            key = pair.get("canonical") or pair.get("kind", "")
+            evidence = "、".join(pair.get("impl", [])) or "码写法归一"
+            lines.append(f"| {key} | {pair['planned']} | {pair['actual']} | {evidence} |")
     lines.extend(["", "## 开发顺序（专家规划）", "",
                   "| 序 | 编码 | 跃迁 | 动作 | 专家 | 前置 |", "|---|---|---|---|---|---|"])
     for e in diff["execution_order"]:
