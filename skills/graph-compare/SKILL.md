@@ -51,6 +51,14 @@ python3 scripts/compare_graphs.py --target /path/to/project \
   --git-trace /path/to/project/governance/GIT_TRACE.json
 ```
 
+## 目标架构：可执行规则断言（新口径）
+
+规划图不再以"编码字符串集合差"为唯一判据。目标架构携带**可执行规则断言**：
+模块存在性、依赖方向约束、禁止依赖（forbidden）、能力等级下限。比对输出改为
+`rule_violations[]`（哪条规则、哪个模块、证据）与 `suspect[]`（疑似同义异码/环），
+保留旧的 `status/level` 集合差为 `shadow` 兼容一版（只提示，不裁决）。
+两者不一致时以规则断言为准，但需在报告写明 shadow 差异，禁止静默丢弃。
+
 ## 解读输出
 
 - `aligned` / `in_progress` / `not_started` / `planned_only` / `actual_only` 五态，不要混成"完成/没完成"；

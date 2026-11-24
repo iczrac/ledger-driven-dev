@@ -36,11 +36,28 @@ bash scripts/check.sh
 
 `scripts/route_expert.py --json` 若显示 `detected_mode=corrupt`，跳过全量门禁直接进入冻结流程：备份账本 → 人工修复 → 重跑校验。
 
+## 文档信任审计（只读）
+
+职责边界：只读核对每篇文档的 `verified.at >= generated.at`、`source_hash` 与上游一致、`stale_after` 未过期；输出可复算的审计结论（结论写进报告，不写事实源）。
+
+允许动作：运行 `doc-lifecycle check --json` 与 `ledger-verify` 的文档不变量，输出 `trust=<ok|suspect|stale|unbound>` 与具体文件路径/原因。
+
+禁止动作：**不得写文档**、不得写 `docs.registry`、不得关闭任何 issue、不得替 `loop-executor` 补正文。只读审计优先于文档写入：与 doc 意图同时命中时本专家接管，写入全部暂停。
+
+停止条件：报告无法复算 / `source_hash` 缺上游锚点 → 停止并标 `unbound`，不猜。
+
+交接模板：
+```
+审计对象：<path>  结论：<ok|suspect|stale|unbound>  证据：verified.at/generated.at/source_hash/stale_after
+下一步负责人：ledger-steward（裁决状态）| loop-executor（补正文）  关闭 issue：否（只读）
+```
+
 ## 权限矩阵
 
 | 动作 | 权限 | 条件 |
 |---|---|---|
-| 读账本 / 历史 / 经验 / 源码 / 测试报告 | 允许 | 无 |
+| 读账本 / 历史 / 经验 / 源码 / 测试报告 / 文档 | 允许 | 无 |
+| 写文档 / 写 `docs.registry` / 关闭 issue | **禁止** | 只读审计，不得写文档、不得关闭 issue |
 | 运行 `check.sh` / `verify_ledger.py --json` | 允许 | 只读或写临时目录 |
 | 修改 `level` / `completion` / `history` / `EMBED` | **禁止** | 只能由生成器从证据派生 |
 | 直接改测试让报告变绿 | **禁止** | 属于 `loop-executor`，且需说明修改原因 |

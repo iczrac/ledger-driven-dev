@@ -59,13 +59,16 @@
         "scripts/goal_loop.py"
       ],
       "files": [
-        "tests/routing/test_routing.py",
-        "tests/routing/test_skills.py",
-        "tests/routing/test_scenarios.py",
-        "tests/routing/test_intent_restate.py",
+        "tests/routing/test_doc_contracts.py",
+        "tests/routing/test_doc_lifecycle_skill.py",
+        "tests/routing/test_doc_routing.py",
         "tests/routing/test_expert_run.py",
+        "tests/routing/test_goal_loop.py",
+        "tests/routing/test_intent_restate.py",
         "tests/routing/test_provenance_view.py",
-        "tests/routing/test_goal_loop.py"
+        "tests/routing/test_routing.py",
+        "tests/routing/test_scenarios.py",
+        "tests/routing/test_skills.py"
       ]
     },
     {

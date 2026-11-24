@@ -31,6 +31,22 @@ metadata:
    后者由生成器的能力指纹链维护，混入人工状态会让「末事件指纹 == 当前模型」失效。
 5. **归档是终态**：需要继续开发就复制出新项目，不要复活旧账本，否则历史会被改写成「从未交付过」。
 
+## 发布门：文檔状態（Doc State Gate）
+
+职责边界：发布前只读取证文档状态；存在 `stale` 文档、未复核的 plan 文档或 `suspect` 未 clear 时**不得放行发布**。不写文档，不替 `ledger-steward` 裁决义务。
+
+允许动作：运行 `doc-lifecycle check --json`，读取 `docs.registry` 状态词，输出放行/阻塞结论与具体文件路径。
+
+禁止动作：禁止写 `docs/**` 正文 / `docs.registry`；禁止在 stale 文档存在时放行；禁止仅凭人工口头说明绕过门禁。
+
+停止条件：任一 `stale` / 未复核 plan / `suspect` 未 clear → 阻塞并列出文件与原因；无批准人不得解冻/归档。
+
+交接模板：
+```
+发布门：<blocked|allowed>  阻塞文档：<path:reason>  未复核 plan：<n>
+下一步负责人：ledger-steward（裁决 stale/suspect）| loop-executor（补正文）  批准人：<name|无>
+```
+
 ## 权限矩阵
 
 | 对象 | 读 | 写 | 说明 |
@@ -38,7 +54,7 @@ metadata:
 | `DECISION_LEDGER.json` | 是 | 仅 `lifecycle` / `retired_caps` / `execution` / `lifecycle.log` | 不碰 `entries` / `capability_model` / `history` |
 | `registry.json` | 是 | 否 | 退役后由人移除能力声明，你只提示 |
 | 看板 `index.html` | 是 | 仅同步 EMBED | 由 `lifecycle.py` 自动完成 |
-| 源码 / 测试 / 文档 | 是 | 否 | 交给 `loop-executor` |
+| 源码 / 测试 / 文档 | 是 | 否 | 交给 `loop-executor`；发布门只读核对 stale/suspect |
 | `history.events` | 是 | **禁止** | 唯一由生成器追加 |
 | 外部系统 / 凭据 | 否 | 否 | 不需要 |
 

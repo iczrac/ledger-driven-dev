@@ -38,7 +38,9 @@ bash scripts/check.sh
 # 等价的显式分解（排错时用）
 python3 -m unittest discover -s tests -v          # 1. 单元与集成测试
 python3 governance/verify_ledger.py --root . --strict   # 2. 31 条不变量
-bash scripts/check.sh --only-idempotence           # 3. 连续重跑幂等
+python3 scripts/doc_lifecycle.py lint --target . --json  # 3. 文档结构/链接/状态词；串起 doc lint 与义务门禁
+python3 scripts/doc_lifecycle.py check --target . --json # 4. 五项文档不变量（shadow）
+bash scripts/check.sh --only-idempotence           # 5. 连续重跑幂等
 ```
 
 ## 检查项
@@ -48,7 +50,7 @@ bash scripts/check.sh --only-idempotence           # 3. 连续重跑幂等
 3. **幂等**：连续重跑生成器，事件数 / 指纹 / 候选 id / 任务卡必须完全一致；
 4. **同步**：看板 EMBED 与账本一致；模板脚本与示例副本一致；
 5. **脱敏**：无来源项目内部代号与专有名词残留；
-6. **文档**：Markdown 内链全部指向存在的文件。
+6. **文档**：Markdown 内链全部指向存在的文件；`doc-lifecycle lint` 与义务门禁串成统一质量门的一节（骨架只判 incomplete，stale/suspect 未清即告警）。
 
 ## 禁止
 

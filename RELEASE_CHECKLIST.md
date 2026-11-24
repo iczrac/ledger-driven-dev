@@ -622,3 +622,20 @@ E7 `cardinality_contradiction`（`ontology.py check --target P` 仍 `ok=false`�
 - 规划图缺失或为空时，diff 报告首行声明漂移结论不可采信，禁止拿空图反向证明「无缺口」。
 - 规划码唯一来源是账本投影；手写文档只增强已有码，讲解示例不再污染规划集。
 - 方法仓自举已重绑；主仓仍绑定 2.20.1，升级到 2.21.0 须单独批准，不在本版范围内。
+
+## v2.22.0 发布检查（文档生命周期维度）
+
+> 由来：路由/契约/技能三层对文档维度缺失。独立复现确认：doc 意图不识别（澄清 + low 兜底）、doc-rebuild 认文档但路由不认；未按任务书推测判为 plan/verify。
+
+- [x] **判定**：路由缺 doc = 部分成立（实际 13 类非 14，兜底 ledger-steward 非 plan/verify）；技能/路由不一致 = 已证实；六契约缺文档维度 = 部分成立（读项提及、职责/写权/停止/交接全缺）；缺 doc-lifecycle = 已证实。
+- [x] **工作流 A**：doc 类 + 冲突唯一负责人 + 文档交接链 + 复述门锚定；路由测试 8/8 绿，三条复现命令均命中 doc、负责人唯一、无澄清。
+- [x] **工作流 B**：六份契约原地修订，权限矩阵互斥交叉检查 7/7 绿；未新增第 10 位专家。
+- [x] **工作流 C**：doc-lifecycle 新增 + doc-rebuild/ledger-verify/ledger-guard/graph-compare 修订；技能纪律 6/6 绿，scaffold 产物被 lint 判 incomplete。
+- [x] **工作流 D**：按官方升级 M4/M5/M7 重绑（approved-by user-approved-v2.22.0）；method_assets / asset_bundle / route --check-assets 三项一致（assets=33 / skills=24 / method_assets=5a7a02203d937fb8 / installed_assets=3ae603cad0acad77）。
+- [x] **门禁**：`bash scripts/check.sh` 全绿；单测 495→517（只增不减，含 stale 过期红门负向）。
+- [x] **边界**：五项文档不变量先 shadow 只告警；不为过门放宽既有判据；不改 feedback/；无第三方依赖；目标项目使用新副本需重新批准安装。
+
+### 待人类拍板
+
+- 五项文档不变量 shadow 期时长；升硬门前需确认 `docs.registry` 存量条目已覆盖。
+- `declared_no_impact` 的批准人名单由人指定，AI 不得自批。

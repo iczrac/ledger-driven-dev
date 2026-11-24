@@ -231,21 +231,23 @@ EXPERT_CARDS = {
         "title": "账本治理专家",
         "duty": "维护决策取代链、确认经验、从 next_queue 产出可执行任务卡。",
         "skills": ["ledger-scan", "ledger-verify", "ledger-decide", "ledger-lesson",
-                   "graph-compare", "layout-inspect", "agent-gate", "work-panel"],
-        "writes": ["entries", "lessons.items"],
+                   "graph-compare", "layout-inspect", "agent-gate", "work-panel",
+                   "doc-lifecycle", "doc-rebuild"],
+        "writes": ["entries", "lessons.items", "docs.registry", "docs.obligations"],
     },
     "evidence-auditor": {
         "title": "证据审计专家",
         "duty": "跑不变量与实测报告，识别假绿灯；失败时冻结后续写入。",
         "skills": ["ledger-guard", "ledger-verify", "graph-compare", "layout-inspect",
-                   "agent-gate", "board-layout", "scale-budget", "test-map", "work-panel"],
+                   "agent-gate", "board-layout", "scale-budget", "test-map", "work-panel",
+                   "doc-lifecycle"],
         "writes": [],
     },
     "loop-executor": {
         "title": "循环执行专家",
         "duty": "从一条任务卡补齐契约/实现/单测/测试记录；不得改等级、历史或看板。",
         "skills": ["ledger-scan", "ledger-verify", "doc-rebuild", "graph-compare",
-                   "agent-gate", "work-panel", "test-map"],
+                   "agent-gate", "work-panel", "test-map", "doc-lifecycle"],
         "writes": ["src/**", "tests/**", "docs/test_records/**"],
     },
     "release-steward": {
@@ -308,6 +310,11 @@ INTENT_PATTERNS = {
              "达成目标", "目标推进", "调整目标", "受控循环", "自动跑到达成",
              "goal loop", "goal orchestrat", "orchestrate goal", "auto iterate",
              "propose goal change", "target loop"),
+    "doc": ("文档", "文檔", "文档化", "规范化", "规范化生成", "文档过期", "文档失效",
+            "文档漂移", "文档复核", "文档重建", "文档索引", "文档覆盖", "文档状态",
+            "文档信任", "文档生命周期", "文档义务", "孤儿文档", "过期标记", "待人工填写",
+            "suspect", "stale", "doc lifecycle", "rebuild docs", "doc drift", "doc trust",
+            "doc coverage", "doc registry", "mark stale", "clear suspect"),
 }
 
 FOLLOW_UP = {
@@ -323,6 +330,7 @@ FOLLOW_UP = {
     "retire": "release-steward",
     "resume": "loop-executor",
     "goal": "goal-orchestrator",
+    "doc": "ledger-steward",
 }
 
 HANDOFF_CHAIN = {
@@ -337,6 +345,8 @@ HANDOFF_CHAIN = {
     "release-steward": ["release-steward", "evidence-auditor", "ledger-steward"],
     "platform-steward": ["platform-steward", "evidence-auditor", "loop-executor"],
     "goal-orchestrator": ["goal-orchestrator", "evidence-auditor", "ledger-steward"],
+    # 文档任务链：doc 意图命中时的唯一交接顺序（写入→执行→只读审计）。
+    "doc": ["ledger-steward", "loop-executor", "evidence-auditor"],
 }
 
 EXCLUDE_DIRS = {
@@ -496,6 +506,27 @@ def decide(facts: dict, scores: dict[str, int], explicit_mode: str) -> dict:
             "options": strong,
         }
 
+    # 文档意图冲突裁决：doc 是跨模式任务链，但写入方只能有一个。
+    # doc+code → ledger-steward（文档义务裁决优先于代码执行，输出交接链）；
+    # doc+verify → evidence-auditor（只读信任审计优先，不得写文档）；
+    # 三者并存 → evidence-auditor + clarification（无唯一解，fail-closed）。
+    doc_active = scores.get("doc", 0) > 0
+    code_active = scores.get("code", 0) > 0
+    verify_active = scores.get("verify", 0) > 0
+    doc_route: str | None = None
+    if doc_active and verify_active:
+        primary = "verify"
+        doc_route = "evidence-auditor"
+        if not (doc_active and code_active and verify_active):
+            clarification = None
+    elif doc_active and code_active:
+        primary = "doc"
+        doc_route = "ledger-steward"
+        clarification = None
+    elif doc_active:
+        primary = "doc"
+        doc_route = "ledger-steward"
+
     mode = facts["mode"]
     follow_up = FOLLOW_UP.get(primary) if primary else None
 
@@ -558,7 +589,20 @@ def decide(facts: dict, scores: dict[str, int], explicit_mode: str) -> dict:
                       "显式指定存量模式；先只读盘点，事实会决定是否能安全接入。",
                       facts, stop_if=["盘点报告未经确认前禁止覆盖治理文件"])
     elif mode == "governed":
-        if primary == "verify":
+        if doc_route == "evidence-auditor":
+            route = _card("evidence-auditor", "high",
+                          "文档信任审计优先：只读核对 verified/generated/source_hash/"
+                          "stale_after；不得写文档、不得关闭 issue。", facts,
+                          preconditions=["doc-lifecycle check --json 只读报告"],
+                          stop_if=["不得写 docs/**", "不得关闭任何 issue"])
+        elif doc_route == "ledger-steward":
+            route = _card("ledger-steward", "high",
+                          "文档生命周期任务：裁决 docs.registry、stale/suspect 与 "
+                          "declared_no_impact；唯一写入方，按文档任务链交接。", facts,
+                          preconditions=["先跑 doc-lifecycle lint 得到结构报告"],
+                          stop_if=["骨架不得标 compliant", "declared_no_impact 须人确认"],
+                          next_expert="loop-executor")
+        elif primary == "verify":
             route = _card("evidence-auditor", "high",
                           "已有可信治理骨架，本轮目标为证据与不变量校验。", facts)
         elif primary == "code":
@@ -631,7 +675,11 @@ def decide(facts: dict, scores: dict[str, int], explicit_mode: str) -> dict:
         if name != route["expert"] and name != "expert-router"
     ][:3]
     route["alternatives"] = alternatives
-    chain = list(HANDOFF_CHAIN.get(route["expert"], [route["expert"]]))
+    doc_hit = any(i.startswith("doc(") for i in active)
+    chain_key = "doc" if doc_hit and route["expert"] == "ledger-steward" else route["expert"]
+    chain = list(HANDOFF_CHAIN.get(chain_key, [route["expert"]]))
+    if doc_hit and route["expert"] == "evidence-auditor":
+        chain = ["evidence-auditor", "ledger-steward", "loop-executor"]
     nxt = route["handoff"].get("next_expert")
     if nxt and nxt in EXPERT_CARDS and nxt not in chain:
         chain.insert(1, nxt)

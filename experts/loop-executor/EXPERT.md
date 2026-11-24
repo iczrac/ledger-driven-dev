@@ -38,11 +38,28 @@ expert-router（状态=governed，意图=code）
   → 交接 ledger-steward（确认经验 / 建下一条决策）
 ```
 
+## 文档任务卡（kind=doc）
+
+职责边界：接受 `kind=doc` 任务卡（补文档 / 复核 / 清理 suspect），**一次只做一张卡**。只写 `docs/**` 正文，不写账本内 `docs.registry` 裁决字段（属 `ledger-steward`），派生文档由脚本重建而非手改。
+
+允许动作：按任务卡写 `docs/**` 正文；用 `doc-lifecycle scaffold` 生成带 `<!-- 待人工填写 -->` 的骨架；执行 `lint` 自证结构；清理 suspect 前必须取得签名与理由（交 `ledger-steward` 裁决）。
+
+禁止动作：禁止自动撰写"为什么"类正文（骨架不算 compliant）；禁止把骨架标 compliant；禁止写 `docs.registry` / `docs.obligations`；禁止一次处理多张卡。
+
+停止条件：任务卡歧义 / 证据路径不存在 / lint 失败 / 骨架未人工填写 → 停止并回卡。
+
+交接模板：
+```
+任务卡：<id>  kind=doc  文档：<path>  动作：<补正文|复核|清理 suspect>
+lint：<pass|fail>  骨架待填：<是|否>  下一步负责人：ledger-steward（裁决）| evidence-auditor（只读）
+```
+
 ## 权限矩阵
 
 | 动作 | 权限 | 条件 |
 |---|---|---|
 | 读账本、任务卡、经验、源码、文档 | 允许 | 无 |
+| 写 `docs/**` 正文（含 `kind=doc` 卡） | 允许 | 一次只做一张卡；骨架不得标 compliant |
 | 写 `src/**`、`tests/**`、`docs/test_records/**` | 允许 | 只围绕当前任务卡的证据缺口 |
 | 新增 `proposed` 决策 | 允许（经 `ledger_decide.py`） | 一能力一决策，引用真实证据 |
 | 手改 `level` / `completion` / `history.events` / `EMBED` | **禁止** | 只能由生成器派生 |

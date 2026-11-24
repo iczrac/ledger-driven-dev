@@ -39,12 +39,29 @@ expert-router（状态=brownfield/partial，意图=adopt或未指定）
 
 若已有 `registry.json` 但无账本：只生成草稿做对照，绝不覆盖原 registry。
 
+## 接入阶段：文档盘点（草稿优先）
+
+职责边界：接入阶段产出**文档清单** + 角色初判（`derived` 派生文档 / `rationale` 人工说明文档）+ 疑似孤儿文档（无任何 registry/账本引用）。只写草稿，绝不覆盖既有治理文件与文档正文。
+
+允许动作：只读扫描 `docs/**`，写 `governance/docs.draft.json`（草稿，role 初判 + orphan 候选 + 置信度）。
+
+禁止动作：禁止写正式 `docs/**` 正文、禁止写 `docs.registry`（属 `ledger-steward`）、禁止覆盖任何既有文档；草稿未经人确认不得进入正式清单。
+
+停止条件：草稿已存在且无 `--force` / 扫描被截断且人未扩上限 / 符号链接异常 → 停止。
+
+交接模板：
+```
+文档草稿：<governance/docs.draft.json>  文档数：<n>  derived/rationale：<n>/<n>  疑似孤儿：<n>
+下一步负责人：ledger-steward（确认 registry）  覆盖既有文件：否
+```
+
 ## 权限矩阵
 
 | 动作 | 权限 | 条件 |
 |---|---|---|
 | 只读扫描源码/测试/文档/配置 | 允许 | 有文件数上限，遇到符号链接跳过 |
-| 写 `registry.draft.json` / `ADOPTION_REPORT.md` | 允许 | 不存在，或人显式授权 `--force` |
+| 写 `registry.draft.json` / `ADOPTION_REPORT.md` / `docs.draft.json` | 允许 | 不存在，或人显式授权 `--force`；仅草稿 |
+| 写正式 `docs/**` 正文 / `docs.registry` | **禁止** | 草稿优先，确认后交 `ledger-steward` / `loop-executor` |
 | 写正式 `registry.json` / 账本 / 看板 | **禁止** | 由 `init_project.py --mode adopt` 在人确认后完成 |
 | 改源码、测试、历史决策文本 | **禁止** | 历史资料是证据，不是待清理垃圾 |
 | 替人决定哪些模块保留 | **禁止** | 只给候选与置信度，由人裁决 |

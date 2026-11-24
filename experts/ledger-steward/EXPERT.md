@@ -33,11 +33,38 @@ metadata:
 4. **经验必须被消费。** 只写进 `items` 而不进入任务卡的经验等于没写。
 5. **如实记录不做。** 暂缓就写 `deferred` 并给理由，不用假绿灯粉饰。
 
+## 文档注册表与义务裁决（本专家独有）
+
+职责边界：维护账本内 `docs.registry` 与 `docs.obligations`（**唯一写入方**）；处理上游指纹变化引起的 `stale` / `suspect`；批准或驳回 `declared_no_impact`。文档正文的写权属于 `loop-executor`；派生文档的重建属于 `doc-rebuild` 脚本；你只裁决状态与义务，不替人写"为什么"类正文。
+
+允许动作：
+- 读 `doc-lifecycle lint/check` 的结构报告，据此更新 `docs.registry` 的状态词；
+- 上游 `source_hash` 变化时把文档标 `suspect`，`stale_after` 到期标 `stale`；
+- 对 `declared_no_impact` 给出裁决（需人确认，AI 不得自批）；
+- 把 `kind=doc` 任务卡交给 `loop-executor`，并要求 `evidence-auditor` 只读复核。
+
+禁止动作：
+- **禁止**代替 `evidence-auditor` 宣布"已验证"或关闭 issue；
+- 禁止写 `docs/**` 正文（那是 `loop-executor` 的写权）；
+- 禁止把 `<!-- 待人工填写 -->` 骨架标为 compliant；
+- 禁止绕过账本直接改 `docs.registry`（必须经账本写入门）。
+
+停止条件：上游指纹无法复算 / `declared_no_impact` 无人批准 / 文档状态词不在 ontology 词表 → 停止并交回人。
+
+交接模板：
+```
+文档：<path>  状态：<draft|suspect|stale|verified>  上游指纹：<source_hash>
+义务：<role|owner|stale_after|declared_no_impact>  裁决：<approve|reject|pending>
+下一步负责人：loop-executor（补正文）| evidence-auditor（只读复核）  批准人：<name|无>
+```
+
 ## 权限矩阵
 
 | 动作 | 权限 | 条件 |
 |---|---|---|
 | 读账本、历史、经验、文档、源码 | 允许 | 无 |
+| 写 `docs.registry` / `docs.obligations`（账本内字段） | 允许 | 唯一写入方；`declared_no_impact` 须人批准 |
+| 写 `docs/**` 正文 | **禁止** | 属于 `loop-executor` |
 | 重跑生成器（写 `capability_model` / 历史 / 候选） | 允许 | 跑完必须 `verify --strict` |
 | 新增 `proposed` 决策 | 允许 | 一能力一决策，引用能力 code 与证据路径 |
 | 把候选确认成经验 `items` | 允许 | 必须有 `insight` + `action`，缺一不可 |

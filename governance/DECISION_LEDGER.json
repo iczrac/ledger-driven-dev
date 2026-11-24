@@ -11717,7 +11717,7 @@
   ],
   "governance_meta": {
     "schema_version": "1.0",
-    "method_version": "2.21.0",
+    "method_version": "2.22.0",
     "upgraded_from": "pre-1.0.0",
     "ledger_version": "1.0",
     "migrations_applied": [
@@ -12042,6 +12042,53 @@
         "risk": "medium",
         "assets_digest": "476fb36e597eb686",
         "board_skeleton": "b6f5d4583cca01c6"
+      },
+      {
+        "seq": 20,
+        "at": "2026-11-24T08:06:34Z",
+        "action": "apply",
+        "from": "2.21.0",
+        "to": "2.22.0",
+        "approved_by": "user-approved-v2.22.0",
+        "migrations": [
+          "M4-method-version",
+          "M5-method-assets",
+          "M7-asset-install"
+        ],
+        "backup": "20261124T080633Z-5d9b05e0",
+        "risk": "medium",
+        "assets_digest": "1082b6d5522be1f2",
+        "board_skeleton": "b6f5d4583cca01c6"
+      },
+      {
+        "seq": 21,
+        "at": "2026-11-24T08:20:52Z",
+        "action": "apply",
+        "from": "2.22.0",
+        "to": "2.22.0",
+        "approved_by": "user-approved-v2.22.0",
+        "migrations": [
+          "M5-method-assets"
+        ],
+        "backup": "20261124T082051Z-5e29f273",
+        "risk": "low",
+        "assets_digest": "76f1f1ef8d539ce9",
+        "board_skeleton": "b6f5d4583cca01c6"
+      },
+      {
+        "seq": 22,
+        "at": "2026-11-24T08:30:56Z",
+        "action": "apply",
+        "from": "2.22.0",
+        "to": "2.22.0",
+        "approved_by": "user-approved-v2.22.0",
+        "migrations": [
+          "M5-method-assets"
+        ],
+        "backup": "20261124T083054Z-86a79a42",
+        "risk": "low",
+        "assets_digest": "5a7a02203d937fb8",
+        "board_skeleton": "b6f5d4583cca01c6"
       }
     ],
     "tools": {
@@ -12061,12 +12108,12 @@
     },
     "method_assets": {
       "algorithm": "sha256-files-v1",
-      "digest": "476fb36e597eb6866da4addde3e79b9eb1095eacc5dc4fe2e1e6fc38bc8522ac",
-      "file_count": 111,
+      "digest": "5a7a02203d937fb8020c7c4b1de74cb27e1632c2f8adbcae386197770d326720",
+      "file_count": 113,
       "counts": {
         "experts": 9,
-        "skills": 23,
-        "scripts": 35,
+        "skills": 24,
+        "scripts": 36,
         "templates": 7,
         "method_docs": 36,
         "standard": 1
@@ -12081,11 +12128,11 @@
     },
     "installed_assets": {
       "schema": "installed-assets-binding/1",
-      "digest": "a344b3e9c84d3494d0fb6c0244ca0b091413e21abcd3f1ff544de88efc2a7d6d",
-      "file_count": 32,
+      "digest": "3ae603cad0acad77d95e6e687fb2f5055ca104fc3c4d56a958e32717c126583f",
+      "file_count": 33,
       "counts": {
         "experts": 9,
-        "skills": 23
+        "skills": 24
       },
       "install_root": ".workbuddy",
       "manifest": "governance/ASSET_MANIFEST.json",

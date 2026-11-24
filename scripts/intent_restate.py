@@ -37,7 +37,7 @@ SCHEMA = "intent-restate/0"
 # 合法意图分类（对齐 route_expert.INTENT_PATTERNS 的 key）
 VALID_INTENTS = {
     "new", "adopt", "verify", "plan", "code", "lesson", "route",
-    "archive", "migrate", "access", "retire", "resume",
+    "archive", "migrate", "access", "retire", "resume", "doc",
     "meta",  # 编排类元指令：不指向具体能力，如"让专家团接管全流程"
 }
 
@@ -46,7 +46,7 @@ VALID_SCOPES = {
     "none", "entries", "lessons.items", "src/**", "tests/**",
     "docs/test_records/**", "governance/registry.json",
     "governance/DECISION_LEDGER.json", "lifecycle", "retired_caps",
-    "governance_meta", "access",
+    "governance_meta", "access", "docs.registry", "docs.obligations",
 }
 
 

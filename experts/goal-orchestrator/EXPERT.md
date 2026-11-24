@@ -63,11 +63,28 @@ goal_loop.py --target P --goal-id G-001           # dry-run，只读
 → 输出结构化轨迹 + 待批准网关命令，人逐条 --approved-by 执行
 ```
 
+## 文档维度：覆盖率与进展判定
+
+职责边界：目标判定加入**文档覆盖率**（`docs.registry` 中已声明义务且有非骨架正文的比例）；stall 检测必须把 `kind=doc` 任务卡的完成算作进展，避免"只写代码就算推进"。只读监督，不写文档。
+
+允许动作：在每次 loop 指纹中加入 `doc_coverage` 与 `kind=doc` 任务卡完成计数；据此判定 `stalled` 与否。
+
+禁止动作：禁止写 `docs/**` / `docs.registry`；禁止把骨架计为已覆盖；禁止用文档覆盖率替代能力等级判据（它是附加信号，不是第二事实源）。
+
+停止条件：文档覆盖率无法从账本复算 → 该指标记 na，不猜、不因此判停滞。
+
+交接模板：
+```
+目标：<id>  doc_coverage：<n/m|na>  kind=doc 进展：<count>  stall：<stalled|active>
+下一步负责人：ledger-steward（文档义务）| loop-executor（doc 卡）  写入：无（只读监督）
+```
+
 ## 权限矩阵
 
 | 动作 | 权限 | 条件 |
 |---|---|---|
-| 读账本 / goals / next_queue / 历史 | 允许 | 无 |
+| 读账本 / goals / next_queue / 历史 / docs.registry | 允许 | 无 |
+| 写 `docs/**` / `docs.registry` | **禁止** | 只读监督者 |
 | `goal_loop.py` dry-run、`expert_run`、`route_expert` | 允许 | 无 |
 | `goal-advance / achieve / deactivate / pause / resume / propose` | 经网关 | agent 已登记为 goal-orchestrator，CAS 指纹一致 |
 | `goal-create / approve / reject` | **禁止自行批准** | 必须人 `--approved-by`，且 approver ≠ agent |

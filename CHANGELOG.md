@@ -2,6 +2,19 @@
 
 本项目版本遵循语义化版本（SemVer）。
 
+## [2.22.0] - 2026-11-24
+
+**文档生命周期维度**：路由、六份专家契约与技能三层同步补齐，文档从"人肉同步"升为可复算的裁决对象。
+
+- 独立复现：三条文档意图（整理过期文档 / 规范化补过期标记 / 文档与代码对不上）实测全部 `intents=[]` 并触发澄清，兜底落到 `ledger-steward`（low），并非任务书推测的 plan/verify。意图表实为 13 类（非 14），`doc-rebuild` 技能 triggers 认文档但路由表不认——不一致已证实。
+- 工作流 A：`INTENT_PATTERNS` 新增 `doc` 类（中英文触发词 22 条）；冲突唯一负责人规则——doc+code 判 `ledger-steward`（唯一写入方 + 交接链），doc+verify 判 `evidence-auditor`（只读审计优先，不得写文档），三者并存触发澄清 fail-closed；`FOLLOW_UP["doc"]`、`HANDOFF_CHAIN["doc"]`、`intent_restate.VALID_INTENTS/SCOPES` 同步。
+- 工作流 B：六份专家契约原地修订（不新增第 10 位专家），每份写清职责边界/允许/禁止/停止/交接；文档写权互斥——`docs.registry` / `docs.obligations` 仅 `ledger-steward`，`docs/**` 正文仅 `loop-executor`，草稿仅 `project-archaeologist`，`evidence-auditor` / `release-steward` / `goal-orchestrator` 只读。
+- 工作流 C：新增 `doc-lifecycle` 技能（scaffold / lint / mark-stale / clear-suspect / check），骨架含 `<!-- 待人工填写 -->` 必判 incomplete，不自动写"为什么"正文，不绕过账本改 ledger；修订 `doc-rebuild`（PROJECT_STATE + `--check` + 派生文档禁止手改）、`ledger-verify`（五项文档不变量先 shadow）、`ledger-guard`（串起 doc lint 与义务门禁）、`graph-compare`（可执行规则断言 + suspect + 旧集合差保留 shadow 一版）。
+- 五项文档不变量（覆盖完整 / 派生可复算 / 信任一致 / 义务已声明 / 无孤儿）先 shadow：只告警不改状态，升硬门须人批准。
+- `doc-lifecycle check` 的 stale 判据为 shadow 只读投影：读 `docs.registry` 的 `stale_after`，过期且未复核即报 issue（含具体文件与原因），不写账本状态；独立复现确认此前仅有文档承诺、代码未实现，已 TDD 补齐。
+- 资产：专家契约 6 改 / 技能 23→24（+1 改 4）/ 已安装资产 32→33；`method_assets=5a7a02203d937fb8`、`installed_assets=3ae603cad0acad77`；已按官方升级执行 M4/M5/M7 重绑，目标项目需重新批准安装才能使用新副本。
+- 实测：单测 495 → 517（+22：doc 路由 8 / 契约互斥 7 / 技能纪律 7，含骨架不可信与 stale 过期两项负向）；`feedback/` 未改，未加第三方依赖。
+
 ## [2.21.0] - 2026-11-24
 
 **目标架构对账链可信度收口**：四项缺口先独立复现再分笔修复；规划图不再拿讲解示例当目标，规划图缺失不再反向假警，同层顺序与同义异码只晒不裁决。

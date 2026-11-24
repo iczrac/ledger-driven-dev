@@ -37,13 +37,15 @@ metadata:
 | 项 | 值 |
 |---|---|
 | 输入 | `--target` 项目根；可选 `--out-dir` / `--out` / `--git-trace` |
-| 输出 | `docs/generated/{PROJECT_BRIEF,MODULE_MAP,CAPABILITY_INDEX}.md`、`governance/CODE_INDEX.json` |
+| 输出 | `docs/generated/{PROJECT_BRIEF,MODULE_MAP,CAPABILITY_INDEX,PROJECT_STATE}.md`、`governance/CODE_INDEX.json` |
+| `--check` | 只读比对：与既有派生文档不一致即报差异与路径，不写盘（退出码 1） |
 | 副作用 | 只写生成目录与索引；既有文件默认跳过，`--force` 才覆盖 |
 | 保护 | 账本路径剥离仓库根前缀，输出不含机器绝对路径 |
 
 ## 步骤
 
 ```bash
+python3 scripts/rebuild_docs.py --target /path/to/project --check      # 只读比对，不写盘
 python3 scripts/rebuild_docs.py --target /path/to/project --dry-run
 python3 scripts/rebuild_docs.py --target /path/to/project
 python3 scripts/code_index.py --target /path/to/project \
@@ -54,11 +56,12 @@ python3 scripts/code_index.py --target /path/to/project \
 
 - `PROJECT_BRIEF.md` 的目标/现状来自账本，不是手写口号；
 - `CAPABILITY_INDEX.md` 一行一个编码，`decisions` 列为空说明该能力还没有账本决策；
-- `CODE_INDEX.json` 的 `commits` 为空通常是还没跑 `trace_git.py`，不是"没有历史"。
+- `CODE_INDEX.json` 的 `commits` 为空通常是还没跑 `trace_git.py`，不是"没有历史"；
+- `PROJECT_STATE.md` 是账本状态的只读快照，派生文档禁止手改——改事实源后重跑。
 
 ## 禁止
 
-- 禁止手改 `docs/generated/**` 当作长期方案；改 registry/账本后重跑；
+- 派生文档禁止手改；禁止手改 `docs/generated/**` 当作长期方案；改 registry/账本后重跑；
 - 禁止为了让文档好看而补不存在的证据路径；
 - 禁止用 `--force` 覆盖人工补充内容而不记录原因。
 

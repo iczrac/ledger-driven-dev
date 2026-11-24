@@ -53,6 +53,17 @@ python3 governance/verify_ledger.py --root . --strict        # CI 门禁
 | `lessons_valid` / `lesson_candidates_dedup` | confirmed 必须补 `insight` + `action`；候选去重由生成器自动维护 |
 | `queue_lessons_confirmed` | 任务卡只引用 confirmed 经验；先确认或移除该引用 |
 
+## 文档信任不变量（先 shadow，只告警不改状态）
+
+在既有账本不变量之外，纳入 5 条文档不变量（由 `doc-lifecycle check --json` 只读复算）：
+1. **覆盖完整**：`docs.registry` 声明的文档都存在；
+2. **派生可复算**：状态词与 `source_hash` 可从文件复算；
+3. **信任一致**：verified 必须同时具备 source_hash 与 generated_at；
+4. **义务已声明**：非骨架文档有 owner/role/stale_after；
+5. **无孤儿**：`docs/**` 无未登记文档。
+
+新判据先 shadow：报告 warn 不改账本状态；升硬门须人批准。
+
 ## 禁止
 
 - 为了让校验通过而手改 `completion`、删历史事件、伪造证据文件；
