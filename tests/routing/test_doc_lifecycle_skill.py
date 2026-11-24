@@ -61,7 +61,7 @@ class DocLifecycleSkillTest(unittest.TestCase):
             (root / "governance" / "DECISION_LEDGER.json").write_text(
                 json.dumps(ledger), encoding="utf-8")
             cmd = [sys.executable, str(ROOT / "scripts" / "doc_lifecycle.py"),
-                   "check", "--target", str(root), "--json"]
+                   "check", "--target", str(root), "--as-of", "2026-11-24", "--json"]
             s = subprocess.run(cmd, capture_output=True, text=True, cwd=ROOT)
             self.assertEqual(s.returncode, 1, s.stdout + s.stderr)
             out = json.loads(s.stdout)

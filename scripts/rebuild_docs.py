@@ -20,20 +20,17 @@ from __future__ import annotations
 import argparse
 import json
 import sys
-from datetime import date
 from pathlib import Path
 
+from doc_lifecycle import (_stale_after_expired as stale_after_state, as_of_date,
+                           has_covers, is_blank_meta)
+from file_layout import presence_for
 from trace_common import artifact_paths, iter_caps, load_json, rel_path, write_if_absent
 
 
-def _stale(value: object) -> bool:
-    """stale_after 早于今天即过期；占位/非法值不猜（fail-closed 为未过期）。"""
-    if not isinstance(value, str) or not value.strip():
-        return False
-    try:
-        return date.fromisoformat(value.strip()[:10]) < date.today()
-    except ValueError:
-        return False
+def _stale(value: object, as_of=None) -> bool:
+    """兼容投影展示；真实三态判据在 doc_lifecycle，unknown 绝不当作未过期计数。"""
+    return stale_after_state(value, as_of) == "expired"
 
 
 def build_project_state(target: Path, registry: dict, ledger: dict) -> str:
@@ -46,6 +43,7 @@ def build_project_state(target: Path, registry: dict, ledger: dict) -> str:
     targets = {str(q.get("code", "")): str(q.get("target_level") or "no_target")
                for q in queue}
     reg = (ledger.get("docs", {}) or {}).get("registry", {}) or {}
+    base = as_of_date(ledger=ledger)
     # 登记播种/批准是文档账本自身的记账事件，不是能力变更；排除它们避免自指漂移。
     events = [e for e in ((ledger.get("history", {}) or {}).get("events", []) or [])
               if str(e.get("type", "")) not in ("doc_registry_seed", "doc_registry_approve")]
@@ -76,7 +74,7 @@ def build_project_state(target: Path, registry: dict, ledger: dict) -> str:
             continue
         status = str(meta.get("status", ""))
         reasons = []
-        if _stale(meta.get("stale_after")):
+        if _stale(meta.get("stale_after"), base):
             reasons.append(f"stale_after={meta.get('stale_after')} 已过期")
         if status in ("draft", "incomplete", "suspect", "stale"):
             reasons.append(f"status={status} 待人工复核")
@@ -94,6 +92,34 @@ def build_project_state(target: Path, registry: dict, ledger: dict) -> str:
                      f"{item.get('level', '')} | {item.get('target_level') or 'no_target'} |")
     if not queue:
         lines.append("| （空） | — | — | — |")
+
+    total_docs = len(reg)
+    covered_docs = sum(1 for meta in reg.values() if has_covers(meta))
+    obligation_ok = sum(
+        1 for meta in reg.values()
+        if isinstance(meta, dict)
+        and not any(is_blank_meta(meta.get(k)) for k in ("owner", "role", "stale_after")))
+    stale_expired = sum(
+        1 for meta in reg.values()
+        if isinstance(meta, dict)
+        and stale_after_state(meta.get("stale_after"), base) == "expired")
+    stale_unknown = sum(
+        1 for meta in reg.values()
+        if isinstance(meta, dict)
+        and stale_after_state(meta.get("stale_after"), base) == "unknown")
+    lines += [
+        "", "## 文档生命周期指标口径", "",
+        "> 0 表示「判据已执行且无命中」；n/a 表示前置数据缺失、判据不适用。"
+        "所有数字都由 `scripts/doc_lifecycle.py gate` 的同名判据复算。", "",
+        "| 指标 | 判据 | 已判 | 计数 |", "|---|---|---|---|",
+        f"| 覆盖完整 | covers.codes / covers.decisions 非空 | {total_docs} | "
+        f"{total_docs - covered_docs}（真实覆盖 {covered_docs}/{total_docs}） |",
+        f"| 义务已声明 | owner / role / stale_after 已填写 | {total_docs} | "
+        f"{total_docs - obligation_ok} |",
+        f"| 过期 | _stale_after_expired(value, as_of={base.isoformat() if base else 'n/a'}) | "
+        f"{stale_expired + (total_docs - stale_unknown - stale_expired)} | {stale_expired} |",
+        f"| 无法判过期 | _stale_after_expired(...) == unknown | {total_docs} | {stale_unknown} |",
+    ]
 
     lines += ["", "## 最近变更", "", "| seq | 类型 | 摘要 |", "|---|---|---|"]
     for ev in events[-3:]:
@@ -219,6 +245,8 @@ def main(argv: list[str] | None = None) -> int:
                     help="只读比对：与重算结果不一致即列出文件并返回非 0，不写盘")
     ap.add_argument("--doc", action="append", default=[],
                     help="--check 时只比对指定文件名（可重复）；默认比对全部")
+    ap.add_argument("--strict", action="store_true",
+                    help="--check 的显式阻断语义；mismatch 一律非 0，not_applicable 永不阻断")
     ap.add_argument("--dry-run", action="store_true", help="只打印摘要，不写文件")
     ap.add_argument("--json", action="store_true", help="输出机器可读摘要")
     args = ap.parse_args(argv)
@@ -236,18 +264,40 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.check:
         mismatches = []
+        not_applicable = []
         wanted_docs = set(args.doc) or set(docs)
+        checked = 0
         for name, content in sorted(docs.items()):
             if name not in wanted_docs:
                 continue
+            rel = f"docs/generated/{name}"
             path = out / name
+            presence = presence_for(rel)  # 唯一事实源：file_layout.ENTRIES
+            if not path.exists() and presence == "on-demand":
+                not_applicable.append({
+                    "path": rel, "class": "not_applicable",
+                    "reason": "file_layout presence=on-demand：未生成属正常，不判缺失"})
+                continue
+            checked += 1
             if not path.exists():
-                mismatches.append({"path": f"docs/generated/{name}", "reason": "文件缺失"})
+                mismatches.append({
+                    "path": rel, "class": "missing",
+                    "reason": f"file_layout presence={presence or 'unregistered'}：必需文件缺失"})
             elif path.read_text(encoding="utf-8") != content:
-                mismatches.append({"path": f"docs/generated/{name}",
-                                   "reason": "与重算结果不一致：派生文档禁止手改"})
+                mismatches.append({
+                    "path": rel, "class": "hand-edited",
+                    "reason": "与重算结果不一致：派生文档禁止手改"})
+        counts = {
+            "checked": checked,
+            "missing": sum(1 for m in mismatches if m["class"] == "missing"),
+            "hand_edited": sum(1 for m in mismatches if m["class"] == "hand-edited"),
+            "not_applicable": len(not_applicable),
+            "mismatch": len(mismatches),
+        }
         report = {"schema": "doc-rebuild-check/1", "ok": not mismatches,
-                  "mismatches": mismatches, "files": len(docs)}
+                  "strict": bool(args.strict), "mismatches": mismatches,
+                  "not_applicable": not_applicable, "counts": counts,
+                  "files": len(wanted_docs), "checked": checked}
         print(json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True))
         return 0 if not mismatches else 1
 

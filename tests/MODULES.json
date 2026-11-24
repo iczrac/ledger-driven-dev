@@ -80,6 +80,7 @@
         "scripts/agent_gateway.py",
         "scripts/lifecycle.py",
         "scripts/file_layout.py",
+        "scripts/doc_lifecycle.py",
         "scripts/ledger_feedback.py",
         "scripts/ontology.py",
         "scripts/acceptance.py"
@@ -89,6 +90,7 @@
         "tests/meta/test_agent_gateway.py",
         "tests/meta/test_doc_architecture.py",
         "tests/meta/test_doc_execution_chain.py",
+        "tests/meta/test_doc_gate_truthfulness.py",
         "tests/meta/test_dogfood.py",
         "tests/meta/test_feedback.py",
         "tests/meta/test_layout.py",

@@ -41,7 +41,7 @@ import hashlib
 import json
 import re
 import sys
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 from pathlib import Path
 
 SCHEMA = "doc-lifecycle/1"
@@ -54,6 +54,9 @@ STATUS_WORDS = ("draft", "incomplete", "suspect", "stale", "verified", "unbound"
 PLAN_HINTS = ("/plans/", "_PLAN.md", "计划：")
 CODE_RE = re.compile(r"\b[A-Z][A-Z0-9]*\.[A-Z][A-Z0-9]*\.[A-Z][A-Z0-9]*\.\d{2}\b")
 DECISION_RE = re.compile(r"\bD-\d+\b")
+CONTRACT_OBLIGATION = "obligation"
+CONTRACT_COVERAGE = "coverage"
+DEFAULT_CONTRACTS = frozenset({CONTRACT_OBLIGATION, CONTRACT_COVERAGE})
 
 TEMPLATES = {
     "plan": "# 计划：<标题>\n\n" + PLACEHOLDER + "\n\n## 目标\n\n" + PLACEHOLDER +
@@ -71,6 +74,54 @@ def _now() -> str:
 
 def _sha(text: str) -> str:
     return hashlib.sha256(text.encode("utf-8")).hexdigest()[:16]
+
+
+def active_contracts(contracts: set[str] | frozenset[str] | None) -> set[str]:
+    """默认启用全部文档判据；显式传空集仅用于对照测试，不供 CLI 缩范围。"""
+    return set(DEFAULT_CONTRACTS) if contracts is None else set(contracts)
+
+
+def is_blank_meta(value: object) -> bool:
+    """占位符、空白与非字符串都视为元数据缺失，不得被当作已填写。"""
+    if not isinstance(value, str) or not value.strip():
+        return True
+    return PLACEHOLDER in value
+
+
+def has_covers(meta: object) -> bool:
+    if not isinstance(meta, dict):
+        return False
+    covers = meta.get("covers") or {}
+    if not isinstance(covers, dict):
+        return False
+    return bool(covers.get("codes")) or bool(covers.get("decisions"))
+
+
+def _parse_day(value: object) -> date | None:
+    if is_blank_meta(value):
+        return None
+    try:
+        return date.fromisoformat(str(value).strip()[:10])
+    except ValueError:
+        return None
+
+
+def as_of_date(root: Path | None = None, ledger: dict | None = None,
+               as_of: object = None) -> date | None:
+    """过期判定的基准日：显式 as_of 优先，否则从账本 last_updated 派生。
+
+    永不回落到机器当前时间，保证同一账本重算结果一致。
+    """
+    explicit = _parse_day(as_of)
+    if explicit is not None:
+        return explicit
+    if ledger is None and root is not None:
+        try:
+            ledger = _load_ledger(root)
+        except (OSError, ValueError):
+            ledger = {}
+    raw = (ledger or {}).get("last_updated")
+    return _parse_day(raw)
 
 
 def _registry_path(root: Path) -> Path:
@@ -148,6 +199,7 @@ def seed(root: Path, approved_by: str) -> dict:
             "covers": {"codes": sorted(set(CODE_RE.findall(text))),
                        "decisions": sorted(set(DECISION_RE.findall(text)))},
             "owner": None,
+            "role": None,
             "stale_after": None,
             "approved_by": approved_by,
         }
@@ -207,9 +259,9 @@ def approve(root: Path, doc: str, status: str, signed_by: str,
             "path": doc, "signed_by": signed_by, "source_hash": actual}
 
 
-def gate(root: Path, strict: bool = False) -> dict:
+def gate(root: Path, strict: bool = False, as_of: object = None) -> dict:
     """统一门禁节：默认 warn 不阻断；--strict 才让退出码非 0。"""
-    report = check(root)
+    report = check(root, as_of=as_of)
     issues = report["issues"]
     counts: dict[str, int] = {}
     for item in issues:
@@ -220,7 +272,7 @@ def gate(root: Path, strict: bool = False) -> dict:
     has_problem = bool(issues) or counts["trust"] > 0
     return {"schema": SCHEMA, "command": "gate", "mode": "strict" if strict else "shadow",
             "status": "fail" if (strict and has_problem) else ("warn" if has_problem else "ok"),
-            "counts": counts,
+            "counts": counts, "metrics": report["metrics"], "as_of": report["as_of"],
             "issues": [{"path": i.get("path", ""), "status": i["status"],
                         "reason": i.get("reason", "")} for i in issues],
             "trust_warnings": [c for c in report["checks"]
@@ -266,20 +318,69 @@ def scaffold(root: Path, doc: str, kind: str) -> dict:
             "reason": "骨架含待人工填写标记，不得判 compliant"}
 
 
-def lint(root: Path) -> dict:
+def lint(root: Path, contracts: set[str] | frozenset[str] | None = None) -> dict:
+    active = active_contracts(contracts)
     docs = _scan(root)
     reg = _load_registry(root)
     issues = []
+    covered = 0
+    obligation_complete = 0
+    obligation_checked = 0
     for d in docs:
         if d["status"] in ("incomplete", "unreadable", "suspect", "stale"):
             issues.append({"path": d["path"], "status": d["status"],
                            "reason": d.get("reason", f"状态词={d['status']}")})
+        meta = reg.get(d["path"]) if isinstance(reg.get(d["path"]), dict) else {}
+        kind = str(meta.get("kind", "")).lower()
         if d["path"] not in reg and d["status"] != "incomplete":
             issues.append({"path": d["path"], "status": "orphan",
                            "reason": "未登记于 docs.registry"})
+        if has_covers(meta):
+            covered += 1
+        elif CONTRACT_COVERAGE in active:
+            issues.append({"path": d["path"], "status": "uncovered",
+                           "reason": "covers.codes 与 covers.decisions 均为空"})
+        is_skeleton = d["status"] == "incomplete" or kind == "scaffold"
+        if not is_skeleton:
+            obligation_checked += 1
+            missing = [k for k in ("owner", "role", "stale_after")
+                       if is_blank_meta(meta.get(k))]
+            if missing:
+                if CONTRACT_OBLIGATION in active:
+                    issues.append({"path": d["path"], "status": "obligation_missing",
+                                   "reason": "义务字段缺失：" + ", ".join(missing)})
+            else:
+                obligation_complete += 1
     ok = not issues
+    metrics = {
+        "coverage": {
+            "id": "covers.codes / covers.decisions",
+            "checked": len(docs), "covered": covered,
+            "count": len(docs) - covered,
+            "ratio": f"{covered}/{len(docs)}",
+            "status": "n/a" if not docs else ("pass" if covered == len(docs) else "warn"),
+        },
+        "obligation": {
+            "id": "owner / role / stale_after",
+            "checked": obligation_checked, "complete": obligation_complete,
+            "count": obligation_checked - obligation_complete,
+            "status": ("n/a" if not obligation_checked else
+                       ("pass" if obligation_complete == obligation_checked else "warn")),
+        },
+        "orphan": {
+            "id": "docs.registry 登记",
+            "checked": len(docs),
+            "count": sum(1 for i in issues if i["status"] == "orphan"),
+        },
+        "incomplete": {
+            "id": "_scan 占位符 / 状态词",
+            "checked": len(docs),
+            "count": sum(1 for d in docs
+                         if d["status"] in ("incomplete", "unreadable", "suspect", "stale")),
+        },
+    }
     return {"schema": SCHEMA, "command": "lint", "docs": docs, "issues": issues,
-            "status": "ok" if ok else "incomplete",
+            "status": "ok" if ok else "incomplete", "metrics": metrics,
             "summary": {"total": len(docs), "issues": len(issues)}}
 
 
@@ -309,41 +410,57 @@ def clear_suspect(root: Path, doc: str, signed_by: str, reason: str) -> dict:
             "hint": "清除结果须由 ledger-steward 写回 docs.registry；本工具不写账本"}
 
 
-def _stale_after_expired(value: object) -> bool:
-    """stale_after 早于今天即过期；占位符/非法值不猜（fail-closed 为未过期）。"""
-    if not isinstance(value, str) or not value.strip() or PLACEHOLDER in value:
-        return False
-    try:
-        day = datetime.strptime(value.strip()[:10], "%Y-%m-%d").date()
-    except ValueError:
-        return False
-    return day < datetime.now(timezone.utc).date()
+def _stale_after_expired(value: object, as_of: date | None = None) -> str:
+    """三态：expired / fresh / unknown；缺值、占位符与非法值一律 unknown。"""
+    day = _parse_day(value)
+    if day is None or as_of is None:
+        return "unknown"
+    return "expired" if day < as_of else "fresh"
 
 
-def check(root: Path) -> dict:
+def check(root: Path, as_of: object = None,
+          contracts: set[str] | frozenset[str] | None = None) -> dict:
     """文档不变量的只读投影；新判据先 shadow：只告警不改状态。"""
-    report = lint(root)
+    report = lint(root, contracts=contracts)
     docs = report["docs"]
     reg = _load_registry(root)
     issues = list(report["issues"])
+    metrics = dict(report["metrics"])
+    try:
+        ledger = _load_ledger(root)
+    except (OSError, ValueError):
+        ledger = {}
+    base = as_of_date(root=root, ledger=ledger, as_of=as_of)
     # 登记后正文被手改：source_hash 不再复算得出，标 suspect（不改账本状态）。
+    hash_checked = 0
     for path, meta in reg.items():
         if not isinstance(meta, dict) or not meta.get("source_hash"):
             continue
+        hash_checked += 1
         live = next((d for d in docs if d["path"] == path), None)
         if live and live.get("source_hash") != meta["source_hash"]:
             issues.append({"path": path, "status": "suspect",
                            "reason": "正文与登记 source_hash 不一致，需人工复核"})
+    suspect_count = sum(1 for i in issues if i["status"] == "suspect")
+    metrics["suspect"] = {
+        "id": "source_hash 复算", "checked": hash_checked, "count": suspect_count,
+        "n_a": not hash_checked,
+        "status": "n/a" if not hash_checked else ("pass" if not suspect_count else "warn"),
+    }
     checks = []
-    # 1 覆盖完整：registry 声明的文档必须存在
+    # 1 覆盖完整：registry 声明存在 + 每篇文档有真实 covers。
     missing = [p for p in reg if not (root / p).exists()]
-    checks.append({"id": "doc_coverage", "status": "pass" if not missing else "warn",
-                   "detail": "覆盖完整" if not missing else f"缺失：{missing}"})
-    # 2 派生可复算：骨架/状态词可从文件复算（_scan 已复算）
+    uncovered = [i["path"] for i in issues if i["status"] == "uncovered"]
+    coverage_bad = sorted(set(missing) | set(uncovered))
+    cover_detail = f"，真实覆盖 {metrics['coverage']['ratio']}"
+    checks.append({"id": "doc_coverage", "status": "pass" if not coverage_bad else "warn",
+                   "detail": ("覆盖完整" + cover_detail) if not coverage_bad
+                             else f"未覆盖：{coverage_bad}{cover_detail}"})
+    # 2 派生可复算：骨架/状态词可从文件复算（_scan 已复算）。
     recomputable = all("status" in d and "source_hash" in d for d in docs)
     checks.append({"id": "doc_derived", "status": "pass" if recomputable else "warn",
                    "detail": "派生可复算"})
-    # 3 信任一致：verified 必须同时具备 source_hash 与 generated_at
+    # 3 信任一致：verified 必须同时具备 source_hash 与 generated_from。
     bad_trust = [d["path"] for d in docs if d["status"] == "verified"
                  and not (d.get("source_hash") and d.get("generated_at"))]
     for path, meta in reg.items():
@@ -352,28 +469,52 @@ def check(root: Path) -> dict:
             bad_trust.append(path)
     checks.append({"id": "doc_trust", "status": "pass" if not bad_trust else "warn",
                    "detail": "信任一致" if not bad_trust else f"异常：{bad_trust}"})
-    # 4 义务已声明：非骨架文档应在 registry 中有义务声明
-    undeclared = [d["path"] for d in docs
-                  if d["status"] not in ("incomplete", "draft") and d["path"] not in reg]
+    # 4 义务已声明：非骨架文档必须给出 owner / role / stale_after。
+    undeclared = [i["path"] for i in issues if i["status"] == "obligation_missing"]
+    undeclared += [d["path"] for d in docs
+                   if d["status"] not in ("incomplete", "draft") and d["path"] not in reg]
+    undeclared = sorted(set(undeclared))
     checks.append({"id": "doc_obligation", "status": "pass" if not undeclared else "warn",
-                   "detail": "义务已声明" if not undeclared else f"未声明：{undeclared}"})
-    # 5 无孤儿：孤儿文档即未登记的文档
-    orphans = [i["path"] for i in report["issues"] if i["status"] == "orphan"]
+                   "detail": "义务已声明" if not undeclared else f"缺失：{undeclared}"})
+    # 5 无孤儿：孤儿文档即未登记的文档。
+    orphans = [i["path"] for i in issues if i["status"] == "orphan"]
     checks.append({"id": "doc_no_orphan", "status": "pass" if not orphans else "warn",
                    "detail": "无孤儿" if not orphans else f"孤儿：{orphans}"})
-    # stale：stale_after 过期或未复核的 plan 文档（只告警，不改账本状态）
+    # 时间语义：缺值 / 占位符 / 非法值 = unknown，单列告警且不计入 stale。
+    stale_states = {"expired": 0, "fresh": 0, "unknown": 0}
     for path, meta in reg.items():
         if not isinstance(meta, dict):
             continue
-        expired = _stale_after_expired(meta.get("stale_after"))
+        state = _stale_after_expired(meta.get("stale_after"), base)
+        stale_states[state] += 1
         verified = str(meta.get("status", "")) in ("verified", "compliant")
-        if expired and not verified:
+        if state == "expired" and not verified:
             issues.append({"path": path, "status": "stale",
                            "reason": f"stale_after={meta['stale_after']} 已过期且未复核"})
+        elif state == "unknown":
+            issues.append({"path": path, "status": "stale_unknown",
+                           "reason": "stale_after 缺失/非法/占位符，无法判断是否过期"})
+    known = stale_states["expired"] + stale_states["fresh"]
+    metrics["stale"] = {
+        "id": "_stale_after_expired(value, as_of)", "checked": known,
+        "count": stale_states["expired"], "fresh": stale_states["fresh"],
+        "status": "n/a" if not known else ("pass" if not stale_states["expired"] else "warn"),
+    }
+    metrics["stale_unknown"] = {
+        "id": "_stale_after_expired(...) == unknown", "checked": len(reg),
+        "count": stale_states["unknown"], "status": "pass" if not stale_states["unknown"] else "warn",
+    }
+    metrics["trust"] = {
+        "id": "doc_trust / doc_coverage / doc_obligation",
+        "checked": len(checks),
+        "count": sum(1 for c in checks if c["id"] in
+                     ("doc_trust", "doc_coverage", "doc_obligation") and c["status"] == "warn"),
+    }
     ok = all(c["status"] == "pass" for c in checks) and not issues
     return {"schema": SCHEMA, "command": "check", "mode": "shadow",
             "status": "ok" if ok else "warn", "checks": checks,
-            "docs": docs, "issues": issues,
+            "docs": docs, "issues": issues, "metrics": metrics,
+            "as_of": base.isoformat() if base else "n/a",
             "note": "新判据先 shadow：只告警不改状态；升硬门须人批准"}
 
 
@@ -390,6 +531,7 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--approved-by", default="", help="ledger-steward 批准人")
     ap.add_argument("--status", default="", help="approve 的目标状态（仅 current）")
     ap.add_argument("--source-hash", default="", help="批准 current 时可复算的正文摘要")
+    ap.add_argument("--as-of", default="", help="过期判定基准日 YYYY-MM-DD；缺省从账本 last_updated 派生")
     ap.add_argument("--strict", action="store_true", help="gate 遇告警时阻断（默认只告警）")
     ap.add_argument("--json", action="store_true", help="输出 JSON")
     args = ap.parse_args(argv)
@@ -402,8 +544,8 @@ def main(argv: list[str] | None = None) -> int:
         "lint": lambda: lint(root),
         "mark-stale": lambda: mark_stale(root, args.doc, args.reason),
         "clear-suspect": lambda: clear_suspect(root, args.doc, args.signed_by, args.reason),
-        "check": lambda: check(root),
-        "gate": lambda: gate(root, args.strict),
+        "check": lambda: check(root, as_of=args.as_of or None),
+        "gate": lambda: gate(root, strict=args.strict, as_of=args.as_of or None),
         "seed": lambda: seed(root, args.approved_by),
         "approve": lambda: approve(root, args.doc, args.status, args.signed_by,
                                    args.reason, args.source_hash),

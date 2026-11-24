@@ -8,7 +8,7 @@
 |---|---|---|---|---|
 | METHOD.GOV.FEEDBACK.01 | 反向回流观察通道 | L3 | verified | L4 |
 | METHOD.GOV.UPGRADE.02 | 升级与迁移引擎 | L3 | verified | no_target |
-| METHOD.GOV.PANEL.03 | 节点工作台 | L3 | verified | L4 |
+| METHOD.GOV.PANEL.03 | 节点工作台 | L3 | verified | no_target |
 | METHOD.GOV.LAYOUT.04 | 文件布局契约 | L3 | verified | L4 |
 | METHOD.GOV.ASSETS.05 | 方法资产清单 | L3 | verified | L4 |
 | METHOD.GOV.TESTMAP.06 | 测试架构映射 | L3 | verified | no_target |
@@ -22,7 +22,7 @@
 | METHOD.GOV.ANALYTICS.14 | 可视化分析层（v2.11.0）：热力图 + 趋势 + 证据链 + 健康度多维 + 卡片墙 + What-if | L3 | declared | L4 |
 | METHOD.GOV.D3.15 | 本地 D3 离线交互层（v2.12.0）：追溯树 + D3 热力图 + 趋势图 + What-if 联动 | L3 | verified | L4 |
 | METHOD.GOV.RUNTIME.16 | 运行时风险入口（v2.15.0）：STATE 事件 → 精确能力点映射 → next_queue 只读重排 | L3 | verified | no_target |
-| METHOD.GOV.DOCLIFE.17 | 文档信任硬门（已声明、待人工批准升硬门；尚无证据，不计入完成度） | L0 | declared | no_target |
+| METHOD.GOV.DOCLIFE.17 | 文档信任硬门（已声明、待人工批准升硬门；尚无证据，不计入完成度） | L0 | declared | L1 |
 
 ## 待复核与过期文档
 
@@ -70,16 +70,27 @@
 
 | 编码 | 动作 | 等级 | 目标等级 |
 |---|---|---|---|
+| METHOD.GOV.DOCLIFE.17 | contracts/ 目录有契约文件 | L0 | L1 |
 | METHOD.GOV.ANALYTICS.14 | docs/test_records/ 有测试记录 | L3 | L4 |
 | METHOD.GOV.ANNOT.10 | docs/test_records/ 有测试记录 | L3 | L4 |
 | METHOD.GOV.ASSETS.05 | docs/test_records/ 有测试记录 | L3 | L4 |
 | METHOD.GOV.BINDING.07 | docs/test_records/ 有测试记录 | L3 | L4 |
-| METHOD.GOV.BOARD.11 | docs/test_records/ 有测试记录 | L3 | L4 |
+
+## 文档生命周期指标口径
+
+> 0 表示「判据已执行且无命中」；n/a 表示前置数据缺失、判据不适用。所有数字都由 `scripts/doc_lifecycle.py gate` 的同名判据复算。
+
+| 指标 | 判据 | 已判 | 计数 |
+|---|---|---|---|
+| 覆盖完整 | covers.codes / covers.decisions 非空 | 42 | 26（真实覆盖 16/42） |
+| 义务已声明 | owner / role / stale_after 已填写 | 42 | 42 |
+| 过期 | _stale_after_expired(value, as_of=2026-11-24) | 0 | 0 |
+| 无法判过期 | _stale_after_expired(...) == unknown | 42 | 42 |
 
 ## 最近变更
 
 | seq | 类型 | 摘要 |
 |---|---|---|
-| 19 | change | completion_delta=1, evidence_changes=1, level_transitions=1 |
-| 20 | change | 无结构化变更 |
 | 21 | change | 无结构化变更 |
+| 28 | change | added=1 |
+| 29 | change | 无结构化变更 |

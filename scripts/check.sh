@@ -8,7 +8,10 @@ MODE="${1:-all}"
 DEMO="examples/demo-shop/governance"
 FAILURES=0
 DOC_STRICT=0
-if [ "$MODE" = "--strict" ]; then DOC_STRICT=1; MODE=all; fi
+for arg in "$@"; do
+  if [ "$arg" = "--strict" ]; then DOC_STRICT=1; fi
+done
+if [ "$MODE" = "--strict" ]; then MODE=all; fi
 
 note(){ printf '\n== %s ==\n' "$1"; }
 pass(){ printf '[PASS] %s\n' "$1"; }
@@ -210,21 +213,42 @@ stage_layout(){
   echo '  布局定义、渲染同步、示例骨架与第 4 个工具副本均一致'
 }
 stage_doc_lifecycle(){
-  note '文档生命周期（shadow）：登记 / 过期 / 信任 / 派生只读'
-  local tmp gate_rc derived_rc
+  note '文档生命周期（shadow）：登记 / 义务 / 覆盖 / 过期三态 / 信任 / 派生只读'
+  local tmp gate_rc derived_rc gate_extra=""
+  if [ "$DOC_STRICT" -eq 1 ]; then gate_extra="--strict"; fi
   tmp="$(mktemp -d)"
-  python3 scripts/doc_lifecycle.py gate --target . --json >"$tmp/gate.json"
+  python3 scripts/doc_lifecycle.py gate --target . $gate_extra --json >"$tmp/gate.json"
   gate_rc=$?
-  python3 scripts/rebuild_docs.py --target . --check --doc PROJECT_STATE.md --json >"$tmp/derived.json"
+  python3 scripts/rebuild_docs.py --target . --check --json >"$tmp/derived.json"
   derived_rc=$?
   python3 - "$tmp/gate.json" "$tmp/derived.json" <<'PY'
 import json, sys
 gate = json.load(open(sys.argv[1]))
 derived = json.load(open(sys.argv[2]))
-c = gate.get("counts", {})
-print(f"  orphan={c.get('orphan', 0)} suspect={c.get('suspect', 0)} "
-      f"stale={c.get('stale', 0)} incomplete={c.get('incomplete', 0)} "
-      f"信任告警={c.get('trust', 0)} 派生漂移={len(derived.get('mismatches', []))}")
+metrics = gate.get("metrics", {})
+labels = {
+    "orphan": ("orphan", "doc_no_orphan / docs.registry 登记"),
+    "suspect": ("suspect", "source_hash 复算"),
+    "stale": ("stale", "_stale_after_expired(value, as_of)"),
+    "incomplete": ("incomplete", "_scan 占位符/状态词"),
+    "trust": ("信任告警", "doc_trust / doc_coverage / doc_obligation"),
+}
+for key, (name, judge) in labels.items():
+    m = metrics.get(key, {})
+    value = "n/a" if m.get("n_a") or m.get("status") == "n/a" else m.get("count", 0)
+    print(f"  {name}={value}（{judge}；已判 {m.get('checked', 0)} 篇）")
+cov = metrics.get("coverage", {})
+print(f"  uncovered={cov.get('count', 0)}（covers.codes/decisions；已判 "
+      f"{cov.get('checked', 0)} 篇；覆盖率 {cov.get('ratio', 'n/a')}）")
+ob = metrics.get("obligation", {})
+print(f"  obligation_missing={ob.get('count', 0)}（owner/role/stale_after；已判 "
+      f"{ob.get('checked', 0)} 篇）")
+unk = metrics.get("stale_unknown", {})
+print(f"  stale_unknown={unk.get('count', 0)}（_stale_after_expired==unknown；已判 "
+      f"{unk.get('checked', 0)} 篇；as_of={gate.get('as_of', 'n/a')}）")
+d = derived.get("counts", {})
+print(f"  派生漂移={d.get('mismatch', 0)}（rebuild_docs --check 全量；已判 "
+      f"{d.get('checked', 0)} 篇；not_applicable={d.get('not_applicable', 0)}）")
 seen = set()
 for item in gate.get("issues", []):
     key = (item.get("path"), item.get("status"))
@@ -233,7 +257,7 @@ for item in gate.get("issues", []):
     seen.add(key)
     print(f"  [文档告警] {item.get('status')} {item.get('path')} — {item.get('reason', '')}")
 for item in derived.get("mismatches", []):
-    print(f"  [派生手改] {item.get('path')} — {item.get('reason', '')}")
+    print(f"  [派生{item.get('class', 'mismatch')}] {item.get('path')} — {item.get('reason', '')}")
 PY
   local rc=$?
   rm -rf "$tmp"
@@ -362,8 +386,10 @@ run(){ name="$1"; shift; if "$@"; then pass "$name"; else fail "$name" '见上�
 
 if [ "$MODE" = "--only-idempotence" ]; then
   run '幂等' stage_idempotence
+elif [ "$MODE" = "--only-doc-lifecycle" ]; then
+  run '文档生命周期（shadow）' stage_doc_lifecycle
 elif [ "$MODE" = "--help" ]; then
-  echo "用法: bash scripts/check.sh [all|--strict|--only-idempotence|--help]"
+  echo "用法: bash scripts/check.sh [all|--strict|--only-idempotence|--only-doc-lifecycle|--help]"
   echo "  --strict  把文档生命周期 shadow 告警升为阻断（须人工批准后使用）"
 else
   run '测试' stage_tests

@@ -2,6 +2,17 @@
 
 本项目版本遵循语义化版本（SemVer）。
 
+## [2.25.0] - 2026-11-24
+
+**决策依据（第一性原理）**：门禁里的数字必须回答「判据执行了几篇、命中几篇、判据是否适用」。把未生成的 on-demand 派生文档报成「文件缺失」，和把 owner/stale_after 全空的文档报成 `stale=0`，都是用口径不一致制造假绿；缺 `stale_after` 被当作「不过期」则是 fail-open。修复只能来自共享事实源、真实判据和三态语义，不能靠缩范围、批量补值或批量 current。
+
+- 复现判定：派生存在性口径冲突与 `--doc PROJECT_STATE.md` 缩范围 = 已证实（全量 `--check` 3 处「文件缺失」而 `file_layout --check` 退出 0）；义务/覆盖两条不变量只在文案 = 已证实（`owner` 仅出现在 seed 写 `None` 与骨架占位；42 篇 owner 非空 0、stale_after 非空 0、真实 covers 16）；缺 `stale_after` 被当未过期 = 已证实（`_stale_after_expired` 对缺失/占位/非法一律返回 `False`）。
+- 工作流 A：`file_layout.py` 新增 `presence_for()`；`rebuild_docs.py --check` 以它为唯一存在性事实源，全量检查，缺失的 on-demand 文档落入 `not_applicable`，存在但不等重算落入 `hand-edited`，必需缺失落入 `missing`。`check.sh` 删除 `--doc` 缩范围，显示 `checked` 与 `not_applicable`。选择方案甲：方案乙把 missing 延后到 strict，会让 shadow 期继续隐藏真实缺口，也无法凭“稳定”积累升硬门证据。
+- 工作流 B：`doc_lifecycle.py` 的 `lint` / `check` 真正消费 `owner` / `role` / `stale_after` 与 `covers`：非骨架文档缺义务字段报 `obligation_missing`；`covers.codes` 与 `covers.decisions` 全空报 `uncovered`；覆盖率作为 `metrics.coverage.ratio` 一等输出。方法仓 lint 从 0 issue 变为 68 issue（obligation_missing=42、uncovered=26，覆盖率 16/42）。
+- 工作流 C：`_stale_after_expired(value, as_of)` 改为三态 `expired` / `fresh` / `unknown`；缺键、占位符与非法字符串一律 `unknown`，单列 `stale_unknown`，不计入 `stale`。`as_of` 显式参数优先，否则从账本 `last_updated` 派生，不读机器当前时间。
+- 工作流 D/E：门禁把 `0` 与 `n/a` 区分，并为每个指标打印判据名与已判篇数；`PROJECT_STATE.md`、`README.md`、`docs/10-AI集成.md`、`docs/15-文件架构.md` 同步口径；`ledger-verify` 的五条不变量逐条指向真实函数。新增 `tests/meta/test_doc_gate_truthfulness.py`（9 条），登记进 `tests/MODULES.json` 并重新渲染 `TEST_MODULES.md`。不改 feedback/、不新增专家或技能、不加第三方依赖、不修改 registry 中任何 status。
+- 实测代价：单测 535 → 544（+9；1 skipped 与基线一致，`run_tests` 543/544 passed）；方法仓 gate issue 从 0 变为 114（obligation_missing=42、uncovered=26、stale_unknown=42、suspect=4），全部 shadow 告警、退出码 0；`--strict` 阶段实测退出码 1。全量派生检查 `checked=1`、`not_applicable=3`、漂移 0。资产与版本按 M4/M5/M7 重绑：`method_assets=eed1f5e5540e4617`（113 文件）、`installed_assets=2ce3462460b0`（33 文件，9 专家 / 24 技能）、`ontology=beb2146190093602`，`upgrade verify` 12 pass / 0 warn / `upgrade_complete=true`，目标项目需重新批准升级。
+
 ## [2.24.0] - 2026-11-24
 
 **第一性原理**：文档的信任只能由可复算的指纹、登记与人工签名派生；事实源只有账本与 registry，任何"看起来绿了"的批量标记都是伪造信任。派生文档只允许由事实源重算，不允许手改；规划图只允许来自人的声明，不允许拿账本现状投影自证。

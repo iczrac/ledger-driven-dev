@@ -432,6 +432,14 @@ def summary() -> dict:
     }
 
 
+def presence_for(path: str) -> str | None:
+    """返回路径在布局清单中的出现口径；未登记返回 None（调用方 fail-closed）。"""
+    for entry in ENTRIES:
+        if entry["path"] == path:
+            return str(entry["presence"])
+    return None
+
+
 def diff(target: Path) -> dict:
     """只读对比目标项目：不创建、不修改、不删除任何文件。"""
     files = [e for e in ENTRIES if e["kind"] == "file"]
