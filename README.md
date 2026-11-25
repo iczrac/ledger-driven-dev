@@ -142,7 +142,7 @@ ledger-driven-dev/
 │   ├── method_assets.py              方法论资产整包摘要（只读）
 │   ├── asset_bundle.py               专家/技能只读部署副本（install/verify）
 │   ├── board_contract.py             看板骨架契约（check/normalize）
-│   ├── build_system_board.py         系统级看板生成器（项目→模块→能力投影）
+│   ├── build_system_board.py         系统级看板生成器（层级/兼容/趋势投影 + 三档视角）
 │   ├── scale_budget.py               规模预算（只读告警）
 │   ├── scale_probe.py                生成器规模基准（临时目录）
 │   ├── work_panel.py                 节点工作台（check/nodes/sync-tests/add/close）
@@ -275,6 +275,7 @@ python3 scripts/upgrade.py --target P verify --json
 python3 scripts/board_contract.py --target P check --json                  # 骨架与样式是否统一
 python3 scripts/build_system_board.py --system-root .. build --apply --approved-by <人>  # 生成系统级看板
 python3 scripts/build_system_board.py --system-root .. check --json         # 系统看板骨架/数据是否漂移
+# 系统看板另投影组合兼容（spec_check.compat）、历史趋势/停滞（账本 events），并提供三档操作人视角；仍为生成物
 python3 scripts/scale_budget.py --target P --json --check                 # 大项目预算
 python3 scripts/method_assets.py --check                                  # 专家/技能资产是否齐备
 python3 scripts/asset_bundle.py verify --target P --json                  # 项目内副本是否可用且未漂移
