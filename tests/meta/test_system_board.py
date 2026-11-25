@@ -86,7 +86,7 @@ class SystemBoardTest(unittest.TestCase):
         data = bsb.embedded_data((self.root / bsb.OUTPUT_REL).read_text(encoding="utf-8"))
         self.assertEqual(data["meta"]["skeleton_digest"],
                          bsb.skeleton_digest(bsb.template_text(ROOT)))
-        self.assertEqual(data["meta"]["schema"], "system-board-data/2")
+        self.assertEqual(data["meta"]["schema"], "system-board-data/3")
 
     def test_detect_skeleton_tamper(self):
         bsb.build(self.root, ROOT, apply=True, approved_by="test")
@@ -154,8 +154,26 @@ class SystemBoardTest(unittest.TestCase):
     def test_template_has_three_personas_and_new_views(self):
         tpl = bsb.template_text(ROOT)
         for token in ('id="persona"', 'data-v="compat"', 'data-v="timeline"',
-                      "PERSONA_HINT", "renderNovice", "renderCompat", "renderTimeline"):
+                      "PERSONA_HINT", "renderNovice", "renderCompat", "renderTimeline",
+                      'id="drawer"', "data-drill", "renderDrill"):
             self.assertIn(token, tpl)
+
+    def test_project_ledger_detail_projection(self):
+        path = self.root / "alpha" / "governance" / "DECISION_LEDGER.json"
+        payload = json.loads(path.read_text(encoding="utf-8"))
+        payload["entries"] = [{"id": "D-TEST", "date": "2026-11-25", "title": "测试决策",
+                               "status": "done", "decision": "记录一条决策"}]
+        payload["work_items"] = [{"id": "W-TEST", "status": "open", "severity": "med",
+                                  "title": "测试工作项", "scope": "ALPHA.MOD.01"}]
+        payload["capability_model"]["summary"] = {
+            "health_overall": 88, "health_dimensions": {"verified_coverage": 50}}
+        write_project(self.root, "alpha", payload)
+        p = [x for x in bsb.discover(self.root) if x["dir"] == "alpha"][0]
+        d = p["detail"]
+        self.assertEqual(d["decisions"][0]["id"], "D-TEST")
+        self.assertEqual(d["work_items"][0]["id"], "W-TEST")
+        self.assertEqual(d["health"]["health_overall"], 88)
+        self.assertEqual(d["health"]["health_dimensions"]["verified_coverage"], 50)
 
     def test_detect_new_dimension_data_tamper(self):
         bsb.build(self.root, ROOT, apply=True, approved_by="test")

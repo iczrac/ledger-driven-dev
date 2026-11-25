@@ -275,7 +275,7 @@ python3 scripts/upgrade.py --target P verify --json
 python3 scripts/board_contract.py --target P check --json                  # 骨架与样式是否统一
 python3 scripts/build_system_board.py --system-root .. build --apply --approved-by <人>  # 生成系统级看板
 python3 scripts/build_system_board.py --system-root .. check --json         # 系统看板骨架/数据是否漂移
-# 系统看板另投影组合兼容（spec_check.compat）、历史趋势/停滞（账本 events），并提供三档操作人视角；仍为生成物
+# 系统看板另投影组合兼容、历史趋势/停滞与项目级账本明细（决策/工作项/健康度），页内可钻取项目账本；仍为生成物
 python3 scripts/scale_budget.py --target P --json --check                 # 大项目预算
 python3 scripts/method_assets.py --check                                  # 专家/技能资产是否齐备
 python3 scripts/asset_bundle.py verify --target P --json                  # 项目内副本是否可用且未漂移

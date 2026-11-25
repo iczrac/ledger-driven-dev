@@ -41,6 +41,11 @@ footer{margin-top:34px;border-top:1px solid var(--line);padding-top:14px;font-si
 .layer b{font-weight:500;color:var(--purple)}
 .spark{width:100%;max-width:300px;height:52px;border:1px solid var(--line);border-radius:8px;background:var(--soft)}
 .big{font-size:20px;font-weight:600}
+.linklike{border:0;background:none;padding:0;color:var(--blue);cursor:pointer;font-size:inherit;text-decoration:underline;font-family:inherit}
+.backdrop{position:fixed;inset:0;background:rgba(0,0,0,.3);z-index:20}
+.drawer{position:fixed;top:0;right:0;bottom:0;width:min(760px,94vw);background:#fff;z-index:21;overflow:auto;padding:24px 26px 56px;box-shadow:-10px 0 30px rgba(0,0,0,.15)}
+.drawer h2{margin:0 0 4px}.drawer h3{margin:18px 0 8px}.close{float:right;border:1px solid var(--line);background:#fff;border-radius:8px;padding:4px 10px;cursor:pointer;color:var(--mut)}
+.section{border-top:1px solid var(--line);margin-top:16px;padding-top:6px}
 </style>
 </head>
 <body>
@@ -72,6 +77,8 @@ footer{margin-top:34px;border-top:1px solid var(--line);padding-top:14px;font-si
   <section id="view-timeline" hidden></section>
   <section id="view-sources" hidden></section>
 </main>
+<div class="backdrop" id="backdrop" hidden></div>
+<aside class="drawer" id="drawer" aria-label="项目级账本" hidden><div id="drawer-body"></div></aside>
 <footer id="foot"></footer>
 <script>
 const SYSTEM_DATA = /*SYSTEM*/;
@@ -118,7 +125,7 @@ function renderOverview(){if(mode==='novice')return renderNovice();
       '<div class="meta" style="margin:8px 0">'+(p.modules||[]).length+' 模块 · '+caps.length+' 能力点 · verified '+v+'/'+caps.length+' · 完成度 '+pct(p.completion)+'</div>'+
       (mode==='expert'?'<div class="meta">最近事件 '+esc(h.last_event_ts||'—')+' · 事件 '+esc(h.events||0)+' 次 · 距观察点 '+esc(h.stale_hours==null?'—':h.stale_hours)+' 小时</div>':'')+
       '<div class="bar-mini"><i style="width:'+Math.min(100,Math.round((caps.length?v/caps.length*100:0)))+'%"></i></div>'+
-      '<div class="hint"><a href="'+esc(p.board)+'">打开项目看板 →</a> · 账本 '+esc(p.ledger)+'</div></article>';}).join('');
+      '<div class="hint"><button class="linklike" type="button" data-drill="'+esc(p.dir)+'">查看项目账本 →</button> · <a href="'+esc(p.board)+'">项目看板 ↗</a> · 账本 '+esc(p.ledger)+'</div></article>';}).join('');
   document.getElementById('view-overview').innerHTML='<h2>在册项目</h2><div class="grid">'+(cards||'<div class="empty">无匹配项目</div>')+'</div>';}
 function capHtml(c,q){let s='<div class="cap"><span class="code">'+hl(c.code,q)+'</span> '+hl(c.name,q)+
   ' <span class="chip lv">'+esc(c.level_code||('L'+c.level))+'</span><span class="chip '+(c.evidence_tier==='verified'?'v':'d')+'">'+esc(c.evidence_tier||'declared')+'</span>'+
@@ -132,7 +139,7 @@ function renderProjects(){const q=document.getElementById('q').value.trim(),caps
         (mc.map(c=>capHtml(c,q)).join('')||'<div class="empty">无匹配能力点</div>')+'</div></details>';}).join('');
     if(q&&!mods)return '';
     return '<details open><summary>'+hl(p.title,q)+' <span class="chip">'+esc(p.code)+'</span><span class="chip s">'+pct(p.completion)+'</span></summary>'+
-      '<div class="meta" style="margin:8px 0">'+esc(p.dir)+' · <a href="'+esc(p.board)+'">项目看板 →</a></div>'+mods+'</details>';}).join('');
+      '<div class="meta" style="margin:8px 0">'+esc(p.dir)+' · <button class="linklike" type="button" data-drill="'+esc(p.dir)+'">项目账本 →</button> · <a href="'+esc(p.board)+'">项目看板 ↗</a></div>'+mods+'</details>';}).join('');
   document.getElementById('view-projects').innerHTML='<h2>系统 → 项目 → 模块 → 能力点</h2>'+(body||'<div class="empty">无匹配节点</div>');}
 function renderMatrix(){const q=document.getElementById('q').value.trim(),caps=filtered();
   const groups=[];DATA.projects.forEach(p=>(p.modules||[]).forEach(m=>groups.push({p:p,m:m,caps:caps.filter(c=>c._project.code===p.code&&c._module.code===m.code)})));
@@ -155,16 +162,38 @@ function spark(series){if(!series||!series.length)return '<div class="empty">无
   const pts=series.map((s,i)=>{const x=series.length===1?120:10+i*220/(series.length-1),y=44-(Number(s.verified_coverage)||0)*36;return x.toFixed(1)+','+y.toFixed(1);}).join(' ');
   const last=series[series.length-1],lx=series.length===1?120:230,ly=44-(Number(last.verified_coverage)||0)*36;
   return '<svg class="spark" viewBox="0 0 240 52" role="img" aria-label="verified 覆盖率趋势"><line x1="10" y1="44" x2="230" y2="44" stroke="#e3e3e3"/><polyline fill="none" stroke="#534AB7" stroke-width="2" points="'+pts+'"/><circle cx="'+lx+'" cy="'+ly.toFixed(1)+'" r="3" fill="#0F6E56"/></svg>';}
+function timelineHtml(p,q){const h=p.history||{},ss=h.series||[];
+  const rows=ss.slice(-8).reverse().map(s=>'<tr><td>'+esc(s.seq)+'</td><td>'+esc(s.ts)+'</td><td>'+esc(s.type)+'</td><td>'+esc(s.caps)+'</td><td>'+esc(s.verified)+'</td><td>'+pct(s.verified_coverage)+'</td><td>'+esc(s.avg_level)+'</td><td>'+esc(s.level_transitions)+'</td><td>'+esc(s.evidence_changes)+'</td></tr>').join('');
+  return '<article class="card"><h3>'+hl(p.title,q)+' '+staleChip(h)+'</h3><div class="meta">事件 '+esc(h.events||0)+' 次 · 最近 '+esc(h.last_event_ts||'—')+' · 距观察点 '+esc(h.stale_hours==null?'—':h.stale_hours)+' 小时</div>'+
+    spark(ss)+'<table style="margin-top:10px"><thead><tr><th>序</th><th>时间</th><th>类型</th><th>能力</th><th>verified</th><th>覆盖</th><th>均等级</th><th>升级</th><th>证据变化</th></tr></thead><tbody>'+(rows||'<tr><td colspan="9" class="empty">无事件</td></tr>')+'</tbody></table></article>';}
 function renderTimeline(){const q=document.getElementById('q').value.trim();
-  const body=DATA.projects.filter(p=>hits([p.title,p.code,p.dir].join(' '),q)).map(p=>{const h=p.history||{},ss=h.series||[];
-    const rows=ss.slice(-8).reverse().map(s=>'<tr><td>'+esc(s.seq)+'</td><td>'+esc(s.ts)+'</td><td>'+esc(s.type)+'</td><td>'+esc(s.caps)+'</td><td>'+esc(s.verified)+'</td><td>'+pct(s.verified_coverage)+'</td><td>'+esc(s.avg_level)+'</td><td>'+esc(s.level_transitions)+'</td><td>'+esc(s.evidence_changes)+'</td></tr>').join('');
-    return '<article class="card"><h3>'+hl(p.title,q)+' '+staleChip(h)+'</h3><div class="meta">事件 '+esc(h.events||0)+' 次 · 最近 '+esc(h.last_event_ts||'—')+' · 距观察点 '+esc(h.stale_hours==null?'—':h.stale_hours)+' 小时</div>'+
-      spark(ss)+'<table style="margin-top:10px"><thead><tr><th>序</th><th>时间</th><th>类型</th><th>能力</th><th>verified</th><th>覆盖</th><th>均等级</th><th>升级</th><th>证据变化</th></tr></thead><tbody>'+(rows||'<tr><td colspan="9" class="empty">无事件</td></tr>')+'</tbody></table></article>';}).join('');
+  const body=DATA.projects.filter(p=>hits([p.title,p.code,p.dir].join(' '),q)).map(p=>timelineHtml(p,q)).join('');
   document.getElementById('view-timeline').innerHTML='<h2>时间趋势与停滞</h2><div class="meta">从账本 history.events 的 state_digest 复算；观察点是系统内最新账本更新时间（'+esc((DATA.meta||{}).as_of||'—')+'），不用机器当前时间，保证重生成幂等。超过 24 小时标「需要关注」，超过 72 小时标「长期未动」。</div>'+(body||'<div class="empty">无匹配项目</div>');}
 function renderSources(){const d=DATA.meta||{},rows=DATA.projects.map(p=>'<tr><td>'+esc(p.code)+'</td><td>'+esc(p.title)+'</td><td>'+esc(p.ledger)+'</td><td>'+esc(p.board)+'</td><td>'+esc(p.version||'—')+'</td>'+(mode==='expert'?'<td>'+esc((p.history||{}).events||0)+'</td>':'')+'</tr>').join('');
   document.getElementById('view-sources').innerHTML='<h2>数据来源</h2><div class="meta">系统看板只做投影；各项目账本仍是唯一事实源。骨架摘要 '+esc(d.skeleton_digest||'—')+'</div>'+
     '<table><thead><tr><th>项目码</th><th>名称</th><th>账本</th><th>看板</th><th>版本</th>'+(mode==='expert'?'<th>事件数</th>':'')+'</tr></thead><tbody>'+rows+'</tbody></table>'+
     '<div class="hint">重生成：<code>python3 ledger-driven-dev/scripts/build_system_board.py --system-root .. --apply</code> · 校验：<code>... check</code></div>';}
+function projectByDir(dir){return (DATA.projects||[]).find(p=>p.dir===dir);}
+function renderDrill(p){const d=p.detail||{},h=d.health||{},dims=h.health_dimensions||{};
+  const caps=(p.modules||[]).reduce((a,m)=>a.concat(m.caps||[]),[]),v=caps.filter(c=>c.evidence_tier==='verified').length;
+  const decisions=(d.decisions||[]).map(e=>'<tr><td>'+esc(e.id)+'</td><td>'+esc(e.date||'—')+'</td><td>'+esc(e.title||'—')+'</td><td>'+esc(e.status||'—')+'</td><td>'+esc(e.decision||'—')+'</td></tr>').join('');
+  const works=(d.work_items||[]).map(w=>'<tr><td>'+esc(w.id)+'</td><td>'+esc(w.status||'—')+'</td><td>'+esc(w.severity||'—')+'</td><td>'+esc(w.title||'—')+'</td><td>'+esc(w.scope||'—')+'</td><td>'+esc(w.owner||'—')+'</td></tr>').join('');
+  const mods=(p.modules||[]).map(m=>'<details open><summary>'+esc(m.name)+' <span class="chip">'+esc(m.code)+'</span><span class="chip">'+(m.caps||[]).length+' 能力点</span></summary><div class="tree">'+(m.caps||[]).map(c=>capHtml(c,'')).join('')+'</div></details>').join('');
+  const dimHtml=Object.keys(dims).map(k=>'<tr><td>'+esc(k)+'</td><td>'+esc(dims[k])+'</td></tr>').join('');
+  return '<button class="close" type="button" data-close>关闭 ×</button><h2>'+esc(p.title)+'</h2>'+
+    '<div class="meta">'+esc(p.code)+' · '+esc(p.dir)+' · 版本 '+esc(p.version||'—')+' · 账本更新 '+esc(p.last_updated||'—')+' '+staleChip(p.history||{})+'</div>'+
+    '<div class="meta" style="margin:8px 0">'+esc(d.purpose||'')+'</div>'+
+    '<div class="stats"><div class="stat"><div class="n">'+(p.modules||[]).length+'</div><div class="l">模块</div></div><div class="stat"><div class="n">'+caps.length+'</div><div class="l">能力点</div></div><div class="stat"><div class="n">'+v+'</div><div class="l">verified</div></div><div class="stat"><div class="n">'+esc(h.health_overall==null?'—':h.health_overall)+'</div><div class="l">健康总分</div></div></div>'+
+    '<div class="section"><h3>决策记录 '+esc((d.decisions||[]).length)+'</h3><table><thead><tr><th>ID</th><th>日期</th><th>标题</th><th>状态</th><th>裁决</th></tr></thead><tbody>'+(decisions||'<tr><td colspan="5" class="empty">无决策</td></tr>')+'</tbody></table></div>'+
+    '<div class="section"><h3>工作项 '+esc((d.work_items||[]).length)+'</h3><table><thead><tr><th>ID</th><th>状态</th><th>级别</th><th>标题</th><th>范围</th><th>负责人</th></tr></thead><tbody>'+(works||'<tr><td colspan="6" class="empty">无工作项</td></tr>')+'</tbody></table></div>'+
+    '<div class="section"><h3>能力点（项目级账本投影）</h3>'+(mods||'<div class="empty">无能力点</div>')+'</div>'+
+    '<div class="section"><h3>健康维度</h3><table><thead><tr><th>维度</th><th>分值</th></tr></thead><tbody>'+(dimHtml||'<tr><td colspan="2" class="empty">无健康数据</td></tr>')+'</tbody></table></div>'+
+    '<div class="section">'+timelineHtml(p,'')+'</div>'+
+    '<div class="section"><h3>数据来源</h3><div class="meta">账本 '+esc(p.ledger)+' · 项目看板 <a href="'+esc(p.board)+'">'+esc(p.board)+' ↗</a></div><div class="hint">抽屉内容由系统看板从项目账本投影；预览面板隔离单文件，外链请在本地文件系统打开时点击。</div></div>';}
+function openDrill(dir){const p=projectByDir(dir);if(!p)return;
+  document.getElementById('drawer-body').innerHTML=renderDrill(p);
+  document.getElementById('drawer').hidden=false;document.getElementById('backdrop').hidden=false;}
+function closeDrill(){document.getElementById('drawer').hidden=true;document.getElementById('backdrop').hidden=true;}
 function render(){renderStats();VIEWS.forEach(v=>{document.getElementById('view-'+v).hidden=v!==view;});
   if(view==='overview')renderOverview();else if(view==='projects')renderProjects();else if(view==='matrix')renderMatrix();
   else if(view==='compat')renderCompat();else if(view==='timeline')renderTimeline();else renderSources();}
@@ -183,6 +212,10 @@ function init(){document.getElementById('tabs').addEventListener('click',e=>{con
   document.getElementById('stats').addEventListener('click',e=>{const s=e.target.closest('[data-go]');if(!s)return;view=s.dataset.go;
     if(mode==='novice'&&view!=='overview')return;
     document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('on',t.dataset.v===view));render();});
+  document.getElementById('main').addEventListener('click',e=>{const b=e.target.closest('[data-drill]');if(b)openDrill(b.dataset.drill);});
+  document.getElementById('drawer').addEventListener('click',e=>{if(e.target.closest('[data-close]'))closeDrill();});
+  document.getElementById('backdrop').addEventListener('click',closeDrill);
+  document.addEventListener('keydown',e=>{if(e.key==='Escape')closeDrill();});
   document.getElementById('foot').textContent='系统看板为生成物 · 权威模板 templates/system_index.html.template · 生成器 scripts/build_system_board.py · 禁止手改 HTML';
   setMode('standard');}
 init();

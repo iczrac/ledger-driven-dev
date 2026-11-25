@@ -12,7 +12,7 @@
 5. 幂等：数据段不含生成时刻，as_of 取各账本 last_updated 的最大值；
    停滞时数相对该 as_of 计算，而非机器当前时间。
 
-输出 schema: system-board-build/1 · system-board-check/1 · system-board-data/2。
+输出 schema: system-board-build/1 · system-board-check/1 · system-board-data/3。
 """
 from __future__ import annotations
 
@@ -199,6 +199,29 @@ def load_ledgers(system_root: Path) -> dict[str, dict]:
     return found
 
 
+def ledger_detail(led: dict) -> dict:
+    """项目级账本明细投影：系统看板内钻取用，仍是账本的只读视图。"""
+    cm = led.get("capability_model") or {}
+    summary = cm.get("summary") or {}
+    return {
+        "purpose": led.get("purpose", ""),
+        "owner": led.get("owner", ""),
+        "coding_spec": cm.get("coding_spec", ""),
+        "decisions": [{k: e.get(k) for k in (
+            "id", "date", "title", "category", "scope", "status",
+            "decision", "rationale", "evidence", "confidence"
+        ) if k in e} for e in (led.get("entries") or [])],
+        "work_items": [{k: w.get(k) for k in (
+            "id", "kind", "status", "severity", "title", "scope", "owner",
+            "source", "resolution", "closed_at"
+        ) if k in w} for w in (led.get("work_items") or [])],
+        "health": {k: summary[k] for k in (
+            "health_overall", "health_dimensions", "overall_completion",
+            "evidence_tier_distribution", "level_distribution"
+        ) if k in summary},
+    }
+
+
 def discover(system_root: Path, ledgers: dict[str, dict] | None = None) -> list[dict]:
     """投影系统 → 项目 → 模块 → 能力；附加历史趋势，零配置发现项目。"""
     root = Path(system_root)
@@ -240,6 +263,7 @@ def discover(system_root: Path, ledgers: dict[str, dict] | None = None) -> list[
                         "verified": verified,
                         "verified_coverage": (round(verified / len(caps_all), 4) if caps_all else 0)},
             "history": history_projection(led, as_of_dt),
+            "detail": ledger_detail(led),
         })
     return found
 
@@ -250,7 +274,7 @@ def build_data(system_root: Path, method_root: Path = METHOD_ROOT) -> dict:
     projects = discover(root, ledgers)
     return {
         "meta": {
-            "schema": "system-board-data/2",
+            "schema": "system-board-data/3",
             "system": Path(system_root).resolve().name,
             "skeleton_digest": skeleton_digest(template_text(method_root)),
             "as_of": max([p.get("last_updated", "") for p in projects] or ["—"]),
