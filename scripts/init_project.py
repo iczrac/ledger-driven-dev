@@ -172,7 +172,7 @@ def build_ledger(name: str, code: str, mode: str, provenance: dict,
         "entries": [{
             "id": "D-001",
             "date": now.strftime("%Y-%m-%d"),
-            "title": "建立项目治理骨架",
+            "title": f"{code} · 治理初始化 · 建立账本与能力注册表（{mode}）",
             "category": "治理初始化",
             "scope": code,
             "status": "done",

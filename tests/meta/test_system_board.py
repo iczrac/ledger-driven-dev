@@ -223,6 +223,43 @@ class SystemBoardTest(unittest.TestCase):
         left, right = facts["ledger-driven-dev"], facts["julia-dev-squad"]
         self.assertEqual(left, right, "双方组合事实字段不对称")
 
+    def test_decision_titles_identifiable_in_workspace(self):
+        """决策标题三段式：项目短名 · 类型 · 简述；组合锚互指向对方。"""
+        base = ROOT.parent
+        prefix = {"ledger-driven-dev": "LEDGER", "julia-dev-squad": "JULIA"}
+        pair = {"ledger-driven-dev": ("D-015", "JULIA D-002"),
+                "julia-dev-squad": ("D-002", "LEDGER D-015")}
+        seen: set[str] = set()
+        total = 0
+        for name, mark in prefix.items():
+            path = base / name / "governance" / "DECISION_LEDGER.json"
+            if not path.is_file():
+                self.skipTest(f"兄弟仓未在工作区：{name}")
+            led = json.loads(path.read_text(encoding="utf-8"))
+            entries = led.get("entries") or []
+            total += len(entries)
+            self.assertTrue(entries, f"{name} 无决策条目")
+            for entry in entries:
+                title = entry.get("title") or ""
+                parts = [p.strip() for p in title.split("·")]
+                self.assertEqual(len(parts), 3, f"{name}/{entry.get('id')} 标题非三段式：{title}")
+                self.assertEqual(parts[0], mark, f"{name}/{entry.get('id')} 项目前缀错：{title}")
+                self.assertTrue(parts[1], f"{name}/{entry.get('id')} 缺类型段：{title}")
+                self.assertTrue(parts[2], f"{name}/{entry.get('id')} 缺简述段：{title}")
+                seen.add(title)
+            eid, target = pair[name]
+            anchor = next((x for x in entries if x.get("id") == eid), None)
+            self.assertIsNotNone(anchor, f"{name} 缺组合锚条目 {eid}")
+            self.assertIn("↔ " + target, anchor["title"],
+                          f"{name}/{eid} 未互指向对方：{anchor['title']}")
+        self.assertEqual(len(seen), total, "跨项目存在同名决策标题")
+
+    def test_init_template_emits_prefixed_title(self):
+        """初始化模板必须产出带项目码前缀的标题，杜绝裸标题再生成。"""
+        src = (ROOT / "scripts/init_project.py").read_text(encoding="utf-8")
+        self.assertIn('f"{code} · 治理初始化 · 建立账本与能力注册表（{mode}）"', src)
+        self.assertNotIn('"title": "建立项目治理骨架"', src)
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
