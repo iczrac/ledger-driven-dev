@@ -14602,7 +14602,7 @@
   ],
   "governance_meta": {
     "schema_version": "1.0",
-    "method_version": "2.25.1",
+    "method_version": "2.26.0",
     "upgraded_from": "pre-1.0.0",
     "ledger_version": "1.0",
     "migrations_applied": [
@@ -15057,6 +15057,23 @@
         "risk": "medium",
         "assets_digest": "5e6eeef7f62a523b",
         "board_skeleton": "b6f5d4583cca01c6"
+      },
+      {
+        "seq": 28,
+        "at": "2026-11-25T02:14:53Z",
+        "action": "apply",
+        "from": "2.25.1",
+        "to": "2.26.0",
+        "approved_by": "iczrac",
+        "migrations": [
+          "M4-method-version",
+          "M5-method-assets",
+          "M7-asset-install"
+        ],
+        "backup": "20261125T021453Z-0c0d635d",
+        "risk": "medium",
+        "assets_digest": "0778ea8f6fb8c14d",
+        "board_skeleton": "b6f5d4583cca01c6"
       }
     ],
     "tools": {
@@ -15076,12 +15093,12 @@
     },
     "method_assets": {
       "algorithm": "sha256-files-v1",
-      "digest": "5e6eeef7f62a523be93207a8c3d8521f7e9390f6974d400f026852f78e1f97ce",
-      "file_count": 113,
+      "digest": "0778ea8f6fb8c14d1e3ae333ef4bc7c71730424c372f894bebc45199996e5da0",
+      "file_count": 114,
       "counts": {
         "experts": 9,
         "skills": 24,
-        "scripts": 36,
+        "scripts": 37,
         "templates": 7,
         "method_docs": 36,
         "standard": 1

@@ -2,6 +2,17 @@
 
 本项目版本遵循语义化版本（SemVer）。
 
+## [2.26.0] - 2026-11-25
+
+**决策依据（第一性原理）**：规范型仓库（主体是 Markdown 规范、无代码符号可绑定的包）的错误从不先出现在运行时——改名漏一处 CJK 相邻旧名、多处版本号失步、生成物被手改、链接指向已删除文件，这些都可判定，就必须交给判据而不是人工走查的运气。边界重划后（联合使用原则：真相与规则归本仓库、人与流程归执行层），这类通用自查判据属于「真相与规则」，理应在本仓库实现为通用工具，而不是让每个执行层仓库自建第二套检查器。
+
+- 新增 `scripts/spec_check.py`（schema `spec-check/1`）：配置驱动的规范型仓库自查器，五类判据——`forbidden_terms` 术语残留（ASCII 词自动按独立词匹配，用 ASCII 环视规避 `\b` 把汉字当词符的假阴性教训）、`version` 版本一致（canonical + 任意声明位置）、`generated` 派生漂移（快照→重建→逐字节比对→按快照还原，检查等效只读）、`required` 必备文件、`links` 相对链接解析。缺配置节报 `n/a` 不冒充 `0`；不可读 fail-closed；配置文件自身自动排除出扫描。
+- 新增 `tests/meta/test_spec_check.py`（13 条）：五类判据的正反向证明、0 与 n/a 口径、等效只读还原（changed 还原 / created 删除）、`--no-rebuild` 跳过、退出码 0/1/2。登记 `tests/MODULES.json` meta 模块并重渲染 `docs/generated/TEST_MODULES.md`。
+- `METHOD_VERSION` 2.25.1 → 2.26.0；`upgrade apply` 重绑（M4/M5/M7，approved_by `iczrac`，backup `20261125T021453Z-0c0d635d`）；`method_assets=0778ea8f6fb8c14d...`（113 → 114 文件，scripts 36 → 37）。
+- README 新增「边界分工（联合使用原则）」节；与执行层仓库（julia-dev）README 的同名节互为对照。
+- 实测代价：单测 547 → 560（+13，1 skipped 与基线一致）；`bash scripts/check.sh` 17 节全绿 `CHECK_EXIT=0`（测试 560/560）；`upgrade verify` pass / `upgrade_complete=true`；`verify_ledger --strict` 30/31 pass、1 na（`goal_loop_valid`，与 v2.25.1 基线一致）。首个使用者 julia-dev 接入后首跑即抓到三条真实缺陷（多语言 README 版本号失步、plugin.json 成员旧名残留、语言切换链接路径错误），验证判据有效性；其间一条测试夹具因部分环境 mkdir shim 不认非 recursive `exist_ok` 而失败，夹具改用 `parents=True` 修复——产品行为（rebuild 失败如实上报 fail-closed）不受影响。
+
+
 ## [2.25.1] - 2026-11-24
 
 **决策依据（第一性原理）**：拍板的作用不是再写一句口号，而是把解释空间收敛成可复算条件。硬门条件必须列出全部指标与 `n/a` 约束；批准人必须是明确的人；派生文档去留必须由布局 presence 裁决；一次性会话授权不能升格为长期身份。
