@@ -96,7 +96,7 @@ SOURCE_ROOT = Path(__file__).resolve().parents[1]
 SCHEMA_PLAN = "upgrade-plan/1"
 SCHEMA_APPLY = "upgrade-apply/1"
 SCHEMA_VERIFY = "upgrade-verify/1"
-METHOD_VERSION = "2.27.0"
+METHOD_VERSION = "2.28.0"
 
 
 def _version_tuple(value) -> tuple[int, ...]:

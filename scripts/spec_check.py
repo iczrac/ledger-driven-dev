@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
-"""规范型仓库通用自查器：术语残留 / 版本一致 / 派生漂移 / 必备文件 / 链接解析 / 本体完整。
+"""规范型仓库通用自查器：术语残留 / 版本一致 / 派生漂移 / 必备文件 / 链接解析 / 本体完整 / 发版标签。
 
 第一性原理
 ----------
 规范型仓库（主体是 Markdown 规范、无代码符号可绑定的包）的错误从不先出现在
 运行时：它们先出现在文本里——改名漏了一处 CJK 相邻的旧名、三处版本号只同步了
 两处、生成物被手改而无人知、README 链接指向已删除的文件。这些错误可判定，就
-必须交给判据而不是靠人工走查的运气。本工具把六类判据做成通用、配置驱动：
+必须交给判据而不是靠人工走查的运气。本工具把七类判据做成通用、配置驱动：
 
   - forbidden_terms  术语残留：禁止词必须为零（ASCII 词自动按独立词匹配，
                      规避 `\\b` 把汉字当词符的假阴性教训——改用 ASCII 环视）；
@@ -16,7 +16,9 @@
   - required         必备文件：声明存在的文件必须存在；
   - links            链接解析：列出文档中的相对链接必须能落到真实文件；
   - ontology         本体完整：声明登记文件的 id 唯一、引用可解析（无孤儿）、
-                     别名不与任何现名冲突、路径映射落到真实文件。
+                     别名不与任何现名冲突、路径映射落到真实文件；
+  - release_tag      发版标签：权威版本号必须已有对应 git tag（v 前缀可配），
+                     非目测「发没发版」。
 
 本体判据口径
 ------------
@@ -122,17 +124,26 @@ def check_terms(target: Path, cfg: dict) -> dict:
             "unreadable": unreadable, "detail": hits}
 
 
+def _canonical_version(target: Path, cfg: dict) -> str | None:
+    """解析 version 判据的权威版本号；无 version 节返回 None。"""
+    spec = cfg.get("version") or {}
+    canonical = spec.get("canonical")
+    if not canonical:
+        src = spec.get("canonical_from", {})
+        if not src:
+            return None
+        data = json.loads((target / src["file"]).read_text(encoding="utf-8"))
+        for key in src["json_key"].split("."):
+            data = data[key]
+        canonical = data
+    return str(canonical)
+
+
 def check_version(target: Path, cfg: dict) -> dict:
     spec = cfg.get("version")
     if not spec:
         return {"metric": "version", "applicable": False, "hits": 0}
-    canonical = spec.get("canonical")
-    if not canonical:
-        src = spec.get("canonical_from", {})
-        data = json.loads((target / src["file"]).read_text(encoding="utf-8"))
-        for key in src["json_key"].split("."):
-            data = data[key]
-        canonical = str(data)
+    canonical = _canonical_version(target, cfg)
     hits: list[dict] = []
     declared = 0
     for d in spec.get("declarations", []):
@@ -376,6 +387,41 @@ def check_ontology(target: Path, cfg: dict) -> dict:
             "entries": len(entries), "ids_declared": len(ids), "detail": hits}
 
 
+def check_release_tag(target: Path, cfg: dict) -> dict:
+    """发版标签判据：权威版本号必须已有对应 git tag。
+
+    只读（`git tag --list`）；非 git 仓库 / 无权威版本 / git 失败一律记命中，
+    不静默放行（fail-closed）。
+    """
+    if cfg.get("release_tag") is None:
+        # 按 key 存在性判定：`"release_tag": {}` = 启用并取默认前缀 `v`
+        return {"metric": "release_tag", "applicable": False, "hits": 0}
+    version = _canonical_version(target, cfg)
+    if not version:
+        return {"metric": "release_tag", "applicable": True, "hits": 1,
+                "detail": [{"reason": "no_canonical_version",
+                            "hint": "release_tag 依赖 version 判据的权威版本号"}]}
+    prefix = cfg["release_tag"].get("prefix", "v")
+    want = f"{prefix}{version}"
+    if not (target / ".git").exists():
+        return {"metric": "release_tag", "applicable": True, "hits": 1,
+                "detail": [{"reason": "not_a_git_repo", "tag": want}]}
+    try:
+        proc = subprocess.run(["git", "-C", str(target), "tag", "--list", want],
+                              capture_output=True, text=True, timeout=30)
+    except (OSError, subprocess.TimeoutExpired):
+        return {"metric": "release_tag", "applicable": True, "hits": 1,
+                "detail": [{"reason": "git_unavailable", "tag": want}]}
+    if proc.returncode != 0:
+        return {"metric": "release_tag", "applicable": True, "hits": 1,
+                "detail": [{"reason": "git_error", "tag": want,
+                            "stderr": proc.stderr[-200:]}]}
+    if want in proc.stdout.split():
+        return {"metric": "release_tag", "applicable": True, "hits": 0, "tag": want}
+    return {"metric": "release_tag", "applicable": True, "hits": 1,
+            "detail": [{"reason": "missing_tag", "tag": want}]}
+
+
 def run_check(target: Path, run_rebuild: bool = True) -> dict:
     cfg = _load_config(target)
     results = [
@@ -385,6 +431,7 @@ def run_check(target: Path, run_rebuild: bool = True) -> dict:
         check_required(target, cfg),
         check_links(target, cfg),
         check_ontology(target, cfg),
+        check_release_tag(target, cfg),
     ]
     applicable = sum(1 for r in results if r["applicable"])
     hits = sum(r["hits"] for r in results if r["applicable"])

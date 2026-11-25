@@ -1,4 +1,4 @@
-"""规范型仓库通用自查器：六类判据、0 与 n/a 口径、等效只读的负向证明。"""
+"""规范型仓库通用自查器：七类判据、0 与 n/a 口径、等效只读的负向证明。"""
 from __future__ import annotations
 MODULE_ID = "meta"
 
@@ -58,7 +58,7 @@ class SpecCheckCLITest(unittest.TestCase):
             self.assertEqual(d["schema"], "spec-check/1")
             self.assertTrue(d["ok"])
             self.assertEqual(d["applicable"], 0)
-            self.assertEqual(d["na"], 6)
+            self.assertEqual(d["na"], 7)
             for m in d["metrics"]:
                 self.assertFalse(m["applicable"])
 
@@ -291,6 +291,82 @@ class OntologyIntegrityTest(unittest.TestCase):
             m = self._metric(t)
             self.assertEqual(m["hits"], 1)
             self.assertEqual(m["detail"][0]["reason"], "invalid_json")
+
+    def test_missing_config_is_na(self):
+        with tempfile.TemporaryDirectory() as td:
+            t = make_repo(Path(td), dict(BASE), {"README.md": "x\n"})
+            m = self._metric(t)
+            self.assertFalse(m["applicable"])
+
+
+def _git_repo_with_tag(t: Path, tag: str | None) -> None:
+    """在目标目录建一个最小 git 仓（tag 需要指向 commit）。"""
+    def run(*a: str):
+        subprocess.run(["git", "-c", "init.defaultBranch=main", *a], cwd=t,
+                       capture_output=True, text=True, check=True)
+    run("init", "-q")
+    run("add", "spec_check.json")
+    run("-c", "user.email=t@local", "-c", "user.name=t", "commit", "-qm", "init")
+    if tag:
+        run("tag", tag)
+
+
+class ReleaseTagTest(unittest.TestCase):
+    """发版标签判据：权威版本必须有对应 git tag；非 git / 无版本 fail-closed。"""
+
+    def _metric(self, target):
+        d = json.loads(cli("--target", str(target), "--json").stdout)
+        return [m for m in d["metrics"] if m["metric"] == "release_tag"][0]
+
+    def test_tag_present_passes_exit_0(self):
+        cfg = {**BASE, "version": {"canonical": "1.2.3"},
+               "release_tag": {"prefix": "v"}}
+        with tempfile.TemporaryDirectory() as td:
+            t = make_repo(Path(td), cfg, {"README.md": "x\n"})
+            _git_repo_with_tag(t, "v1.2.3")
+            m = self._metric(t)
+            self.assertTrue(m["applicable"])
+            self.assertEqual(m["hits"], 0)
+            self.assertEqual(m["tag"], "v1.2.3")
+            self.assertEqual(cli("--target", str(t)).returncode, 0)
+
+    def test_tag_missing_hits(self):
+        cfg = {**BASE, "version": {"canonical": "9.9.9"},
+               "release_tag": {"prefix": "v"}}
+        with tempfile.TemporaryDirectory() as td:
+            t = make_repo(Path(td), cfg, {"README.md": "x\n"})
+            _git_repo_with_tag(t, None)
+            m = self._metric(t)
+            self.assertEqual(m["hits"], 1)
+            self.assertEqual(m["detail"][0]["reason"], "missing_tag")
+            self.assertEqual(cli("--target", str(t)).returncode, 1)
+
+    def test_non_git_repo_fails_closed(self):
+        cfg = {**BASE, "version": {"canonical": "1.0.0"},
+               "release_tag": {}}
+        with tempfile.TemporaryDirectory() as td:
+            t = make_repo(Path(td), cfg, {"README.md": "x\n"})
+            m = self._metric(t)
+            self.assertEqual(m["hits"], 1)
+            self.assertEqual(m["detail"][0]["reason"], "not_a_git_repo")
+
+    def test_release_tag_without_version_fails_closed(self):
+        cfg = {**BASE, "release_tag": {}}
+        with tempfile.TemporaryDirectory() as td:
+            t = make_repo(Path(td), cfg, {"README.md": "x\n"})
+            _git_repo_with_tag(t, "v0.1.0")
+            m = self._metric(t)
+            self.assertEqual(m["hits"], 1)
+            self.assertEqual(m["detail"][0]["reason"], "no_canonical_version")
+
+    def test_custom_prefix(self):
+        cfg = {**BASE, "version": {"canonical": "2.0.0"},
+               "release_tag": {"prefix": "rel-"}}
+        with tempfile.TemporaryDirectory() as td:
+            t = make_repo(Path(td), cfg, {"README.md": "x\n"})
+            _git_repo_with_tag(t, "rel-2.0.0")
+            m = self._metric(t)
+            self.assertEqual(m["hits"], 0)
 
     def test_missing_config_is_na(self):
         with tempfile.TemporaryDirectory() as td:

@@ -2,6 +2,16 @@
 
 本项目版本遵循语义化版本（SemVer）。
 
+## [2.28.0] - 2026-11-25
+
+**决策依据（第一性原理）**：julia-dev v1.1.0→v1.10.13 共 20 个版本只作为 commit 存在、零 tag 零 Release，而人工补课后靠纪律记忆维持——「记得打 tag」与「版本号文本一致」是同类可判定事实，不该依赖人记得。缺失文件有 `required` 判据兜底、版本失步有 `version` 判据兜底，唯独「当前版本是否有对应发版标签」仍靠目测，这是第七个可判定盲区。判据落 spec_check 第七类，保持「通用判据归本仓库、使用者只配不建」的边界原则。
+
+- `scripts/spec_check.py` 新增第七类判据 `release_tag`（配置节 `release_tag`）：权威版本号（复用 `version` 判据的 canonical 解析，不新增第二版本源）必须已有对应 git tag，前缀可配（默认 `v`）；`release_tag: {}` 即启用默认前缀——按 key 存在性判定启用而非真值，避免空对象被误判 n/a。非 git 仓库 / 权威版本缺失 / git 不可用 / tag 不存在一律记命中（fail-closed），`git tag --list` 只读。
+- `tests/meta/test_spec_check.py` 19 → 25 条：tag 存在通过（exit 0）、tag 缺失命中、非 git 仓库 fail-closed、release_tag 无 version 节 fail-closed（no_canonical_version）、自定义前缀、缺配置 n/a。夹具 `_git_repo_with_tag` 建最小 git 仓（tag 必须指向 commit）。
+- `METHOD_VERSION` 2.27.0 → 2.28.0；`upgrade apply`（M4/M5/M7，approved_by `iczrac`，backup `20261125T084321Z-39f31dd4`）。
+- 首个使用者 julia-dev 接入 `release_tag` 配置：其发布纪律（tag+Release+zip+同步副本四件套）从 README 条款升级为机械判据——今后版本号改了而没打 tag，自查立即红。
+- 实测代价：初版用真值判断 `if not cfg.get("release_tag")` 致空对象配置被静默 n/a，被两条负向单测当场抓住（0 != 1），改按 key 存在性判定——教训同 v2.27.0：fail-closed 的判据先要保证自己的「启用语义」不被真值 falsy 坑。
+
 ## [2.27.0] - 2026-11-25
 
 **决策依据（第一性原理）**：上一轮已证明「同一概念多处声明」是三起真实缺陷的共同病根（成员旧名残留、多语言版本失步、链接路径漂移），而治理动作只是事后抓到。根治要把「概念唯一声明点」变成机器载体：声明文件里每个概念一条记录、一个稳定 id，改名史记入 aliases，其余位置只许引用 id——漂移从「靠走查发现」变为「判据必然命中」。判据落点经权衡：本仓库已有 `ontology.py`（把自身隐式本体收成派生契约，f(权威源) 语义），与本判据分工不同——后者面向任意仓库的**显式声明文件**做一致性验证，配置驱动、零领域知识，因此并入 spec_check 做第六类判据，而不是扩展 ontology.py。声明格式选 JSON 而非 YAML：spec_check 纪律第一条是零第三方依赖，PyYAML 不可引入；JSON 由 stdlib 解析，YAML 承载待依赖策略明确后再开放。
