@@ -14602,7 +14602,7 @@
   ],
   "governance_meta": {
     "schema_version": "1.0",
-    "method_version": "2.26.0",
+    "method_version": "2.27.0",
     "upgraded_from": "pre-1.0.0",
     "ledger_version": "1.0",
     "migrations_applied": [
@@ -15074,6 +15074,22 @@
         "risk": "medium",
         "assets_digest": "0778ea8f6fb8c14d",
         "board_skeleton": "b6f5d4583cca01c6"
+      },
+      {
+        "seq": 29,
+        "at": "2026-11-25T05:45:36Z",
+        "action": "apply",
+        "from": "2.26.0",
+        "to": "2.27.0",
+        "approved_by": "iczrac",
+        "migrations": [
+          "M4-method-version",
+          "M5-method-assets"
+        ],
+        "backup": "20261125T054536Z-1573d691",
+        "risk": "low",
+        "assets_digest": "66de7e14cade4c87",
+        "board_skeleton": "b6f5d4583cca01c6"
       }
     ],
     "tools": {
@@ -15093,7 +15109,7 @@
     },
     "method_assets": {
       "algorithm": "sha256-files-v1",
-      "digest": "0778ea8f6fb8c14d1e3ae333ef4bc7c71730424c372f894bebc45199996e5da0",
+      "digest": "66de7e14cade4c877f4347d1b9792473e78cc57f44028150630a32887c9fe054",
       "file_count": 114,
       "counts": {
         "experts": 9,

@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
-"""规范型仓库通用自查器：术语残留 / 版本一致 / 派生漂移 / 必备文件 / 链接解析。
+"""规范型仓库通用自查器：术语残留 / 版本一致 / 派生漂移 / 必备文件 / 链接解析 / 本体完整。
 
 第一性原理
 ----------
 规范型仓库（主体是 Markdown 规范、无代码符号可绑定的包）的错误从不先出现在
 运行时：它们先出现在文本里——改名漏了一处 CJK 相邻的旧名、三处版本号只同步了
 两处、生成物被手改而无人知、README 链接指向已删除的文件。这些错误可判定，就
-必须交给判据而不是靠人工走查的运气。本工具把五类判据做成通用、配置驱动：
+必须交给判据而不是靠人工走查的运气。本工具把六类判据做成通用、配置驱动：
 
   - forbidden_terms  术语残留：禁止词必须为零（ASCII 词自动按独立词匹配，
                      规避 `\\b` 把汉字当词符的假阴性教训——改用 ASCII 环视）；
@@ -14,7 +14,17 @@
   - generated        派生漂移：重建命令跑完后与快照逐字节比对，跑完即还原，
                      检查等效只读；
   - required         必备文件：声明存在的文件必须存在；
-  - links            链接解析：列出文档中的相对链接必须能落到真实文件。
+  - links            链接解析：列出文档中的相对链接必须能落到真实文件；
+  - ontology         本体完整：声明登记文件的 id 唯一、引用可解析（无孤儿）、
+                     别名不与任何现名冲突、路径映射落到真实文件。
+
+本体判据口径
+------------
+本体声明文件（`ontology.files`，JSON）是「概念唯一声明点」的机器载体：
+每个概念一条记录、一个稳定 id，改名史记入 aliases，其余位置只许引用 id。
+判据只验证一致性，不产生新事实；与 scripts/ontology.py 的分工：后者把
+ledger 自身隐式本体收成派生契约（f(权威源)），本判据面向任意仓库的显式
+声明文件，配置驱动、零领域知识。
 
 口径
 ----
@@ -238,6 +248,134 @@ def check_links(target: Path, cfg: dict) -> dict:
             "links_checked": checked, "detail": hits}
 
 
+ID_RE = re.compile(r"^[a-z][a-z0-9_-]*\.[a-z0-9_.-]+$")
+
+
+def _ontology_entries(target: Path, cfg: dict) -> tuple[list[tuple[str, str, dict]], list[dict]]:
+    """收集声明文件里的全部条目，返回 ([(file, collection, entry)], errors)。"""
+    spec = cfg.get("ontology", {})
+    entries: list[tuple[str, str, dict]] = []
+    errors: list[dict] = []
+    for pattern in spec.get("files", []):
+        for p in sorted(target.glob(pattern)):
+            if not p.is_file():
+                continue
+            rel = p.relative_to(target).as_posix()
+            try:
+                data = json.loads(p.read_text(encoding="utf-8"))
+            except (OSError, UnicodeDecodeError):
+                errors.append({"file": rel, "reason": "unreadable"})
+                continue
+            except ValueError as exc:
+                errors.append({"file": rel, "reason": "invalid_json", "msg": str(exc)[:200]})
+                continue
+            if not isinstance(data, dict):
+                errors.append({"file": rel, "reason": "top_level_not_object"})
+                continue
+            for coll, items in data.items():
+                if coll == "schema" or not isinstance(items, list):
+                    continue
+                for i, ent in enumerate(items):
+                    if not isinstance(ent, dict):
+                        errors.append({"file": rel, "collection": coll,
+                                       "index": i, "reason": "entry_not_object"})
+                        continue
+                    entries.append((rel, coll, ent))
+    return entries, errors
+
+
+def check_ontology(target: Path, cfg: dict) -> dict:
+    spec = cfg.get("ontology")
+    if not spec or not spec.get("files"):
+        return {"metric": "ontology_integrity", "applicable": False, "hits": 0}
+    hits: list[dict] = list()
+    entries, errors = _ontology_entries(target, cfg)
+    hits.extend(errors)
+    ids: dict[str, tuple[str, str]] = {}
+    for rel, coll, ent in entries:
+        ent_id = ent.get("id")
+        if not isinstance(ent_id, str) or not ID_RE.match(ent_id):
+            hits.append({"file": rel, "collection": coll, "reason": "missing_or_bad_id",
+                         "id": ent_id if isinstance(ent_id, str) else None})
+            continue
+        if ent_id in ids:
+            hits.append({"file": rel, "id": ent_id, "reason": "duplicate_id",
+                         "first_seen": f"{ids[ent_id][0]}#{ids[ent_id][1]}"})
+        else:
+            ids[ent_id] = (rel, coll)
+    # 现名与别名在同一 collection 内必须互不冲突（改名史唯一记录处）
+    names: dict[str, str] = {}
+    aliases: dict[str, str] = {}
+    for rel, coll, ent in entries:
+        name = ent.get("name")
+        if isinstance(name, str) and name:
+            key = f"{coll}:{name}"
+            if key in names:
+                hits.append({"file": rel, "collection": coll, "name": name,
+                             "reason": "duplicate_name"})
+            else:
+                names[key] = name
+        for alias in ent.get("aliases") or []:
+            if not isinstance(alias, str) or not alias:
+                continue
+            if alias == name:
+                hits.append({"file": rel, "id": ent.get("id"),
+                             "reason": "alias_equals_own_name", "alias": alias})
+            key = f"{coll}:{alias}"
+            if key in aliases:
+                hits.append({"file": rel, "alias": alias, "reason": "duplicate_alias",
+                             "first_seen": aliases[key]})
+            else:
+                aliases[key] = ent.get("id") or rel
+    for rel, coll, ent in entries:
+        name = ent.get("name")
+        if isinstance(name, str) and f"{coll}:{name}" in aliases:
+            hits.append({"file": rel, "id": ent.get("id"), "name": name,
+                         "reason": "name_collides_with_alias"})
+        for alias in ent.get("aliases") or []:
+            if isinstance(alias, str) and f"{coll}:{alias}" in names:
+                hits.append({"file": rel, "id": ent.get("id"), "alias": alias,
+                             "reason": "alias_collides_with_name"})
+    # 引用可解析：ref_fields 里的 id 形字符串必须落在已声明 id 集内（无孤儿）
+    ref_fields = spec.get("ref_fields", [])
+    for rel, coll, ent in entries:
+        for field in ref_fields:
+            val = ent.get(field)
+            if val is None:
+                continue
+            vals = val if isinstance(val, list) else [val]
+            for v in vals:
+                if not isinstance(v, str):
+                    continue
+                if not ID_RE.match(v):
+                    hits.append({"file": rel, "id": ent.get("id"), "field": field,
+                                 "ref": v, "reason": "malformed_ref"})
+                elif v not in ids:
+                    hits.append({"file": rel, "id": ent.get("id"), "field": field,
+                                 "ref": v, "reason": "unresolved_ref"})
+    # 路径映射：path_fields 里的非空字符串必须是真实存在的仓库相对路径
+    path_fields = spec.get("path_fields", [])
+    for rel, coll, ent in entries:
+        for field in path_fields:
+            val = ent.get(field)
+            if not isinstance(val, dict):
+                if val is not None:
+                    hits.append({"file": rel, "id": ent.get("id"), "field": field,
+                                 "reason": "mapping_not_object"})
+                continue
+            for plat, path in val.items():
+                if path is None:
+                    continue
+                if not isinstance(path, str) or not path:
+                    hits.append({"file": rel, "id": ent.get("id"), "field": field,
+                                 "platform": plat, "reason": "bad_mapping_value"})
+                elif not (target / path).exists():
+                    hits.append({"file": rel, "id": ent.get("id"), "field": field,
+                                 "platform": plat, "path": path, "reason": "missing_path"})
+    return {"metric": "ontology_integrity", "applicable": True, "hits": len(hits),
+            "entries": len(entries), "ids_declared": len(ids), "detail": hits}
+
+
 def run_check(target: Path, run_rebuild: bool = True) -> dict:
     cfg = _load_config(target)
     results = [
@@ -246,6 +384,7 @@ def run_check(target: Path, run_rebuild: bool = True) -> dict:
         check_generated(target, cfg, run_rebuild),
         check_required(target, cfg),
         check_links(target, cfg),
+        check_ontology(target, cfg),
     ]
     applicable = sum(1 for r in results if r["applicable"])
     hits = sum(r["hits"] for r in results if r["applicable"])

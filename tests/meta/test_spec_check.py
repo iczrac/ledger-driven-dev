@@ -1,4 +1,4 @@
-"""规范型仓库通用自查器：五类判据、0 与 n/a 口径、等效只读的负向证明。"""
+"""规范型仓库通用自查器：六类判据、0 与 n/a 口径、等效只读的负向证明。"""
 from __future__ import annotations
 MODULE_ID = "meta"
 
@@ -58,7 +58,7 @@ class SpecCheckCLITest(unittest.TestCase):
             self.assertEqual(d["schema"], "spec-check/1")
             self.assertTrue(d["ok"])
             self.assertEqual(d["applicable"], 0)
-            self.assertEqual(d["na"], 5)
+            self.assertEqual(d["na"], 6)
             for m in d["metrics"]:
                 self.assertFalse(m["applicable"])
 
@@ -208,6 +208,95 @@ class RequiredAndLinksTest(unittest.TestCase):
             links = [m for m in d["metrics"] if m["metric"] == "broken_links"][0]
             self.assertEqual(links["links_checked"], 0)
             self.assertEqual(links["hits"], 0)
+
+
+class OntologyIntegrityTest(unittest.TestCase):
+    """本体判据：id 唯一、引用可解析、别名不冲突、路径映射落真。"""
+
+    CFG = {**BASE, "ontology": {
+        "files": ["onto/*.json"],
+        "ref_fields": ["consumes", "members"],
+        "path_fields": ["platforms"],
+    }}
+
+    ACTORS = {
+        "schema": "julia-ledger-onto/0.1",
+        "actors": [
+            {"id": "actor.julia", "name": "Julia", "aliases": [], "kind": "lead",
+             "platforms": {"claude-code": "agents/lead.md"}},
+            {"id": "actor.remy", "name": "Remy", "aliases": ["Mike"], "kind": "specialist",
+             "platforms": {"claude-code": "agents/remy.md", "hermes": None},
+             "consumes": ["actor.julia"]},
+        ],
+    }
+
+    def _metric(self, target):
+        d = json.loads(cli("--target", str(target), "--json").stdout)
+        return [m for m in d["metrics"] if m["metric"] == "ontology_integrity"][0]
+
+    def test_good_registry_passes_exit_0(self):
+        with tempfile.TemporaryDirectory() as td:
+            t = make_repo(Path(td), self.CFG, {
+                "onto/actors.json": json.dumps(self.ACTORS, ensure_ascii=False),
+                "agents/lead.md": "x\n", "agents/remy.md": "x\n",
+            })
+            m = self._metric(t)
+            self.assertTrue(m["applicable"])
+            self.assertEqual(m["hits"], 0, f"detail={m.get('detail')}")
+            self.assertEqual(m["ids_declared"], 2)
+            self.assertEqual(cli("--target", str(t)).returncode, 0)
+
+    def test_duplicate_id_and_unresolved_ref(self):
+        actors = {"actors": [
+            {"id": "actor.a", "name": "A"},
+            {"id": "actor.a", "name": "A2"},
+            {"id": "actor.b", "name": "B", "members": ["actor.ghost"]},
+        ]}
+        with tempfile.TemporaryDirectory() as td:
+            t = make_repo(Path(td), self.CFG,
+                          {"onto/actors.json": json.dumps(actors)})
+            m = self._metric(t)
+            reasons = {x["reason"] for x in m["detail"]}
+            self.assertIn("duplicate_id", reasons)
+            self.assertIn("unresolved_ref", reasons)
+            self.assertEqual(cli("--target", str(t)).returncode, 1)
+
+    def test_alias_collides_with_existing_name(self):
+        # 核心场景：改名后旧名若仍被另一角色占用，必须命中
+        actors = {"actors": [
+            {"id": "actor.x", "name": "Mark", "aliases": ["Rick"]},
+            {"id": "actor.y", "name": "Rick"},
+        ]}
+        with tempfile.TemporaryDirectory() as td:
+            t = make_repo(Path(td), self.CFG,
+                          {"onto/actors.json": json.dumps(actors)})
+            m = self._metric(t)
+            reasons = {x["reason"] for x in m["detail"]}
+            self.assertIn("alias_collides_with_name", reasons)
+            self.assertEqual(cli("--target", str(t)).returncode, 1)
+
+    def test_platform_mapping_missing_path(self):
+        actors = {"actors": [{"id": "actor.a", "name": "A",
+                              "platforms": {"claude-code": "agents/nope.md"}}]}
+        with tempfile.TemporaryDirectory() as td:
+            t = make_repo(Path(td), self.CFG,
+                          {"onto/actors.json": json.dumps(actors)})
+            m = self._metric(t)
+            self.assertEqual(m["hits"], 1)
+            self.assertEqual(m["detail"][0]["reason"], "missing_path")
+
+    def test_invalid_json_fails_closed(self):
+        with tempfile.TemporaryDirectory() as td:
+            t = make_repo(Path(td), self.CFG, {"onto/actors.json": "{broken"})
+            m = self._metric(t)
+            self.assertEqual(m["hits"], 1)
+            self.assertEqual(m["detail"][0]["reason"], "invalid_json")
+
+    def test_missing_config_is_na(self):
+        with tempfile.TemporaryDirectory() as td:
+            t = make_repo(Path(td), dict(BASE), {"README.md": "x\n"})
+            m = self._metric(t)
+            self.assertFalse(m["applicable"])
 
 
 if __name__ == "__main__":
