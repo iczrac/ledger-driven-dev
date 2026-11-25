@@ -135,3 +135,51 @@ class DiscoveryTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class SpecRepoDiscoveryTest(unittest.TestCase):
+    """v2.29.0 spec-repo 模式：文档型仓库以 SKILL.md/agents 为能力点候选。"""
+
+    def _discover(self, files):
+        root = make_project(files)
+        return discover(root)
+
+    def test_spec_repo_detected_and_modules_built(self):
+        d = self._discover({
+            "README.md": "# 规范仓库\n",
+            "plugin.json": '{"version": "1.0.0"}',
+            "scripts/build_dist.py": "print('x')\n",
+            "agents/remy.md": "# Remy\n",
+            "agents/lead.md": "# Julia\n",
+            "skills/deep-diff-review/SKILL.md": "# 深查\n",
+            "skills/ledger-bridge/SKILL.md": "# 桥\n",
+        })
+        self.assertEqual(d["_discovery"]["source"], "filesystem-only/spec-repo")
+        codes = {m["code"] for m in d["modules"]}
+        self.assertIn("TEAM", codes)
+        self.assertIn("SKILLS", codes)
+        self.assertIn("INFRA", codes)
+        skills = [m for m in d["modules"] if m["code"] == "SKILLS"][0]
+        domains = {c["domain"] for c in skills["caps"]}
+        self.assertIn("DEEPDIFFREVIEW", domains)
+        self.assertIn("LEDGERBRIDGE", domains)
+        team = [m for m in d["modules"] if m["code"] == "TEAM"][0]
+        self.assertEqual({c["domain"] for c in team["caps"]}, {"REMY", "LEAD"})
+
+    def test_code_repo_not_misdetected(self):
+        d = self._discover({
+            "README.md": "# app\n",
+            "src/core/order.py": "class Order:\n",
+            "src/core/pay.py": "def pay():\n",
+            "tests/test_order.py": "pass\n",
+        })
+        self.assertEqual(d["_discovery"]["source"], "filesystem-only")
+        self.assertNotIn("TEAM", {m["code"] for m in d["modules"]})
+
+    def test_spec_mode_confidence_medium(self):
+        d = self._discover({
+            "agents/remy.md": "# R\n",
+            "skills/bridge/SKILL.md": "# B\n",
+        })
+        self.assertEqual(d["_discovery"]["confidence"], "medium")
+        self.assertGreaterEqual(d["_discovery"]["candidate_caps"], 2)

@@ -58,7 +58,7 @@ class SpecCheckCLITest(unittest.TestCase):
             self.assertEqual(d["schema"], "spec-check/1")
             self.assertTrue(d["ok"])
             self.assertEqual(d["applicable"], 0)
-            self.assertEqual(d["na"], 7)
+            self.assertEqual(d["na"], 8)
             for m in d["metrics"]:
                 self.assertFalse(m["applicable"])
 
@@ -367,6 +367,65 @@ class ReleaseTagTest(unittest.TestCase):
             _git_repo_with_tag(t, "rel-2.0.0")
             m = self._metric(t)
             self.assertEqual(m["hits"], 0)
+
+    def test_missing_config_is_na(self):
+        with tempfile.TemporaryDirectory() as td:
+            t = make_repo(Path(td), dict(BASE), {"README.md": "x\n"})
+            m = self._metric(t)
+            self.assertFalse(m["applicable"])
+
+
+class CompatAnchorTest(unittest.TestCase):
+    """组合锚判据：兄弟仓版本必须满足 min_version；缺仓/坏配置/不可读 fail-closed。"""
+
+    def _metric(self, target):
+        d = json.loads(cli("--target", str(target), "--json").stdout)
+        return [m for m in d["metrics"] if m["metric"] == "compat"][0]
+
+    def _cfg(self, anchors):
+        return {**BASE, "compat": {"anchors": anchors}}
+
+    def test_anchor_satisfied_passes_exit_0(self):
+        cfg = self._cfg([{"repo": "sibling", "min_version": "2.28.0",
+                          "version_source": {"file": "scripts/upgrade.py",
+                                             "regex": r'METHOD_VERSION = "([0-9][\w.]*)"'}}])
+        with tempfile.TemporaryDirectory() as td:
+            t = make_repo(Path(td), cfg, {})
+            (t / "sibling" / "scripts").mkdir(parents=True)
+            (t / "sibling" / "scripts" / "upgrade.py").write_text(
+                'METHOD_VERSION = "2.29.0"\n', encoding="utf-8")
+            m = self._metric(t)
+            self.assertEqual(m["hits"], 0)
+            self.assertEqual(m["anchors_checked"], 1)
+            self.assertEqual(cli("--target", str(t)).returncode, 0)
+
+    def test_version_below_anchor_hits(self):
+        cfg = self._cfg([{"repo": "sibling", "min_version": "3.0.0",
+                          "version_source": {"file": "v.json", "json_key": "version"}}])
+        with tempfile.TemporaryDirectory() as td:
+            t = make_repo(Path(td), cfg, {})
+            (t / "sibling").mkdir()
+            (t / "sibling" / "v.json").write_text('{"version": "2.29.0"}', encoding="utf-8")
+            m = self._metric(t)
+            self.assertEqual(m["hits"], 1)
+            self.assertEqual(m["detail"][0]["reason"], "version_below_anchor")
+
+    def test_repo_missing_and_bad_config_fail_closed(self):
+        cfg = self._cfg([
+            {"repo": "nowhere", "min_version": "1.0.0",
+             "version_source": {"file": "v.json", "json_key": "version"}},
+            {"repo": "sibling", "min_version": "1.0.0", "version_source": {"file": "v.json"}},
+        ])
+        with tempfile.TemporaryDirectory() as td:
+            t = make_repo(Path(td), cfg, {})
+            (t / "sibling").mkdir()
+            reasons = set()
+            for d in (cli("--target", str(t), "--json").stdout,):
+                m = [x for x in json.loads(d)["metrics"] if x["metric"] == "compat"][0]
+                reasons = {x["reason"] for x in m["detail"]}
+            self.assertIn("repo_missing", reasons)
+            self.assertIn("bad_config", reasons)
+            self.assertEqual(cli("--target", str(t)).returncode, 1)
 
     def test_missing_config_is_na(self):
         with tempfile.TemporaryDirectory() as td:

@@ -18,7 +18,9 @@
   - ontology         本体完整：声明登记文件的 id 唯一、引用可解析（无孤儿）、
                      别名不与任何现名冲突、路径映射落到真实文件；
   - release_tag      发版标签：权威版本号必须已有对应 git tag（v 前缀可配），
-                     非目测「发没发版」。
+                     非目测「发没发版」；
+  - compat           组合锚：声明的兄弟仓版本必须满足 min_version（semver 比较），
+                     组合兼容从人脑对照变为机械校验。
 
 本体判据口径
 ------------
@@ -422,6 +424,76 @@ def check_release_tag(target: Path, cfg: dict) -> dict:
             "detail": [{"reason": "missing_tag", "tag": want}]}
 
 
+def _semver_key(v: str) -> tuple:
+    parts = []
+    for p in v.split("."):
+        parts.append(int(p) if p.isdigit() else p)
+    return tuple(parts)
+
+
+def _read_version_source(target: Path, base: Path, src: dict) -> str | None:
+    """从 src.file（相对 base）读版本：json_key 逐层取值或 regex 第一捕获组。"""
+    p = base / src["file"]
+    text = p.read_text(encoding="utf-8")
+    if "json_key" in src:
+        data = json.loads(text)
+        for key in src["json_key"].split("."):
+            data = data[key]
+        return str(data)
+    m = re.search(src["regex"], text)
+    return m.group(1) if m else None
+
+
+def check_compat(target: Path, cfg: dict) -> dict:
+    """组合锚判据：声明的兄弟仓版本必须 >= min_version。
+
+    只读兄弟仓文件；repo 缺失 / 版本源非法 / 版本不可读 / semver 解析失败 /
+    版本低于锚——一律记命中，不静默放行（fail-closed）。
+    """
+    spec = cfg.get("compat")
+    if spec is None:
+        return {"metric": "compat", "applicable": False, "hits": 0}
+    anchors = spec.get("anchors")
+    if not anchors:
+        return {"metric": "compat", "applicable": True, "hits": 1,
+                "detail": [{"reason": "bad_config",
+                            "msg": "compat 配置缺 anchors"}]}
+    hits: list[dict] = []
+    checked = 0
+    for a in anchors:
+        repo = target / a.get("repo", "")
+        if not repo.is_dir():
+            hits.append({"reason": "repo_missing", "repo": a.get("repo")})
+            continue
+        src = a.get("version_source") or {}
+        if not src.get("file") or ("json_key" not in src and "regex" not in src):
+            hits.append({"reason": "bad_config", "repo": a.get("repo"),
+                         "msg": "version_source 需 file+json_key 或 file+regex"})
+            continue
+        try:
+            found = _read_version_source(target, repo, src)
+        except (OSError, KeyError, ValueError, re.error, IndexError) as exc:
+            hits.append({"reason": "version_unreadable", "repo": a.get("repo"),
+                         "file": src["file"], "msg": str(exc)[:120]})
+            continue
+        if not found:
+            hits.append({"reason": "version_not_found", "repo": a.get("repo"),
+                         "file": src["file"]})
+            continue
+        checked += 1
+        try:
+            low = _semver_key(a["min_version"]) <= _semver_key(found)
+        except (TypeError, AttributeError):
+            hits.append({"reason": "version_unparsable", "repo": a.get("repo"),
+                         "found": found, "min": a.get("min_version")})
+            continue
+        if not low:
+            hits.append({"reason": "version_below_anchor", "repo": a.get("repo"),
+                         "found": found, "min": a["min_version"]})
+    return {"metric": "compat", "applicable": True, "hits": len(hits),
+            "anchors_checked": checked, "detail": hits}
+
+
 def run_check(target: Path, run_rebuild: bool = True) -> dict:
     cfg = _load_config(target)
     results = [
@@ -432,6 +504,7 @@ def run_check(target: Path, run_rebuild: bool = True) -> dict:
         check_links(target, cfg),
         check_ontology(target, cfg),
         check_release_tag(target, cfg),
+        check_compat(target, cfg),
     ]
     applicable = sum(1 for r in results if r["applicable"])
     hits = sum(r["hits"] for r in results if r["applicable"])

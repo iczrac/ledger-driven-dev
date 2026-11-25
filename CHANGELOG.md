@@ -2,6 +2,17 @@
 
 本项目版本遵循语义化版本（SemVer）。
 
+## [2.29.0] - 2026-11-25
+
+**决策依据（第一性原理）**：多项目独立开发、组合使用（CapabilityForge 双仓为首个实例）暴露三类组合层摩擦——①两仓 8+ 个 schema 各自声明、关系靠散文与记忆；②组合兼容（julia v1.10.14 × ledger v2.28.0）靠人脑对照；③文档型仓库（julia-dev 主体为 SKILL.md/agents）在代码型发现器下产不出有意义的草稿。三者同为「组合治理」主题，同版落地：schema 登记本体统管表达与转译、compat 判据统管兼容、discover spec-repo 模式统管文档资产接入。登记本体取薄形态：只声明接口面（id/owner/version/fields/consumers/translates_to），不复制语义细节，校验复用既有 ontology_integrity 判据——零新校验器。
+
+- **schema 登记本体**：新增 `governance/onto/schemas.json`（schema-registry/1），登记两仓全部 10 个结构化契约（spec-check/1、julia-ledger-onto/0.1、ledger-test-report/1、node-test-results/1、registry/2、acceptance/1、access/1、goals/1、maturity-analytics/1、登记格式自身）；转译边 `translates_to` 由 spec_check `ontology_integrity` 的 ref_fields 机制校验，**无新判据代码**。新增 `tests/meta/test_schema_registry.py`（4 条）：全登记零命中、每个 schema 串在其声明文件中真实存在（防登记漂移）、坏引用命中、重复 id 命中。
+- **spec_check 第八判据 `compat`**（配置节 `compat.anchors`）：每锚声明兄弟仓相对路径 + 版本源（file+json_key 或 file+regex）+ min_version，semver 比较机械校验；repo 缺失/坏配置/版本不可读/解析失败/低于锚——一律 fail-closed。启用按 key 存在性判定（沿用 v2.28.0 教训）。测试 25 → 29 条；空配置 n/a 7 → 8。
+- **discover_project spec-repo 模式**：识别规则＝代码文件占比 ≤25%（或绝对值 ≤3）且存在 SKILL.md / agents/*.md 结构化标记；命中后以文档结构为能力点候选——TEAM（agents）、SKILLS（SKILL.md）、INFRA（残余源码）三模块产草稿，仍只读、人工确认制不变。测试 11 → 14 条（正反向：文档仓命中、代码仓不误判、置信度）。
+- **组合治理约定**（README 边界节）：组合锚在消费方 spec_check.json 声明；联合链跑通双方账本各记 evidence（category=组合锚），互为对照不设中央事实源；全部契约登记进 schemas.json。
+- `METHOD_VERSION` 2.28.0 → 2.29.0；`upgrade apply`（approved_by `iczrac`，backup `20261125T112409Z-61b58853`）；单测 584 → 598（+14）；check.sh 17 节全绿（69 PASS，目标版本 2.29.0）。
+- 实测代价：发现器适配初版把 spec 分支的 `warnings.append` 放在 `warnings` 初始化之前，UnboundLocalError 被自有单测当场抓住——教训与 v2.27.0/v2.28.0 同款：新分支的变量生命周期必须先于其使用。
+
 ## [2.28.0] - 2026-11-25
 
 **决策依据（第一性原理）**：julia-dev v1.1.0→v1.10.13 共 20 个版本只作为 commit 存在、零 tag 零 Release，而人工补课后靠纪律记忆维持——「记得打 tag」与「版本号文本一致」是同类可判定事实，不该依赖人记得。缺失文件有 `required` 判据兜底、版本失步有 `version` 判据兜底，唯独「当前版本是否有对应发版标签」仍靠目测，这是第七个可判定盲区。判据落 spec_check 第七类，保持「通用判据归本仓库、使用者只配不建」的边界原则。

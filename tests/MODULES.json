@@ -99,7 +99,8 @@
         "tests/meta/test_ontology.py",
         "tests/meta/test_platform_contract.py",
         "tests/meta/test_upgrade.py",
-        "tests/meta/test_spec_check.py"
+        "tests/meta/test_spec_check.py",
+        "tests/meta/test_schema_registry.py"
       ]
     },
     {

@@ -61,6 +61,63 @@ def _module_root(rel: str) -> str:
     return parts[0] if len(parts) > 1 else "."
 
 
+SPEC_REPO_MAX_CODE_RATIO = 0.25
+
+
+def _detect_spec_repo(collected: list[str], counts: dict,
+                      source_files: list[str]) -> tuple[bool, list[str], list[str]]:
+    """规范型仓库识别：少代码多文档 + 结构化标记（SKILL.md / agents/*.md）。
+
+    v2.29.0：代码型发现器对 SKILL.md/agents 文档型仓库产不出有意义的草稿
+    （此前 julia 类仓库只能得到空骨架）。识别为 spec-repo 后改以文档结构
+    为能力点候选——判据：代码文件占比低（<= 25% 或绝对值极少）且存在标记。
+    """
+    skill_files = [p for p in collected
+                   if p.endswith("SKILL.md") and not TEST_RE.search("/" + p)]
+    agent_files = [p for p in collected
+                   if p.startswith("agents/") and p.endswith(".md")]
+    total = max(counts["scanned"], 1)
+    low_code = (len(source_files) <= 3
+                or len(source_files) / total <= SPEC_REPO_MAX_CODE_RATIO)
+    marked = bool(skill_files or agent_files)
+    return (low_code and marked, skill_files, agent_files)
+
+
+def _cap_from_file(rel: str, used: set[str]) -> dict:
+    stem = Path(rel).stem if not rel.endswith("SKILL.md") else Path(rel).parent.name
+    domain = sanitize_code(stem, "ITEM")
+    if domain in used:
+        domain = f"{domain}{len(used) + 1:02d}"
+    used.add(domain)
+    return {"name": stem.replace("_", " ").replace("-", " ").strip().title() or stem,
+            "domain": domain, "impl": [rel],
+            "hints": [stem.lower()]}
+
+
+def _spec_repo_modules(skill_files: list[str], agent_files: list[str],
+                       source_files: list[str], max_caps: int) -> list[dict]:
+    """spec-repo 草稿：TEAM=agents、SKILLS=SKILL.md、INFRA=残余源码。"""
+    modules: list[dict] = []
+    if agent_files:
+        used: set[str] = set()
+        caps = [_cap_from_file(rel, used) for rel in sorted(agent_files)][:max_caps]
+        modules.append({"code": "TEAM", "name": "专家团队", "src": ["agents/"], "caps": caps})
+    if skill_files:
+        used: set[str] = set()
+        caps = [_cap_from_file(rel, used) for rel in sorted(skill_files)][:max_caps]
+        modules.append({"code": "SKILLS", "name": "技能", "src": ["skills/"], "caps": caps})
+    residual = [p for p in source_files
+                if p not in ("agents/",) and not p.startswith("agents/")
+                and "/skills/" not in f"/{p}"]
+    if residual:
+        used: set[str] = set()
+        caps = [_cap_from_file(rel, used) for rel in sorted(residual)][:max_caps]
+        modules.append({"code": "INFRA", "name": "基建脚本", "src": ["scripts/"], "caps": caps})
+    if not modules:
+        modules.append({"code": "CORE", "name": "核心能力", "src": [], "caps": []})
+    return modules
+
+
 def discover(target: Path, max_files: int = 3000, max_caps: int = 8) -> dict:
     """只读扫描并返回草稿 dict。target 必须是项目根目录。"""
     collected: list[str] = []
@@ -97,11 +154,19 @@ def discover(target: Path, max_files: int = 3000, max_caps: int = 8) -> dict:
         p for p in collected
         if Path(p).suffix.lower() in SOURCE_EXTS and not TEST_RE.search("/" + p)
     ]
-    groups: dict[str, list[str]] = {}
-    for rel in source_files:
-        groups.setdefault(_module_root(rel), []).append(rel)
 
     warnings: list[str] = []
+    spec_mode, skill_files, agent_files = _detect_spec_repo(
+        collected, counts, source_files)
+    if spec_mode:
+        modules = _spec_repo_modules(skill_files, agent_files, source_files, max_caps)
+        warnings.append("规范型仓库模式：能力点候选来自 SKILL.md/agents 文档结构，"
+                        "编码与分域需人工确认（draft 仅供采纳起点）。")
+    else:
+        groups: dict[str, list[str]] = {}
+        for rel in source_files:
+            groups.setdefault(_module_root(rel), []).append(rel)
+
     if counts["truncated"]:
         warnings.append(f"扫描在 {max_files} 个文件处截断，草稿可能不完整。")
     if not source_files:
@@ -111,55 +176,58 @@ def discover(target: Path, max_files: int = 3000, max_caps: int = 8) -> dict:
     if not counts["doc"]:
         warnings.append("未发现文档文件；文档索引预计为空。")
 
-    modules: list[dict] = []
-    used_codes: set[str] = set()
-    for group in sorted(groups):
-        paths = sorted(groups[group])
-        leaf = Path(group).name if group != "." else target.name
-        base_code = sanitize_code(leaf, "CORE")
-        code = base_code
-        n = 2
-        while code in used_codes:
-            code = f"{base_code}{n:02d}"
-            n += 1
-        used_codes.add(code)
+    if not spec_mode:
+        modules = []
+        used_codes: set[str] = set()
+        for group in sorted(groups):
+            paths = sorted(groups[group])
+            leaf = Path(group).name if group != "." else target.name
+            base_code = sanitize_code(leaf, "CORE")
+            code = base_code
+            n = 2
+            while code in used_codes:
+                code = f"{base_code}{n:02d}"
+                n += 1
+            used_codes.add(code)
 
-        caps: list[dict] = []
-        used_domains: set[str] = set()
-        for rel in paths[:max_caps]:
-            stem = Path(rel).stem
-            domain = sanitize_code(stem, "ITEM")
-            if domain in used_domains:
-                domain = f"{domain}{len(used_domains) + 1:02d}"
-            used_domains.add(domain)
-            caps.append({
-                "name": stem.replace("_", " ").strip().title() or stem,
-                "domain": domain,
-                "impl": [rel],
-                "hints": [stem.lower(), leaf.lower()],
+            caps: list[dict] = []
+            used_domains: set[str] = set()
+            for rel in paths[:max_caps]:
+                stem = Path(rel).stem
+                domain = sanitize_code(stem, "ITEM")
+                if domain in used_domains:
+                    domain = f"{domain}{len(used_domains) + 1:02d}"
+                used_domains.add(domain)
+                caps.append({
+                    "name": stem.replace("_", " ").strip().title() or stem,
+                    "domain": domain,
+                    "impl": [rel],
+                    "hints": [stem.lower(), leaf.lower()],
+                })
+            if len(paths) > max_caps:
+                warnings.append(f"{group} 发现 {len(paths)} 个源码文件，草稿只取前 {max_caps} 个。")
+            modules.append({
+                "code": code,
+                "name": leaf.replace("_", " ").strip().title() or leaf,
+                "src": [group.rstrip("/") + "/"],
+                "caps": caps,
             })
-        if len(paths) > max_caps:
-            warnings.append(f"{group} 发现 {len(paths)} 个源码文件，草稿只取前 {max_caps} 个。")
-        modules.append({
-            "code": code,
-            "name": leaf.replace("_", " ").strip().title() or leaf,
-            "src": [group.rstrip("/") + "/"],
-            "caps": caps,
-        })
 
-    if not modules:
-        modules.append({"code": "CORE", "name": "核心能力", "src": [], "caps": []})
+        if not modules:
+            modules.append({"code": "CORE", "name": "核心能力", "src": [], "caps": []})
 
     draft = {
         "_comment": "只读发现的草稿：需人工确认与精简，再复制为 governance/registry.json。",
         "_discovery": {
             "schema": SCHEMA,
-            "source": "filesystem-only",
+            "source": "filesystem-only/spec-repo" if spec_mode else "filesystem-only",
             "counts": counts,
             "warnings": warnings,
             "candidate_modules": len(modules),
             "candidate_caps": sum(len(m["caps"]) for m in modules),
-            "confidence": "medium" if source_files and counts["test"] else "low",
+            "confidence": ("medium" if sum(len(m["caps"]) for m in modules) else "low")
+                          if spec_mode else
+                          ("medium" if source_files and counts["test"] else "low"),
         },
         "project": {
             "code": "NEWPROJ",

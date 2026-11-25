@@ -1,0 +1,106 @@
+{
+  "schema": "schema-registry/1",
+  "_comment": "schema 登记本体：两仓全部结构化契约的唯一登记处（真相与规则归 ledger 侧）。每条只声明接口面（id/owner/version/fields/consumers/translates_to），不复制语义细节；各 schema 的真相仍在各自文件。translates_to 方向语义：仅表示『存在已声明的映射或消费关系』，不代表数据流向；边必须指向本登记处已声明的 id（由 spec_check ontology_integrity 的 ref_fields 机械校验，负向证明见 tests/meta/test_schema_registry.py）。consumers 为自由文本（指向本登记处之外的仓/工具时不做引用校验）。file 只填本仓内真实存在的路径，外部契约用 external_file。",
+  "schemas": [
+    {
+      "id": "schema.schema-registry",
+      "name": "schema-registry",
+      "version": "1",
+      "owner": "ledger-driven-dev",
+      "file": "governance/onto/schemas.json",
+      "fields": ["schema", "schemas", "id", "name", "version", "owner", "file", "external_file", "fields", "consumers", "translates_to"],
+      "consumers": ["spec_check", "julia-dev-squad", "ledger-driven-dev"],
+      "translates_to": []
+    },
+    {
+      "id": "schema.spec-check",
+      "name": "spec-check",
+      "version": "1",
+      "owner": "ledger-driven-dev",
+      "file": "scripts/spec_check.py",
+      "fields": ["schema", "scan", "forbidden_terms", "version", "generated", "required", "ontology", "links", "release_tag", "compat"],
+      "consumers": ["julia-dev-squad", "spec_check 自查"],
+      "translates_to": ["schema.julia-ledger-onto"]
+    },
+    {
+      "id": "schema.julia-ledger-onto",
+      "name": "julia-ledger-onto",
+      "version": "0.1",
+      "owner": "julia-dev-squad",
+      "external_file": "julia-dev-squad/onto/actors.json",
+      "fields": ["schema", "actors", "id", "name", "aliases", "kind", "platforms", "consumes", "members", "gates", "depends"],
+      "consumers": ["spec_check ontology_integrity"],
+      "translates_to": ["schema.spec-check"]
+    },
+    {
+      "id": "schema.ledger-test-report",
+      "name": "ledger-test-report",
+      "version": "1",
+      "owner": "ledger-driven-dev",
+      "file": "governance/test_report.json",
+      "fields": ["schema", "label", "generated_at", "cases", "source_binding"],
+      "consumers": ["build_capability_model", "work_panel"],
+      "translates_to": ["schema.node-test-results"]
+    },
+    {
+      "id": "schema.node-test-results",
+      "name": "node-test-results",
+      "version": "1",
+      "owner": "ledger-driven-dev",
+      "file": "governance/DECISION_LEDGER.json",
+      "fields": ["schema", "source", "source_sha256", "overall", "summary", "cases"],
+      "consumers": ["账本看板", "build_capability_model"],
+      "translates_to": ["schema.ledger-test-report"]
+    },
+    {
+      "id": "schema.registry-2",
+      "name": "registry",
+      "version": "2",
+      "owner": "ledger-driven-dev",
+      "file": "templates/registry_codec.py",
+      "fields": ["project", "modules", "caps", "code", "level", "evidence"],
+      "consumers": ["build_capability_model", "init_project", "discover_project"],
+      "translates_to": []
+    },
+    {
+      "id": "schema.acceptance",
+      "name": "acceptance",
+      "version": "1",
+      "owner": "ledger-driven-dev",
+      "file": "scripts/acceptance.py",
+      "fields": ["schema", "target_version", "scope", "invariants"],
+      "consumers": ["check.sh", "upgrade.py"],
+      "translates_to": ["schema.registry-2"]
+    },
+    {
+      "id": "schema.access",
+      "name": "access",
+      "version": "1",
+      "owner": "ledger-driven-dev",
+      "file": "governance/DECISION_LEDGER.json",
+      "fields": ["schema", "revision", "agents", "leases", "audit"],
+      "consumers": ["verify_ledger"],
+      "translates_to": []
+    },
+    {
+      "id": "schema.goals",
+      "name": "goals",
+      "version": "1",
+      "owner": "ledger-driven-dev",
+      "file": "governance/DECISION_LEDGER.json",
+      "fields": ["schema", "items"],
+      "consumers": ["goal_ledger", "verify_ledger"],
+      "translates_to": []
+    },
+    {
+      "id": "schema.maturity-analytics",
+      "name": "maturity-analytics",
+      "version": "1",
+      "owner": "ledger-driven-dev",
+      "file": "templates/build_capability_model.py",
+      "fields": ["schema", "purpose", "levels", "maturity", "series"],
+      "consumers": ["账本看板"],
+      "translates_to": ["schema.registry-2"]
+    }
+  ]
+}
