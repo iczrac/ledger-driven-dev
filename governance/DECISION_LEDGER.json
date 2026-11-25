@@ -294,6 +294,23 @@
         "tests/core/test_runtime_signals.py"
       ],
       "confidence": "high"
+    },
+    {
+      "id": "D-015",
+      "date": "2026-11-25",
+      "title": "组合治理落地：julia-dev-squad 以锚声明接入账本体系",
+      "category": "组合协同",
+      "scope": "JULIA",
+      "status": "done",
+      "supersedes": null,
+      "decision": "执行层 julia-dev-squad v1.10.15 以 adopt 模式接入账本（31 能力点：11 成员九域+19 技能+INFRA.DIST.01），并在其 spec_check.json 声明组合锚：本仓 METHOD_VERSION >= 2.29.0 为兼容约束，由 compat 判据机械校验。联合验收证据：julia 侧包装套件 14/14 通过（八判据全绿+锚校验），两仓账本各记一条（本条与 julia D-002）。",
+      "rationale": "组合治理=契约治理（联邦模型拍板）：各仓管好自己的真相，模块间只用契约说话，兼容锚由消费方声明。文档资产 verified⟺符号级绑定的模型边界在 julia 接入中实证，per-skill 可执行契约列为 julia WI-001 演进项。",
+      "evidence": [
+        "scripts/spec_check.py",
+        "scripts/discover_project.py",
+        "governance/onto/schemas.json"
+      ],
+      "confidence": "high"
     }
   ],
   "history": {
