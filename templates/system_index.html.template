@@ -45,6 +45,8 @@ footer{margin-top:34px;border-top:1px solid var(--line);padding-top:14px;font-si
 .backdrop{position:fixed;inset:0;background:rgba(0,0,0,.3);z-index:20}
 .drawer{position:fixed;top:0;right:0;bottom:0;width:min(760px,94vw);background:#fff;z-index:21;overflow:auto;padding:24px 26px 56px;box-shadow:-10px 0 30px rgba(0,0,0,.15)}
 .drawer h2{margin:0 0 4px}.drawer h3{margin:18px 0 8px}.close{float:right;border:1px solid var(--line);background:#fff;border-radius:8px;padding:4px 10px;cursor:pointer;color:var(--mut)}
+.drawer-bar{position:sticky;top:-24px;background:#fff;padding:0 0 10px;margin:0 0 4px;border-bottom:1px solid var(--line);z-index:2;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.drawer-bar input{flex:1;min-width:180px}.mode-novice .stat{cursor:default}
 .section{border-top:1px solid var(--line);margin-top:16px;padding-top:6px}
 </style>
 </head>
@@ -78,7 +80,7 @@ footer{margin-top:34px;border-top:1px solid var(--line);padding-top:14px;font-si
   <section id="view-sources" hidden></section>
 </main>
 <div class="backdrop" id="backdrop" hidden></div>
-<aside class="drawer" id="drawer" aria-label="项目级账本" hidden><div id="drawer-body"></div></aside>
+<aside class="drawer" id="drawer" aria-label="项目级账本" hidden><div class="drawer-bar" id="drawer-bar"></div><div id="drawer-body"></div></aside>
 <footer id="foot"></footer>
 <script>
 const SYSTEM_DATA = /*SYSTEM*/;
@@ -174,31 +176,53 @@ function renderSources(){const d=DATA.meta||{},rows=DATA.projects.map(p=>'<tr><t
     '<table><thead><tr><th>项目码</th><th>名称</th><th>账本</th><th>看板</th><th>版本</th>'+(mode==='expert'?'<th>事件数</th>':'')+'</tr></thead><tbody>'+rows+'</tbody></table>'+
     '<div class="hint">重生成：<code>python3 ledger-driven-dev/scripts/build_system_board.py --system-root .. --apply</code> · 校验：<code>... check</code></div>';}
 function projectByDir(dir){return (DATA.projects||[]).find(p=>p.dir===dir);}
-function renderDrill(p){const d=p.detail||{},h=d.health||{},dims=h.health_dimensions||{};
-  const caps=(p.modules||[]).reduce((a,m)=>a.concat(m.caps||[]),[]),v=caps.filter(c=>c.evidence_tier==='verified').length;
-  const decisions=(d.decisions||[]).map(e=>'<tr><td>'+esc(e.id)+'</td><td>'+esc(e.date||'—')+'</td><td>'+esc(e.title||'—')+'</td><td>'+esc(e.status||'—')+'</td><td>'+esc(e.decision||'—')+'</td></tr>').join('');
-  const works=(d.work_items||[]).map(w=>'<tr><td>'+esc(w.id)+'</td><td>'+esc(w.status||'—')+'</td><td>'+esc(w.severity||'—')+'</td><td>'+esc(w.title||'—')+'</td><td>'+esc(w.scope||'—')+'</td><td>'+esc(w.owner||'—')+'</td></tr>').join('');
-  const mods=(p.modules||[]).map(m=>'<details open><summary>'+esc(m.name)+' <span class="chip">'+esc(m.code)+'</span><span class="chip">'+(m.caps||[]).length+' 能力点</span></summary><div class="tree">'+(m.caps||[]).map(c=>capHtml(c,'')).join('')+'</div></details>').join('');
+let drillDir='',drillQ='';
+function copyText(text,btn){const done=()=>{btn.textContent='已复制 ✓';setTimeout(()=>{btn.textContent='复制账本路径';},1500);};
+  if(typeof navigator!=='undefined'&&navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(text).then(done,()=>{});return;}
+  const ta=document.createElement('textarea');ta.value=text;document.body.appendChild(ta);ta.select();
+  try{document.execCommand('copy');done();}catch(e){}document.body.removeChild(ta);}
+function drillStep(delta){const ps=DATA.projects||[],i=ps.findIndex(p=>p.dir===drillDir);
+  if(i<0||!ps.length)return;openDrill(ps[(i+delta+ps.length)%ps.length].dir,drillQ);}
+function renderDrillChrome(){const p=projectByDir(drillDir);if(!p)return;
+  document.getElementById('drawer-bar').innerHTML='<button class="close" type="button" data-close>关闭 ×</button>'+
+    '<span class="chip">系统 / '+esc(p.dir)+'</span>'+
+    '<button type="button" data-step="-1">‹ 上一个</button><button type="button" data-step="1">下一个 ›</button>'+
+    '<input id="drawer-q" type="search" value="'+esc(drillQ)+'" placeholder="筛选决策 / 工作项 / 能力点…" aria-label="筛选项目账本">'+
+    '<button type="button" data-fold="open">全展开</button><button type="button" data-fold="close">全折叠</button>'+
+    '<button type="button" data-copy>复制账本路径</button>';}
+function renderDrill(p,q){const d=p.detail||{},h=d.health||{},dims=h.health_dimensions||{};q=(q||'').trim();
+  const ok=s=>hits(s,q),caps=(p.modules||[]).reduce((a,m)=>a.concat(m.caps||[]),[]),v=caps.filter(c=>c.evidence_tier==='verified').length;
+  const decs=(d.decisions||[]).filter(e=>ok([e.id,e.date,e.title,e.status,e.decision].join(' ')));
+  const decisions=decs.map(e=>'<tr><td>'+hl(e.id,q)+'</td><td>'+esc(e.date||'—')+'</td><td>'+hl(e.title||'',q)+'</td><td>'+esc(e.status||'—')+'</td><td>'+hl(e.decision||'',q)+'</td></tr>').join('');
+  const ws=(d.work_items||[]).filter(w=>ok([w.id,w.status,w.severity,w.title,w.scope,w.owner].join(' ')));
+  const works=ws.map(w=>'<tr><td>'+hl(w.id,q)+'</td><td>'+esc(w.status||'—')+'</td><td>'+esc(w.severity||'—')+'</td><td>'+hl(w.title||'',q)+'</td><td>'+hl(w.scope||'',q)+'</td><td>'+esc(w.owner||'—')+'</td></tr>').join('');
+  const mods=(p.modules||[]).map(m=>{const mc=(m.caps||[]).filter(c=>ok([c.code,c.name,c.domain,c.level_code,c.next_action].join(' ')));
+    if(q&&!mc.length&&!ok(m.code+' '+m.name))return '';
+    return '<details open><summary>'+hl(m.name,q)+' <span class="chip">'+esc(m.code)+'</span><span class="chip">'+mc.length+' 能力点</span></summary><div class="tree">'+(mc.map(c=>capHtml(c,q)).join('')||'<div class="empty">无匹配能力点</div>')+'</div></details>';}).join('');
   const dimHtml=Object.keys(dims).map(k=>'<tr><td>'+esc(k)+'</td><td>'+esc(dims[k])+'</td></tr>').join('');
-  return '<button class="close" type="button" data-close>关闭 ×</button><h2>'+esc(p.title)+'</h2>'+
+  return '<h2>'+esc(p.title)+'</h2>'+
     '<div class="meta">'+esc(p.code)+' · '+esc(p.dir)+' · 版本 '+esc(p.version||'—')+' · 账本更新 '+esc(p.last_updated||'—')+' '+staleChip(p.history||{})+'</div>'+
-    '<div class="meta" style="margin:8px 0">'+esc(d.purpose||'')+'</div>'+
+    '<div class="meta" style="margin:8px 0">'+esc(d.purpose||'')+(q?' <span class="chip p">抽屉内筛选：'+esc(q)+'</span>':'')+'</div>'+
     '<div class="stats"><div class="stat"><div class="n">'+(p.modules||[]).length+'</div><div class="l">模块</div></div><div class="stat"><div class="n">'+caps.length+'</div><div class="l">能力点</div></div><div class="stat"><div class="n">'+v+'</div><div class="l">verified</div></div><div class="stat"><div class="n">'+esc(h.health_overall==null?'—':h.health_overall)+'</div><div class="l">健康总分</div></div></div>'+
-    '<div class="section"><h3>决策记录 '+esc((d.decisions||[]).length)+'</h3><table><thead><tr><th>ID</th><th>日期</th><th>标题</th><th>状态</th><th>裁决</th></tr></thead><tbody>'+(decisions||'<tr><td colspan="5" class="empty">无决策</td></tr>')+'</tbody></table></div>'+
-    '<div class="section"><h3>工作项 '+esc((d.work_items||[]).length)+'</h3><table><thead><tr><th>ID</th><th>状态</th><th>级别</th><th>标题</th><th>范围</th><th>负责人</th></tr></thead><tbody>'+(works||'<tr><td colspan="6" class="empty">无工作项</td></tr>')+'</tbody></table></div>'+
-    '<div class="section"><h3>能力点（项目级账本投影）</h3>'+(mods||'<div class="empty">无能力点</div>')+'</div>'+
+    '<div class="section"><h3>决策记录 '+esc(decs.length)+' / '+esc((d.decisions||[]).length)+'</h3><table><thead><tr><th>ID</th><th>日期</th><th>标题</th><th>状态</th><th>裁决</th></tr></thead><tbody>'+(decisions||'<tr><td colspan="5" class="empty">无匹配决策</td></tr>')+'</tbody></table></div>'+
+    '<div class="section"><h3>工作项 '+esc(ws.length)+' / '+esc((d.work_items||[]).length)+'</h3><table><thead><tr><th>ID</th><th>状态</th><th>级别</th><th>标题</th><th>范围</th><th>负责人</th></tr></thead><tbody>'+(works||'<tr><td colspan="6" class="empty">无匹配工作项</td></tr>')+'</tbody></table></div>'+
+    '<div class="section"><h3>能力点（项目级账本投影）</h3>'+(mods||'<div class="empty">无匹配能力点</div>')+'</div>'+
     '<div class="section"><h3>健康维度</h3><table><thead><tr><th>维度</th><th>分值</th></tr></thead><tbody>'+(dimHtml||'<tr><td colspan="2" class="empty">无健康数据</td></tr>')+'</tbody></table></div>'+
-    '<div class="section">'+timelineHtml(p,'')+'</div>'+
+    '<div class="section">'+timelineHtml(p,q)+'</div>'+
     '<div class="section"><h3>数据来源</h3><div class="meta">账本 '+esc(p.ledger)+' · 项目看板 <a href="'+esc(p.board)+'">'+esc(p.board)+' ↗</a></div><div class="hint">抽屉内容由系统看板从项目账本投影；预览面板隔离单文件，外链请在本地文件系统打开时点击。</div></div>';}
-function openDrill(dir){const p=projectByDir(dir);if(!p)return;
-  document.getElementById('drawer-body').innerHTML=renderDrill(p);
+function renderDrillBody(){const p=projectByDir(drillDir);if(!p)return;document.getElementById('drawer-body').innerHTML=renderDrill(p,drillQ);}
+function openDrill(dir,q){const p=projectByDir(dir);if(!p)return;drillDir=dir;drillQ=q||'';
+  renderDrillChrome();renderDrillBody();
   document.getElementById('drawer').hidden=false;document.getElementById('backdrop').hidden=false;}
 function closeDrill(){document.getElementById('drawer').hidden=true;document.getElementById('backdrop').hidden=true;}
 function render(){renderStats();VIEWS.forEach(v=>{document.getElementById('view-'+v).hidden=v!==view;});
   if(view==='overview')renderOverview();else if(view==='projects')renderProjects();else if(view==='matrix')renderMatrix();
   else if(view==='compat')renderCompat();else if(view==='timeline')renderTimeline();else renderSources();}
+function savedMode(){try{return sessionStorage.getItem('forge-persona')||'standard';}catch(e){return 'standard';}}
 function setMode(m){mode=m;document.body.className='mode-'+m;
+  document.getElementById('persona').value=m;
   document.getElementById('persona-hint').textContent=PERSONA_HINT[m]||'';
+  try{sessionStorage.setItem('forge-persona',m);}catch(e){}
   const allowed=m==='novice'?['overview']:VIEWS;
   document.querySelectorAll('.tab').forEach(t=>{t.hidden=allowed.indexOf(t.dataset.v)<0;});
   ['tier','level'].forEach(id=>{document.getElementById(id).hidden=m==='novice';});
@@ -213,11 +237,21 @@ function init(){document.getElementById('tabs').addEventListener('click',e=>{con
     if(mode==='novice'&&view!=='overview')return;
     document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('on',t.dataset.v===view));render();});
   document.getElementById('main').addEventListener('click',e=>{const b=e.target.closest('[data-drill]');if(b)openDrill(b.dataset.drill);});
-  document.getElementById('drawer').addEventListener('click',e=>{if(e.target.closest('[data-close]'))closeDrill();});
+  document.getElementById('drawer').addEventListener('input',e=>{if(e.target.id==='drawer-q'){drillQ=e.target.value;renderDrillBody();}});
+  document.getElementById('drawer').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;
+    if(b.hasAttribute('data-close')){closeDrill();return;}
+    if(b.dataset.step){drillStep(Number(b.dataset.step));return;}
+    if(b.hasAttribute('data-copy')){const p=projectByDir(drillDir);if(p)copyText(p.ledger,b);return;}
+    if(b.dataset.fold){document.querySelectorAll('#drawer-body details').forEach(d=>{d.open=b.dataset.fold==='open';});}});
   document.getElementById('backdrop').addEventListener('click',closeDrill);
-  document.addEventListener('keydown',e=>{if(e.key==='Escape')closeDrill();});
-  document.getElementById('foot').textContent='系统看板为生成物 · 权威模板 templates/system_index.html.template · 生成器 scripts/build_system_board.py · 禁止手改 HTML';
-  setMode('standard');}
+  document.addEventListener('keydown',e=>{
+    if(e.key==='Escape'){if(!document.getElementById('drawer').hidden){closeDrill();return;}
+      const q=document.getElementById('q');if(q.value){q.value='';render();}return;}
+    const tag=((document.activeElement||{}).tagName||'').toLowerCase(),k=(e.key||'').toLowerCase();
+    if((k==='/'&&tag!=='input'&&tag!=='select')||((e.ctrlKey||e.metaKey)&&k==='k')){
+      if(e.preventDefault)e.preventDefault();document.getElementById('q').focus();}});
+  document.getElementById('foot').textContent='系统看板为生成物 · 权威模板 templates/system_index.html.template · 生成器 scripts/build_system_board.py · 禁止手改 HTML · / 聚焦搜索 · Esc 关闭抽屉/清空搜索';
+  setMode(savedMode());}
 init();
 </script>
 </body>

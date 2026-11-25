@@ -155,7 +155,9 @@ class SystemBoardTest(unittest.TestCase):
         tpl = bsb.template_text(ROOT)
         for token in ('id="persona"', 'data-v="compat"', 'data-v="timeline"',
                       "PERSONA_HINT", "renderNovice", "renderCompat", "renderTimeline",
-                      'id="drawer"', "data-drill", "renderDrill"):
+                      'id="drawer"', "data-drill", "renderDrill", 'id="drawer-bar"',
+                      'id="drawer-q"', "data-step", "data-fold", "data-copy",
+                      "drillStep", "savedMode"):
             self.assertIn(token, tpl)
 
     def test_project_ledger_detail_projection(self):
