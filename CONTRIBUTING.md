@@ -23,6 +23,7 @@ bash scripts/check.sh
 | `templates/build_capability_model.py` | 复制到 `examples/demo-shop/governance/`，重跑生成器，跑门禁 |
 | `templates/verify_ledger.py` | 同步示例副本；若新增检查项，补负向测试 |
 | `templates/index.html.template` | 用 `board_contract.py --target examples/demo-shop normalize --apply --approved-by <人> --no-backup` 同步示例骨架；`sync_board` 保证 EMBED 一致；跑 `node --check` 与 `board_contract.py check`（骨架摘要必变，会触发所有项目 M6） |
+| `templates/system_index.html.template` / `scripts/build_system_board.py` | 重生成 `CapabilityForge/governance/index.html`（`--apply --approved-by <人>`）；跑 `build_system_board.py check` 与 `tests/meta/test_system_board.py`；系统看板是生成物，禁止在项目里手改 HTML |
 | `scripts/scale_budget.py` 的 `BUDGETS` / 模板 `PAGE_SIZE` | 同步 `18-规模化与版面契约` 的阈值表与基准，重跑 `scale_probe.py` 取证 |
 | `templates/registry.example.json` | 确认 `init_project.py` 产出的骨架仍可被生成器消费 |
 | `scripts/` 下脚本 | 补 `tests/` 用例；技能脚本的纪律必须被测试证明 |

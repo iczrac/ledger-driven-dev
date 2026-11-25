@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CapabilityForge · 系统级账本看板</title>
+<style>
+:root{--ink:#1a1a1a;--mut:#666;--line:#e3e3e3;--bg:#fff;--soft:#f7f7f5;--purple:#534AB7;--pp:#EEEDFE;--green:#0F6E56;--gp:#E1F5EE;--amber:#854F0B;--ap:#FAEEDA;--red:#A32D2D;--rp:#FCEBEB;--blue:#185FA5;--bp:#E6F1FB;--gray:#5F5E5A;--gp2:#F1EFE8}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;color:var(--ink);line-height:1.6;max-width:1180px;margin:0 auto;padding:32px 26px 72px;background:var(--bg)}
+.skip{position:absolute;left:-9999px;top:8px;background:var(--ink);color:#fff;padding:8px 14px;border-radius:8px;text-decoration:none;z-index:10}.skip:focus{left:12px}
+h1{font-size:22px;font-weight:600;margin:0 0 4px}h2{font-size:16px;font-weight:600;margin:22px 0 10px}h3{font-size:14px;font-weight:600;margin:0 0 6px}
+.sub{font-size:12px;color:var(--mut);margin-bottom:18px}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:16px 0 20px}
+.stat{border:1px solid var(--line);border-radius:10px;padding:12px 14px;background:var(--soft);cursor:pointer}
+.stat:hover{border-color:var(--purple)}.stat .n{font-size:22px;font-weight:600}.stat .l{font-size:12px;color:var(--mut)}
+.bar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:14px}
+input,select{border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:13px;background:#fff;color:var(--ink)}
+input#q{flex:1;min-width:220px}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin:14px 0 12px;border-bottom:1px solid var(--line);padding-bottom:8px}
+.tab{border:1px solid var(--line);background:#fff;border-radius:8px;padding:7px 12px;font-size:13px;cursor:pointer;color:var(--mut)}
+.tab.on{background:var(--pp);border-color:var(--purple);color:var(--purple)}
+.card{border:1px solid var(--line);border-radius:10px;padding:14px;margin-bottom:10px;background:#fff}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:12px}
+.meta{font-size:12px;color:var(--mut)}.chip{display:inline-block;border-radius:999px;padding:1px 8px;font-size:11px;margin-right:6px;background:var(--gp2);color:var(--gray)}
+.chip.v{background:var(--gp);color:var(--green)}.chip.d{background:var(--ap);color:var(--amber)}.chip.lv{background:var(--bp);color:var(--blue)}
+a{color:var(--blue);text-decoration:none}a:hover{text-decoration:underline}
+details{border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin:8px 0;background:#fff}
+summary{cursor:pointer;font-size:13px;font-weight:500}summary:hover{color:var(--purple)}
+.tree{margin:10px 0 4px 12px;border-left:1px solid var(--line);padding-left:12px}
+.cap{border-bottom:1px dashed var(--line);padding:7px 0;font-size:13px}.cap:last-child{border-bottom:0}
+.cap .code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;color:var(--mut)}
+.bar-mini{height:5px;background:var(--gp2);border-radius:4px;overflow:hidden;margin-top:4px;max-width:180px}.bar-mini i{display:block;height:100%;background:var(--green)}
+table{border-collapse:collapse;width:100%;font-size:13px}th,td{border-bottom:1px solid var(--line);padding:8px 10px;text-align:left}th{font-weight:500;color:var(--mut);background:var(--soft)}
+.empty{color:var(--mut);font-size:13px;padding:18px 0}
+.hint{font-size:12px;color:var(--mut);margin-top:6px}
+mark{background:var(--ap);color:inherit}
+footer{margin-top:34px;border-top:1px solid var(--line);padding-top:14px;font-size:12px;color:var(--mut)}
+.layer{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:8px 0 16px;font-size:12px}
+.layer span{border:1px solid var(--line);border-radius:8px;padding:5px 10px;background:var(--soft)}
+.layer b{font-weight:500;color:var(--purple)}
+</style>
+</head>
+<body>
+<a class="skip" href="#main">跳到主内容</a>
+<h1>CapabilityForge · 系统级账本看板</h1>
+<p class="sub" id="asof">从各项目账本实时投影 · 系统 → 项目 → 模块 → 能力点</p>
+<div class="stats" id="stats"></div>
+<nav class="tabs" id="tabs">
+  <button class="tab on" type="button" data-v="overview">系统总览</button>
+  <button class="tab" type="button" data-v="projects">项目与模块</button>
+  <button class="tab" type="button" data-v="matrix">能力矩阵</button>
+  <button class="tab" type="button" data-v="sources">数据来源</button>
+</nav>
+<div class="bar">
+  <input id="q" type="search" placeholder="搜索项目 / 模块 / 能力编码 / 名称…" aria-label="搜索系统看板">
+  <select id="tier" aria-label="证据层级筛选"><option value="">全部证据层</option><option value="verified">verified</option><option value="declared">declared</option></select>
+  <select id="level" aria-label="等级筛选"><option value="">全部等级</option><option value="0">L0</option><option value="1">L1</option><option value="2">L2</option><option value="3">L3</option><option value="4">L4</option><option value="5">L5</option></select>
+</div>
+<div class="layer" id="layer"><b>系统</b><span>CapabilityForge</span><span>→ 项目（各开发仓）</span><span>→ 模块</span><span>→ 能力点（证据分层）</span></div>
+<main id="main">
+  <section id="view-overview"></section>
+  <section id="view-projects" hidden></section>
+  <section id="view-matrix" hidden></section>
+  <section id="view-sources" hidden></section>
+</main>
+<footer id="foot"></footer>
+<script>
+const SYSTEM_DATA = /*SYSTEM*/;
+let DATA = SYSTEM_DATA;
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function hl(s,q){s=esc(s);if(!q)return s;const i=s.toLowerCase().indexOf(q.toLowerCase());return i<0?s:s.slice(0,i)+'<mark>'+s.slice(i,i+q.length)+'</mark>'+s.slice(i+q.length);}
+function hits(s,q){return !q||String(s||'').toLowerCase().indexOf(q.toLowerCase())>=0;}
+function allCaps(){const out=[];(DATA.projects||[]).forEach(p=>(p.modules||[]).forEach(m=>(m.caps||[]).forEach(c=>out.push(Object.assign({_project:p,_module:m},c)))));return out;}
+function filtered(){const q=document.getElementById('q').value.trim(),t=document.getElementById('tier').value,l=document.getElementById('level').value;
+  return allCaps().filter(c=>hits([c.code,c.name,c._project.code,c._project.title,c._module.code,c._module.name].join(' '),q)&&(!t||(c.evidence_tier||'declared')===t)&&(l===''||Number(c.level)===Number(l)));}
+function pct(x){return ((Number(x)||0)*100).toFixed(0)+'%';}
+function statCard(n,l,view){return '<div class="stat" data-go="'+view+'"><div class="n">'+esc(n)+'</div><div class="l">'+esc(l)+'</div></div>';}
+function renderStats(){const caps=allCaps(),v=caps.filter(c=>c.evidence_tier==='verified').length;
+  document.getElementById('stats').innerHTML=statCard(DATA.projects.length,'在册项目','projects')+
+    statCard(DATA.projects.reduce((a,p)=>a+(p.modules||[]).length,0),'模块','projects')+
+    statCard(caps.length,'能力点','matrix')+
+    statCard(caps.length?Math.round(v/caps.length*100)+'%':'—','verified 覆盖','matrix');
+  document.getElementById('asof').textContent='数据截至 '+(DATA.meta.as_of||'—')+' · 由脚本从各项目账本投影 · '+DATA.projects.length+' 个项目';}
+function renderOverview(){const q=document.getElementById('q').value.trim(),cards=DATA.projects.filter(p=>hits([p.code,p.title,p.role,p.dir].join(' '),q)).map(p=>{
+    const caps=(p.modules||[]).reduce((a,m)=>a.concat(m.caps||[]),[]),v=caps.filter(c=>c.evidence_tier==='verified').length;
+    return '<article class="card"><h3>'+hl(p.title,q)+' <span class="chip">'+esc(p.code)+'</span></h3>'+
+      '<div class="meta">'+hl(p.role||'',q)+' · 开发仓 '+esc(p.dir)+'</div>'+
+      '<div class="meta" style="margin:8px 0">'+(p.modules||[]).length+' 模块 · '+caps.length+' 能力点 · verified '+caps.filter(c=>c.evidence_tier==='verified').length+'/'+caps.length+' · 完成度 '+pct(p.completion)+'</div>'+
+      '<div class="bar-mini"><i style="width:'+Math.min(100,Math.round((caps.length?v/caps.length*100:0)))+'%"></i></div>'+
+      '<div class="hint"><a href="'+esc(p.board)+'">打开项目看板 →</a> · 账本 '+esc(p.ledger)+'</div></article>';}).join('');
+  document.getElementById('view-overview').innerHTML='<h2>在册项目</h2><div class="grid">'+(cards||'<div class="empty">无匹配项目</div>')+'</div>';}
+function capHtml(c,q){return '<div class="cap"><span class="code">'+hl(c.code,q)+'</span> '+hl(c.name,q)+
+  ' <span class="chip lv">'+esc(c.level_code||('L'+c.level))+'</span><span class="chip '+(c.evidence_tier==='verified'?'v':'d')+'">'+esc(c.evidence_tier||'declared')+'</span>'+
+  '<div class="meta">完成度 '+pct(c.completion)+' · 下步 '+esc(c.next_action||'—')+'</div></div>';}
+function renderProjects(){const q=document.getElementById('q').value.trim(),caps=filtered();
+  const body=DATA.projects.map(p=>{const mods=(p.modules||[]).map(m=>{const mc=caps.filter(c=>c._project.code===p.code&&c._module.code===m.code);
+      if(q&&!mc.length&&!hits(m.code+' '+m.name,q))return '';
+      return '<details><summary>'+hl(m.name,q)+' <span class="chip">'+esc(m.code)+'</span><span class="chip">'+mc.length+' 能力点</span></summary><div class="tree">'+
+        (mc.map(c=>capHtml(c,q)).join('')||'<div class="empty">无匹配能力点</div>')+'</div></details>';}).join('');
+    if(q&&!mods)return '';
+    return '<details open><summary>'+hl(p.title,q)+' <span class="chip">'+esc(p.code)+'</span><span class="chip s">'+pct(p.completion)+'</span></summary>'+
+      '<div class="meta" style="margin:8px 0">'+esc(p.dir)+' · <a href="'+esc(p.board)+'">项目看板 →</a></div>'+mods+'</details>';}).join('');
+  document.getElementById('view-projects').innerHTML='<h2>系统 → 项目 → 模块 → 能力点</h2>'+(body||'<div class="empty">无匹配节点</div>');}
+function renderMatrix(){const q=document.getElementById('q').value.trim(),caps=filtered();
+  const groups=[];DATA.projects.forEach(p=>(p.modules||[]).forEach(m=>groups.push({p:p,m:m,caps:caps.filter(c=>c._project.code===p.code&&c._module.code===m.code)})));
+  const rows=groups.filter(g=>!q||g.caps.length||hits(g.p.title+' '+g.m.name+' '+g.m.code,q)).map(g=>{
+    const dist=[0,0,0,0,0,0];g.caps.forEach(c=>dist[Number(c.level)||0]++);
+    const v=g.caps.filter(c=>c.evidence_tier==='verified').length;
+    return '<tr><td>'+hl(g.p.title,q)+'</td><td>'+hl(g.m.name,q)+'</td><td>'+esc(g.m.code)+'</td><td>'+g.caps.length+'</td>'+
+      dist.map(n=>'<td>'+(n||'·')+'</td>').join('')+'<td>'+v+'</td></tr>';}).join('');
+  document.getElementById('view-matrix').innerHTML='<h2>模块 × L0–L5 能力矩阵</h2><div class="meta">按当前搜索与筛选实时统计；数据来自账本，不是手绘图。</div>'+
+    '<table><thead><tr><th>项目</th><th>模块</th><th>编码</th><th>能力</th><th>L0</th><th>L1</th><th>L2</th><th>L3</th><th>L4</th><th>L5</th><th>verified</th></tr></thead><tbody>'+(rows||'<tr><td colspan="11" class="empty">无匹配</td></tr>')+'</tbody></table>';}
+function renderSources(){const rows=DATA.projects.map(p=>'<tr><td>'+esc(p.code)+'</td><td>'+esc(p.title)+'</td><td>'+esc(p.ledger)+'</td><td>'+esc(p.board)+'</td><td>'+esc(p.version||'—')+'</td></tr>').join('');
+  document.getElementById('view-sources').innerHTML='<h2>数据来源</h2><div class="meta">系统看板只做投影；各项目账本仍是唯一事实源。骨架摘要 '+esc((DATA.meta||{}).skeleton_digest||'—')+'</div>'+
+    '<table><thead><tr><th>项目码</th><th>名称</th><th>账本</th><th>看板</th><th>版本</th></tr></thead><tbody>'+rows+'</tbody></table>'+
+    '<div class="hint">重生成：<code>python3 ledger-driven-dev/scripts/build_system_board.py --system-root .. --apply</code> · 校验：<code>... check</code></div>';}
+let view='overview';
+function render(){renderStats();['overview','projects','matrix','sources'].forEach(v=>{document.getElementById('view-'+v).hidden=v!==view;});
+  if(view==='overview')renderOverview();else if(view==='projects')renderProjects();else if(view==='matrix')renderMatrix();else renderSources();}
+function init(){document.getElementById('tabs').addEventListener('click',e=>{const b=e.target.closest('.tab');if(!b)return;view=b.dataset.v;
+    document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('on',t===b));render();});
+  ['q','tier','level'].forEach(id=>document.getElementById(id).addEventListener('input',render));
+  document.getElementById('stats').addEventListener('click',e=>{const s=e.target.closest('[data-go]');if(!s)return;view=s.dataset.go;
+    document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('on',t.dataset.v===view));render();});
+  document.getElementById('foot').textContent='系统看板为生成物 · 权威模板 templates/system_index.html.template · 生成器 scripts/build_system_board.py · 禁止手改 HTML';
+  render();}
+init();
+</script>
+</body>
+</html>
