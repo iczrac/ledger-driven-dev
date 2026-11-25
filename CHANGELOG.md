@@ -2,6 +2,15 @@
 
 本项目版本遵循语义化版本（SemVer）。
 
+## [Unreleased] - 2026-11-25
+
+边界审查修正（使用者拍板「都修」）；不改 `METHOD_VERSION`，随下个正式版本一并发布。
+
+- **契约登记补齐（错位 A）**：`governance/onto/schemas.json` 从 10 条增至 13 条，补登 `system-board-data/3`（`external_file` 指向工作区系统看板产物）、`system-board-build/1`、`system-board-check/1`，兑现 v2.29.0「全部结构化契约登记」约定。三条 `file` 均指向 `scripts/build_system_board.py`，由既有 `test_all_declared_schemas_are_real` 校验契约串真实存在；`ids_declared` 断言同步 10 → 13。`schemas.json` 不在 `ontology.py SOURCE_FILES`，`ontology_digest` 保持 `768c3e5f…` 不变。
+- **组合事实字段对齐（错位 B）**：ledger `D-015` 与 julia `D-002` 的 category 由「组合协同／治理协同」统一为约定的「组合锚」，各补 `compat_evidence`（provider／provider_version=2.29.0、consumer／consumer_version=1.10.15、validated_at=2026-11-25、approved_by）。两仓均通过 `ledger_io.write_ledger` 唯一入口写入，账本与项目看板 EMBED 同步；双方对称，不设中央事实源。
+- **守护测试**：`tests/meta/test_system_board.py` 新增两条——三类系统看板契约必须在登记本体可查；工作区双方组合事实必须 category=组合锚、字段完整且完全对称（兄弟仓不在工作区时 skip，不破坏测试独立性）。
+- **验证**：`test_schema_registry` 4/4、`test_system_board` 14/14；两仓 `verify_ledger --strict` 退出码 0（未通过项均为 `na`）；`ontology.py check` 零漂移；系统看板重生成后 `check` `match=true`。
+
 ## [2.29.0] - 2026-11-25
 
 **决策依据（第一性原理）**：多项目独立开发、组合使用（CapabilityForge 双仓为首个实例）暴露三类组合层摩擦——①两仓 8+ 个 schema 各自声明、关系靠散文与记忆；②组合兼容（julia v1.10.14 × ledger v2.28.0）靠人脑对照；③文档型仓库（julia-dev 主体为 SKILL.md/agents）在代码型发现器下产不出有意义的草稿。三者同为「组合治理」主题，同版落地：schema 登记本体统管表达与转译、compat 判据统管兼容、discover spec-repo 模式统管文档资产接入。登记本体取薄形态：只声明接口面（id/owner/version/fields/consumers/translates_to），不复制语义细节，校验复用既有 ontology_integrity 判据——零新校验器。

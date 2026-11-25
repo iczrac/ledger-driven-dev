@@ -37,7 +37,7 @@ class SchemaRegistryTest(unittest.TestCase):
         m = sc.check_ontology(ROOT, CFG)
         self.assertTrue(m["applicable"])
         self.assertEqual(m["hits"], 0, f"detail={m.get('detail')}")
-        self.assertEqual(m["ids_declared"], 10)
+        self.assertEqual(m["ids_declared"], 13)
 
     def test_all_declared_schemas_are_real(self):
         """登记处列出的每个 schema 串必须在其声明文件中真实出现，防登记漂移。"""

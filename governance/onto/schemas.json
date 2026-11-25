@@ -101,6 +101,37 @@
       "fields": ["schema", "purpose", "levels", "maturity", "series"],
       "consumers": ["账本看板"],
       "translates_to": ["schema.registry-2"]
+    },
+    {
+      "id": "schema.system-board-data",
+      "name": "system-board-data",
+      "version": "3",
+      "owner": "ledger-driven-dev",
+      "file": "scripts/build_system_board.py",
+      "external_file": "governance/index.html",
+      "fields": ["meta", "schema", "as_of", "compat", "projects", "history", "detail", "stale_status"],
+      "consumers": ["系统级看板", "build_system_board"],
+      "translates_to": ["schema.node-test-results", "schema.registry-2"]
+    },
+    {
+      "id": "schema.system-board-build",
+      "name": "system-board-build",
+      "version": "1",
+      "owner": "ledger-driven-dev",
+      "file": "scripts/build_system_board.py",
+      "fields": ["system_root", "build", "apply", "approved_by", "json"],
+      "consumers": ["系统级看板生成器"],
+      "translates_to": ["schema.system-board-data"]
+    },
+    {
+      "id": "schema.system-board-check",
+      "name": "system-board-check",
+      "version": "1",
+      "owner": "ledger-driven-dev",
+      "file": "scripts/build_system_board.py",
+      "fields": ["system_root", "check", "json", "match", "reasons"],
+      "consumers": ["系统级看板生成器", "契约测试"],
+      "translates_to": ["schema.system-board-data"]
     }
   ]
 }

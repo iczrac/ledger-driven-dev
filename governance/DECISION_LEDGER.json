@@ -2,7 +2,7 @@
   "ledger_version": "1.0",
   "title": "Ledger-Driven Dev 方法论仓库（自举） 决策与能力账本",
   "purpose": "单一事实源：决策、裁决、待办及能力索引的唯一写入点。",
-  "last_updated": "2026-11-24 22:47 HKT",
+  "last_updated": "2026-11-25 23:05 HKT",
   "owner": "待定",
   "provenance": {
     "mode": "greenfield",
@@ -299,7 +299,7 @@
       "id": "D-015",
       "date": "2026-11-25",
       "title": "组合治理落地：julia-dev-squad 以锚声明接入账本体系",
-      "category": "组合协同",
+      "category": "组合锚",
       "scope": "JULIA",
       "status": "done",
       "supersedes": null,
@@ -310,7 +310,17 @@
         "scripts/discover_project.py",
         "governance/onto/schemas.json"
       ],
-      "confidence": "high"
+      "confidence": "high",
+      "compat_evidence": {
+        "anchor": "spec_check.compat.anchors -> ledger-driven-dev >= 2.29.0",
+        "provider": "ledger-driven-dev",
+        "provider_version": "2.29.0",
+        "consumer": "julia-dev-squad",
+        "consumer_version": "1.10.15",
+        "validated_at": "2026-11-25",
+        "note": "接入跑通版本；julia v1.10.17 沿用同一组合锚",
+        "approved_by": "使用者（2026-11-25 拍板：修正 category 与字段）"
+      }
     }
   ],
   "history": {

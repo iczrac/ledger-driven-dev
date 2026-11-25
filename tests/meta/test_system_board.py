@@ -191,6 +191,38 @@ class SystemBoardTest(unittest.TestCase):
         self.assertFalse(result["match"])
         self.assertIn("缺失", result["reasons"][0])
 
+    def test_system_board_contracts_registered(self):
+        """系统看板的三类结构化契约必须在 schema 登记本体中可查。"""
+        reg = json.loads((ROOT / "governance/onto/schemas.json").read_text(encoding="utf-8"))
+        by_id = {e["id"]: e for e in reg["schemas"]}
+        expected = {"schema.system-board-data": "3", "schema.system-board-build": "1",
+                    "schema.system-board-check": "1"}
+        for sid, version in expected.items():
+            self.assertIn(sid, by_id)
+            self.assertEqual(by_id[sid]["version"], version)
+            self.assertEqual(by_id[sid]["file"], "scripts/build_system_board.py")
+
+    def test_combo_evidence_symmetric_in_workspace(self):
+        """边界约定 v2.29 ②：组合事实双方对称，category=组合锚且字段完整。"""
+        base = ROOT.parent
+        expected = {"ledger-driven-dev": "D-015", "julia-dev-squad": "D-002"}
+        facts: dict[str, dict] = {}
+        for name, eid in expected.items():
+            path = base / name / "governance" / "DECISION_LEDGER.json"
+            if not path.is_file():
+                self.skipTest(f"兄弟仓未在工作区：{name}")
+            led = json.loads(path.read_text(encoding="utf-8"))
+            entry = next((x for x in led.get("entries") or [] if x.get("id") == eid), None)
+            self.assertIsNotNone(entry, f"{name} 缺组合事实条目 {eid}")
+            self.assertEqual(entry.get("category"), "组合锚")
+            ev = entry.get("compat_evidence") or {}
+            for key in ("provider", "provider_version", "consumer",
+                        "consumer_version", "validated_at"):
+                self.assertTrue(ev.get(key), f"{name}.{eid} 缺字段 {key}")
+            facts[name] = ev
+        left, right = facts["ledger-driven-dev"], facts["julia-dev-squad"]
+        self.assertEqual(left, right, "双方组合事实字段不对称")
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
