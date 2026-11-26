@@ -685,3 +685,25 @@ E7 `cardinality_contradiction`（`ontology.py check --target P` 仍 `ok=false`�
 - [x] **会话授权边界**：`user-approved-execution-chain` 仅作历史一次性会话授权，不作为长期 current 签名或 owner 指派身份；本版升级写入使用明确批准人。
 - [x] **派生文档去留**：五份 `docs/generated/` 派生文档全部保持 `presence=on-demand`；`PROJECT_STATE.md` 不改为 required，删除后落入 `not_applicable`，手改落入 `hand-edited`；不为了让检查通过而提交其余四份。
 - [x] **同步点**：`skills/ledger-verify`、`skills/doc-lifecycle`、`docs/08`、`docs/STANDARD`、`docs/10`、`docs/15`、`README` 与本节使用同一组硬门指标；新增三项回归测试锁定口径。
+
+## Unreleased 发布硬项（防复发门禁）
+
+第一性原理：文档里写下的命令是**可执行主张**，必须绑定到真实产物；一致性校验只能证明「副本 = 源」，不能证明「源是真的」。以下每项都是可复算命令，不是勾选承诺；任一失败即不得升版本、不得打 tag / 发版。
+
+- [ ] **本仓全门禁**：`bash scripts/check.sh` 全绿（含规范自查阶段；命中和 `n/a` 分列，命中必须为 0）。
+- [ ] **主张判据**：`python3 scripts/spec_check.py --target .` 的 `executable_claims` 适用且零命中；例外只允许写在 `spec_check.json` 的 `claims.exceptions`，带理由 / 批准人 / 到期日，禁通配。
+- [ ] **资产边界**：`python3 scripts/asset_bundle.py --check` 通过；`install --apply` 遇到未解析命令必须拒绝写盘（负向证明见 `tests/views/test_assets.py`）。
+- [ ] **升级器自检**：`python3 scripts/upgrade.py check` 通过——资产定义、模块映射与主张判据共用同一检查器，不复制第二份。
+- [ ] **消费方门禁**：在 `julia-dev-squad` 仓根执行 `bash scripts/check.sh` 全绿；该脚本调用同一份 `spec_check.py`，组合锚声明的兄弟仓工具必须真实存在。
+- [ ] **人工确认**：以上命令的实际输出贴入本次发版记录；AI 不得代签。未升 `METHOD_VERSION`、未打 tag、未生成 Release 包时，以上检查只做本地验证，不宣称「已发布」。
+
+### 提交与发版原子口径（B 收口版）
+
+第一性原理：原子化要绑在**可复算的状态边界**上，不是绑在不可机器判定的「决策」上。Git 不记录一个 commit 属于哪个决策，因此「一个 commit 一个决策」既无法机械校验，也必然退化为纸面承诺（与 `ledger_entry` 同一失败模式），明确拒绝。只保留两条可复算约束：
+
+1. **派生一致性原子（提交边界）**：一个 commit 的状态边界 = `bash scripts/check.sh` 全绿。权威源与派生物（`docs/generated/`、`governance/index.html`）+ `spec_check.json` + 绑定测试必须落在**同一个 commit**。拆 commit 时不按主题拆，按派生一致性拆；每个中间 commit 都要各自跑 `bash scripts/check.sh` 全绿，否则宁可合为一个一致 commit，不制造「回滚点造假」的中间快照。
+2. **发版逻辑原子（版本边界）**：版本锚 + tag 构成发版的逻辑原子；`python3 scripts/spec_check.py --target .` 的 `compat`（兄弟仓 `METHOD_VERSION` ≥ 声明的 `min_version`）与 `release_tag`（本仓版本有对应 tag）判据已 fail-closed 检查。
+
+**诚实边界**：跨仓物理原子在 Git 中不存在，明确放弃；不引入 monorepo / submodule 等结构性改动。`compat` 读的是兄弟仓**工作树**的 `METHOD_VERSION`，不是兄弟仓的 tag；因此「tag 提交顺序」仍是人工纪律，机器只保证版本锚与「本仓版本已打 tag」，不得对外宣称「跨仓顺序已机器强制」。
+
+**防复发判准**：本节任何「原子」承诺若不含可复算命令与判据，它本身就是下一条 `ledger_entry`——判准是「这句话有没有对应的判据与复算命令」。

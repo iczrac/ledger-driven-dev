@@ -47,8 +47,10 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from ledger_io import load_ledger, write_ledger  # noqa: E402
+from spec_check import check_executable_claims  # noqa: E402
 
 ROOT = Path(__file__).resolve().parents[1]
+SPEC_CONFIG_REL = "spec_check.json"
 SCHEMA_BUNDLE = "asset-bundle/1"
 SCHEMA_MANIFEST = "installed-assets/1"
 SCHEMA_INSTALL = "asset-install/1"
@@ -171,12 +173,14 @@ def install_plan(target: Path, source_root: Path = ROOT) -> dict:
         # 只清理「与旧清单记录完全一致」的副本；被人改过的一律保留并报警
         (removable if _sha256_file(p) == old_rows[rel] else protected).append(rel)
     changes = missing + drifted + removable
+    claims = check_claims(source_root)
     return {
         "schema": SCHEMA_INSTALL, "target": ".", "mode": "plan",
         "digest": b["digest"], "file_count": b["file_count"],
         "counts": b["counts"], "missing": missing, "drifted": drifted,
         "unchanged": ok, "stale_removable": removable,
         "stale_protected": protected, "changes": changes,
+        "claim_hits": claims["hits"], "claims_checked": claims["checked"],
         "noop": not changes and old.get("digest") == b["digest"],
         "writes": sorted(set(missing + drifted + [MANIFEST_REL])),
         "approval_required": True,
@@ -195,6 +199,11 @@ def install(target: Path, *, approved_by: str = "", apply: bool = False,
         raise ValueError("资产安装必须提供 --approved-by（人工批准）；AI 不得自行改写可用资产")
     if not target.is_dir():
         raise ValueError("目标目录不存在")
+    claims = check_claims(source_root)
+    if claims["hits"]:
+        sample = "; ".join(f"{h.get('file')}:{h.get('line')} {h.get('command')}"
+                           for h in claims["detail"][:3])
+        raise ValueError(f"权威源存在 {claims['hits']} 条未解析命令主张，拒绝安装：{sample}")
 
     b = bundle(source_root)
     for r in b["files"]:
@@ -294,8 +303,33 @@ def verify(target: Path, source_root: Path = ROOT) -> dict:
                     "--apply --approved-by <人>"}
 
 
+def check_claims(source_root: Path = ROOT) -> dict:
+    """复用 spec_check 的 executable_claims 判据，只扫将被安装的权威源文件。
+
+    安装边界不复制第二份扫描器：范围取 bundle_rows 的 source，配置取同一份
+    spec_check.json 的 claims 节（external / exceptions 单一登记点）。缺配置、
+    配置非法一律 fail-closed，不把「无从判定」当成零命中。
+    """
+    source_root = Path(source_root)
+    cfg_path = source_root / SPEC_CONFIG_REL
+    try:
+        cfg = json.loads(cfg_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        return {"applicable": True, "hits": 1, "checked": 0,
+                "detail": [{"reason": "spec_config_unreadable", "error": str(exc)}]}
+    claims = cfg.get("claims") if isinstance(cfg, dict) else None
+    if not isinstance(claims, dict):
+        return {"applicable": True, "hits": 1, "checked": 0,
+                "detail": [{"reason": "claims_config_missing"}]}
+    scoped = {**claims, "docs": [r["source"] for r in bundle_rows(source_root)]}
+    report = check_executable_claims(source_root, {"claims": scoped})
+    return {"applicable": bool(report.get("applicable")), "hits": report["hits"],
+            "checked": report.get("commands_checked", 0),
+            "detail": report.get("detail", [])}
+
+
 def check_definitions(source_root: Path = ROOT) -> list[str]:
-    """定义自检：数量下限、frontmatter name 与目录名一致、路径安全。"""
+    """定义自检：数量下限、frontmatter、路径安全、可执行主张。"""
     source_root = Path(source_root)
     b = bundle(source_root)
     errs: list[str] = []
@@ -317,6 +351,13 @@ def check_definitions(source_root: Path = ROOT) -> list[str]:
             errs.append(f"frontmatter name 与目录名不一致：{r['source']}")
         if "description:" not in text:
             errs.append(f"缺少 description frontmatter：{r['source']}")
+    claims = check_claims(source_root)
+    if claims["applicable"] and claims["hits"]:
+        for hit in claims["detail"][:10]:
+            errs.append(f"资产内未解析命令：{hit.get('file')}:{hit.get('line')} "
+                        f"{hit.get('command')}（{hit.get('reason')}）")
+        if claims["hits"] > 10:
+            errs.append(f"资产内未解析命令另有 {claims['hits'] - 10} 条")
     return errs
 
 

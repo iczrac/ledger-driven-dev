@@ -12,8 +12,8 @@ from pathlib import Path
 from _base import DEMO, ROOT, demo_copy
 
 sys.path.insert(0, str(ROOT / "scripts"))
-from asset_bundle import (bundle, check_definitions, install, install_plan,  # noqa: E402
-                          read_manifest, verify as assets_verify)
+from asset_bundle import (bundle, check_claims, check_definitions, install,  # noqa: E402
+                          install_plan, read_manifest, verify as assets_verify)
 from route_expert import (asset_root, build as route_build, check_assets,  # noqa: E402
                           installed_manifest_paths, load_assets)
 from upgrade import apply as upgrade_apply, plan as upgrade_plan, verify as upgrade_verify
@@ -207,6 +207,51 @@ class AssetsTest(unittest.TestCase):
             rollback(target, backups[-1].name, "gate-bot")
             self.assertFalse((target / ".workbuddy" / "skills" / "ledger-verify" /
                               "SKILL.md").is_file())
+
+
+class AssetClaimGuardTest(unittest.TestCase):
+    """安装边界复用 spec_check 判据：假命令必须在写盘前被拦住。"""
+
+    def make_source(self, td: Path, *, with_config: bool = True) -> Path:
+        src = td / "method"
+        (src / "skills" / "ghost").mkdir(parents=True, exist_ok=True)
+        (src / "skills" / "ghost" / "SKILL.md").write_text(
+            "---\nname: ghost\ndescription: 测试用\n---\n"
+            "跑一次：`python3 scripts/ghost_missing.py`\n", encoding="utf-8")
+        if with_config:
+            (src / "spec_check.json").write_text(json.dumps({
+                "schema": "spec-check/1",
+                "claims": {"docs": ["skills/**/SKILL.md"], "exceptions": []}}),
+                encoding="utf-8")
+        return src
+
+    def test_asset_claim_hit_blocks_apply_and_shows_in_dry_run(self):
+        with tempfile.TemporaryDirectory() as td, demo_copy() as (_t, _l, _r, board):
+            src = self.make_source(Path(td))
+            target = board.parent.parent
+            report = check_claims(src)
+            self.assertEqual(report["hits"], 1)
+            self.assertEqual(report["detail"][0]["reason"], "missing_command")
+            dry = install_plan(target, src)
+            self.assertEqual(dry["claim_hits"], 1)
+            self.assertTrue(any("未解析命令" in e for e in check_definitions(src)))
+            with self.assertRaises(ValueError) as ctx:
+                install(target, approved_by="gate-bot", apply=True,
+                        source_root=src, bind_ledger=False)
+            self.assertIn("ghost_missing.py", str(ctx.exception))
+            self.assertFalse((target / ".workbuddy" / "skills" / "ghost").exists())
+
+    def test_real_command_and_missing_config_are_distinct(self):
+        with tempfile.TemporaryDirectory() as td:
+            src = self.make_source(Path(td))
+            scripts = src / "scripts"
+            scripts.mkdir()
+            (scripts / "ghost_missing.py").write_text("print(1)\n", encoding="utf-8")
+            self.assertEqual(check_claims(src)["hits"], 0)
+            (src / "spec_check.json").unlink()
+            bad = check_claims(src)
+            self.assertEqual(bad["hits"], 1)
+            self.assertEqual(bad["detail"][0]["reason"], "spec_config_unreadable")
 
 
 if __name__ == "__main__":
