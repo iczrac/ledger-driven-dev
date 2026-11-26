@@ -3,7 +3,7 @@
 
 第一性原理
 ----------
-治理层**文件数是固定的**：registry / 账本 / 看板 / 6 个工具副本 / 少量
+治理层**文件数是固定的**：registry / 账本 / 看板 / 7 个工具副本 / 少量
 派生报告，不会因为模块多就每模块生成一个文件（见 file_layout.py）。
 所以「需生成的文件数量大」不是本方法的主要风险，真正的增长维度是：
 
@@ -26,6 +26,8 @@ import json
 import re
 import sys
 from pathlib import Path
+
+from board_path import resolve
 
 ROOT = Path(__file__).resolve().parents[1]
 SCHEMA = "scale-budget/1"
@@ -111,7 +113,7 @@ def report(target: Path, source_root: Path = ROOT) -> dict:
     page = render_limit(source_root)
     metrics = {
         "ledger_bytes": _size(gov / "DECISION_LEDGER.json"),
-        "board_bytes": _size(gov / "index.html"),
+        "board_bytes": _size(resolve(gov)),
         "entries": len(entries),
         "history_events": len(events),
         "capabilities": caps,

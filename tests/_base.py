@@ -18,6 +18,8 @@ for extra in (ROOT / "scripts", ROOT / "templates", GOV):
     if str(extra) not in sys.path:
         sys.path.insert(0, str(extra))
 
+from board_path import resolve as board_resolve  # noqa: E402
+
 
 def load_ledger() -> dict:
     return json.loads((GOV / "DECISION_LEDGER.json").read_text())
@@ -31,7 +33,7 @@ def demo_copy():
         dst = tmp / "examples" / "demo-shop"
         shutil.copytree(DEMO, dst, ignore=shutil.ignore_patterns("__pycache__"))
         gov = dst / "governance"
-        yield tmp, gov / "DECISION_LEDGER.json", gov / "registry.json", gov / "index.html"
+        yield tmp, gov / "DECISION_LEDGER.json", gov / "registry.json", board_resolve(gov)
 
 
 def run_generator(root: Path, ledger: Path, registry: Path, board: Path,

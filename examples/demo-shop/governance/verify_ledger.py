@@ -60,7 +60,7 @@ na 绝不计入 pass。旧版把「未启用」写成 pass，于是 24/24 全绿
 用法
 ----
     python3 verify_ledger.py --root examples/demo-shop --registry examples/demo-shop/governance/registry.json \
-        --ledger examples/demo-shop/governance/DECISION_LEDGER.json --board examples/demo-shop/governance/index.html
+        --ledger examples/demo-shop/governance/DECISION_LEDGER.json --board <board_path 解析结果>
     python3 verify_ledger.py --root . --json        # 机器可读输出
     python3 verify_ledger.py --root . --strict      # 存在 fail 返回非零退出码
     python3 verify_ledger.py --root . --strict --require-active  # na 也算失败
@@ -88,6 +88,13 @@ except ModuleNotFoundError:  # pragma: no cover - 仅在 spec 加载路径触发
     from registry_codec import iter_caps as registry_iter_caps
     from registry_codec import policy_error as projection_policy_error
     from registry_codec import projection_opted_out
+
+# 看板路径唯一解析层：随工具副本一起安装，避免各处硬编码 index.html。
+try:
+    from board_path import resolve as board_resolve
+except ModuleNotFoundError:  # pragma: no cover - 仅在 spec 加载路径触发
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    from board_path import resolve as board_resolve
 
 # 四段式：项目.模块.域均以大写字母开头；序号段为两位数字
 CODE_RE = re.compile(r"^[A-Z][A-Z0-9]*\.[A-Z][A-Z0-9]*\.[A-Z][A-Z0-9]*\.\d{2}$")
@@ -998,7 +1005,7 @@ def main() -> None:
     ap.add_argument("--root", default=".", help="仓库根目录（默认当前目录）")
     ap.add_argument("--ledger", help="账本路径（默认 <root>/governance/DECISION_LEDGER.json）")
     ap.add_argument("--registry", help="registry.json 路径（默认 <root>/governance/registry.json）")
-    ap.add_argument("--board", help="看板 HTML 路径（默认 <root>/governance/index.html）")
+    ap.add_argument("--board", help="看板 HTML 路径（默认由 board_path.resolve 解析）")
     ap.add_argument("--json", action="store_true", help="输出 JSON")
     ap.add_argument("--strict", action="store_true", help="有 fail 时返回退出码 1")
     ap.add_argument("--require-active", action="store_true",
@@ -1008,7 +1015,7 @@ def main() -> None:
     repo_root = Path(args.root).resolve()
     ledger_path = Path(args.ledger) if args.ledger else repo_root / "governance" / "DECISION_LEDGER.json"
     reg_path = Path(args.registry) if args.registry else repo_root / "governance" / "registry.json"
-    board_path = Path(args.board) if args.board else repo_root / "governance" / "index.html"
+    board_path = Path(args.board) if args.board else board_resolve(repo_root)
 
     try:
         ledger = json.loads(Path(ledger_path).read_text())

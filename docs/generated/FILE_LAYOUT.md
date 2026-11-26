@@ -1,7 +1,8 @@
 # FILE_LAYOUT · 引入方案后的文件布局
 
 > 本文件由 `scripts/file_layout.py` 从布局定义渲染；请勿手改。
-> schema `file-layout/1` · 条目 37 · 引入后新增 32 项 · 账本内字段 12 项。
+> schema `file-layout/1` · 条目 38 · 引入后新增 33 项 · 账本内字段 12 项。
+> 看板路径模式 `governance/{board}`：由 `scripts/board_path.py` 按目标治理目录解析；表中展示中性占位符，实际文件名取自解析结果。
 
 ## 分层含义
 
@@ -29,7 +30,7 @@
 | `governance/` | 事实源层 | 引入方案后新增 | 治理骨架必需 | init_project.py | `bootstrap` | 禁 | 建议提交 git | 治理目录：事实源、派生报告与工具副本都收敛在此，不另建管理项目。　保护：scenario_guard 越界文件检查。　注：此目录出现清单外的自制报告 / 第二份账本会被 --diff 报为越界。 |
 | `governance/registry.json` | 事实源层 | 引入方案后新增 | 治理骨架必需 | 人（唯一手写清单） | `manual` | 可 | 建议提交 git | 能力注册表：项目信息、模块清单、impls / hints / unit_test 声明。全项目唯一需手填的清单。　保护：registry_impls_exist / component_paths_exist。　注：新建为空清单；存量接入来自人工确认后的 registry.draft.json。多人同改仍需 git 合并。 |
 | `governance/DECISION_LEDGER.json` | 事实源层 | 引入方案后新增 | 治理骨架必需 | 生成器 / 决策脚本 / 生命周期脚本 | `rewrite` | 禁 | 建议提交 git | 单一事实源：entries 决策、capability_model 派生结果、history、lessons、lifecycle 全在这里。　保护：31 条不变量 / --expect-fingerprint CAS / frozen 冻结 / 看板 EMBED 同步。　注：可以写 entries（经 ledger_decide.py），但 level / completion / history / EMBED 一律自动派生，禁止手改。 |
-| `governance/index.html` | 派生层 | 引入方案后新增 | 治理骨架必需 | build_capability_model.py / lifecycle.py / upgrade.py / board_contract.py | `rewrite` | 禁 | 建议提交 git | 可视化看板；EMBED 与账本逐字节等价，CSS/DOM/JS 骨架与权威模板一致、按 PAGE_SIZE 分批渲染。　保护：board_embed_synced 不变量 + 去 EMBED 后的骨架 sha256（board_contract.py）。　注：lifecycle.py 改状态时同步 EMBED；禁止在项目里改样式，换版面要改模板并发版再由 upgrade 归一。 |
+| `governance/<项目目录名>.html` | 派生层 | 引入方案后新增 | 治理骨架必需 | build_capability_model.py / lifecycle.py / upgrade.py / board_contract.py | `rewrite` | 禁 | 建议提交 git | 可视化看板；EMBED 与账本逐字节等价，CSS/DOM/JS 骨架与权威模板一致、按 PAGE_SIZE 分批渲染。　保护：board_embed_synced 不变量 + 去 EMBED 后的骨架 sha256（board_contract.py）。　注：lifecycle.py 改状态时同步 EMBED；禁止在项目里改样式，换版面要改模板并发版再由 upgrade 归一。 |
 | `governance/vendor/` | 派生层 | 引入方案后新增 | 跑对应命令后才出现（不出现属正常） | upgrade.py | `rewrite` | 禁 | 建议提交 git | 治理目录下的本地前端依赖目录；当前只放 D3，避免 CDN 与后端依赖。　保护：relative file:// path。　注：由 upgrade.py 创建；目录内文件必须逐项登记，禁止手工塞入第二套事实源。 |
 | `governance/vendor/d3.v7.min.js` | 派生层 | 引入方案后新增 | 跑对应命令后才出现（不出现属正常） | upgrade.py | `rewrite` | 禁 | 建议提交 git | 本地 D3 v7 运行时：供追溯树、趋势与热力图做离线交互，不访问 CDN、不引后端。　保护：upgrade.py TOOLING 摘要一致 / file:// 相对路径加载 / hasD3() 降级。　注：由方法仓下发；删除后看板自动回退原生 SVG / details 树，禁止在项目内改版本。 |
 | `governance/test_report.json` | 派生层 | 引入方案后新增 | 跑对应命令后才出现（不出现属正常） | run_tests.py | `rewrite` | 禁 | 可提交（便于离线审计）或 CI 重跑 | 机器可读测试报告，schema ledger-test-report/1；是 verified 证据的唯一来源。　保护：evidence_binding 逐文件 sha256 / --strict-evidence。　注：报告绑定测试源码内容摘要；源码一改就判 stale，verified 回落 declared。 |
@@ -49,6 +50,7 @@
 | `governance/verify_ledger.py` | 工具层 | 引入方案后新增 | 治理骨架必需 | init_project.py（复制模板） | `bootstrap` | 禁 | 建议提交 git | 校验器副本：回答「账本内部坏没坏」。　保护：31 条不变量 / 模板同步。　注：与 scenario_guard.py 分工：后者回答「现在能不能动它」，未复制进目标项目。 |
 | `governance/registry_codec.py` | 工具层 | 引入方案后新增 | 治理骨架必需 | init_project.py（复制模板） | `bootstrap` | 禁 | 建议提交 git | registry schema/2 唯一编码与容器归一化契约，供生成器和校验器共同消费。　保护：唯一 code_namespace / cap_code / normalize_projects / iter_caps。　注：禁止在目标项目里改写；code 规则只在本方法的权威模板维护。 |
 | `governance/run_tests.py` | 工具层 | 引入方案后新增 | 治理骨架必需 | init_project.py（复制 scripts/） | `bootstrap` | 禁 | 建议提交 git | 测试报告生成器副本，产出 governance/test_report.json。　保护：报告含源码绑定摘要。　注：工具副本之一：让项目脱离本仓库也能独立复算证据（v2.1.2 起共 5 个，v2.3.0 增至 6 个）。 |
+| `governance/board_path.py` | 工具层 | 引入方案后新增 | 治理骨架必需 | init_project.py（复制模板） | `bootstrap` | 禁 | 建议提交 git | 看板路径解析层副本：规范名与迁移兼容读的唯一来源，杜绝 index.html 硬编码串味。　保护：逐字节模板同步 / 以治理目录完整路径为键。　注：禁止在目标项目里改写；改名策略由方法仓统一切换并随工具副本下发。 |
 | `governance/binding_advisory.py` | 工具层 | 引入方案后新增 | 治理骨架必需 | init_project.py（复制模板） | `bootstrap` | 禁 | 建议提交 git | 证据绑定 advisory 副本：查「声明的测试」与「声明的实现」之间有无调用关系。　保护：符号级绑定 advisory / 模板同步。　注：shadow 门禁：只晒 [UNBOUND] 不否决；由生成器在重算时调用，独立成模块是让生成器主体保持在模块大小硬限之下。 |
 | `governance/derived_issues.py` | 工具层 | 引入方案后新增 | 治理骨架必需 | init_project.py（复制模板） | `bootstrap` | 禁 | 建议提交 git | 把非 bound 能力投影成可认领 issue（issue_set = h(binding_status)）。　保护：派生 issue / 生成器调用。　注：v2.3.0 起共 6 个工具副本；issue 是账本视图而非手工第二事实源，独立成模块让生成器主体保持在模块大小硬限之下。 |
 | `.workbuddy/` | 资产层 | 引入方案后新增 | 跑对应命令后才出现（不出现属正常） | asset_bundle.py | `write-if-absent` | 禁 | 可提交（便于离线审计）或 CI 重跑 | 平台项目级 Agent 资产目录；升级 M7 后才有内容，权威源仍是方法论仓库。　保护：asset_bundle.py verify 逐文件 sha256 / manifest 整包摘要。　注：这里只放由治理升级安装的副本；用户自己放的技能不属于治理清单，不会被删除。 |

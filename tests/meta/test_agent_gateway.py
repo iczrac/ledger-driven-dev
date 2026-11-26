@@ -21,6 +21,7 @@ sys.path.insert(0, str(ROOT / "scripts"))
 from agent_gateway import (ACTIONS, ROLE_POLICIES, check_definitions,  # noqa: E402
                            evaluate, register, request, status)
 from upgrade import apply as upgrade_apply  # noqa: E402
+from board_path import resolve as board_resolve  # noqa: E402
 
 GATEWAY = ROOT / "scripts" / "agent_gateway.py"
 CODE = "DEMO.API.QUERY.01"
@@ -113,7 +114,7 @@ class GatewayTest(unittest.TestCase):
             self.assertEqual(d2["access"]["audit"][0]["action"], "register")
             self.assertTrue(board_synced(gov, d2))
             r = run_verify(tmp, gov / "DECISION_LEDGER.json", gov / "registry.json",
-                           gov / "index.html")
+                           board_resolve(gov))
             self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
 
     def test_unregistered_and_unauthorized_denied(self):
@@ -215,7 +216,7 @@ class GatewayTest(unittest.TestCase):
             self.assertEqual(d2["access"]["revision"], 2)  # register + claim
             self.assertTrue(board_synced(gov, d2))
             r = run_verify(tmp, gov / "DECISION_LEDGER.json", gov / "registry.json",
-                           gov / "index.html")
+                           board_resolve(gov))
             self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
 
     def test_lease_blocks_concurrent_agent(self):

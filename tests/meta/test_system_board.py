@@ -12,6 +12,7 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "scripts"))
 
 import build_system_board as bsb  # noqa: E402
+from board_path import resolve as board_resolve  # noqa: E402
 
 
 def ledger_payload(code, title, caps, history=None):
@@ -44,7 +45,7 @@ def write_project(root: Path, name: str, payload: dict):
     gov.mkdir(parents=True, exist_ok=True)
     (gov / "DECISION_LEDGER.json").write_text(
         json.dumps(payload, ensure_ascii=False), encoding="utf-8")
-    (gov / "index.html").write_text("<html>project board</html>", encoding="utf-8")
+    board_resolve(gov).write_text("<html>project board</html>", encoding="utf-8")
 
 
 class SystemBoardTest(unittest.TestCase):
@@ -71,7 +72,8 @@ class SystemBoardTest(unittest.TestCase):
         self.assertEqual([p["code"] for p in projects], ["ALPHA", "BETA"])
         self.assertEqual(projects[0]["summary"]["capabilities"], 2)
         self.assertEqual(projects[0]["summary"]["verified"], 1)
-        self.assertEqual(projects[1]["board"], "../beta/governance/index.html")
+        self.assertEqual(projects[1]["board"],
+                         "../" + board_resolve(self.root / "beta").relative_to(self.root).as_posix())
 
     def test_build_is_idempotent_and_check_passes(self):
         res = bsb.build(self.root, ROOT, apply=True, approved_by="test")

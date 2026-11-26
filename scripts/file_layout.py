@@ -13,7 +13,7 @@
 
 关键边界：本清单描述的是**被治理项目（target）**，不是方法论仓库自身。
 scripts/ / templates/ / tests/ / docs/NN-方法论文档 等不会复制进目标项目；
-只有 6 个工具脚本副本以 governance/*.py 落地。
+只有 7 个工具脚本副本以 governance/*.py 落地。
 v1.2.0 起例外是专家与技能：由 asset_bundle.py 装成 .workbuddy/ 下的
 **只读部署副本**（权威源仍在方法论仓库，逐文件 sha256 + 账本绑定）。
 账本内的 lifecycle.log / governance_meta / access 等是 **JSON 字段**，
@@ -38,7 +38,11 @@ import re
 import sys
 from pathlib import Path
 
+from board_path import filename_for as _board_filename
+
 SCHEMA = "file-layout/1"
+# 看板文件名由 board_path 按治理目录完整路径解析，清单只登记模式。
+BOARD_PATH_PATTERN = "governance/{board}"
 ROOT = Path(__file__).resolve().parents[1]
 
 LAYERS = {
@@ -116,14 +120,14 @@ ENTRIES: list[dict] = [
          expect="DECISION_LEDGER.json"),
 
     # ---------------- 派生层 ----------------
-    dict(path="governance/index.html", kind="file", layer="派生层", origin="new",
+    dict(path=BOARD_PATH_PATTERN, kind="file", layer="派生层", origin="new",
          presence="required",
          owner="build_capability_model.py / lifecycle.py / upgrade.py / board_contract.py",
          producer="templates/build_capability_model.py", write="rewrite", commit="yes",
          guard="board_embed_synced 不变量 + 去 EMBED 后的骨架 sha256（board_contract.py）",
          purpose="可视化看板；EMBED 与账本逐字节等价，CSS/DOM/JS 骨架与权威模板一致、按 PAGE_SIZE 分批渲染。",
         note="lifecycle.py 改状态时同步 EMBED；禁止在项目里改样式，换版面要改模板并发版再由 upgrade 归一。",
-        expect="index.html"),
+        expect="board_path"),
     dict(path="governance/vendor/", kind="dir", layer="派生层", origin="new",
          presence="on-demand", owner="upgrade.py", producer="scripts/upgrade.py",
          write="rewrite", commit="yes", guard="relative file:// path",
@@ -241,6 +245,13 @@ ENTRIES: list[dict] = [
          purpose="测试报告生成器副本，产出 governance/test_report.json。",
          note="工具副本之一：让项目脱离本仓库也能独立复算证据（v2.1.2 起共 5 个，v2.3.0 增至 6 个）。",
          expect="run_tests.py"),
+    dict(path="governance/board_path.py", kind="file", layer="工具层", origin="new",
+         presence="required", owner="init_project.py（复制模板）",
+         producer="scripts/init_project.py", write="bootstrap", commit="yes",
+         guard="逐字节模板同步 / 以治理目录完整路径为键",
+         purpose="看板路径解析层副本：规范名与迁移兼容读的唯一来源，杜绝 index.html 硬编码串味。",
+         note="禁止在目标项目里改写；改名策略由方法仓统一切换并随工具副本下发。",
+         expect="board_path.py"),
     dict(path="governance/binding_advisory.py", kind="file", layer="工具层", origin="new",
          presence="required", owner="init_project.py（复制模板）",
          producer="scripts/init_project.py", write="bootstrap", commit="yes",
@@ -313,6 +324,15 @@ for _entry in ENTRIES:
     for _key in ("owner", "producer", "guard", "note", "expect"):
         _entry.setdefault(_key, "")
 
+def expand_path(path: str, target: Path | None = None) -> str:
+    """展开看板路径模式；未给 target 时用中性占位符（用于清单展示与自检）。"""
+    if "{board}" not in path:
+        return path
+    if target is None:
+        return "governance/<项目目录名>.html"
+    return "governance/" + _board_filename(target)
+
+
 # 账本内字段：不是文件，但最容易被误当成 governance/ 下的独立文件。
 LEDGER_FIELDS: list[dict] = [
     dict(path="capability_model", owner="build_capability_model.py", write="rewrite",
@@ -367,9 +387,9 @@ def validate() -> list[str]:
     """自检清单定义，并交叉验证「产出脚本源码里确实写着这个文件名」。"""
     errs: list[str] = []
     seen: set[str] = set()
-    paths = {e["path"] for e in ENTRIES}
+    paths = {expand_path(e["path"]) for e in ENTRIES}
     for e in ENTRIES:
-        p = e["path"]
+        p = expand_path(e["path"])
         if p in seen:
             errs.append(f"重复路径：{p}")
         seen.add(p)
@@ -425,8 +445,8 @@ def summary() -> dict:
         "by_layer": dict(Counter(e["layer"] for e in ENTRIES)),
         "by_origin": dict(Counter(e["origin"] for e in ENTRIES)),
         "by_presence": dict(Counter(e["presence"] for e in ENTRIES)),
-        "required": [e["path"] for e in ENTRIES if e["presence"] == "required"],
-        "added_by_method": [e["path"] for e in ENTRIES if e["origin"] == "new"],
+        "required": [expand_path(e["path"]) for e in ENTRIES if e["presence"] == "required"],
+        "added_by_method": [expand_path(e["path"]) for e in ENTRIES if e["origin"] == "new"],
         "ledger_fields": len(LEDGER_FIELDS),
         "not_in_target": len(NOT_IN_TARGET),
     }
@@ -435,7 +455,7 @@ def summary() -> dict:
 def presence_for(path: str) -> str | None:
     """返回路径在布局清单中的出现口径；未登记返回 None（调用方 fail-closed）。"""
     for entry in ENTRIES:
-        if entry["path"] == path:
+        if expand_path(entry["path"]) == path:
             return str(entry["presence"])
     return None
 
@@ -445,7 +465,8 @@ def diff(target: Path) -> dict:
     files = [e for e in ENTRIES if e["kind"] == "file"]
     rows: list[dict] = []
     for e in ENTRIES:
-        p = target / e["path"]
+        rel = expand_path(e["path"], target)
+        p = target / rel
         exists = p.is_dir() if e["kind"] == "dir" else p.is_file()
         if exists:
             status = "present"
@@ -457,11 +478,11 @@ def diff(target: Path) -> dict:
             status = "not-run"
         else:
             status = "absent-preexisting"
-        rows.append({"path": e["path"], "layer": e["layer"], "origin": e["origin"],
+        rows.append({"path": rel, "layer": e["layer"], "origin": e["origin"],
                      "presence": e["presence"], "status": status, "exists": exists})
 
     # governance/ 下的清单外文件 = 可能出现第二事实源，报警
-    known = {e["path"] for e in ENTRIES}
+    known = {expand_path(e["path"], target) for e in ENTRIES}
     unexpected: list[str] = []
     gov = target / "governance"
     if gov.is_dir():
@@ -516,6 +537,8 @@ def render_md() -> str:
         f"> schema `{SCHEMA}` · 条目 {len(ENTRIES)} · "
         f"引入后新增 {sum(1 for e in ENTRIES if e['origin'] == 'new')} 项 · "
         f"账本内字段 {len(LEDGER_FIELDS)} 项。",
+        f"> 看板路径模式 `{BOARD_PATH_PATTERN}`：由 `scripts/board_path.py` 按目标治理目录解析；"
+        "表中展示中性占位符，实际文件名取自解析结果。",
         "",
         "## 分层含义",
         "",
@@ -539,7 +562,7 @@ def render_md() -> str:
         if e["note"]:
             meaning += f"　注：{e['note']}"
         lines.append(
-            f"| `{e['path']}` | {e['layer']} | {ORIGINS[e['origin']]} | "
+            f"| `{expand_path(e['path'])}` | {e['layer']} | {ORIGINS[e['origin']]} | "
             f"{PRESENCES[e['presence']]} | {e['owner']} | `{e['write']}` | {editable} | "
             f"{COMMITS[e['commit']]} | {meaning} |"
         )

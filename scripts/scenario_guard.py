@@ -37,6 +37,8 @@ import sys
 from datetime import datetime, timedelta
 from pathlib import Path
 
+from board_path import resolve
+
 SCHEMA = "scenario-preflight/1"
 SUPPORTED_LEDGER_VERSIONS = {"1.0"}
 AXIOMS = {
@@ -235,7 +237,7 @@ def collect(target: Path, expect_fingerprint: str | None = None,
         "current_fingerprint": fingerprint,
         "expect_fingerprint": expect_fingerprint,
         "report": report_facts,
-        "board_synced": _board_synced(gov / "index.html", ledger),
+        "board_synced": _board_synced(resolve(gov), ledger),
         "git": _git_facts(target),
         "retired": {"codes": sorted(retired_codes),
                     "conflicts": sorted(retired_codes & active_codes)},

@@ -38,6 +38,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
+from board_path import resolve  # noqa: E402
 from ledger_io import EMBED_RE, load_ledger, sha256_bytes  # noqa: E402
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -84,7 +85,7 @@ def template_digest(source_root: Path = ROOT) -> str:
 
 
 def board_digest(gov: Path) -> str | None:
-    p = Path(gov) / "index.html"
+    p = resolve(gov)
     return skeleton_digest(p.read_text(encoding="utf-8")) if p.is_file() else None
 
 
@@ -105,7 +106,7 @@ def check(target: Path, source_root: Path = ROOT) -> dict:
     target = Path(target)
     gov = target / "governance"
     want = template_digest(source_root)
-    board = gov / "index.html"
+    board = resolve(gov)
     if not board.is_file():
         return {"schema": SCHEMA_CHECK, "target": ".", "match": False,
                 "template_digest": want, "board_digest": None,
@@ -135,7 +136,7 @@ def check(target: Path, source_root: Path = ROOT) -> dict:
 def normalize_board(gov: Path, ledger: dict, source_root: Path = ROOT,
                     *, approved_by: str = "", apply: bool = False,
                     backup_root: Path | None = None) -> dict:
-    """用权威模板骨架 + 当前账本重建 index.html。默认 dry-run。"""
+    """用权威模板骨架 + 当前账本重建看板（路径由 board_path 解析）。默认 dry-run。"""
     if not apply:
         return {"schema": SCHEMA_NORMALIZE, "applied": False,
                 "message": "dry-run：未写盘。加 --apply --approved-by <人> 才执行"}
@@ -155,7 +156,7 @@ def normalize_board(gov: Path, ledger: dict, source_root: Path = ROOT,
         rebuilt = ONTO_TERMS_RE.sub(
             lambda _m: "const ONTO_TERMS = " + terms_json + ";\nlet ONTO_DATA = ONTO_TERMS;",
             rebuilt, count=1)
-    board = gov / "index.html"
+    board = resolve(gov)
     before = board_digest(gov) if board.is_file() else None
     backup = None
     if backup_root is not None and board.is_file():

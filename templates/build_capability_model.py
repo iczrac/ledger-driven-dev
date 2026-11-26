@@ -82,6 +82,15 @@ except ModuleNotFoundError:  # pragma: no cover
     from derived_issues import caps_of_model as _caps_of_model
     from derived_issues import check_issues as _check_issues
 
+# 看板路径唯一解析层：与校验器共用，避免生成器/校验器各写一份 index.html。
+try:
+    from board_path import filename_for as board_filename_for
+    from board_path import resolve as board_resolve
+except ModuleNotFoundError:  # pragma: no cover
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    from board_path import filename_for as board_filename_for
+    from board_path import resolve as board_resolve
+
 # 场景预检契约：与 scenario_guard.py 保持一致；跨版本直写会破坏历史语义。
 SUPPORTED_LEDGER_VERSIONS = {"1.0"}
 
@@ -640,7 +649,7 @@ def judge_level(
     if level >= 4 and gov_hit:
         ev["governance"] = [
             f"{proj_rel}/{gov_dir}/DECISION_LEDGER.json",
-            f"{proj_rel}/{gov_dir}/index.html",
+            f"{proj_rel}/{gov_dir}/{board_filename_for(proj_root / gov_dir)}",
         ]
         level = 5
     return level, ev
@@ -1788,7 +1797,7 @@ def main() -> None:
     ap.add_argument("--root", default=".", help="项目根目录（默认当前目录）")
     ap.add_argument("--registry", help="registry.json 路径（默认 <root>/governance/registry.json）")
     ap.add_argument("--ledger", help="账本路径（默认 <root>/governance/DECISION_LEDGER.json）")
-    ap.add_argument("--board", help="看板 HTML 路径（默认 <root>/governance/index.html）")
+    ap.add_argument("--board", help="看板 HTML 路径（默认由 board_path.resolve 解析）")
     ap.add_argument("--no-board", action="store_true", help="不同步看板内嵌数据")
     ap.add_argument("--test-report", help="测试报告 JSON（由 scripts/run_tests.py 生成）；提供则判定 verified 级证据")
     ap.add_argument("--dry-run", action="store_true", help="只打印摘要，不写文件")
@@ -1821,7 +1830,7 @@ def main() -> None:
     repo_root = Path(args.root).resolve()
     reg_path = Path(args.registry) if args.registry else repo_root / "governance" / "registry.json"
     ledger_path = Path(args.ledger) if args.ledger else repo_root / "governance" / "DECISION_LEDGER.json"
-    board_path = Path(args.board) if args.board else repo_root / "governance" / "index.html"
+    board_path = Path(args.board) if args.board else board_resolve(repo_root)
 
     cfg_all = json.loads(Path(reg_path).read_text())
     projects_cfg = normalize_projects(cfg_all)

@@ -20,6 +20,8 @@ import json
 import re
 from pathlib import Path
 
+from board_path import resolve
+
 EMBED_RE = re.compile(r"const EMBED = \{.*?\};\nlet DATA", re.S)
 
 
@@ -45,7 +47,7 @@ def load_ledger(gov: Path) -> dict:
 
 def sync_board(gov: Path, ledger: dict) -> bool:
     """把账本逐字节等价地写回看板 EMBED；返回是否真的改动了看板。"""
-    board = Path(gov) / "index.html"
+    board = resolve(gov)
     if not board.is_file():
         return False
     html = board.read_text(encoding="utf-8")
@@ -80,7 +82,7 @@ def registry_sha(gov: Path) -> str | None:
 
 def board_synced(gov: Path, ledger: dict) -> bool | None:
     """None=没有看板；True/False=EMBED 是否与账本等价。"""
-    board = Path(gov) / "index.html"
+    board = resolve(gov)
     if not board.is_file():
         return None
     m = re.search(r"const EMBED = (\{.*?\});\nlet DATA",

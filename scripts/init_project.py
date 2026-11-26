@@ -6,18 +6,19 @@
     python3 scripts/init_project.py --target /path/to/legacy --mode adopt \
         --from-draft /path/to/legacy/governance/registry.draft.json --code LEGACY
 
-会创建（共 7 个文件，全部落在 <target>/governance/）：
+会创建（共 10 个文件，全部落在 <target>/governance/；看板文件名由 board_path 解析）：
     registry.json                 能力注册表（新建为空清单；接入来自草稿）—— 唯一手写清单
     DECISION_LEDGER.json          账本骨架（含接入来源 provenance）
-    index.html                    可视化看板（EMBED 由生成器同步）
+    <看板文件名>                   可视化看板（由 board_path 解析，EMBED 由生成器同步）
     build_capability_model.py     生成器副本（来自 templates/）
     binding_advisory.py           证据绑定 advisory 副本（来自 templates/，v2.1.2）
     derived_issues.py             派生 issue 副本（来自 templates/，v2.3.0）
     verify_ledger.py              校验器副本（来自 templates/）
     registry_codec.py             registry schema/2 唯一编码契约副本（来自 templates/）
     run_tests.py                  测试报告生成器副本（来自 scripts/）
+    board_path.py                 看板路径解析层副本（来自 templates/）
 
-后四个是工具副本，可用 --no-generator 一并跳过；不在目标项目里手改它们，
+后七个是工具副本，可用 --no-generator 一并跳过；不在目标项目里手改它们，
 升级方法论时从 templates/ / scripts/ 重新同步。
 不会覆盖已存在文件（除非 --force）；草稿、源码与既有账本永不自动改写。
 目录含义与所有权见 docs/15-文件架构.md 与 scripts/file_layout.py。
@@ -31,6 +32,8 @@ import shutil
 import sys
 from datetime import datetime
 from pathlib import Path
+
+from board_path import filename_for
 
 HERE = Path(__file__).resolve().parent
 TEMPLATES = HERE.parent / "templates"
@@ -239,7 +242,7 @@ def main() -> int:
     ))
 
     # 看板模板
-    files.append((gov / "index.html", (TEMPLATES / "index.html.template").read_text()))
+    files.append((gov / filename_for(gov), (TEMPLATES / "index.html.template").read_text()))
 
     for path, content in files:
         if path.exists() and not args.force:
@@ -250,7 +253,8 @@ def main() -> int:
 
     if not args.no_generator:
         for name in ("build_capability_model.py", "binding_advisory.py",
-                     "derived_issues.py", "verify_ledger.py", "registry_codec.py"):
+                     "derived_issues.py", "verify_ledger.py", "registry_codec.py",
+                     "board_path.py"):
             gen = gov / name
             if gen.exists() and not args.force:
                 print(f"跳过（已存在）: {gen}")
@@ -274,7 +278,7 @@ def main() -> int:
     print(f"  5.（可选）升级证据为 verified —— 从本项目根运行：")
     print(f"     python3 governance/run_tests.py --dir tests --out governance/test_report.json")
     print(f"     python3 governance/build_capability_model.py --root . --test-report governance/test_report.json")
-    print(f"  6. 浏览器打开 {gov / 'index.html'} 查看看板（徽章显示声明/实测）")
+    print(f"  6. 浏览器打开 {gov / filename_for(gov)} 查看看板（徽章显示声明/实测）")
     return 0
 
 

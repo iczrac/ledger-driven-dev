@@ -14,6 +14,7 @@ from _base import DEMO, ROOT, demo_copy
 
 from file_layout import (ABS_RE, ENTRIES, LEDGER_FIELDS, NOT_IN_TARGET,
                          diff, render_md, validate)
+from board_path import filename_for
 
 LAYOUT = ROOT / "scripts" / "file_layout.py"
 INIT = ROOT / "scripts" / "init_project.py"
@@ -136,10 +137,11 @@ class LayoutDiffTest(unittest.TestCase):
             self.assertEqual(p.returncode, 0, p.stderr)
             gov = root / "governance"
             self.assertEqual(sorted(f.name for f in gov.iterdir() if f.is_file()),
-                             ["DECISION_LEDGER.json", "binding_advisory.py",
-                              "build_capability_model.py", "derived_issues.py",
-                              "index.html", "registry.json", "registry_codec.py",
-                              "run_tests.py", "verify_ledger.py"])
+                             sorted(["DECISION_LEDGER.json", "binding_advisory.py",
+                                     "board_path.py", "build_capability_model.py",
+                                     "derived_issues.py", filename_for(root),
+                                     "registry.json", "registry_codec.py",
+                                     "run_tests.py", "verify_ledger.py"]))
             d = diff(root)
             self.assertEqual(d["phase"], "skeleton")
             self.assertEqual(d["missing_required"], [])

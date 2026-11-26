@@ -46,6 +46,8 @@ import sys
 import tempfile
 from pathlib import Path
 
+from board_path import resolve as board_resolve
+
 ROOT = Path(__file__).resolve().parents[1]
 SCHEMA = "acceptance/1"
 UPGRADE = "scripts/upgrade.py"
@@ -567,7 +569,7 @@ def activation_placeholder(root: Path = ROOT) -> dict:
         out = subprocess.run(
             [sys.executable, str(proj / "governance" / "verify_ledger.py"),
              "--root", str(base), "--registry", str(proj / "governance" / "registry.json"),
-             "--ledger", str(lp), "--board", str(proj / "governance" / "index.html"),
+             "--ledger", str(lp), "--board", str(board_resolve(proj / "governance")),
              "--json"], capture_output=True, text=True)
         try:
             v = json.loads(out.stdout)

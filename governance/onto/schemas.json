@@ -108,7 +108,7 @@
       "version": "3",
       "owner": "ledger-driven-dev",
       "file": "scripts/build_system_board.py",
-      "external_file": "governance/index.html",
+      "external_file": "governance/system.html",
       "fields": ["meta", "schema", "as_of", "compat", "projects", "history", "detail", "stale_status"],
       "consumers": ["系统级看板", "build_system_board"],
       "translates_to": ["schema.node-test-results", "schema.registry-2"]

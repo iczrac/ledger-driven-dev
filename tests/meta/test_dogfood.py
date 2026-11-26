@@ -17,10 +17,11 @@ from _base import ROOT
 
 sys.path.insert(0, str(ROOT / "scripts"))
 from upgrade import METHOD_VERSION  # noqa: E402
+from board_path import resolve as board_resolve  # noqa: E402
 
 GOV = ROOT / "governance"
 LEDGER = GOV / "DECISION_LEDGER.json"
-BOARD = GOV / "index.html"
+BOARD = board_resolve(GOV)
 TEMPLATE = ROOT / "templates" / "index.html.template"
 ONTO_JSON = ROOT / "docs" / "generated" / "ONTOLOGY.json"
 

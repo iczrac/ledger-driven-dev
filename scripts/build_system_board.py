@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""系统级看板生成器：模板 + 各项目账本 -> CapabilityForge/governance/index.html。
+"""系统级看板生成器：模板 + 各项目账本 -> CapabilityForge/governance/<board_path 解析名>。
 
 纪律
 ----
@@ -24,13 +24,15 @@ import sys
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
+from board_path import filename_for, resolve
+
 SCRIPT = Path(__file__).resolve()
 METHOD_ROOT = SCRIPT.parents[1]
 DATA_RE = re.compile(r"const SYSTEM_DATA = .*?;\nlet DATA = SYSTEM_DATA;", re.S)
 DATA_CAPTURE_RE = re.compile(r"const SYSTEM_DATA = (\{.*\});\nlet DATA = SYSTEM_DATA;", re.S)
 PLACEHOLDER = "const SYSTEM_DATA = /*SYSTEM*/;\nlet DATA = SYSTEM_DATA;"
 TEMPLATE_REL = "templates/system_index.html.template"
-OUTPUT_REL = "governance/index.html"
+OUTPUT_REL = "governance/" + filename_for(METHOD_ROOT.parent)
 BACKUP_DIR = ".system-board-backups"
 SCHEMA_BUILD = "system-board-build/1"
 SCHEMA_CHECK = "system-board-check/1"
@@ -256,7 +258,8 @@ def discover(system_root: Path, ledgers: dict[str, dict] | None = None) -> list[
             "version": led.get("ledger_version", ""),
             "last_updated": led.get("last_updated", ""),
             "ledger": ledger_path.relative_to(root).as_posix(),
-            "board": ("../" + ledger_path.parent.relative_to(root).as_posix() + "/index.html"),
+            "board": ("../" + ledger_path.parent.relative_to(root).as_posix() + "/"
+                      + filename_for(ledger_path.parent)),
             "completion": (projects[0].get("completion", 0) if projects else 0),
             "modules": modules,
             "summary": {"modules": len(modules), "capabilities": len(caps_all),
@@ -300,7 +303,7 @@ def embedded_data(html: str) -> dict | None:
 
 
 def check(system_root: Path, method_root: Path = METHOD_ROOT) -> dict:
-    out = Path(system_root) / OUTPUT_REL
+    out = resolve(system_root)
     reasons: list[str] = []
     want_skeleton = skeleton_digest(template_text(method_root))
     if not out.is_file():
@@ -330,7 +333,7 @@ def build(system_root: Path, method_root: Path = METHOD_ROOT, *,
     if not approved_by:
         raise ValueError("生成系统看板必须提供 --approved-by（人工批准）")
     root = Path(system_root)
-    out = root / OUTPUT_REL
+    out = resolve(root)
     backup = None
     if out.is_file():
         bdir = root / BACKUP_DIR

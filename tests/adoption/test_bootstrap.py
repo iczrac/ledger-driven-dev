@@ -9,6 +9,7 @@ import unittest
 from pathlib import Path
 
 from _base import ROOT
+from board_path import resolve as board_resolve
 
 INIT = ROOT / "scripts" / "init_project.py"
 DISCOVER = ROOT / "scripts" / "discover_project.py"
@@ -43,9 +44,9 @@ class BootstrapTest(unittest.TestCase):
         proc = run(INIT, "--target", root, "--code", "NEW", "--name", "新项目")
         self.assertEqual(proc.returncode, 0, proc.stderr)
         gov = root / "governance"
-        for name in ("registry.json", "DECISION_LEDGER.json", "index.html",
+        for name in ("registry.json", "DECISION_LEDGER.json", board_resolve(gov).name,
                      "build_capability_model.py", "verify_ledger.py",
-                     "registry_codec.py", "run_tests.py"):
+                     "registry_codec.py", "run_tests.py", "board_path.py"):
             self.assertTrue((gov / name).exists(), name)
         reg = json.loads((gov / "registry.json").read_text())
         ledger = json.loads((gov / "DECISION_LEDGER.json").read_text())
@@ -137,10 +138,10 @@ class BootstrapTest(unittest.TestCase):
         self.assertEqual(run(INIT, "--target", root, "--mode", "adopt", "--code", "LEG").returncode, 0)
         gov = root / "governance"
         gen = run(GENERATOR, "--root", root, "--registry", gov / "registry.json",
-                  "--ledger", gov / "DECISION_LEDGER.json", "--board", gov / "index.html")
+                  "--ledger", gov / "DECISION_LEDGER.json", "--board", board_resolve(gov))
         self.assertEqual(gen.returncode, 0, gen.stderr)
         ver = run(VERIFIER, "--root", root, "--registry", gov / "registry.json",
-                  "--ledger", gov / "DECISION_LEDGER.json", "--board", gov / "index.html",
+                  "--ledger", gov / "DECISION_LEDGER.json", "--board", board_resolve(gov),
                   "--strict")
         self.assertEqual(ver.returncode, 0, ver.stdout + ver.stderr)
         ledger = json.loads((gov / "DECISION_LEDGER.json").read_text())

@@ -40,6 +40,8 @@ import subprocess
 import sys
 from pathlib import Path
 
+from board_path import resolve
+
 SCHEMA = "ledger-observations/1"
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -186,7 +188,7 @@ def probe_verifier(target: Path, gov: Path) -> dict | None:
     cmd = [sys.executable, str(v), "--root", str(target),
            "--registry", str(gov / "registry.json"),
            "--ledger", str(gov / "DECISION_LEDGER.json"),
-           "--board", str(gov / "index.html"), "--json"]
+           "--board", str(resolve(gov)), "--json"]
     try:
         r = subprocess.run(cmd, capture_output=True, text=True, timeout=25, cwd=str(target))
     except (OSError, subprocess.SubprocessError):

@@ -6,6 +6,9 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
 MODE="${1:-all}"
 DEMO="examples/demo-shop/governance"
+# 看板文件名由唯一解析层给出；改名期间脚本不需要改字面量。
+BOARD_DEMO="$(python3 scripts/board_path.py --target "$DEMO" --resolved)"
+BOARD_NAME="$(python3 scripts/board_path.py --target . --filename)"
 FAILURES=0
 DOC_STRICT=0
 for arg in "$@"; do
@@ -118,7 +121,7 @@ stage_verify(){
   python3 "$DEMO/verify_ledger.py" --root . \
     --registry "$DEMO/registry.json" \
     --ledger "$DEMO/DECISION_LEDGER.json" \
-    --board "$DEMO/index.html" --strict
+    --board "$BOARD_DEMO" --strict
 }
 stage_verify_main(){
   note '主账本自校验（governance/DECISION_LEDGER.json · 31 条三态）'
@@ -142,7 +145,7 @@ stage_idempotence(){
   cp -r examples/demo-shop/src examples/demo-shop/tests examples/demo-shop/docs "$tmp/examples/demo-shop/"
   cp "$DEMO"/*.* "$tmp/examples/demo-shop/governance/"
   local ledger="$tmp/examples/demo-shop/governance/DECISION_LEDGER.json"
-  local board="$tmp/examples/demo-shop/governance/index.html"
+  local board="$tmp/examples/demo-shop/governance/$BOARD_NAME"
   local reg="$tmp/examples/demo-shop/governance/registry.json"
   local report="$tmp/examples/demo-shop/governance/test_report.json"
   before="$(snapshot "$ledger")"
@@ -165,11 +168,12 @@ stage_sync(){
   cmp -s templates/derived_issues.py "$DEMO/derived_issues.py" || return 1
   cmp -s templates/verify_ledger.py "$DEMO/verify_ledger.py" || return 1
   cmp -s templates/registry_codec.py "$DEMO/registry_codec.py" || return 1
+  cmp -s templates/board_path.py "$DEMO/board_path.py" || return 1
   cmp -s templates/vendor/d3.v7.min.js "$DEMO/vendor/d3.v7.min.js" || return 1
-  python3 - "$DEMO" <<'PY' || return 1
+  python3 - "$DEMO" "$BOARD_NAME" <<'PY' || return 1
 import json, re, sys
 base = sys.argv[1]
-html = open(f'{base}/index.html').read()
+html = open(f'{base}/{sys.argv[2]}').read()
 embed = json.loads(re.search(r'const EMBED = (\{.*?\});\nlet DATA', html, re.S).group(1))
 ledger = json.load(open(f'{base}/DECISION_LEDGER.json'))
 assert embed == ledger, '看板 EMBED 与账本不一致'
@@ -311,7 +315,7 @@ stage_upgrade_access(){
   fi
   python3 "$gov/verify_ledger.py" --root "$tmp" \
     --registry "$gov/registry.json" --ledger "$gov/DECISION_LEDGER.json" \
-    --board "$gov/index.html" --strict >/dev/null \
+    --board "$gov/$BOARD_NAME" --strict >/dev/null \
     || { rm -rf "$tmp"; return 1; }
   rm -rf "$tmp"
   echo '  升级计划/备份/复验、第七轴本体绑定、可用资产、节点工作台、注册批准、写入审计、默认拒绝、31 条三态不变量均通过'

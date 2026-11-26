@@ -28,6 +28,8 @@ import tempfile
 import time
 from pathlib import Path
 
+from board_path import filename_for
+
 ROOT = Path(__file__).resolve().parents[1]
 SCHEMA = "scale-probe/1"
 GEN = ROOT / "templates" / "build_capability_model.py"
@@ -85,13 +87,14 @@ def build_project(base: Path, mods: int, caps_per: int, files: int,
     tpl = TEMPLATE.read_text(encoding="utf-8")
     import re
     embed_re = re.compile(r"const EMBED = \{.*?\};\nlet DATA", re.S)
-    (gov / "index.html").write_text(
+    (gov / filename_for(gov)).write_text(
         embed_re.sub(lambda _m: "const EMBED = {};\nlet DATA", tpl, count=1),
         encoding="utf-8")
     shutil.copyfile(GEN, gov / "build_capability_model.py")
     shutil.copyfile(ADV, gov / "binding_advisory.py")
     shutil.copyfile(ROOT / "templates" / "derived_issues.py", gov / "derived_issues.py")
     shutil.copyfile(CODEC, gov / "registry_codec.py")
+    shutil.copyfile(ROOT / "templates" / "board_path.py", gov / "board_path.py")
     return {"mods": mods, "caps_per": caps_per, "caps": mods * caps_per,
             "files": files, "entries": entries, "events": events}
 
@@ -108,7 +111,7 @@ def probe(config: dict) -> dict:
             [sys.executable, str(gov / "build_capability_model.py"),
              "--root", str(base), "--registry", str(gov / "registry.json"),
              "--ledger", str(gov / "DECISION_LEDGER.json"),
-             "--board", str(gov / "index.html")],
+             "--board", str(gov / filename_for(gov))],
             capture_output=True, text=True, timeout=600)
         elapsed = time.perf_counter() - t0
         if p.returncode != 0:
@@ -124,7 +127,7 @@ def probe(config: dict) -> dict:
             "elapsed_s": round(elapsed, 3),
             "products": {
                 "ledger_bytes": (gov / "DECISION_LEDGER.json").stat().st_size,
-                "board_bytes": (gov / "index.html").stat().st_size,
+                "board_bytes": (gov / filename_for(gov)).stat().st_size,
                 "governance_files": len([x for x in gov.rglob("*") if x.is_file()]),
                 "project_files": budget["metrics"]["project_files"],
             },

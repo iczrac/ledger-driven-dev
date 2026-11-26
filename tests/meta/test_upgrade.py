@@ -22,6 +22,7 @@ from ledger_io import current_fingerprint, load_ledger, write_ledger
 sys.path.insert(0, str(ROOT / "scripts"))
 from upgrade import (METHOD_VERSION, POST_UPGRADE, PRE_UPGRADE, TOOLING, _version_tuple,  # noqa: E402
                      apply, check_definitions, plan, rollback, verify)
+from board_path import resolve as board_resolve  # noqa: E402
 
 UPGRADE = ROOT / "scripts" / "upgrade.py"
 POLICY = {"schema": "projection-policy/1", "test_results": "opt-out",
@@ -60,7 +61,7 @@ class UpgradeTest(unittest.TestCase):
         self.assertEqual(check_definitions(), [])
         self.assertEqual(plan.__name__, "plan")
         self.assertEqual(len(POST_UPGRADE), 19)
-        self.assertEqual(len(TOOLING), 7)
+        self.assertEqual(len(TOOLING), 8)
         self.assertEqual(TOOLING["governance/vendor/d3.v7.min.js"],
                          "templates/vendor/d3.v7.min.js")
         self.assertEqual(len(PRE_UPGRADE), 1)
@@ -150,7 +151,7 @@ class UpgradeTest(unittest.TestCase):
             self.assertTrue(v["upgrade_complete"])
             gov = target / "governance"
             r = run_verify(tmp, gov / "DECISION_LEDGER.json", gov / "registry.json",
-                           gov / "index.html")
+                           board_resolve(gov))
             self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
 
     def test_apply_is_idempotent(self):
@@ -347,7 +348,7 @@ class ProjectionPolicyTest(unittest.TestCase):
 
             def history_checks() -> dict:
                 result = run_verify(tmp, ledger_path, gov / "registry.json",
-                                    gov / "index.html")
+                                    board_resolve(gov))
                 payload = json.loads(result.stdout)
                 return {c["id"]: c["status"] for c in payload["checks"]}
 

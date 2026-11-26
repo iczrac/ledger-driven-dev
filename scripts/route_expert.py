@@ -25,6 +25,8 @@ import re
 import sys
 from pathlib import Path
 
+from board_path import resolve
+
 SCHEMA = "expert-route/1"
 SOURCE_ROOT = Path(__file__).resolve().parents[1]
 ASSET_SCHEMA = "expert-assets/1"
@@ -416,7 +418,7 @@ def inspect(target: Path, max_files: int = 2000) -> dict:
 
     has_git = (target / ".git").exists()
     has_report = (gov / "test_report.json").exists()
-    has_board = (gov / "index.html").exists()
+    has_board = resolve(gov).exists()
     registry_modules = len(registry.get("modules", [])) if registry_state == "ok" else 0
 
     if ledger_state == "corrupt":

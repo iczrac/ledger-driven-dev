@@ -20,6 +20,7 @@ from pathlib import Path
 from _base import DEMO, ROOT, demo_copy
 from board_contract import (board_digest, check as board_check, normalize_board,
                             skeleton_digest, template_digest)
+from board_path import resolve as board_resolve
 from ledger_io import board_synced, load_ledger, write_ledger
 from method_assets import check as assets_check
 from method_assets import manifest as assets_manifest
@@ -152,7 +153,7 @@ class BoardTest(unittest.TestCase):
             target = Path(td)
             gov = target / "governance"
             gov.mkdir()
-            (gov / "index.html").write_text(
+            board_resolve(gov).write_text(
                 self._html().replace('<div id="stats"></div>', ""), encoding="utf-8")
             r = board_check(target)
             self.assertIn("stats", r["layout"]["missing_ids"])
@@ -178,7 +179,7 @@ class BoardTest(unittest.TestCase):
             target = Path(td)
             gov = target / "governance"
             gov.mkdir()
-            (gov / "index.html").write_text(self._html(), encoding="utf-8")
+            board_resolve(gov).write_text(self._html(), encoding="utf-8")
             p = subprocess.run([sys.executable, str(SCRIPTS / "board_contract.py"),
                                 "--target", str(target), "check", "--json"],
                                capture_output=True, text=True)

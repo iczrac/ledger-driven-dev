@@ -34,6 +34,8 @@ import sys
 from datetime import datetime
 from pathlib import Path
 
+from board_path import resolve
+
 CODE_RE = re.compile(r"^[A-Z][A-Z0-9]*\.[A-Z][A-Z0-9]*\.[A-Z][A-Z0-9]*\.\d{2}$")
 EMBED_RE = re.compile(r"const EMBED = \{.*?\};\nlet DATA", re.S)
 MUTATIONS = {"freeze", "unfreeze", "archive", "retire", "restore", "claim", "release"}
@@ -56,7 +58,7 @@ def _load(gov: Path) -> tuple[dict, Path]:
 
 def _sync_board(gov: Path, ledger: dict) -> None:
     """状态变更后同步看板 EMBED，维持 31 条不变量中的 board_embed_synced。"""
-    board = gov / "index.html"
+    board = resolve(gov)
     if not board.exists():
         return
     compact = json.dumps(ledger, ensure_ascii=False, separators=(",", ":"))

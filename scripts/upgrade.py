@@ -20,7 +20,7 @@ v0.9.0 只做了 `ledger_version` 的 fail-closed，于是已有项目面临三�
 --------------------
     method_version   方法论/工具链版本（本文件 METHOD_VERSION），写进账本
     ledger_version   账本数据契约版本（1.0）；不兼容时只 fail-closed，不猜迁移
-    tool hashes      6 个工具副本的 sha256，与 templates/ scripts/ 逐一比对
+    tool hashes      7 个工具副本的 sha256，与 templates/ scripts/ 逐一比对
     method_assets    专家/技能/路由/模板/文档整包摘要；资产升级必须重新批准
     board_skeleton   去 EMBED 后的看板骨架 sha256；统一 CSS/DOM/JS，禁止项目改版
     installed_assets 项目级 .workbuddy/ 内已安装副本的逐文件摘要；缺失/手改即判不可用
@@ -72,6 +72,8 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
+from board_path import filename_for
+
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 # 投影宣告 codec 的唯一权威源在 templates/registry_codec.py；与工具副本共用判据。
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "templates"))
@@ -119,6 +121,7 @@ TOOLING: dict[str, str] = {
     "governance/verify_ledger.py": "templates/verify_ledger.py",
     "governance/registry_codec.py": "templates/registry_codec.py",
     "governance/run_tests.py": "scripts/run_tests.py",
+    "governance/board_path.py": "templates/board_path.py",
     # v2.12.0：本地 D3 随方法版本下发，file:// 下不访问 CDN。
     "governance/vendor/d3.v7.min.js": "templates/vendor/d3.v7.min.js",
 }
@@ -132,7 +135,7 @@ MIGRATIONS: list[dict] = [
          name="建立默认拒绝的 Agent 接入登记", approval=True,
          note="agents=[] / leases=[] / audit=[] / revision=0；升级是接入控制的前置条件"),
     dict(id="M3-tool-sync", field="", kind="tool-sync",
-         name="同步 6 个工具副本到权威模板", approval=False,
+         name="同步 7 个工具副本到权威模板", approval=False,
          note="先备份；副本内容变化会让 evidence_binding 过期，必须重新取证"),
     dict(id="M4-method-version", field="", kind="meta-refresh",
          name="刷新 method_version 与工具摘要", approval=False,
@@ -322,7 +325,8 @@ def plan(target: Path, source_root: Path = SOURCE_ROOT) -> dict:
             "none" if noop else
             "medium" if any(m["kind"] in ("tool-sync", "board-normalize", "asset-install")
                             for m in needed) else "low")
-    writes = ["governance/DECISION_LEDGER.json", "governance/index.html"]
+    board_rel = "governance/" + filename_for(target)
+    writes = ["governance/DECISION_LEDGER.json", board_rel]
     if any(m["kind"] == "tool-sync" for m in needed):
         writes += [r["path"] for r in rows if r["state"] != "in-sync"]
     if any(m["kind"] == "asset-install" for m in needed):
@@ -350,7 +354,7 @@ def plan(target: Path, source_root: Path = SOURCE_ROOT) -> dict:
         "noop": noop,
         "risk": risk,
         "backup": {"root": BACKUP_ROOT,
-                   "files": ["governance/DECISION_LEDGER.json", "governance/index.html",
+                   "files": ["governance/DECISION_LEDGER.json", board_rel,
                              "governance/registry.json", *TOOLING,
                              "governance/ASSET_MANIFEST.json",
                              *[r["path"] for r in installed_bundle(source_root)["files"]]],
@@ -427,7 +431,7 @@ def apply(target: Path, approved_by: str, *,
         dst.parent.mkdir(parents=True, exist_ok=True)
         shutil.copyfile(src, dst)
 
-    # 骨架归一：统一快照已备份 index.html，这里不再重复备份；
+    # 骨架归一：统一快照已备份看板（路径由 board_path 解析），这里不再重复备份；
     # 只换 CSS/DOM/JS 骨架，数据段随后由 write_ledger 用最终账本同步。
     if "M6-board-skeleton" in ids:
         normalize_board(gov, ledger, source_root,
