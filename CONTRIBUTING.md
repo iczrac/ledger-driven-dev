@@ -14,7 +14,25 @@
 bash scripts/check.sh
 ```
 
-它依次跑：单元测试（`unittest discover` 与 `run_tests.py` 双口径）→ 测试架构映射 → 证据分层 → 24 条账本不变量 → 场景矩阵 → 文件布局 → 升级与多 Agent 接入端到端 → 资产/骨架/规模/节点工作台契约 → 生成器幂等 → 模板/示例同步与看板 EMBED → 脱敏与文档内链。**任何阶段失败都不得提交**。本地与 CI 跑的是同一份脚本，不允许出现"本地过了 CI 挂了"。
+它依次跑 18 个阶段：单元测试（`unittest discover` 与 `run_tests.py` 双口径）→ 测试架构映射 → 证据分层 → 账本校验（31 条三态不变量）→ 主账本自校验 → 场景矩阵 → 文件布局 → 文档生命周期（shadow）→ 升级与多 Agent 接入端到端 → 资产/骨架/规模/节点工作台契约 → 生成器幂等 → 模板/示例同步与看板 EMBED → 反向回流 → 本体层 → 脱敏与文档内链 → 规范自查 → 验收契约 → 前置条件。**任何阶段失败都不得提交**。本地与 CI 跑的是同一份脚本，不允许出现"本地过了 CI 挂了"。
+
+## 验证分层
+
+门禁有两档，用途不同，**不可互相替代**：
+
+| 档位 | 命令 | 实测耗时 | 用途 |
+|---|---|---|---|
+| 中途快检 | `bash scripts/check.sh --fast` | 约 45s | 实施过程中的自检 |
+| 全量门禁 | `bash scripts/check.sh` | 约 445s | **提交前的唯一依据** |
+
+- **实施过程中**用 `bash scripts/check.sh --fast`（约 45s），不要为改一行代码去等一次全量。
+- **提交前必须**再跑一次全量 `bash scripts/check.sh`（约 445s）。
+- **全量门禁是唯一的提交依据**；快检结果**不可**作为提交依据。快检的输出会明示
+  「中途快检，非提交依據」——不要把「快检通过」读成「可以提交了」。
+- 快检 = 全量阶段表去掉「测试」那一关（全量用例，实测占全量约 90% 的时间），
+  覆盖其余全部阶段（当前 17/18 个）。因此**模板/示例同步、看板 EMBED、文档内链等
+  契约检查仍在快检内**——它们不是"可以省的部分"。上次看板改名引入的门禁回归就是
+  被「同步」阶段抓到的，快检若漏掉它，等于把同一个坑再挖一次。
 
 ## 改动的规则
 
@@ -23,7 +41,7 @@ bash scripts/check.sh
 | `templates/build_capability_model.py` | 复制到 `examples/demo-shop/governance/`，重跑生成器，跑门禁 |
 | `templates/verify_ledger.py` | 同步示例副本；若新增检查项，补负向测试 |
 | `templates/index.html.template` | 用 `board_contract.py --target examples/demo-shop normalize --apply --approved-by <人> --no-backup` 同步示例骨架；`sync_board` 保证 EMBED 一致；跑 `node --check` 与 `board_contract.py check`（骨架摘要必变，会触发所有项目 M6） |
-| `templates/system_index.html.template` / `scripts/build_system_board.py` | 重生成 `CapabilityForge/governance/index.html`（`--apply --approved-by <人>`）；跑 `build_system_board.py check` 与 `tests/meta/test_system_board.py`；系统看板是生成物，禁止在项目里手改 HTML |
+| `templates/system_index.html.template` / `scripts/build_system_board.py` | 重生成 `CapabilityForge/governance/system.html`（`--apply --approved-by <人>`）；跑 `build_system_board.py check` 与 `tests/meta/test_system_board.py`；系统看板是生成物，禁止在项目里手改 HTML |
 | `scripts/scale_budget.py` 的 `BUDGETS` / 模板 `PAGE_SIZE` | 同步 `18-规模化与版面契约` 的阈值表与基准，重跑 `scale_probe.py` 取证 |
 | `templates/registry.example.json` | 确认 `init_project.py` 产出的骨架仍可被生成器消费 |
 | `scripts/` 下脚本 | 补 `tests/` 用例；技能脚本的纪律必须被测试证明 |

@@ -10,7 +10,7 @@
 - [x] 文档索引分 8 类 + 关联决策，路径存在性校验
 - [x] 看板 11 个标签视图（含工作台 / 工作项 / 术语与实现）可渲染，节点工作条显示 TODO / issue / 测试；内嵌数据由生成器同步；CSS/DOM/JS 骨架与模板一致，按 PAGE_SIZE 分批
 - [x] 循环协议写入 capability_model
-- [x] 可信性校验器：24 条不变量（含证据分层），支持 --json / --strict
+- [x] 可信性校验器：31 条不变量（含证据分层），支持 --json / --strict
 - [x] 证据分层：declared/verified，run_tests.py 产出实测报告，生成器 --test-report 判定升级
 - [x] 看板显示 tier 徽章与 verified 覆盖率；任务卡携带 tier 与 needs_runtime_verification
 - [x] SELECT 任务队列：生成器产出 next_queue，dry-run 可见，任务卡携带已确认经验
@@ -53,7 +53,7 @@
 - [x] 路由脚本只读、确定性，账本损坏/意图冲突时 fail-closed
 - [x] 存量项目盘点只写草稿与报告，不覆盖既有治理文件与源码
 - [x] 新建/接入均写入 provenance，外部路径不泄露绝对路径
-- [x] 接入模式生成后可通过 24 条不变量校验
+- [x] 接入模式生成后可通过 31 条不变量校验
 - [x] docs/12-专家路由.md 与 README / AI 集成 / 落地指南互相引用一致
 
 ## 可追溯性五项反问（0.7.0）
@@ -118,7 +118,7 @@
 - [x] `tests/MODULES.json`：6 个开发模块 / 23 个测试文件；`MODULE_ID` 自证、`rglob` 与 `unittest discover` 双口径一致
 - [x] `test_modules.py --check` 与 `docs/generated/TEST_MODULES.md` 渲染同步；`--target examples/demo-shop` 输出模块单测缺口
 - [x] `work_items` / `test_results` 两个账本内字段；`work_panel.py` 写动作全部需人批准；`sync-tests` 绑定报告字节
-- [x] 24 条不变量中的 `work_items_valid` / `work_item_refs_valid` / `test_results_binding_valid` 均有负向证明
+- [x] 31 条不变量中的 `work_items_valid` / `work_item_refs_valid` / `test_results_binding_valid` 均有负向证明
 - [x] 看板 10 个 tab：工作台 / 工作项视图与节点工作条；Node DOM stub 证明空账本不崩；骨架归一到 `735bcd09…`
 - [x] `work_panel.py nodes` 与看板 JS 按同一规则复算派生聚合，不落盘、无第三份事实源
 - [x] 规模预算新增 `work_items`（10 项阈值）；场景矩阵 60 / 10 轴、覆盖率 84.2%（47 / 7 / 5 / 1）
