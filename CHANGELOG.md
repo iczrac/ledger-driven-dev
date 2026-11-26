@@ -4,6 +4,12 @@
 
 ## [Unreleased] - 2026-11-25
 
+原子化提交残留声明（2026-11-26，使用者拍板「如实标注残留」）：按派生一致性边界拆分后，Ed 只读复核与独立复现均证实**中间 commit 非绿**，与本版新增的「每个中间 commit 各自全绿」口径不符，如实记录、不重写历史。
+
+- **实测**：`92691fe`（引入 `executable_claims` 判据）命中 `executable_claims=18`——18 份 Skill 的 `scripts/ledger_entry.py` 假命令到 `6eb4a4b` 才清。julia 侧 `ef1c9af` 命中 `generated_drift=5`、`8c23ab4` 命中 `generated_drift=12`——权威源先改、dist 到 `13db23b` 才重算。
+- **有效回滚点**：唯一全绿快照 = 两仓 HEAD（ledger `c207117`、julia `13db23b`）；上一个全绿锚 = `origin/main`（ledger `eb6813e`、julia `bb0d330`）。不得把非绿的中间 hash 当回滚点。
+- **历史处理**：两仓均未 push、未升版、未打 tag；本轮不 amend / rebase / squash。若将来要真正满足中间全绿，须新一轮明确授权重写本地历史。
+
 边界审查修正（使用者拍板「都修」）；不改 `METHOD_VERSION`，随下个正式版本一并发布。
 
 - **契约登记补齐（错位 A）**：`governance/onto/schemas.json` 从 10 条增至 13 条，补登 `system-board-data/3`（`external_file` 指向工作区系统看板产物）、`system-board-build/1`、`system-board-check/1`，兑现 v2.29.0「全部结构化契约登记」约定。三条 `file` 均指向 `scripts/build_system_board.py`，由既有 `test_all_declared_schemas_are_real` 校验契约串真实存在；`ids_declared` 断言同步 10 → 13。`schemas.json` 不在 `ontology.py SOURCE_FILES`，`ontology_digest` 保持 `768c3e5f…` 不变。
