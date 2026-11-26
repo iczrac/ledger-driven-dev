@@ -64,10 +64,12 @@ from datetime import datetime
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+ROOT = Path(__file__).resolve().parents[1]
+# 投影宣告与升级器 / 校验器 / 生成器共用唯一判据。
+sys.path.insert(0, str(ROOT / "templates"))
 
 from ledger_io import load_ledger, write_ledger  # noqa: E402
-
-ROOT = Path(__file__).resolve().parents[1]
+from registry_codec import projection_opted_out  # noqa: E402
 SCHEMA_CHECK = "work-panel-check/1"
 SCHEMA_NODES = "node-work-summary/1"
 SCHEMA_TEST_RESULTS = "node-test-results/1"
@@ -606,10 +608,16 @@ def activation_from_report(tr: dict) -> dict:
 def sync_tests(target: Path, *, approved_by: str = "", apply: bool = False) -> dict:
     target = Path(target)
     gov = target / "governance"
+    ledger = load_ledger(gov)
+    if projection_opted_out(ledger):
+        # 宣告 opt-out 就没有写入动作，因此不要求 --approved-by（无写无需批准）。
+        return {"schema": SCHEMA_ACTION, "action": "sync-tests",
+                "mode": "apply" if apply else "dry-run",
+                "noop": True, "policy": "opt-out", "cases": 0,
+                "message": "账本宣告 test_results opt-out；不写投影，无需批准"}
     tr = test_results_from_report(gov)
     if tr is None:
         raise ValueError(f"找不到可读的测试报告：{REPORT_REL}")
-    ledger = load_ledger(gov)
     current = ledger.get("test_results")
     activation = activation_from_report(tr)
     meta = ledger.get("governance_meta") or {}

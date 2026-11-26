@@ -73,7 +73,10 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+# 投影宣告 codec 的唯一权威源在 templates/registry_codec.py；与工具副本共用判据。
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "templates"))
 
+from registry_codec import projection_opted_out  # noqa: E402
 from ledger_io import (board_synced, load_ledger, sha256_bytes, sha256_file,
                        write_ledger)  # noqa: E402
 from scenario_guard import _binding_fresh  # noqa: E402
@@ -240,6 +243,8 @@ def _projection_stale(gov: Path, ledger: dict) -> bool:
     无报告是合法的 declared 状态（E2），证据未激活由校验器的 na 态与
     activation 占位共同明示。
     """
+    if projection_opted_out(ledger):
+        return False
     report = gov / "test_report.json"
     if not report.is_file():
         return False
@@ -435,7 +440,7 @@ def apply(target: Path, approved_by: str, *,
                        source_root=source_root, bind_ledger=False)
     if "M8-work-panel" in ids:
         ledger.setdefault("work_items", [])
-        if "test_results" not in ledger:
+        if not projection_opted_out(ledger) and "test_results" not in ledger:
             projection = test_results_from_report(gov)
             if projection is not None:
                 ledger["test_results"] = projection

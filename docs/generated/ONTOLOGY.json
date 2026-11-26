@@ -11,7 +11,7 @@
     {
       "path": "scripts/work_panel.py",
       "role": "value_domains",
-      "sha256": "106a91b55b35abb83efec79af356579865a1fdf50a79f61ef24d22802e50e4e4"
+      "sha256": "11477ea37d6c63f89aff299cba57319004f3be5c369714a4ccadf95e2cc1b407"
     },
     {
       "path": "scripts/scenario_matrix.py",
@@ -31,12 +31,12 @@
     {
       "path": "templates/build_capability_model.py",
       "role": "value_domains",
-      "sha256": "4b8a5d2afe5407430c474f8b09524c88bc1a3c7b82378328ea4f9d87390ea9f1"
+      "sha256": "c969a4b8bbfd12e98d53a77ac6124255c08aac1c1babd623a8a7283fb6775929"
     },
     {
       "path": "templates/verify_ledger.py",
       "role": "axioms",
-      "sha256": "66235c73c29682d8bf7bb2089705fd9e3568985996848186196698b38fb8e5ba"
+      "sha256": "5c0e000996061203bffce0617ed2964ceb4b9483fe59b59af1a9eb2394ce9126"
     }
   ],
   "bounded_contexts": [
@@ -786,5 +786,5 @@
     "polyseme_terms": 3,
     "drift_count": 0
   },
-  "ontology_digest": "d5e21bc916d5857a9ad9a20eda8e977d1682104003432087cf416d26242e36f4"
+  "ontology_digest": "240b5580f180c34b8a81dc891b88374afa6b487989437dc6372124a71e976d9d"
 }

@@ -7,7 +7,10 @@
    - 旧形状：``project`` + 平坦 ``modules[]``（单项目模板、示例项目仍兼容）；
    - 新形状：``schema: registry/2`` + ``projects[]``（每个项目自带 ``modules[]``）。
 2. 把项目码 / 模块码 / 域 / 序号收敛成四段能力码；
-3. 为生成器、校验器、可追溯投影器提供同一份展开结果，杜绝第二套 codec。
+3. 为生成器、校验器、可追溯投影器提供同一份展开结果，杜绝第二套 codec；
+4. 责任扩张：registry codec ＋ 投影宣告 codec——消费方可在
+   ``governance_meta.projection_policy`` 显式宣告 ``test_results: opt-out``，
+   唯一判据在这里，生成器 / 校验器 / 升级器 / 工作台共用，不得各写一份。
 
 纪律：本模块只读输入、不写文件、不猜缺失证据。显式 ``caps[].code`` 只要合法
 就是稳定身份；否则按列表序号派生。迁移期间不得重排 caps。
@@ -19,6 +22,7 @@ from copy import deepcopy
 
 SCHEMA = "registry/2"
 LEGACY_SCHEMA = "registry/1"
+PROJECTION_POLICY_SCHEMA = "projection-policy/1"
 CODE_RE = re.compile(r"^[A-Z][A-Z0-9]*\.[A-Z][A-Z0-9]*\.[A-Z][A-Z0-9]*\.\d{2}$")
 
 PROJECT_DIRS = (
@@ -31,6 +35,38 @@ DIR_DEFAULTS = {
     "docs_dir": "docs",
     "governance_dir": "governance",
 }
+
+
+def policy_error(ledger: dict) -> str | None:
+    """只读校验投影宣告；没有宣告返回 None（旧账本行为完全不变）。"""
+    if not isinstance(ledger, dict):
+        return None
+    meta = ledger.get("governance_meta")
+    if not isinstance(meta, dict) or "projection_policy" not in meta:
+        return None
+    policy = meta["projection_policy"]
+    if not isinstance(policy, dict):
+        return "projection_policy 必须是对象"
+    if policy.get("schema") != PROJECTION_POLICY_SCHEMA:
+        return f"projection_policy.schema 非法：{policy.get('schema')}"
+    if policy.get("test_results") not in ("opt-out", "inherit"):
+        return "projection_policy.test_results 必须是 opt-out 或 inherit"
+    for field in ("reason", "approved_by"):
+        if not str(policy.get(field, "")).strip():
+            return f"projection_policy.{field} 缺失"
+    return None
+
+
+def projection_opted_out(ledger: dict, key: str = "test_results") -> bool:
+    """是否显式宣告不投影该键；宣告存在但非法时 fail-closed 返回 True。"""
+    if not isinstance(ledger, dict):
+        return False
+    meta = ledger.get("governance_meta")
+    if not isinstance(meta, dict) or "projection_policy" not in meta:
+        return False
+    if policy_error(ledger) is not None:
+        return True
+    return meta["projection_policy"].get(key) == "opt-out"
 
 
 def code_namespace(project_code: str, module_code: str) -> str:

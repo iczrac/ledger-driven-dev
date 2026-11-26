@@ -149,6 +149,23 @@ class HealthNaContractTest(unittest.TestCase):
                     health["recommendation_note"], "因測試未投影而抑制建議")
                 self.assertEqual(recommended_actions(self._model(), ledger, health), [])
 
+    def test_opted_out_projection_cases_are_not_counted(self):
+        """P2：宣告 opt-out 后，即便账本残留 cases 也不得污染健康分。"""
+        ledger = self._ledger({"cases": [{"status": "pass"}],
+                               "summary": {"total": 1, "passed": 1}})
+        ledger.setdefault("governance_meta", {})["projection_policy"] = {
+            "schema": "projection-policy/1", "test_results": "opt-out",
+            "reason": "消费方刻意不投影节点测试结果", "approved_by": "iczrac"}
+        health = compute_health_dimensions(self._model(), ledger)
+        row = health["dimensions"]["test_pass_rate"]
+        self.assertEqual(row["status"], "na")
+        self.assertIsNone(row["score"])
+        self.assertEqual(row["detail"], "n/a (未投影)")
+        self.assertEqual(row["effective_weight"], 0.0)
+        self.assertEqual(health["coverage"], {
+            "applied": 4, "total": 5,
+            "na_dims": ["test_pass_rate"], "weight_base": 0.75})
+
     def test_zero_capabilities_marks_verified_na(self):
         ledger = self._ledger({"cases": [{"status": "pass"}],
                                "summary": {"total": 1, "passed": 1}})

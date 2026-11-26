@@ -254,6 +254,21 @@ class VerifyTest(unittest.TestCase):
             self.assertIn("sha256 与清单不符", row["detail"], row)
 
 
+    def test_opt_out_with_self_consistent_projection_is_fail_not_na(self):
+        """P2：宣告 opt-out 却仍投影（即使投影自洽）必须 FAIL，不是 na。"""
+        with demo_copy() as (root, ledger, reg, board):
+            d = json.loads(ledger.read_text())
+            self.assertIn("test_results", d)  # 投影本身与当前报告自洽
+            d.setdefault("governance_meta", {})["projection_policy"] = {
+                "schema": "projection-policy/1", "test_results": "opt-out",
+                "reason": "消费方刻意不投影节点测试结果", "approved_by": "iczrac"}
+            write_ledger(ledger.parent, d)
+            payload = json.loads(run_verify(root, ledger, reg, board).stdout)
+            rows = {c["id"]: c for c in payload["checks"]}
+            self.assertEqual(rows["test_results_binding_valid"]["status"], "fail")
+            self.assertEqual(rows["analytics_test_results_detail_valid"]["status"], "fail")
+
+
 class TristateTest(unittest.TestCase):
     """v1.3.0：能力未启用（na）绝不能被记成 pass。"""
 

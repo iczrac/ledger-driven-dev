@@ -49,11 +49,13 @@ try:
     from registry_codec import cap_code as codec_cap_code
     from registry_codec import code_namespace as _codec_code_namespace
     from registry_codec import normalize_projects
+    from registry_codec import projection_opted_out
 except ModuleNotFoundError:  # pragma: no cover - 仅在 spec 加载路径触发
     sys.path.insert(0, str(Path(__file__).resolve().parent))
     from registry_codec import cap_code as codec_cap_code
     from registry_codec import code_namespace as _codec_code_namespace
     from registry_codec import normalize_projects
+    from registry_codec import projection_opted_out
 
 # 符号级证据绑定（v2.1.2 advisory → v2.2.0 硬门禁）。独立模块：生成器主体
 # 必须保持在模块大小硬限之下。硬门禁在 build() 内基于实际证据执行；
@@ -1401,6 +1403,9 @@ def compute_health_dimensions(model: dict, ledger: dict | None = None,
     fresh_score = FRESHNESS_SCORE.get(str(fresh), FRESHNESS_SCORE["unbound"])
 
     cases_raw = (ledger.get("test_results") or {}).get("cases")
+    # opt-out 宣告下即便账本残留投影也不计入健康分，test_pass_rate 保持 n/a。
+    if projection_opted_out(ledger):
+        cases_raw = []
     cases = cases_raw if isinstance(cases_raw, list) else []
     passed = sum(1 for x in cases if isinstance(x, dict) and x.get("status") == "pass")
     test_score = 100.0 * passed / len(cases) if cases else None

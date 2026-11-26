@@ -5,6 +5,7 @@
 from __future__ import annotations
 MODULE_ID = "meta"
 
+import copy
 import hashlib
 import json
 import shutil
@@ -23,6 +24,8 @@ from upgrade import (METHOD_VERSION, POST_UPGRADE, PRE_UPGRADE, TOOLING, _versio
                      apply, check_definitions, plan, rollback, verify)
 
 UPGRADE = ROOT / "scripts" / "upgrade.py"
+POLICY = {"schema": "projection-policy/1", "test_results": "opt-out",
+          "reason": "消费方刻意不投影节点测试结果", "approved_by": "iczrac"}
 
 
 @contextmanager
@@ -276,6 +279,91 @@ class UpgradeV130Test(unittest.TestCase):
             self.assertTrue(second["noop"], second["migrations"])
             self.assertNotIn("M8-work-panel",
                              [m["id"] for m in second["migrations"]])
+
+
+class ProjectionPolicyTest(unittest.TestCase):
+    """P2：投影 opt-out 宣告只有一个 codec，升级 / 工作台 / 校验共用。"""
+
+    @staticmethod
+    def _load(path: Path, name: str):
+        import importlib.util
+        spec = importlib.util.spec_from_file_location(name, path)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        return module
+
+    def test_codec_copies_agree(self):
+        paths = (ROOT / "templates", ROOT / "governance",
+                 ROOT / "examples" / "demo-shop" / "governance")
+        mods = [self._load(p / "registry_codec.py", f"rc_{i}")
+                for i, p in enumerate(paths)]
+        variants = (
+            {},
+            {"governance_meta": {"projection_policy": dict(POLICY)}},
+            {"governance_meta": {"projection_policy": dict(POLICY, test_results="inherit")}},
+            {"governance_meta": {"projection_policy": {"schema": "bogus"}}},
+        )
+        for variant in variants:
+            for mod in mods[1:]:
+                self.assertEqual(mod.projection_opted_out(variant),
+                                 mods[0].projection_opted_out(variant))
+                self.assertEqual(mod.policy_error(variant), mods[0].policy_error(variant))
+        self.assertFalse(mods[0].projection_opted_out(variants[0]))
+        self.assertIsNone(mods[0].policy_error(variants[0]))
+        self.assertTrue(mods[0].projection_opted_out(variants[1]))
+        self.assertFalse(mods[0].projection_opted_out(variants[2]))
+        self.assertTrue(mods[0].projection_opted_out(variants[3]))
+        self.assertIsNotNone(mods[0].policy_error(variants[3]))
+
+    def test_opted_out_report_does_not_trigger_m8(self):
+        with project_copy() as (tmp, target):
+            gov = target / "governance"
+            self.assertTrue((gov / "test_report.json").is_file())
+            d = ledger_of(target)
+            d.pop("test_results", None)
+            meta = d.setdefault("governance_meta", {})
+            meta["activation"] = {"schema": "evidence-activation/1",
+                                  "state": "unbound", "reason": "opt-out",
+                                  "all_active": False}
+            meta["projection_policy"] = copy.deepcopy(POLICY)
+            write_ledger(gov, d)
+            first = plan(target)
+            self.assertNotIn("M8-work-panel",
+                             [m["id"] for m in first["migrations"]])
+            apply(target, "张三")
+            after = ledger_of(target)
+            self.assertNotIn("test_results", after)
+            self.assertEqual(after["governance_meta"]["projection_policy"]["test_results"],
+                             "opt-out")
+            second = plan(target)
+            self.assertTrue(second["noop"], second["migrations"])
+
+    def test_policy_change_preserves_fingerprint_and_history(self):
+        with project_copy() as (tmp, target):
+            gov = target / "governance"
+            ledger_path = gov / "DECISION_LEDGER.json"
+            original = ledger_of(target)
+            fp, n_events = current_fingerprint(original), len(original["history"]["events"])
+
+            def history_checks() -> dict:
+                result = run_verify(tmp, ledger_path, gov / "registry.json",
+                                    gov / "index.html")
+                payload = json.loads(result.stdout)
+                return {c["id"]: c["status"] for c in payload["checks"]}
+
+            before = history_checks()
+            self.assertEqual(before["history_current_matches"], "pass")
+            self.assertEqual(before["history_event_fingerprints"], "pass")
+            for reason in ("首次宣告", "改写理由"):
+                d = ledger_of(target)
+                d.setdefault("governance_meta", {})["projection_policy"] = dict(
+                    POLICY, reason=reason)
+                write_ledger(gov, d)
+                self.assertEqual(current_fingerprint(ledger_of(target)), fp)
+                self.assertEqual(len(ledger_of(target)["history"]["events"]), n_events)
+                after = history_checks()
+                self.assertEqual(after["history_current_matches"], "pass")
+                self.assertEqual(after["history_event_fingerprints"], "pass")
 
 
 if __name__ == "__main__":

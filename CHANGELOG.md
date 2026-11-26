@@ -4,6 +4,14 @@
 
 ## [Unreleased] - 2026-11-25
 
+P2 投影宣告防复发（双保险，原 C2/C3 合并；`METHOD_VERSION` 仍 2.29.0，未 push / 未 tag / 未升版）：
+
+- **唯一判据**：`templates/registry_codec.py` 责任扩张为「registry codec ＋ 投影宣告 codec」，新增 `PROJECTION_POLICY_SCHEMA='projection-policy/1'`、`projection_opted_out()`、`policy_error()`；无宣告时行为完全不变（ledger 主账 616/617 不被破坏、demo 投影保留），宣告非法时 fail-closed。四副本（templates / ledger governance / demo governance / julia governance 的 registry_codec.py、verify_ledger.py、build_capability_model.py）逐 byte 一致，julia 侧由 M3 升级同步、不手改 adopted copy。
+- **三向 fail-closed**：升级器 M8 与 `work_panel.py sync-tests` 认 opt-out（后者早退 `noop=True/policy=opt-out/cases=0`，无写入不需批准）；`verify_ledger` #24/#31 在「opt-out＋投影存在」时判 FAIL 而非 na、「opt-out＋无投影」判 na、「无宣告＋投影存在」仍走原绑定校验，policy 非法两条皆 FAIL，检查 ID 与总数不变；生成器在 opt-out 时不计 cases，健康分 `test_pass_rate` 保持 n/a。
+- **负向证明**：`tests/meta/test_upgrade.py` 锁 codec 副本一致、opt-out 报告不触发 M8 且二次 plan noop、policy 变更不改 fingerprint / history 事件数且 #18/#19 PASS；`tests/views/test_work_panel.py` 锁 sync-tests 早退不写；`tests/core/test_verify.py` 锁 opt-out＋自洽投影 FAIL 非 na；`tests/core/test_maturity_analytics.py` 锁投影 cases 不计入健康分。
+- **re-baseline**：P1 新增测试使 committed 报告 617 与 discover 618 的已知差异，在本轮按「报告重生成 → `work_panel.py sync-tests` → `build_capability_model.py` 重算 → 看板重建」原子单元一次收口；本轮共新增 6 个测试方法，报告重新对齐为 624 cases（623 pass + 1 skip），主账第 24/#31 条仍走正常绑定、detail=623/624，无 opt-out 语义退化。ontology 投影由 `python3 scripts/ontology.py build --apply --approved-by iczrac` 生成器重算（非手改 `docs/generated/`）；不放宽 verify、不手改摘要。
+- **边界宣告（Ed Q5）**：方法论语义向后相容增量（仅防复发）；版本号刻意不升；method_assets／ontology 摘要已 re-baseline。ontology 摘要变动来自 `build_capability_model.py` / `verify_ledger.py`（两者在 `ontology.py SOURCE_FILES`），`registry_codec.py` 不在其中。
+
 P1 门禁盲区修复（防复发，使用者选 C；`METHOD_VERSION` 仍 2.29.0，未 push / 未 tag / 未升版）：
 
 - **根因**：`check.sh` 原第 17 阶段的 `stage_verify` 只验 `examples/demo-shop` 账本，主账本 analytics 陈旧投影（547/547 对 616/617）可以穿透门禁，直到 `verify_ledger --root . --strict` 单独执行才暴露（Task#20 F-1）。

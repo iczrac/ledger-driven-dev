@@ -81,9 +81,13 @@ from pathlib import Path
 # v2.0.1：校验器与生成器共用同一 registry codec，避免第二套 code 规则。
 try:
     from registry_codec import iter_caps as registry_iter_caps
+    from registry_codec import policy_error as projection_policy_error
+    from registry_codec import projection_opted_out
 except ModuleNotFoundError:  # pragma: no cover - 仅在 spec 加载路径触发
     sys.path.insert(0, str(Path(__file__).resolve().parent))
     from registry_codec import iter_caps as registry_iter_caps
+    from registry_codec import policy_error as projection_policy_error
+    from registry_codec import projection_opted_out
 
 # 四段式：项目.模块.域均以大写字母开头；序号段为两位数字
 CODE_RE = re.compile(r"^[A-Z][A-Z0-9]*\.[A-Z][A-Z0-9]*\.[A-Z][A-Z0-9]*\.\d{2}$")
@@ -180,6 +184,10 @@ def verify(repo_root: Path, ledger: dict, registry: dict | None,
             raise ValueError(f"非法检查状态：{st}")
         results.append({"id": check_id, "ok": st == "pass",
                         "status": st, "detail": detail})
+
+    # 投影宣告：读唯一 codec，不在校验器里复写规则。无宣告 → 旧行为完全不变。
+    policy_err = projection_policy_error(ledger)
+    opted_out = projection_opted_out(ledger)
 
     entries = ledger.get("entries", [])
     cm = ledger.get("capability_model", {})
@@ -474,8 +482,18 @@ def verify(repo_root: Path, ledger: dict, registry: dict | None,
     add("work_item_refs_valid", not r_errors, f"错误={r_errors[:5]}")
 
     # 24. 测试结果投影：只认绑定了当前报告 hash 的只读投影，杜绝手填"全绿"
+    #     三向：opt-out + tr 存在 → FAIL（不是 na）；opt-out + tr=None → na；
+    #     无 opt-out → 原正常绑定语义（ledger 主账 616/617 不能坏）。
     tr = ledger.get("test_results")
-    if tr is None:
+    if policy_err:
+        add("test_results_binding_valid", False, f"投影宣告非法：{policy_err}")
+    elif opted_out and tr is not None:
+        add("test_results_binding_valid", False,
+            "已宣告 opt-out 却仍存在 test_results 投影")
+    elif opted_out:
+        add("test_results_binding_valid", False,
+            "已宣告 opt-out：测试证据未投影", status="na")
+    elif tr is None:
         add("test_results_binding_valid", False,
             "未启用节点测试结果投影（全部能力按 declared 显示）", status="na")
     elif not isinstance(tr, dict) or tr.get("schema") != "node-test-results/1":
@@ -906,7 +924,16 @@ def verify(repo_root: Path, ledger: dict, registry: dict | None,
     #     生成器，analytics 的 detail 会停留在旧分子/分母。分数可能仍是 100%，
     #     但投影已经说谎，必须 fail-closed。
     tr_projection = ledger.get("test_results")
-    if not isinstance(tr_projection, dict) or not isinstance(analytics, dict):
+    if policy_err:
+        add("analytics_test_results_detail_valid", False,
+            f"投影宣告非法：{policy_err}")
+    elif opted_out and tr_projection is not None:
+        add("analytics_test_results_detail_valid", False,
+            "已宣告 opt-out 却仍存在 test_results 投影")
+    elif opted_out:
+        add("analytics_test_results_detail_valid", True,
+            "已宣告 opt-out：测试证据未投影", status="na")
+    elif not isinstance(tr_projection, dict) or not isinstance(analytics, dict):
         add("analytics_test_results_detail_valid", True,
             "未启用测试证据或分析层（旧账本）", status="na")
     else:

@@ -19,6 +19,9 @@ from work_panel import (add_item, cap_index, check, close_item,  # noqa: E402
                         normalize_report, test_results_from_report, validate,
                         valid_scopes)
 
+OPT_OUT_POLICY = {"schema": "projection-policy/1", "test_results": "opt-out",
+                  "reason": "消费方刻意不投影节点测试结果", "approved_by": "iczrac"}
+
 
 def synthetic_ledger() -> dict:
     caps = ["DEMO.CORE.ORDER.01", "DEMO.CORE.PRICE.02", "DEMO.API.QUERY.01"]
@@ -121,6 +124,25 @@ class WorkPanelTest(unittest.TestCase):
             self.assertEqual(len(payload["checks"]), 31)
             self.assertTrue(any(c["id"] == "test_results_binding_valid"
                                 for c in payload["checks"]))
+
+    def test_sync_tests_respects_opt_out_declaration(self):
+        """P2：宣告 opt-out 后 sync-tests 早退 noop，无写入就不需要批准。"""
+        with demo_copy() as (root, ledger_path, _reg, board_path):
+            target, gov = board_path.parent.parent, board_path.parent
+            d = load_ledger(gov)
+            d.pop("test_results", None)  # 模拟消费方从未投影节点测试结果
+            d.setdefault("governance_meta", {})["projection_policy"] = copy.deepcopy(
+                OPT_OUT_POLICY)
+            write_ledger(gov, d)
+            out = sync_tests(target, apply=True)  # 故意不给 approved_by：无写入不应被拒
+            self.assertTrue(out["noop"])
+            self.assertEqual(out["policy"], "opt-out")
+            self.assertEqual(out["cases"], 0)
+            after = load_ledger(gov)
+            self.assertNotIn("test_results", after)
+            self.assertNotEqual(
+                (after.get("governance_meta") or {}).get("activation", {}).get("state"),
+                "active")
 
     def test_tampered_projection_fails_verifier(self):
         with demo_copy() as (root, ledger_path, _reg, board_path):
