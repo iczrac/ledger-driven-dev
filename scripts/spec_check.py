@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
-"""规范型仓库通用自查器：术语残留 / 版本一致 / 派生漂移 / 必备文件 / 链接解析 / 本体完整 / 发版标签。
+"""规范型仓库通用自查器：术语残留 / 版本一致 / 派生漂移 / 必备文件 / 链接解析 / 本体完整 / 发版标签 / 组合锚 / 可执行主张。
 
 第一性原理
 ----------
 规范型仓库（主体是 Markdown 规范、无代码符号可绑定的包）的错误从不先出现在
 运行时：它们先出现在文本里——改名漏了一处 CJK 相邻的旧名、三处版本号只同步了
 两处、生成物被手改而无人知、README 链接指向已删除的文件。这些错误可判定，就
-必须交给判据而不是靠人工走查的运气。本工具把七类判据做成通用、配置驱动：
+必须交给判据而不是靠人工走查的运气。本工具把九类判据做成通用、配置驱动：
 
   - forbidden_terms  术语残留：禁止词必须为零（ASCII 词自动按独立词匹配，
                      规避 `\\b` 把汉字当词符的假阴性教训——改用 ASCII 环视）；
@@ -20,7 +20,10 @@
   - release_tag      发版标签：权威版本号必须已有对应 git tag（v 前缀可配），
                      非目测「发没发版」；
   - compat           组合锚：声明的兄弟仓版本必须满足 min_version（semver 比较），
-                     组合兼容从人脑对照变为机械校验。
+                     组合兼容从人脑对照变为机械校验；
+  - executable_claims 可执行主张：文档里显式写出的 `python3 scripts/...` /
+                     `bash scripts/...` 必须落到本仓或已声明兄弟仓的真实文件；
+                     例外只能在配置里登记理由/批准人/到期日，禁止通配。
 
 本体判据口径
 ------------
@@ -56,11 +59,16 @@ import json
 import re
 import subprocess
 import sys
+from datetime import date
 from pathlib import Path
 
 SCHEMA = "spec-check/1"
 ASCII_WORD_RE_TMPL = r"(?<![A-Za-z]){0}(?![A-Za-z])"
 LINK_RE = re.compile(r"\[[^\]]*\]\(([^)\s]+)\)")
+# 只把显式命令当「可执行主张」；反引号里的布局路径、产物名、xxx 占位符不算命令。
+CLAIM_CMD_RE = re.compile(
+    r"\b(?:python3?|bash|sh)\s+((?:scripts|governance|tests)/"
+    r"[A-Za-z0-9_./*-]+\.(?:py|sh))")
 
 
 def _sha256_bytes(b: bytes) -> str:
@@ -259,6 +267,113 @@ def check_links(target: Path, cfg: dict) -> dict:
                 hits.append({"file": rel, "link": link})
     return {"metric": "broken_links", "applicable": True, "hits": len(hits),
             "links_checked": checked, "detail": hits}
+
+
+def check_executable_claims(target: Path, cfg: dict) -> dict:
+    """可执行主张判据：文档里显式命令必须落到真实文件。
+
+    解析顺序：本仓 → claims.external 声明的兄弟仓 → claims.exceptions。
+    例外必须带 reason / approved_by / expires_on，且不得含通配符；过期即命中。
+    任一配置结构错误、兄弟仓缺失、文件不可读一律 fail-closed 记命中。
+    """
+    spec = cfg.get("claims")
+    if spec is None:
+        return {"metric": "executable_claims", "applicable": False, "hits": 0}
+    hits: list[dict] = []
+    docs = spec.get("docs")
+    if not isinstance(docs, list) or not docs:
+        return {"metric": "executable_claims", "applicable": True, "hits": 1,
+                "detail": [{"reason": "bad_config",
+                            "msg": "claims.docs 必须是非空数组"}]}
+
+    exceptions = spec.get("exceptions", [])
+    if not isinstance(exceptions, list):
+        return {"metric": "executable_claims", "applicable": True, "hits": 1,
+                "detail": [{"reason": "bad_config",
+                            "msg": "claims.exceptions 必须是数组"}]}
+    exc_index: dict[tuple[str, str], dict] = {}
+    for exc in exceptions:
+        if not isinstance(exc, dict):
+            hits.append({"reason": "bad_exception", "msg": "例外必须是对象"})
+            continue
+        missing = [k for k in ("file", "command", "reason", "approved_by", "expires_on")
+                   if not exc.get(k)]
+        if missing:
+            hits.append({"reason": "bad_exception", "missing": missing,
+                         "file": exc.get("file"), "command": exc.get("command")})
+            continue
+        if any(ch in str(exc["file"]) + str(exc["command"]) for ch in "*?"):
+            hits.append({"reason": "wildcard_exception", "file": exc["file"],
+                         "command": exc["command"]})
+            continue
+        try:
+            date.fromisoformat(str(exc["expires_on"]))
+        except ValueError:
+            hits.append({"reason": "bad_exception", "file": exc["file"],
+                         "command": exc["command"], "msg": "expires_on 须为 YYYY-MM-DD"})
+            continue
+        key = (str(exc["file"]), str(exc["command"]))
+        if key in exc_index:
+            hits.append({"reason": "duplicate_exception", "file": key[0],
+                         "command": key[1]})
+            continue
+        exc_index[key] = exc
+
+    external = spec.get("external", [])
+    if not isinstance(external, list):
+        return {"metric": "executable_claims", "applicable": True, "hits": 1,
+                "detail": [{"reason": "bad_config",
+                            "msg": "claims.external 必须是数组"}]}
+    for ext in external:
+        if (not isinstance(ext, dict) or not ext.get("prefix")
+                or not ext.get("repo") or not ext.get("reason")):
+            hits.append({"reason": "bad_external", "msg": "需 prefix/repo/reason"})
+
+    checked = 0
+    for p in _iter_files(target, {"include": docs,
+                                  "exclude": spec.get("exclude", [])}):
+        rel = p.relative_to(target).as_posix()
+        try:
+            text = p.read_text(encoding="utf-8")
+        except (OSError, UnicodeDecodeError):
+            hits.append({"file": rel, "reason": "unreadable"})
+            continue
+        for lineno, line in enumerate(text.splitlines(), 1):
+            for command in sorted(set(CLAIM_CMD_RE.findall(line))):
+                checked += 1
+                if (target / command).exists():
+                    continue
+                ext = next((e for e in external
+                            if isinstance(e, dict) and e.get("prefix")
+                            and command.startswith(e["prefix"])), None)
+                external_hit = None
+                if ext:
+                    repo = target / ext["repo"]
+                    if not repo.is_dir():
+                        external_hit = {"file": rel, "line": lineno, "command": command,
+                                        "reason": "external_repo_missing",
+                                        "repo": ext["repo"]}
+                    elif not (repo / command).exists():
+                        external_hit = {"file": rel, "line": lineno, "command": command,
+                                        "reason": "external_command_missing",
+                                        "repo": ext["repo"]}
+                    else:
+                        continue  # 兄弟仓已解析，无需查例外
+
+                # 例外必须对本仓缺失与兄弟仓缺失都可达，否则 provenance 成为纸面承诺。
+                exc = exc_index.get((rel, command))
+                if exc:
+                    if date.fromisoformat(str(exc["expires_on"])) < date.today():
+                        hits.append({"file": rel, "line": lineno, "command": command,
+                                     "reason": "expired_exception"})
+                    continue
+                if external_hit:
+                    hits.append(external_hit)
+                    continue
+                hits.append({"file": rel, "line": lineno, "command": command,
+                             "reason": "missing_command"})
+    return {"metric": "executable_claims", "applicable": True, "hits": len(hits),
+            "commands_checked": checked, "detail": hits}
 
 
 ID_RE = re.compile(r"^[a-z][a-z0-9_-]*\.[a-z0-9_.-]+$")
@@ -502,6 +617,7 @@ def run_check(target: Path, run_rebuild: bool = True) -> dict:
         check_generated(target, cfg, run_rebuild),
         check_required(target, cfg),
         check_links(target, cfg),
+        check_executable_claims(target, cfg),
         check_ontology(target, cfg),
         check_release_tag(target, cfg),
         check_compat(target, cfg),

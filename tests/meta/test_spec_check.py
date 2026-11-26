@@ -1,4 +1,4 @@
-"""规范型仓库通用自查器：七类判据、0 与 n/a 口径、等效只读的负向证明。"""
+"""规范型仓库通用自查器：九类判据、0 与 n/a 口径、等效只读的负向证明。"""
 from __future__ import annotations
 MODULE_ID = "meta"
 
@@ -58,7 +58,7 @@ class SpecCheckCLITest(unittest.TestCase):
             self.assertEqual(d["schema"], "spec-check/1")
             self.assertTrue(d["ok"])
             self.assertEqual(d["applicable"], 0)
-            self.assertEqual(d["na"], 8)
+            self.assertEqual(d["na"], 9)
             for m in d["metrics"]:
                 self.assertFalse(m["applicable"])
 

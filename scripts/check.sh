@@ -382,6 +382,12 @@ print('  脱敏无残留；文档内链全部有效')
 PY
 }
 
+stage_spec(){
+  note '规范自查：版本锚 / schema 本体 / 发版标签 / 可执行主张（spec-check/1）'
+  python3 scripts/spec_check.py --target . --json >/dev/null || return 1
+  echo '  版本锚、schema 引用、发版标签与可执行主张一致'
+}
+
 run(){ name="$1"; shift; if "$@"; then pass "$name"; else fail "$name" '见上方输出'; fi; }
 
 if [ "$MODE" = "--only-idempotence" ]; then
@@ -406,6 +412,7 @@ else
   run '反向回流' stage_feedback
   run '本体层' stage_ontology
   run '卫生' stage_hygiene
+  run '规范自查' stage_spec
   run '验收契约' stage_acceptance
   run '前置条件' stage_preconditions
 fi
@@ -415,4 +422,4 @@ if [ "$FAILURES" -gt 0 ]; then
   printf '质量门禁失败：%d 个阶段未通过\n' "$FAILURES"
   exit 1
 fi
-printf '质量门禁全绿：测试 / 测试架构 / 证据分层 / 31 条三态不变量 / 场景矩阵 / 文件布局 / 文档生命周期（shadow） / 升级与接入 / 资产与工作台契约 / 幂等 / 同步 / 反向回流 / 本体层 / 脱敏 / 文档链接 / 验收契约 / 前置条件\n'
+printf '质量门禁全绿：测试 / 测试架构 / 证据分层 / 31 条三态不变量 / 场景矩阵 / 文件布局 / 文档生命周期（shadow） / 升级与接入 / 资产与工作台契约 / 幂等 / 同步 / 反向回流 / 本体层 / 卫生（脱敏+文档链接） / 规范自查 / 验收契约 / 前置条件\n'

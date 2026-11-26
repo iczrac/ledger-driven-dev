@@ -1,0 +1,30 @@
+{
+  "schema": "spec-check/1",
+  "version": {
+    "canonical": "2.29.0",
+    "declarations": [
+      {
+        "file": "scripts/upgrade.py",
+        "regex": "METHOD_VERSION\\s*=\\s*\"([0-9][\\w.]*)\""
+      }
+    ]
+  },
+  "ontology": {
+    "files": ["governance/onto/*.json"],
+    "ref_fields": ["translates_to"]
+  },
+  "release_tag": {
+    "prefix": "v"
+  },
+  "claims": {
+    "docs": [
+      "skills/**/SKILL.md",
+      "docs/*.md",
+      "docs/STANDARD.md",
+      "experts/**/EXPERT.md",
+      "README.md",
+      "RELEASE_CHECKLIST.md"
+    ],
+    "exceptions": []
+  }
+}
