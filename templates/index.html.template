@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>决策与能力账本 · 单一事实源</title>
+<title id="board-title">决策与能力账本 · 单一事实源</title>
 <style>
 :root{--ink:#1a1a1a;--mut:#666;--line:#e3e3e3;--bg:#fff;--soft:#f7f7f5;--purple:#534AB7;--pp:#EEEDFE;--green:#0F6E56;--gp:#E1F5EE;--amber:#854F0B;--ap:#FAEEDA;--red:#A32D2D;--rp:#FCEBEB;--blue:#185FA5;--bp:#E6F1FB;--gray:#5F5E5A;--gp2:#F1EFE8;--shadow:0 8px 24px rgba(20,20,30,.06)}
 *{box-sizing:border-box}html{scroll-behavior:smooth}body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;color:var(--ink);line-height:1.6;max-width:1180px;margin:0 auto;padding:32px 26px 72px;background:var(--bg)}
@@ -286,7 +286,7 @@ input.search:focus{border-color:var(--purple);box-shadow:0 0 0 3px var(--pp)}
 <body>
 <a class="skip-link" href="#list">跳到主要内容</a>
 <header class="page-head">
-<h1>决策与能力账本</h1>
+<h1 id="board-title-h1">决策与能力账本</h1>
 <div class="sub" id="sub">单一事实源 · 加载中…</div>
 
 <div class="stats" id="stats" aria-label="账本概览"></div>
@@ -335,6 +335,17 @@ input.search:focus{border-color:var(--purple);box-shadow:0 0 0 3px var(--pp)}
 <script>
 const EMBED = {"ledger_version":"1.0","title":"项目决策与能力账本","purpose":"单一事实源：决策、裁决、待办及能力索引的唯一写入点。","last_updated":"","owner":"待定","workflow":["所有重大决策/裁决/待办只写入本文件 entries，不再新建独立报告。","新增条目分配稳定 id，状态初始 proposed/decided，填齐字段。","旧决策被取代时设 superseded/supersedes，用取代链表达演进。","能力等级与完成度由 build_capability_model.py 从证据重算，禁止手填。"],"fields":{"id":"稳定标识，永不复用","status":"proposed | decided | done | superseded | deferred","evidence":"证据/文档路径","confidence":"high | medium | low"},"entries":[],"history":{"spec":{},"events":[]},"lessons":{"spec":{},"items":[],"candidates":[]},"module_map":{"modules":[],"pages_path":"artifacts/control_center/pages/"},"architecture":{"projects":[]},"capability_model":{"version":"1.0","generated_at":"","summary":{"projects":0,"modules":0,"capabilities":0,"overall_completion":0},"levels":{},"scoring":{},"coding_spec":{},"doc_index_spec":{},"projects":[],"loop_protocol":{}}};
 let DATA = EMBED;
+// 标题数据驱动：账本 title 优先；取不到时保留 <title>/<h1> 的字面量作为降级。
+// 仅用 textContent 写入，避免账本文本被当成 HTML 注入。
+(function(){
+  try{
+    var t=(DATA && typeof DATA.title==='string') ? DATA.title.trim() : '';
+    if(!t) return;
+    document.title=t;
+    var h=document.getElementById('board-title-h1');
+    if(h) h.textContent=t;
+  }catch(_e){/* 降级：静默保留字面量 */}
+})();
 // What-if 只修改这份视图副本；BASE(DATA) 永远保持账本原样，不写回文件。
 let VIEW_DATA = DATA;
 

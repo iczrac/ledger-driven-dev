@@ -45,7 +45,7 @@ SYSTEM_FILENAME = "system.html"
 PROJECT_SUFFIX = ".html"
 
 POLICIES = ("legacy", "compatible", "canonical")
-POLICY = "legacy"
+POLICY = "compatible"
 SCHEMA = "board-path/1"
 
 
