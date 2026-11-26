@@ -231,5 +231,76 @@ class BudgetTest(unittest.TestCase):
         self.assertEqual(small["model"]["capabilities"], larger["model"]["capabilities"])
 
 
+class BoardPathTest(unittest.TestCase):
+    """看板路径解析层：规范名识别、迁移策略、全路径键（防同名 slug 串味）。"""
+
+    def test_canonical_names_of_four_boards(self):
+        import board_path as bp
+        self.assertEqual(bp.canonical_filename(ROOT.parent), "system.html")
+        self.assertEqual(bp.canonical_filename(ROOT), "ledger-driven-dev.html")
+        self.assertEqual(bp.canonical_filename(ROOT.parent / "julia-dev-squad"),
+                         "julia-dev-squad.html")
+        self.assertEqual(bp.canonical_filename(DEMO), "demo-shop.html")
+        self.assertTrue(bp.is_system_governance(ROOT.parent / "governance"))
+        self.assertFalse(bp.is_system_governance(ROOT / "governance"))
+
+    def test_legacy_policy_keeps_behavior_unchanged(self):
+        import board_path as bp
+        old = bp.POLICY
+        try:
+            bp.POLICY = "legacy"
+            for root in (ROOT.parent, ROOT, DEMO):
+                self.assertEqual(bp.filename_for(root), bp.LEGACY_FILENAME)
+                self.assertEqual(bp.resolve(root).name, "index.html")
+        finally:
+            bp.POLICY = old
+
+    def test_full_path_key_prevents_same_slug_cross_talk(self):
+        import board_path as bp
+        old = bp.POLICY
+        try:
+            bp.POLICY = "compatible"
+            with tempfile.TemporaryDirectory() as td:
+                roots = []
+                for parent_name in ("alpha", "beta"):
+                    root = Path(td) / parent_name / "examples" / "demo-shop"
+                    (root / "governance").mkdir(parents=True)
+                    (root / "governance" / "DECISION_LEDGER.json").write_text("{}", encoding="utf-8")
+                    (root / "governance" / "demo-shop.html").write_text("x", encoding="utf-8")
+                    roots.append(root)
+                self.assertEqual(bp.canonical_filename(roots[0]),
+                                 bp.canonical_filename(roots[1]))
+                self.assertNotEqual(bp.resolve(roots[0]), bp.resolve(roots[1]))
+                for root in roots:
+                    self.assertEqual(bp.resolve(root), root / "governance" / "demo-shop.html")
+        finally:
+            bp.POLICY = old
+
+    def test_compatible_policy_falls_back_to_legacy_only_when_new_missing(self):
+        import board_path as bp
+        old = bp.POLICY
+        try:
+            bp.POLICY = "compatible"
+            with tempfile.TemporaryDirectory() as td:
+                root = Path(td) / "demo-shop"
+                gov = root / "governance"
+                gov.mkdir(parents=True)
+                (gov / "DECISION_LEDGER.json").write_text("{}", encoding="utf-8")
+                self.assertEqual(bp.filename_for(root), "demo-shop.html")
+                (gov / "index.html").write_text("old", encoding="utf-8")
+                self.assertEqual(bp.filename_for(root), "index.html")
+                (gov / "demo-shop.html").write_text("new", encoding="utf-8")
+                self.assertEqual(bp.filename_for(root), "demo-shop.html")
+        finally:
+            bp.POLICY = old
+
+    def test_cli_returns_single_line_for_shell(self):
+        p = subprocess.run([sys.executable, str(SCRIPTS / "board_path.py"),
+                            "--target", str(DEMO), "--filename"],
+                           capture_output=True, text=True)
+        self.assertEqual(p.returncode, 0, p.stderr)
+        self.assertEqual(p.stdout.strip(), "index.html")
+
+
 if __name__ == "__main__":
     unittest.main()
