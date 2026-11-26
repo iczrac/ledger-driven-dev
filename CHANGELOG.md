@@ -4,6 +4,16 @@
 
 ## [Unreleased] - 2026-11-25
 
+健康度 0/0 顯示誤導修復（使用者拍板 A，Ed 有條件採納；**`METHOD_VERSION` 仍 2.29.0，不升版、不發 tag**）：
+
+- **根因**：比值型維度分母為 0 時被記為 `0`，再與其餘維度加權平均，julia 健康分被壓成 75；77 分與 n/a 是兩回事，不能混為一談。
+- **正解**：分母為 0 的維度標 `status="na"` / `score=null` / `effective_weight=0`，test detail 精確為 `n/a (未投影)`、verified 為 `n/a (无能力点)`；`weight` 保留名義值（向後相容）。`overall` 改為 `Σ(score×effective_weight) / Σ(weight for ok)`，無 ok 維度則 `null`；Python `math.floor` half-up 與前端 `Math.round(n*10)/10` 對齊。
+- **覆蓋度揭露**：`health.coverage = {applied, total, na_dims, weight_base}` 同步寫入 `summary.health_coverage`；看板同一 trustbar 元素在 partial 時必須印「综合健康度（{applied}/{total} 維；測試未投影）{overall}」，na 維度顯示 n/a、中色、寬度 0；推薦行動被抑制並給 `recommendation_note`，不得靜默歸零。
+- **雙向 fail-closed**：第 28 條重算有效權重、`na_dims` 必須同時等於 score=null 集合與由 ledger/model 重算的 na 集合；第 31 條有 cases 必 ok、無 cases 必 na，`0/0` 或假 `x/y` 一律 fail，schema 非法不降級 na。第 24 條不改。
+- **規則文字**：規則 15 後補「任何比值型指標分母為 0 時一律標 n/a、排除加權並揭露覆蓋度，不得記為 0；檢查器須雙向驗證 n/a 與真相狀態。」（julia 側僅作 ledger 規則的消費介面說明，不另立第二份規範）。
+- **測試**：`tests/core/test_maturity_analytics.py` 新增 T1（空 cases / cases=[] / verified total=0）、T2（真 cases 保留舊公式與名義權重）、T4b（Python/JS NA 字串、有效權重公式、coverage 鍵名靜態契約）；`tests/core/test_verify.py` 新增 T3（有 cases 偽造 na、無 cases 殘留 `0/0` 皆 #28/#31 雙 fail，:75/:88 回歸）；`tests/meta/test_system_board.py` 新增 T5（`test_pass_rate=null` 如實投影）。共享 fixture `tests/fixtures/health_equivalence.json` 四組；`tests/tools/compare_health_equivalence.py` 在 CI 獨立 node 步骤比對 Python canonical 與前端 `recomputeHealth`，本地 `check.sh` 保持零 node 依賴。
+- **驗證**：ledger 主帳 91.7、demo 90.2 不變；`METHOD_VERSION` / `spec_check.json` compat `min_version` 均仍 2.29.0；`upgrade plan --json --approved-by iczrac` 的 M5-method-assets 摘要 delta 出現後 `upgrade apply` 已重綁 canonical→工具副本與摘要，再 `verify` / 重建投影 / `check.sh` 全綠。
+
 原子化提交残留声明（2026-11-26，使用者拍板「如实标注残留」）：按派生一致性边界拆分后，Ed 只读复核与独立复现均证实**中间 commit 非绿**，与本版新增的「每个中间 commit 各自全绿」口径不符，如实记录、不重写历史。
 
 - **实测**：`92691fe`（引入 `executable_claims` 判据）命中 `executable_claims=18`——18 份 Skill 的 `scripts/ledger_entry.py` 假命令到 `6eb4a4b` 才清。julia 侧 `ef1c9af` 命中 `generated_drift=5`、`8c23ab4` 命中 `generated_drift=12`——权威源先改、dist 到 `13db23b` 才重算。

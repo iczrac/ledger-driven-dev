@@ -610,7 +610,8 @@ def verify(repo_root: Path, ledger: dict, registry: dict | None,
         add("analytics_maturity_valid", True, "未启用分析层（旧账本）", status="na")
     else:
         from build_capability_model import (  # 局部导入：保持旧脚本可单独运行
-            ANALYTICS_SCHEMA, HEALTH_DIMENSION_WEIGHTS)
+            ANALYTICS_SCHEMA, HEALTH_DIMENSION_WEIGHTS,
+            compute_health_dimensions, round_half_up)
 
         a_errors: list[str] = []
         cap_by_code = {c.get("code"): c for c in caps}
@@ -645,17 +646,81 @@ def verify(repo_root: Path, ledger: dict, registry: dict | None,
         dims = health.get("dimensions") or {}
         if set(dims) != set(HEALTH_DIMENSION_WEIGHTS):
             a_errors.append("健康度维度集合不符")
+        expected = compute_health_dimensions(cm, ledger)
+        expected_dims = expected["dimensions"]
+        # 旧账本（生成器早于 coverage/status）只走名义权重旧公式，不追加新义务。
+        legacy = ("coverage" not in health
+                  and not any("status" in (row or {}) for row in dims.values()))
         weighted = 0.0
+        weight_base = 0.0
+        na_dims: list[str] = []
         for name, row in dims.items():
+            row = row or {}
             score, weight = row.get("score"), row.get("weight")
+            if abs(float(weight) - HEALTH_DIMENSION_WEIGHTS.get(name, -1)) > 1e-9:
+                a_errors.append(f"{name}:权重不符")
+            if legacy:
+                if not isinstance(score, (int, float)) or not 0 <= score <= 100:
+                    a_errors.append(f"{name}:分数越界 {score}")
+                    continue
+                weighted += float(score) * float(weight)
+                weight_base += float(weight)
+                continue
+            status, effective = row.get("status"), row.get("effective_weight")
+            if status not in ("ok", "na"):
+                a_errors.append(f"{name}:status 非法 {status}")
+                continue
+            expected_row = expected_dims.get(name) or {}
+            if status == "na":
+                na_dims.append(name)
+                if score is not None:
+                    a_errors.append(f"{name}:na 却保留 score={score}")
+                if effective is None or abs(float(effective)) > 1e-9:
+                    a_errors.append(f"{name}:na 的 effective_weight 非 0")
+                if expected_row.get("score") is not None:
+                    a_errors.append(f"{name}:n/a 与账本真相不符（实有资料）")
+                continue
             if not isinstance(score, (int, float)) or not 0 <= score <= 100:
                 a_errors.append(f"{name}:分数越界 {score}")
                 continue
-            if abs(float(weight) - HEALTH_DIMENSION_WEIGHTS.get(name, -1)) > 1e-9:
-                a_errors.append(f"{name}:权重不符")
+            if effective is None or abs(float(effective) - float(weight)) > 1e-9:
+                a_errors.append(f"{name}:ok 的 effective_weight≠weight")
+                continue
+            if expected_row.get("status") != "ok":
+                a_errors.append(f"{name}:ok 与账本真相不符（应为 n/a）")
+            elif abs(float(score) - float(expected_row.get("score", -1))) > 0.15:
+                a_errors.append(f"{name}:分数与重算不符")
             weighted += float(score) * float(weight)
-        if abs(round(weighted, 1) - float(health.get("overall", -1))) > 0.15:
-            a_errors.append(f"overall 不符：记录={health.get('overall')} 实算={round(weighted, 1)}")
+            weight_base += float(weight)
+        if legacy:
+            expected_overall = round_half_up(weighted, 1) if weight_base > 0 else None
+        else:
+            expected_overall = (round_half_up(weighted / weight_base, 1)
+                                if weight_base > 0 else None)
+            expected_na = {n for n, r in expected_dims.items()
+                           if r.get("status") == "na"}
+            coverage = health.get("coverage") or {}
+            score_null = {n for n, r in dims.items()
+                          if (r or {}).get("score") is None}
+            if set(na_dims) != score_null or set(na_dims) != expected_na:
+                a_errors.append("覆盖度 n/a 集合与重算不符")
+            if coverage.get("applied") != len(dims) - len(na_dims) \
+                    or coverage.get("total") != len(dims):
+                a_errors.append("coverage.applied/total 不符")
+            if abs(float(coverage.get("weight_base", -1))
+                   - round_half_up(weight_base, 4)) > 1e-4:
+                a_errors.append("coverage.weight_base 不符")
+            summary_coverage = (cm.get("summary") or {}).get("health_coverage")
+            if summary_coverage != coverage:
+                a_errors.append("summary.health_coverage 与分析层不一致")
+        recorded_overall = health.get("overall")
+        if expected_overall is None:
+            if recorded_overall is not None:
+                a_errors.append(f"overall 应为 n/a，记录={recorded_overall}")
+        elif not isinstance(recorded_overall, (int, float)) \
+                or abs(float(recorded_overall) - expected_overall) > 0.15:
+            a_errors.append(
+                f"overall 不符：记录={recorded_overall} 实算={expected_overall}")
         summary_dims = (cm.get("summary") or {}).get("health_dimensions") or {}
         expected_summary = {k: v.get("score") for k, v in dims.items()}
         if summary_dims != expected_summary:
@@ -845,24 +910,54 @@ def verify(repo_root: Path, ledger: dict, registry: dict | None,
         add("analytics_test_results_detail_valid", True,
             "未启用测试证据或分析层（旧账本）", status="na")
     else:
+        from build_capability_model import round_half_up  # 局部导入：共用口径
+
         t_errors: list[str] = []
         cases = tr_projection.get("cases")
-        if not isinstance(cases, list):
-            t_errors.append("test_results.cases 非数组")
-        else:
+        summary = tr_projection.get("summary") or {}
+        health_projection = analytics.get("health") or {}
+        dims = health_projection.get("dimensions") or {}
+        row = dims.get("test_pass_rate") or {}
+        detail = row.get("detail")
+        score = row.get("score")
+        status = row.get("status")
+        legacy = ("coverage" not in health_projection
+                  and not any("status" in (x or {}) for x in dims.values()))
+        if isinstance(cases, list) and cases:
             passed_count = sum(
                 1 for c in cases
                 if isinstance(c, dict) and c.get("status") == "pass")
             expected_detail = f"{passed_count}/{len(cases)}"
-            summary = tr_projection.get("summary") or {}
+            expected_score = round_half_up(100 * passed_count / len(cases), 1)
+            if status in ("na", None) and not (status is None and legacy):
+                t_errors.append(f"有 cases 却标 status={status}")
+            if score is None:
+                t_errors.append("有 cases 却 score=null")
+            elif abs(float(score) - expected_score) > 1e-9:
+                t_errors.append(f"score={score}≠{expected_score}")
+            if detail != expected_detail:
+                t_errors.append(f"detail={detail}≠{expected_detail}")
             if summary.get("total") != len(cases):
                 t_errors.append(f"summary.total={summary.get('total')}≠{len(cases)}")
             if summary.get("passed") != passed_count:
                 t_errors.append(f"summary.passed={summary.get('passed')}≠{passed_count}")
-            dims = ((analytics.get("health") or {}).get("dimensions") or {})
-            detail = (dims.get("test_pass_rate") or {}).get("detail")
-            if detail != expected_detail:
-                t_errors.append(f"detail={detail}≠{expected_detail}")
+        elif cases == [] or cases is None:
+            if status != "na":
+                t_errors.append(f"无 cases 却标 status={status}")
+            if score is not None:
+                t_errors.append(f"无 cases 却保留 score={score}")
+            if detail != "n/a (未投影)":
+                t_errors.append(f"detail={detail}≠n/a (未投影)")
+            if not legacy and row.get("effective_weight") not in (0, 0.0):
+                t_errors.append("n/a 的 effective_weight 非 0")
+            if summary.get("total") != 0:
+                t_errors.append(f"summary.total={summary.get('total')}≠0")
+            if summary.get("passed") != 0:
+                t_errors.append(f"summary.passed={summary.get('passed')}≠0")
+            expected_detail = "n/a (未投影)"
+        else:
+            expected_detail = "n/a (schema 非法)"
+            t_errors.append("test_results.cases 非数组")
         add("analytics_test_results_detail_valid", not t_errors,
             (f"测试明细一致：{expected_detail}" if not t_errors
              else f"错误={t_errors[:5]}"))

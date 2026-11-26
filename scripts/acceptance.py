@@ -549,6 +549,10 @@ def activation_placeholder(root: Path = ROOT) -> dict:
         lp = proj / "governance" / "DECISION_LEDGER.json"
         ledger = json.loads(lp.read_text(encoding="utf-8"))
         ledger.pop("test_results", None)
+        # 测试证据消失后分析投影必须同步重算，否则 #28 会正确地判为伪造。
+        sys.path.insert(0, str(root / "templates"))
+        from build_capability_model import apply_analytics  # noqa: E402
+        apply_analytics(ledger["capability_model"], ledger)
         lp.write_text(json.dumps(ledger, ensure_ascii=False, indent=2), encoding="utf-8")
         sys.path.insert(0, str(root / "scripts"))
         import upgrade  # noqa: E402  — 复用真实升级器，不重写第二套规则

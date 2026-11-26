@@ -408,6 +408,8 @@ function allCaps(){
 const ANALYTICS_SCHEMA='maturity-analytics/1';
 const HEALTH_WEIGHTS={evidence_freshness:.20,test_pass_rate:.25,decision_backlog:.15,
   verified_coverage:.20,work_health:.20};
+const HEALTH_NA_TEST='n/a (未投影)';
+const HEALTH_NA_VERIFY='n/a (无能力点)';
 let selectedCap='', tierFilter='all';
 let whatIf={active:false,overrides:{}};
 function cloneData(d){return JSON.parse(JSON.stringify(d));}
@@ -470,24 +472,41 @@ function recomputeHealth(cm,d,overrides){
   })));
   const sm=(cm||{}).summary||{};
   const freshScores={fresh:100,stale:50,unbound:20};
-  const fresh=freshScores[sm.evidence_freshness||'unbound']===undefined
-    ?20:freshScores[sm.evidence_freshness];
-  const cases=((d||{}).test_results||{}).cases||[];
-  const passed=cases.filter(c=>c.status==='pass').length;
-  const failed=cases.filter(c=>c.status==='fail'||c.status==='error').length;
-  const open=(d.entries||[]).filter(e=>e.status==='proposed'||e.status==='deferred').length;
+  const freshKey=sm.evidence_freshness||'unbound';
+  const fresh=freshScores[freshKey]===undefined?20:freshScores[freshKey];
+  const casesRaw=((d||{}).test_results||{}).cases;
+  const cases=Array.isArray(casesRaw)?casesRaw:[];
+  const passed=cases.filter(c=>c&&c.status==='pass').length;
+  const failed=cases.filter(c=>c&&(c.status==='fail'||c.status==='error')).length;
+  const open=((d||{}).entries||[]).filter(e=>e.status==='proposed'||e.status==='deferred').length;
   const verified=caps.filter(c=>c.tier==='verified').length;
-  const issues=(d.work_items||[]).filter(x=>x.kind==='issue'&&x.status!=='done');
+  const issues=((d||{}).work_items||[]).filter(x=>x.kind==='issue'&&x.status!=='done');
   const blocked=issues.filter(x=>x.status==='blocked').length;
-  const dims={
-    evidence_freshness:{score:fresh,weight:HEALTH_WEIGHTS.evidence_freshness,detail:sm.evidence_freshness||'unbound'},
-    test_pass_rate:{score:cases.length?round1(100*passed/cases.length):0,weight:HEALTH_WEIGHTS.test_pass_rate,detail:passed+'/'+cases.length},
-    decision_backlog:{score:Math.max(0,100-Math.min(100,open*10)),weight:HEALTH_WEIGHTS.decision_backlog,detail:'open='+open},
-    verified_coverage:{score:caps.length?round1(100*verified/caps.length):0,weight:HEALTH_WEIGHTS.verified_coverage,detail:verified+'/'+caps.length},
-    work_health:{score:Math.max(0,100-Math.min(100,blocked*20+(issues.length-blocked)*8+failed*15)),weight:HEALTH_WEIGHTS.work_health,detail:'blocked='+blocked+' failed='+failed}
+  const mk=(name,score,detail)=>{
+    const weight=HEALTH_WEIGHTS[name];
+    return score===null||score===undefined
+      ?{score:null,status:'na',weight:weight,effective_weight:0,detail:detail}
+      :{score:round1(score),status:'ok',weight:weight,effective_weight:weight,detail:detail};
   };
-  let overall=0;Object.keys(dims).forEach(k=>{overall+=dims[k].score*dims[k].weight;});
-  return {dimensions:dims,overall:round1(overall)};
+  const dims={
+    evidence_freshness:mk('evidence_freshness',fresh,String(freshKey)),
+    test_pass_rate:mk('test_pass_rate',cases.length?100*passed/cases.length:null,
+      cases.length?passed+'/'+cases.length:HEALTH_NA_TEST),
+    decision_backlog:mk('decision_backlog',Math.max(0,100-Math.min(100,open*10)),'open='+open),
+    verified_coverage:mk('verified_coverage',caps.length?100*verified/caps.length:null,
+      caps.length?verified+'/'+caps.length:HEALTH_NA_VERIFY),
+    work_health:mk('work_health',Math.max(0,100-Math.min(100,blocked*20+(issues.length-blocked)*8+failed*15)),
+      'blocked='+blocked+' issues='+issues.length+' failed='+failed)
+  };
+  const names=Object.keys(dims);
+  const applied=names.filter(k=>dims[k].status==='ok');
+  const na_dims=names.filter(k=>dims[k].status==='na');
+  let weighted=0;
+  applied.forEach(k=>{weighted+=dims[k].score*dims[k].effective_weight;});
+  const weight_base=Math.round(applied.reduce((s,k)=>s+dims[k].weight,0)*1e4)/1e4;
+  const coverage={applied:applied.length,total:names.length,na_dims:na_dims,weight_base:weight_base};
+  const overall=weight_base>0?round1(weighted/weight_base):null;
+  return {dimensions:dims,overall:overall,coverage:coverage};
 }
 function deriveAnalytics(d){
   const cm=d.capability_model||{}, caps=[];
@@ -579,6 +598,7 @@ function applyWhatIf(){
   cm.summary=cm.summary||{};cm.summary.health_dimensions={};
   Object.keys(health.dimensions).forEach(k=>{cm.summary.health_dimensions[k]=health.dimensions[k].score;});
   cm.summary.health_overall=health.overall;
+  cm.summary.health_coverage=health.coverage;
   cm.analytics.health=health;
   const gain={};(cm.analytics.recommended_actions||[]).forEach(a=>{gain[a.code]=a.health_gain;});
   cm.next_queue=(cm.next_queue||[]).map(t=>Object.assign({},t,{health_impact:gain[t.code]||0}));
@@ -601,12 +621,21 @@ function whatIfBannerHtml(){
 function healthDashHtml(){
   const cm=VIEW_DATA.capability_model||{};
   const h=recomputeHealth(cm,VIEW_DATA);
+  const cov=h.coverage||{applied:5,total:5,na_dims:[]};
+  const partial=cov.applied<cov.total;
+  const score=h.overall===null||h.overall===undefined?'n/a':esc(h.overall);
+  const label=partial
+    ?'综合健康度（'+cov.applied+'/'+cov.total+' 維；測試未投影）'+score
+    :'综合健康度 '+score;
   return '<div class="health-dim">'+Object.keys(h.dimensions).map(k=>{
-    const v=h.dimensions[k], col=v.score>=80?'var(--green)':v.score>=50?'var(--amber)':'var(--red)';
+    const v=h.dimensions[k], isNa=v.status==='na';
+    const col=isNa?'var(--mut)':v.score>=80?'var(--green)':v.score>=50?'var(--amber)':'var(--red)';
+    const shown=isNa?'n/a':esc(v.score);
     return '<div class="hdim"><div class="hk"><span>'+esc(k)+'</span><span>'+esc(v.detail)+'</span></div>'+
-      '<div class="hv" style="color:'+col+'">'+esc(v.score)+'</div>'+
-      '<div class="hbar"><i style="width:'+esc(v.score)+'%;background:'+col+'"></i></div></div>';
-  }).join('')+'</div><div class="trustbar"><span class="tb">综合健康度 <b>'+esc(h.overall)+'</b></span>'+
+      '<div class="hv" style="color:'+col+'">'+shown+'</div>'+
+      '<div class="hbar"><i style="width:'+(isNa?0:v.score)+'%;background:'+col+'"></i></div></div>';
+  }).join('')+'</div><div class="trustbar"><span class="tb">'+label+'</span>'+
+    (partial?'<span class="tb">建議 <b>因測試未投影而抑制</b></span>':'')+
     '<span class="tb">口径 <b>证据20 / 测试25 / 积压15 / 实测20 / 工作20</b></span></div>';
 }
 function bindWhatIf(box){

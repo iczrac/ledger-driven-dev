@@ -8,6 +8,7 @@ import unittest
 
 from _base import ROOT, VERIFIER, demo_copy, load_ledger, run_verify
 from asset_bundle import install  # v2.1.2：资产对账负向证明
+from build_capability_model import apply_analytics  # n/a 变更后必须重算投影
 from ledger_io import write_ledger
 
 
@@ -90,6 +91,40 @@ class VerifyTest(unittest.TestCase):
             payload = json.loads(run_verify(root, ledger, reg, board).stdout)
             failed = [c["id"] for c in payload["checks"] if not c["ok"]]
             self.assertIn("analytics_test_results_detail_valid", failed)
+
+    def test_detects_forged_na_despite_real_cases(self):
+        """有真实 cases 却把 test_pass_rate 改 n/a：#31 与 #28 必须双向 fail。"""
+        with demo_copy() as (root, ledger, reg, board):
+            d = json.loads(ledger.read_text())
+            a = d["capability_model"].get("analytics")
+            if not isinstance(a, dict) or not d.get("test_results"):
+                self.skipTest("demo 账本尚未生成 analytics/test_results")
+            row = a["health"]["dimensions"]["test_pass_rate"]
+            row.update({"status": "na", "score": None,
+                        "detail": "n/a (未投影)", "effective_weight": 0})
+            ledger.write_text(json.dumps(d, ensure_ascii=False))
+            payload = json.loads(run_verify(root, ledger, reg, board).stdout)
+            failed = [c["id"] for c in payload["checks"] if not c["ok"]]
+            self.assertIn("analytics_test_results_detail_valid", failed)
+            self.assertIn("analytics_maturity_valid", failed)
+
+    def test_rejects_stale_zero_when_unprojected(self):
+        """无 cases 却留 0/0 或数值 0：n/a 与零分混淆必须 fail。"""
+        with demo_copy() as (root, ledger, reg, board):
+            d = json.loads(ledger.read_text())
+            a = d["capability_model"].get("analytics")
+            if not isinstance(a, dict):
+                self.skipTest("demo 账本尚未生成 analytics")
+            d["test_results"] = {"cases": [], "summary": {"total": 0, "passed": 0}}
+            row = a["health"]["dimensions"]["test_pass_rate"]
+            row.update({"status": "ok", "score": 0, "detail": "0/0",
+                        "effective_weight": 0.25})
+            d["capability_model"]["summary"]["health_dimensions"]["test_pass_rate"] = 0
+            ledger.write_text(json.dumps(d, ensure_ascii=False))
+            payload = json.loads(run_verify(root, ledger, reg, board).stdout)
+            failed = [c["id"] for c in payload["checks"] if not c["ok"]]
+            self.assertIn("analytics_test_results_detail_valid", failed)
+            self.assertIn("analytics_maturity_valid", failed)
 
     def test_detects_forged_d3_lineage(self):
         """v2.12.0 #29：追溯状态节点手改到与当前能力不符必须被抓到。"""
@@ -234,6 +269,7 @@ class TristateTest(unittest.TestCase):
         with demo_copy() as (root, ledger, reg, board):
             d = json.loads(ledger.read_text())
             d.pop("test_results", None)
+            apply_analytics(d["capability_model"], d)
             write_ledger(ledger.parent, d)
             payload = json.loads(run_verify(root, ledger, reg, board).stdout)
             row = next(c for c in payload["checks"]
@@ -249,6 +285,7 @@ class TristateTest(unittest.TestCase):
         with demo_copy() as (root, ledger, reg, board):
             d = json.loads(ledger.read_text())
             d.pop("test_results", None)
+            apply_analytics(d["capability_model"], d)
             write_ledger(ledger.parent, d)
             soft = self._run(root, ledger, reg, board, "--strict")
             self.assertEqual(soft.returncode, 0, soft.stdout + soft.stderr)

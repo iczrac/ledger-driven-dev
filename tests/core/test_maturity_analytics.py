@@ -8,13 +8,16 @@ from __future__ import annotations
 MODULE_ID = "core"
 import unittest
 
-from _base import load_ledger
+from _base import ROOT, load_ledger
 
 from build_capability_model import (  # noqa: E402
     HEALTH_DIMENSION_WEIGHTS,
+    HEALTH_METHOD,
     LINEAGE_SCHEMA,
     build_analytics,
     compute_health_dimensions,
+    recommended_actions,
+    round_half_up,
 )
 
 
@@ -99,6 +102,100 @@ class MaturityAnalyticsTest(unittest.TestCase):
         for task in self.cm.get("next_queue", []):
             self.assertIn("health_impact", task, task["code"])
             self.assertGreaterEqual(task["health_impact"], 0)
+
+
+class HealthNaContractTest(unittest.TestCase):
+    """0/0 不得记 0：分母为 0 标 n/a、排除加权并揭露覆盖度。"""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.ledger = load_ledger()
+        cls.cm = cls.ledger["capability_model"]
+
+    @staticmethod
+    def _model(with_caps: bool = True) -> dict:
+        caps = [{"code": f"EQ.MOD.{i:02d}", "name": f"c{i}",
+                 "level": 5, "evidence_tier": "verified"} for i in range(1, 6)]
+        return {"summary": {"evidence_freshness": "fresh"},
+                "projects": ([{"code": "EQ", "modules": [
+                    {"code": "EQ.MOD", "caps": caps}]}] if with_caps else [])}
+
+    @staticmethod
+    def _ledger(test_results: dict | None = None) -> dict:
+        ledger = {"entries": [], "work_items": []}
+        if test_results is not None:
+            ledger["test_results"] = test_results
+        return ledger
+
+    def test_empty_test_cases_mark_na_and_renormalize(self):
+        variants = (
+            self._ledger(),
+            self._ledger({"cases": [], "summary": {"total": 0, "passed": 0}}),
+        )
+        for ledger in variants:
+            with self.subTest(has_tr="test_results" in ledger):
+                health = compute_health_dimensions(self._model(), ledger)
+                row = health["dimensions"]["test_pass_rate"]
+                self.assertEqual(row["status"], "na")
+                self.assertIsNone(row["score"])
+                self.assertEqual(row["detail"], "n/a (未投影)")
+                self.assertEqual(row["weight"], HEALTH_DIMENSION_WEIGHTS["test_pass_rate"])
+                self.assertEqual(row["effective_weight"], 0.0)
+                self.assertEqual(health["overall"], 100.0)
+                self.assertEqual(health["coverage"], {
+                    "applied": 4, "total": 5,
+                    "na_dims": ["test_pass_rate"], "weight_base": 0.75})
+                self.assertEqual(
+                    health["recommendation_note"], "因測試未投影而抑制建議")
+                self.assertEqual(recommended_actions(self._model(), ledger, health), [])
+
+    def test_zero_capabilities_marks_verified_na(self):
+        ledger = self._ledger({"cases": [{"status": "pass"}],
+                               "summary": {"total": 1, "passed": 1}})
+        health = compute_health_dimensions(self._model(with_caps=False), ledger)
+        row = health["dimensions"]["verified_coverage"]
+        self.assertEqual(row["status"], "na")
+        self.assertIsNone(row["score"])
+        self.assertEqual(row["detail"], "n/a (无能力点)")
+        self.assertEqual(health["overall"], 100.0)
+        self.assertEqual(health["coverage"]["na_dims"], ["verified_coverage"])
+        self.assertEqual(health["coverage"]["weight_base"], 0.8)
+
+    def test_real_cases_keep_legacy_formula(self):
+        health = compute_health_dimensions(self.cm, self.ledger)
+        row = health["dimensions"]["test_pass_rate"]
+        self.assertEqual(row["status"], "ok")
+        self.assertEqual(row["score"], 100.0)
+        self.assertEqual(row["detail"], "3/3")
+        self.assertEqual(row["effective_weight"], row["weight"])
+        self.assertEqual(health["overall"], 90.2)
+        self.assertEqual(health["coverage"]["applied"], 5)
+        self.assertEqual(HEALTH_DIMENSION_WEIGHTS, {
+            "evidence_freshness": 0.20, "test_pass_rate": 0.25,
+            "decision_backlog": 0.15, "verified_coverage": 0.20,
+            "work_health": 0.20})
+
+    def test_half_up_not_bankers_rounding(self):
+        self.assertEqual(round_half_up(56.25, 1), 56.3)
+        self.assertEqual(round_half_up(90.25, 1), 90.3)
+
+    def test_t4b_static_contract_python_and_js(self):
+        py = (ROOT / "templates/build_capability_model.py").read_text()
+        verify = (ROOT / "templates/verify_ledger.py").read_text()
+        js = (ROOT / "templates/index.html.template").read_text()
+        for token in ("n/a (未投影)", "n/a (无能力点)", "effective_weight",
+                      "weight_base", "na_dims", "recommendation_note"):
+            self.assertIn(token, py, token)
+        self.assertIn("math.floor", py)
+        self.assertIn("按有效权重重正规律", HEALTH_METHOD)
+        for token in ("HEALTH_NA_TEST='n/a (未投影)'",
+                      "HEALTH_NA_VERIFY='n/a (无能力点)'",
+                      "effective_weight", "weight_base", "na_dims",
+                      "health_coverage", "測試未投影"):
+            self.assertIn(token, js, token)
+        self.assertIn("Math.round(n*10)/10", js)
+        self.assertIn("n/a (未投影)", verify)
+        self.assertIn("compute_health_dimensions", verify)
 
 
 if __name__ == "__main__":

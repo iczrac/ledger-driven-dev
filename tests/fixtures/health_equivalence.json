@@ -1,0 +1,100 @@
+{
+  "schema": "health-equivalence/1",
+  "purpose": "Python canonical 与前端 recomputeHealth 的单一来源对比样本",
+  "cases": [
+    {
+      "name": "empty_cases",
+      "model": {
+        "summary": {"evidence_freshness": "fresh"},
+        "projects": [{
+          "code": "EQ", "name": "Equivalence", "modules": [{
+            "code": "EQ.MOD", "name": "Module", "caps": [
+              {"code": "EQ.MOD.01", "name": "c1", "level": 5, "evidence_tier": "verified"},
+              {"code": "EQ.MOD.02", "name": "c2", "level": 5, "evidence_tier": "verified"},
+              {"code": "EQ.MOD.03", "name": "c3", "level": 5, "evidence_tier": "verified"},
+              {"code": "EQ.MOD.04", "name": "c4", "level": 5, "evidence_tier": "verified"},
+              {"code": "EQ.MOD.05", "name": "c5", "level": 5, "evidence_tier": "verified"}
+            ]
+          }]
+        }]
+      },
+      "ledger": {
+        "test_results": {"cases": [], "summary": {"total": 0, "passed": 0}},
+        "entries": [], "work_items": []
+      }
+    },
+    {
+      "name": "real_cases",
+      "model": {
+        "summary": {"evidence_freshness": "fresh"},
+        "projects": [{
+          "code": "EQ", "name": "Equivalence", "modules": [{
+            "code": "EQ.MOD", "name": "Module", "caps": [
+              {"code": "EQ.MOD.01", "name": "c1", "level": 5, "evidence_tier": "verified"},
+              {"code": "EQ.MOD.02", "name": "c2", "level": 5, "evidence_tier": "verified"},
+              {"code": "EQ.MOD.03", "name": "c3", "level": 5, "evidence_tier": "verified"},
+              {"code": "EQ.MOD.04", "name": "c4", "level": 5, "evidence_tier": "verified"},
+              {"code": "EQ.MOD.05", "name": "c5", "level": 5, "evidence_tier": "verified"}
+            ]
+          }]
+        }]
+      },
+      "ledger": {
+        "test_results": {
+          "cases": [
+            {"status": "pass"}, {"status": "pass"}, {"status": "pass"}
+          ],
+          "summary": {"total": 3, "passed": 3}
+        },
+        "entries": [], "work_items": []
+      }
+    },
+    {
+      "name": "half_up_boundary",
+      "model": {
+        "summary": {"evidence_freshness": "fresh"},
+        "projects": [{
+          "code": "EQ", "name": "Equivalence", "modules": [{
+            "code": "EQ.MOD", "name": "Module", "caps": [
+              {"code": "EQ.MOD.01", "name": "c1", "level": 5, "evidence_tier": "verified"},
+              {"code": "EQ.MOD.02", "name": "c2", "level": 5, "evidence_tier": "verified"},
+              {"code": "EQ.MOD.03", "name": "c3", "level": 5, "evidence_tier": "verified"},
+              {"code": "EQ.MOD.04", "name": "c4", "level": 5, "evidence_tier": "verified"},
+              {"code": "EQ.MOD.05", "name": "c5", "level": 5, "evidence_tier": "verified"}
+            ]
+          }]
+        }]
+      },
+      "ledger": {
+        "test_results": {
+          "cases": [
+            {"status": "pass"}, {"status": "pass"}, {"status": "pass"},
+            {"status": "pass"}, {"status": "pass"}, {"status": "pass"},
+            {"status": "pass"}, {"status": "pass"}, {"status": "pass"},
+            {"status": "fail"}, {"status": "fail"}, {"status": "fail"},
+            {"status": "fail"}, {"status": "fail"}, {"status": "fail"},
+            {"status": "fail"}
+          ],
+          "summary": {"total": 16, "passed": 9}
+        },
+        "entries": [], "work_items": []
+      }
+    },
+    {
+      "name": "mixed_na_weight_base",
+      "model": {
+        "summary": {"evidence_freshness": "fresh"},
+        "projects": []
+      },
+      "ledger": {
+        "test_results": {
+          "cases": [
+            {"status": "pass"}, {"status": "pass"}, {"status": "pass"}
+          ],
+          "summary": {"total": 3, "passed": 3}
+        },
+        "entries": [], "work_items": []
+      }
+    }
+  ]
+}

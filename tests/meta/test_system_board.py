@@ -177,6 +177,24 @@ class SystemBoardTest(unittest.TestCase):
         self.assertEqual(d["health"]["health_overall"], 88)
         self.assertEqual(d["health"]["health_dimensions"]["verified_coverage"], 50)
 
+    def test_board_projection_tolerates_na_dimension(self):
+        """T5：summary.test_pass_rate=null（分母 0 的 n/a）须如实投影，不抛错。"""
+        path = self.root / "alpha" / "governance" / "DECISION_LEDGER.json"
+        payload = json.loads(path.read_text(encoding="utf-8"))
+        payload["capability_model"]["summary"] = {
+            "health_overall": 100.0,
+            "health_dimensions": {
+                "test_pass_rate": None, "verified_coverage": 100},
+            "health_coverage": {"applied": 4, "total": 5,
+                                "na_dims": ["test_pass_rate"], "weight_base": 0.75},
+        }
+        write_project(self.root, "alpha", payload)
+        project = [x for x in bsb.discover(self.root) if x["dir"] == "alpha"][0]
+        health = project["detail"]["health"]
+        self.assertIsNone(health["health_dimensions"]["test_pass_rate"])
+        self.assertEqual(health["health_dimensions"]["verified_coverage"], 100)
+        self.assertEqual(health["health_overall"], 100.0)
+
     def test_detect_new_dimension_data_tamper(self):
         bsb.build(self.root, ROOT, apply=True, approved_by="test")
         out = self.root / bsb.OUTPUT_REL

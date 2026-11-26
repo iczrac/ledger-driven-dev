@@ -35,6 +35,7 @@ import argparse
 import ast
 import hashlib
 import json
+import math
 import os
 import re
 import subprocess
@@ -105,8 +106,17 @@ HEALTH_DIMENSION_WEIGHTS = {
 }
 HEALTH_METHOD = (
     "加权投影：证据新鲜度20% + 测试通过率25% + 决策积压15% + "
-    "verified 覆盖20% + 工作健康20%；各项 0-100，全部来自账本现有字段。"
+    "verified 覆盖20% + 工作健康20%；各项 0-100，全部来自账本现有字段；"
+    "n/a 维度不计入，其余按有效权重重正规律，并同时显示覆盖维数。"
 )
+
+
+def round_half_up(value: float, digits: int = 1) -> float:
+    """四舍五入（half-up），与前端 Math.round(n*10)/10 同口径。"""
+    factor = 10 ** digits
+    return math.floor(float(value) * factor + 0.5) / factor
+
+
 ANALYTICS_SCHEMA = "maturity-analytics/1"
 # v2.12.0：D3 消费的追溯树投影。保持 ANALYTICS_SCHEMA 不变（老看板仍能读
 # maturity/health），新字段带自己的子 schema；缺失即为旧账本，由前端降级。
@@ -1390,9 +1400,10 @@ def compute_health_dimensions(model: dict, ledger: dict | None = None,
              or "unbound")
     fresh_score = FRESHNESS_SCORE.get(str(fresh), FRESHNESS_SCORE["unbound"])
 
-    cases = (ledger.get("test_results") or {}).get("cases") or []
+    cases_raw = (ledger.get("test_results") or {}).get("cases")
+    cases = cases_raw if isinstance(cases_raw, list) else []
     passed = sum(1 for x in cases if isinstance(x, dict) and x.get("status") == "pass")
-    test_score = round(100 * passed / len(cases), 1) if cases else 0.0
+    test_score = 100.0 * passed / len(cases) if cases else None
 
     entries = ledger.get("entries") or []
     backlog = sum(1 for e in entries
@@ -1400,7 +1411,7 @@ def compute_health_dimensions(model: dict, ledger: dict | None = None,
     backlog_score = max(0.0, 100.0 - min(100.0, backlog * 10.0))
 
     verified = sum(1 for c in caps if c["tier"] == "verified")
-    verified_score = round(100 * verified / total, 1) if total else 0.0
+    verified_score = 100.0 * verified / total if total else None
 
     work_items = ledger.get("work_items") or []
     issues = [x for x in work_items
@@ -1415,30 +1426,46 @@ def compute_health_dimensions(model: dict, ledger: dict | None = None,
                     + failed * 15.0),
     )
 
+    def _dim(name: str, score: float | None, detail: str) -> dict:
+        weight = HEALTH_DIMENSION_WEIGHTS[name]
+        if score is None:
+            return {"score": None, "status": "na", "weight": weight,
+                    "effective_weight": 0.0, "detail": detail}
+        return {"score": round_half_up(score), "status": "ok", "weight": weight,
+                "effective_weight": weight, "detail": detail}
+
     dims = {
-        "evidence_freshness": {
-            "score": fresh_score, "weight": HEALTH_DIMENSION_WEIGHTS["evidence_freshness"],
-            "detail": str(fresh),
-        },
-        "test_pass_rate": {
-            "score": test_score, "weight": HEALTH_DIMENSION_WEIGHTS["test_pass_rate"],
-            "detail": f"{passed}/{len(cases)}",
-        },
-        "decision_backlog": {
-            "score": backlog_score, "weight": HEALTH_DIMENSION_WEIGHTS["decision_backlog"],
-            "detail": f"open={backlog}",
-        },
-        "verified_coverage": {
-            "score": verified_score, "weight": HEALTH_DIMENSION_WEIGHTS["verified_coverage"],
-            "detail": f"{verified}/{total}",
-        },
-        "work_health": {
-            "score": work_score, "weight": HEALTH_DIMENSION_WEIGHTS["work_health"],
-            "detail": f"blocked={blocked} issues={len(issues)} failed={failed}",
-        },
+        "evidence_freshness": _dim(
+            "evidence_freshness", fresh_score, str(fresh)),
+        "test_pass_rate": _dim(
+            "test_pass_rate", test_score,
+            f"{passed}/{len(cases)}" if cases else "n/a (未投影)"),
+        "decision_backlog": _dim(
+            "decision_backlog", backlog_score, f"open={backlog}"),
+        "verified_coverage": _dim(
+            "verified_coverage", verified_score,
+            f"{verified}/{total}" if total else "n/a (无能力点)"),
+        "work_health": _dim(
+            "work_health", work_score,
+            f"blocked={blocked} issues={len(issues)} failed={failed}"),
     }
-    overall = round(sum(row["score"] * row["weight"] for row in dims.values()), 1)
-    return {"dimensions": dims, "overall": overall, "method": HEALTH_METHOD}
+    applied = [name for name, row in dims.items() if row["status"] == "ok"]
+    na_dims = [name for name, row in dims.items() if row["status"] == "na"]
+    weight_base = round_half_up(
+        sum(dims[name]["weight"] for name in applied), 4)
+    overall = (round_half_up(
+        sum(dims[name]["score"] * dims[name]["effective_weight"]
+            for name in applied) / weight_base, 1)
+        if weight_base > 0 else None)
+    coverage = {"applied": len(applied), "total": len(dims),
+                "na_dims": na_dims, "weight_base": weight_base}
+    health = {"dimensions": dims, "overall": overall,
+              "method": HEALTH_METHOD, "coverage": coverage}
+    if na_dims:
+        health["recommendation_note"] = (
+            "因測試未投影而抑制建議" if "test_pass_rate" in na_dims
+            else "因部分維度 n/a 而抑制建議")
+    return health
 
 
 def _missing_evidence(c) -> list[str]:
@@ -1455,8 +1482,15 @@ def _missing_evidence(c) -> list[str]:
 
 
 def recommended_actions(model: dict, ledger: dict, health: dict) -> list[dict]:
-    """按健康度边际增益排序的推荐行动，增益由同一套公式模拟得出。"""
-    base = health["overall"]
+    """按健康度边际增益排序的推荐行动，增益由同一套公式模拟得出。
+
+    部分维度 n/a 时基准不再可比：静默给 0 增益等于说谎，直接抑制并在
+    health.recommendation_note 留下 schema-safe 的明确提示。
+    """
+    base = health.get("overall")
+    coverage = health.get("coverage") or {}
+    if base is None or coverage.get("applied") != coverage.get("total"):
+        return []
     actions: list[dict] = []
     for _, _, c in _iter_caps(model):
         code = c.get("code")
@@ -1468,7 +1502,10 @@ def recommended_actions(model: dict, ledger: dict, health: dict) -> list[dict]:
             target_tier = "verified"
         sim = compute_health_dimensions(
             model, ledger, {code: {"level": target_level, "tier": target_tier}})
-        gain = round(sim["overall"] - base, 1)
+        sim_overall = sim.get("overall")
+        if sim_overall is None or base is None:
+            continue
+        gain = round_half_up(sim_overall - base, 1)
         if gain <= 0:
             continue
         missing = _missing_evidence(c)
@@ -1680,6 +1717,7 @@ def build_analytics(model: dict, ledger: dict, health: dict) -> dict:
         "change_summary": change,
         "health": health,
         "recommended_actions": recommended_actions(model, ledger, health),
+        "recommendation_note": health.get("recommendation_note"),
         "timeline": build_event_timeline(events),
         "lineage": build_lineage_projection(model, ledger),
     }
@@ -1693,6 +1731,11 @@ def apply_analytics(model: dict, ledger: dict,
         k: v["score"] for k, v in health["dimensions"].items()}
     model["summary"]["health_overall"] = health["overall"]
     model["summary"]["health_method"] = HEALTH_METHOD
+    model["summary"]["health_coverage"] = health["coverage"]
+    if health.get("recommendation_note"):
+        model["summary"]["health_recommendation_note"] = health["recommendation_note"]
+    else:
+        model["summary"].pop("health_recommendation_note", None)
     analytics = build_analytics(model, ledger, health)
     model["analytics"] = analytics
     gain = {a["code"]: a["health_gain"]

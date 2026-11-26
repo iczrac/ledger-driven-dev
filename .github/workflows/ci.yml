@@ -31,3 +31,6 @@ jobs:
           open('/tmp/ledger_board.js', 'w').write(js)
           PY
           node --check /tmp/ledger_board.js
+
+      - name: 健康度 Python/JS 等价（T4 · 独立 node 步骤）
+        run: python3 tests/tools/compare_health_equivalence.py

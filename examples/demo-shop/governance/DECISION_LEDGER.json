@@ -2,7 +2,7 @@
   "ledger_version": "1.0",
   "title": "Demo Shop 决策与能力账本",
   "purpose": "单一事实源：决策、裁决、待办及能力索引的唯一写入点。",
-  "last_updated": "2026-11-20 00:27 HKT",
+  "last_updated": "2026-11-26 13:08 HKT",
   "owner": "示例项目",
   "workflow": [
     "所有重大决策/裁决/待办只写入本文件 entries，不再新建独立报告。",
@@ -292,7 +292,7 @@
   },
   "capability_model": {
     "version": "1.0",
-    "generated_at": "2026-11-20 00:27 HKT",
+    "generated_at": "2026-11-26 13:08 HKT",
     "generator": "templates/build_capability_model.py",
     "purpose": "统一能力编码 + 可复算完成度 + 嵌套组件树 + 文档索引，供规划与编码代理消费。",
     "coding_spec": {
@@ -420,8 +420,8 @@
                   "matched_tests": [
                     "test_data_ready.py"
                   ],
-                  "report_at": "2026-11-17 23:03 HKT",
-                  "report_label": "demo-unit"
+                  "report_at": "2026-11-26 13:07 HKT",
+                  "report_label": "project"
                 },
                 "binding_status": "bound",
                 "next_level": 5,
@@ -560,8 +560,8 @@
                   "matched_tests": [
                     "test_order.py"
                   ],
-                  "report_at": "2026-11-17 23:03 HKT",
-                  "report_label": "demo-unit"
+                  "report_at": "2026-11-26 13:07 HKT",
+                  "report_label": "project"
                 },
                 "binding_status": "bound",
                 "next_level": 5,
@@ -666,8 +666,8 @@
                   "matched_tests": [
                     "test_pricing.py"
                   ],
-                  "report_at": "2026-11-17 23:03 HKT",
-                  "report_label": "demo-unit"
+                  "report_at": "2026-11-26 13:07 HKT",
+                  "report_label": "project"
                 },
                 "binding_status": "bound",
                 "next_level": 5,
@@ -912,8 +912,6 @@
         "declared": 1
       },
       "verified_coverage": 0.75,
-      "evidence_bound": true,
-      "evidence_freshness": "fresh",
       "health_dimensions": {
         "evidence_freshness": 100.0,
         "test_pass_rate": 100.0,
@@ -922,233 +920,15 @@
         "work_health": 76.0
       },
       "health_overall": 90.2,
-      "health_method": "加权投影：证据新鲜度20% + 测试通过率25% + 决策积压15% + verified 覆盖20% + 工作健康20%；各项 0-100，全部来自账本现有字段。"
-    },
-    "next_queue": [
-      {
-        "code": "DEMO.API.QUERY.01",
-        "name": "订单查询接口",
-        "project": "DEMO",
-        "module": "DEMO.API",
-        "domain": "QUERY",
-        "level": "L2",
-        "completion": 0.4,
-        "target_level": "L3",
-        "action": "tests/unit/ 有对应测试",
-        "evidence_tier": "declared",
-        "needs_runtime_verification": false,
-        "missing_evidence": [
-          "契约(L1)",
-          "单测(L3)",
-          "测试记录(L4)"
-        ],
-        "docs": {
-          "plans": [],
-          "module_docs": [],
-          "contracts": [],
-          "impl": [
-            "examples/demo-shop/src/api/order_api.py"
-          ],
-          "unit_tests": [],
-          "test_records": []
-        },
-        "decisions": [],
-        "health_impact": 5.0,
-        "lessons": [
-          {
-            "id": "L-001",
-            "title": "测试记录文件名必须命中 registry hints 才会被判定为 L4",
-            "insight": "生成器按 registry 中能力的 hints 关键字匹配 docs/test_records/ 下的文件名；文件存在但命名不含 hint 时，证据不会被识别，能力会停在你以为已达成的等级。",
-            "action": "新增测试记录时以 <hint>_test_record.md 命名，并在生成器 dry-run 输出中确认等级跃迁后再提交。"
-          }
-        ],
-        "rank": 1
-      }
-    ],
-    "history": {
-      "spec": {
-        "purpose": "append-only 状态演进：只记录由证据/等级/文档真实变化驱动的事件，重跑不产生噪音。",
-        "append_only": true,
-        "fingerprint": "对派生状态（等级/完成度/证据路径/文档索引路径/决策引用）规范化排序后取 sha256 前 16 位；仅当与末事件不同才追加。",
-        "replay": "每个事件携带 state_digest（当时完整能力状态），可重建任意时点快照。",
-        "event_types": [
-          "genesis",
-          "change",
-          "manual"
-        ],
-        "invariant": "events[i].fingerprint_before == events[i-1].fingerprint_after；seq 从 1 连续递增。"
+      "health_method": "加权投影：证据新鲜度20% + 测试通过率25% + 决策积压15% + verified 覆盖20% + 工作健康20%；各项 0-100，全部来自账本现有字段；n/a 维度不计入，其余按有效权重重正规律，并同时显示覆盖维数。",
+      "health_coverage": {
+        "applied": 5,
+        "total": 5,
+        "na_dims": [],
+        "weight_base": 1.0
       },
-      "event_count": 4,
-      "latest": {
-        "seq": 4,
-        "ts": "2026-11-17 22:14 HKT",
-        "type": "change",
-        "fingerprint_before": "78f8cff9e5f8e90b",
-        "fingerprint_after": "8be2cb497e26f77a",
-        "changes": {
-          "level_transitions": [],
-          "added": [],
-          "removed": [],
-          "completion_delta": [],
-          "evidence_changes": []
-        },
-        "state_digest": {
-          "DEMO.DATA.READY.01": {
-            "l": 5,
-            "c": 1.0,
-            "t": "verified",
-            "e": [
-              "examples/demo-shop/docs/test_records/DATA_READY_TEST_RECORD.md",
-              "examples/demo-shop/src/contracts/data_ready.py",
-              "examples/demo-shop/tests/unit/test_data_ready.py"
-            ],
-            "d": [
-              "examples/demo-shop/docs/plans/DATA_PIPELINE_PLAN.md",
-              "examples/demo-shop/docs/test_records/DATA_READY_TEST_RECORD.md",
-              "examples/demo-shop/src/contracts/data_ready.py",
-              "examples/demo-shop/tests/unit/test_data_ready.py"
-            ],
-            "dec": []
-          },
-          "DEMO.CORE.ORDER.01": {
-            "l": 5,
-            "c": 1.0,
-            "t": "verified",
-            "e": [
-              "examples/demo-shop/docs/test_records/ORDER_TEST_RECORD.md",
-              "examples/demo-shop/src/contracts/order_schema.py",
-              "examples/demo-shop/src/domain/order.py",
-              "examples/demo-shop/tests/unit/test_order.py"
-            ],
-            "d": [
-              "examples/demo-shop/docs/README.md",
-              "examples/demo-shop/docs/test_records/ORDER_TEST_RECORD.md",
-              "examples/demo-shop/src/contracts/order_schema.py",
-              "examples/demo-shop/src/domain/order.py",
-              "examples/demo-shop/tests/unit/test_order.py"
-            ],
-            "dec": [
-              "D-001",
-              "D-002"
-            ]
-          },
-          "DEMO.CORE.PRICE.02": {
-            "l": 5,
-            "c": 1.0,
-            "t": "verified",
-            "e": [
-              "examples/demo-shop/docs/test_records/PRICE_TEST_RECORD.md",
-              "examples/demo-shop/src/domain/pricing.py",
-              "examples/demo-shop/tests/unit/test_pricing.py"
-            ],
-            "d": [
-              "examples/demo-shop/docs/README.md",
-              "examples/demo-shop/docs/plans/PRICING_ROADMAP.md",
-              "examples/demo-shop/docs/test_records/PRICE_TEST_RECORD.md",
-              "examples/demo-shop/src/domain/pricing.py",
-              "examples/demo-shop/tests/unit/test_pricing.py"
-            ],
-            "dec": [
-              "D-001",
-              "D-002",
-              "D-003"
-            ]
-          },
-          "DEMO.API.QUERY.01": {
-            "l": 2,
-            "c": 0.4,
-            "t": "declared",
-            "e": [
-              "examples/demo-shop/src/api/order_api.py"
-            ],
-            "d": [
-              "examples/demo-shop/src/api/order_api.py"
-            ],
-            "dec": []
-          }
-        },
-        "trigger": "derive",
-        "note": "证据 / 等级 / 文档索引变化，由生成器自动侦测。"
-      },
-      "current_fingerprint": "8be2cb497e26f77a"
-    },
-    "lessons": {
-      "spec": {
-        "purpose": "从历史沉淀可复用经验：机器识别候选信号，人/AI 确认后补充洞察与行动，任务卡自动携带相关经验。",
-        "workflow": [
-          "生成器从历史产生 candidates（降级 / 长期停滞 / 决策被取代），不替人下结论；",
-          "人/AI 将候选确认成 items，填写 insight（学到了什么）与 action（下次怎么做）；",
-          "next_queue 按 scope 匹配 confirmed 经验并附到任务卡，让下一轮站在前人结论上开工。"
-        ],
-        "candidate_rules": [
-          "downgrade",
-          "stagnation",
-          "superseded_decision"
-        ],
-        "status": [
-          "draft",
-          "confirmed",
-          "retired"
-        ]
-      },
-      "items": [
-        {
-          "id": "L-001",
-          "status": "confirmed",
-          "created_ts": "2026-11-17 21:40 HKT",
-          "title": "测试记录文件名必须命中 registry hints 才会被判定为 L4",
-          "insight": "生成器按 registry 中能力的 hints 关键字匹配 docs/test_records/ 下的文件名；文件存在但命名不含 hint 时，证据不会被识别，能力会停在你以为已达成的等级。",
-          "action": "新增测试记录时以 <hint>_test_record.md 命名，并在生成器 dry-run 输出中确认等级跃迁后再提交。",
-          "scope": {
-            "projects": [
-              "DEMO"
-            ],
-            "capabilities": [],
-            "domains": [],
-            "levels": []
-          },
-          "source_events": [
-            1
-          ],
-          "evidence": [
-            "examples/demo-shop/governance/registry.json"
-          ],
-          "confidence": "high"
-        }
-      ],
-      "candidates": [
-        {
-          "id": "LC-C1CDBB",
-          "kind": "stagnation",
-          "reason": "能力 DEMO.API.QUERY.01 连续 3 个事件停在 40%（L2），未补齐下一级证据；宜判断是优先级问题还是阻塞。",
-          "source_events": [
-            2,
-            3,
-            4
-          ],
-          "suggested_scope": {
-            "capabilities": [
-              "DEMO.API.QUERY.01"
-            ]
-          },
-          "status": "open",
-          "origin": "derive"
-        },
-        {
-          "id": "LC-E0299A",
-          "kind": "superseded_decision",
-          "reason": "决策 D-003 取代了 D-002；应沉淀原判断失效的原因，避免同类误判再次发生。",
-          "source_events": [],
-          "suggested_scope": {
-            "decisions": [
-              "D-003",
-              "D-002"
-            ]
-          },
-          "status": "open",
-          "origin": "derive"
-        }
-      ]
+      "evidence_bound": true,
+      "evidence_freshness": "fresh"
     },
     "analytics": {
       "schema": "maturity-analytics/1",
@@ -1266,32 +1046,48 @@
         "dimensions": {
           "evidence_freshness": {
             "score": 100.0,
+            "status": "ok",
             "weight": 0.2,
+            "effective_weight": 0.2,
             "detail": "fresh"
           },
           "test_pass_rate": {
             "score": 100.0,
+            "status": "ok",
             "weight": 0.25,
+            "effective_weight": 0.25,
             "detail": "3/3"
           },
           "decision_backlog": {
             "score": 100.0,
+            "status": "ok",
             "weight": 0.15,
+            "effective_weight": 0.15,
             "detail": "open=0"
           },
           "verified_coverage": {
             "score": 75.0,
+            "status": "ok",
             "weight": 0.2,
+            "effective_weight": 0.2,
             "detail": "3/4"
           },
           "work_health": {
             "score": 76.0,
+            "status": "ok",
             "weight": 0.2,
+            "effective_weight": 0.2,
             "detail": "blocked=0 issues=3 failed=0"
           }
         },
         "overall": 90.2,
-        "method": "加权投影：证据新鲜度20% + 测试通过率25% + 决策积压15% + verified 覆盖20% + 工作健康20%；各项 0-100，全部来自账本现有字段。"
+        "method": "加权投影：证据新鲜度20% + 测试通过率25% + 决策积压15% + verified 覆盖20% + 工作健康20%；各项 0-100，全部来自账本现有字段；n/a 维度不计入，其余按有效权重重正规律，并同时显示覆盖维数。",
+        "coverage": {
+          "applied": 5,
+          "total": 5,
+          "na_dims": [],
+          "weight_base": 1.0
+        }
       },
       "recommended_actions": [
         {
@@ -1302,6 +1098,7 @@
           "evidence": "契约(L1)"
         }
       ],
+      "recommendation_note": null,
       "timeline": [
         {
           "seq": 1,
@@ -1661,6 +1458,232 @@
           }
         }
       }
+    },
+    "next_queue": [
+      {
+        "code": "DEMO.API.QUERY.01",
+        "name": "订单查询接口",
+        "project": "DEMO",
+        "module": "DEMO.API",
+        "domain": "QUERY",
+        "level": "L2",
+        "completion": 0.4,
+        "target_level": "L3",
+        "action": "tests/unit/ 有对应测试",
+        "evidence_tier": "declared",
+        "needs_runtime_verification": false,
+        "missing_evidence": [
+          "契约(L1)",
+          "单测(L3)",
+          "测试记录(L4)"
+        ],
+        "docs": {
+          "plans": [],
+          "module_docs": [],
+          "contracts": [],
+          "impl": [
+            "examples/demo-shop/src/api/order_api.py"
+          ],
+          "unit_tests": [],
+          "test_records": []
+        },
+        "decisions": [],
+        "health_impact": 5.0,
+        "lessons": [
+          {
+            "id": "L-001",
+            "title": "测试记录文件名必须命中 registry hints 才会被判定为 L4",
+            "insight": "生成器按 registry 中能力的 hints 关键字匹配 docs/test_records/ 下的文件名；文件存在但命名不含 hint 时，证据不会被识别，能力会停在你以为已达成的等级。",
+            "action": "新增测试记录时以 <hint>_test_record.md 命名，并在生成器 dry-run 输出中确认等级跃迁后再提交。"
+          }
+        ],
+        "rank": 1
+      }
+    ],
+    "history": {
+      "spec": {
+        "purpose": "append-only 状态演进：只记录由证据/等级/文档真实变化驱动的事件，重跑不产生噪音。",
+        "append_only": true,
+        "fingerprint": "对派生状态（等级/完成度/证据路径/文档索引路径/决策引用）规范化排序后取 sha256 前 16 位；仅当与末事件不同才追加。",
+        "replay": "每个事件携带 state_digest（当时完整能力状态），可重建任意时点快照。",
+        "event_types": [
+          "genesis",
+          "change",
+          "manual"
+        ],
+        "invariant": "events[i].fingerprint_before == events[i-1].fingerprint_after；seq 从 1 连续递增。"
+      },
+      "event_count": 4,
+      "latest": {
+        "seq": 4,
+        "ts": "2026-11-17 22:14 HKT",
+        "type": "change",
+        "fingerprint_before": "78f8cff9e5f8e90b",
+        "fingerprint_after": "8be2cb497e26f77a",
+        "changes": {
+          "level_transitions": [],
+          "added": [],
+          "removed": [],
+          "completion_delta": [],
+          "evidence_changes": []
+        },
+        "state_digest": {
+          "DEMO.DATA.READY.01": {
+            "l": 5,
+            "c": 1.0,
+            "t": "verified",
+            "e": [
+              "examples/demo-shop/docs/test_records/DATA_READY_TEST_RECORD.md",
+              "examples/demo-shop/src/contracts/data_ready.py",
+              "examples/demo-shop/tests/unit/test_data_ready.py"
+            ],
+            "d": [
+              "examples/demo-shop/docs/plans/DATA_PIPELINE_PLAN.md",
+              "examples/demo-shop/docs/test_records/DATA_READY_TEST_RECORD.md",
+              "examples/demo-shop/src/contracts/data_ready.py",
+              "examples/demo-shop/tests/unit/test_data_ready.py"
+            ],
+            "dec": []
+          },
+          "DEMO.CORE.ORDER.01": {
+            "l": 5,
+            "c": 1.0,
+            "t": "verified",
+            "e": [
+              "examples/demo-shop/docs/test_records/ORDER_TEST_RECORD.md",
+              "examples/demo-shop/src/contracts/order_schema.py",
+              "examples/demo-shop/src/domain/order.py",
+              "examples/demo-shop/tests/unit/test_order.py"
+            ],
+            "d": [
+              "examples/demo-shop/docs/README.md",
+              "examples/demo-shop/docs/test_records/ORDER_TEST_RECORD.md",
+              "examples/demo-shop/src/contracts/order_schema.py",
+              "examples/demo-shop/src/domain/order.py",
+              "examples/demo-shop/tests/unit/test_order.py"
+            ],
+            "dec": [
+              "D-001",
+              "D-002"
+            ]
+          },
+          "DEMO.CORE.PRICE.02": {
+            "l": 5,
+            "c": 1.0,
+            "t": "verified",
+            "e": [
+              "examples/demo-shop/docs/test_records/PRICE_TEST_RECORD.md",
+              "examples/demo-shop/src/domain/pricing.py",
+              "examples/demo-shop/tests/unit/test_pricing.py"
+            ],
+            "d": [
+              "examples/demo-shop/docs/README.md",
+              "examples/demo-shop/docs/plans/PRICING_ROADMAP.md",
+              "examples/demo-shop/docs/test_records/PRICE_TEST_RECORD.md",
+              "examples/demo-shop/src/domain/pricing.py",
+              "examples/demo-shop/tests/unit/test_pricing.py"
+            ],
+            "dec": [
+              "D-001",
+              "D-002",
+              "D-003"
+            ]
+          },
+          "DEMO.API.QUERY.01": {
+            "l": 2,
+            "c": 0.4,
+            "t": "declared",
+            "e": [
+              "examples/demo-shop/src/api/order_api.py"
+            ],
+            "d": [
+              "examples/demo-shop/src/api/order_api.py"
+            ],
+            "dec": []
+          }
+        },
+        "trigger": "derive",
+        "note": "证据 / 等级 / 文档索引变化，由生成器自动侦测。"
+      },
+      "current_fingerprint": "8be2cb497e26f77a"
+    },
+    "lessons": {
+      "spec": {
+        "purpose": "从历史沉淀可复用经验：机器识别候选信号，人/AI 确认后补充洞察与行动，任务卡自动携带相关经验。",
+        "workflow": [
+          "生成器从历史产生 candidates（降级 / 长期停滞 / 决策被取代），不替人下结论；",
+          "人/AI 将候选确认成 items，填写 insight（学到了什么）与 action（下次怎么做）；",
+          "next_queue 按 scope 匹配 confirmed 经验并附到任务卡，让下一轮站在前人结论上开工。"
+        ],
+        "candidate_rules": [
+          "downgrade",
+          "stagnation",
+          "superseded_decision"
+        ],
+        "status": [
+          "draft",
+          "confirmed",
+          "retired"
+        ]
+      },
+      "items": [
+        {
+          "id": "L-001",
+          "status": "confirmed",
+          "created_ts": "2026-11-17 21:40 HKT",
+          "title": "测试记录文件名必须命中 registry hints 才会被判定为 L4",
+          "insight": "生成器按 registry 中能力的 hints 关键字匹配 docs/test_records/ 下的文件名；文件存在但命名不含 hint 时，证据不会被识别，能力会停在你以为已达成的等级。",
+          "action": "新增测试记录时以 <hint>_test_record.md 命名，并在生成器 dry-run 输出中确认等级跃迁后再提交。",
+          "scope": {
+            "projects": [
+              "DEMO"
+            ],
+            "capabilities": [],
+            "domains": [],
+            "levels": []
+          },
+          "source_events": [
+            1
+          ],
+          "evidence": [
+            "examples/demo-shop/governance/registry.json"
+          ],
+          "confidence": "high"
+        }
+      ],
+      "candidates": [
+        {
+          "id": "LC-C1CDBB",
+          "kind": "stagnation",
+          "reason": "能力 DEMO.API.QUERY.01 连续 3 个事件停在 40%（L2），未补齐下一级证据；宜判断是优先级问题还是阻塞。",
+          "source_events": [
+            2,
+            3,
+            4
+          ],
+          "suggested_scope": {
+            "capabilities": [
+              "DEMO.API.QUERY.01"
+            ]
+          },
+          "status": "open",
+          "origin": "derive"
+        },
+        {
+          "id": "LC-E0299A",
+          "kind": "superseded_decision",
+          "reason": "决策 D-003 取代了 D-002；应沉淀原判断失效的原因，避免同类误判再次发生。",
+          "source_events": [],
+          "suggested_scope": {
+            "decisions": [
+              "D-003",
+              "D-002"
+            ]
+          },
+          "status": "open",
+          "origin": "derive"
+        }
+      ]
     }
   },
   "history": {
@@ -2132,7 +2155,7 @@
   "test_results": {
     "schema": "node-test-results/1",
     "source": "governance/test_report.json",
-    "source_sha256": "e6d1ecb3d63830889b5b511ffd340c455c99d81a7ca8ff4bb82b7b88c3bbd277",
+    "source_sha256": "2aa4c8562736ad0819038dfa645f96c140806e5941c1cb6c733cf6381036f6b6",
     "overall": "pass",
     "summary": {
       "total": 3,
@@ -2143,22 +2166,22 @@
     },
     "cases": [
       {
-        "id": "_lld_test_data_ready_2348.DataReadyTest.test_required_fields",
+        "id": "_lld_test_data_ready_56417.DataReadyTest.test_required_fields",
         "file": "examples/demo-shop/tests/unit/test_data_ready.py",
         "status": "pass",
-        "seconds": 2.3e-05
+        "seconds": 2e-05
       },
       {
-        "id": "_lld_test_order_62845.OrderTest.test_payable",
+        "id": "_lld_test_order_25290.OrderTest.test_payable",
         "file": "examples/demo-shop/tests/unit/test_order.py",
         "status": "pass",
-        "seconds": 1.4e-05
+        "seconds": 1.3e-05
       },
       {
-        "id": "_lld_test_pricing_52899.PricingTest.test_discount",
+        "id": "_lld_test_pricing_55777.PricingTest.test_discount",
         "file": "examples/demo-shop/tests/unit/test_pricing.py",
         "status": "pass",
-        "seconds": 1.3e-05
+        "seconds": 1.2e-05
       }
     ],
     "note": "test_report.json 的只读投影；账本内不复制生成时间与日志尾部"

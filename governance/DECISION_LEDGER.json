@@ -2,7 +2,7 @@
   "ledger_version": "1.0",
   "title": "Ledger-Driven Dev 方法论仓库（自举） 决策与能力账本",
   "purpose": "单一事实源：决策、裁决、待办及能力索引的唯一写入点。",
-  "last_updated": "2026-11-25 23:20 HKT",
+  "last_updated": "2026-11-26 13:35 HKT",
   "owner": "待定",
   "provenance": {
     "mode": "greenfield",
@@ -7914,7 +7914,7 @@
   },
   "capability_model": {
     "version": "1.0",
-    "generated_at": "2026-11-24 22:47 HKT",
+    "generated_at": "2026-11-26 13:35 HKT",
     "generator": "templates/build_capability_model.py",
     "purpose": "统一能力编码 + 可复算完成度 + 嵌套组件树 + 文档索引，供规划与编码代理消费。",
     "coding_spec": {
@@ -8035,7 +8035,7 @@
                   "matched_tests": [
                     "test_feedback.py"
                   ],
-                  "report_at": "2026-11-24 22:46 HKT",
+                  "report_at": "2026-11-26 13:34 HKT",
                   "report_label": "project"
                 },
                 "binding_status": "bound",
@@ -8065,42 +8065,42 @@
                   "decisions": [
                     {
                       "id": "D-002",
-                      "title": "发版 v2.4.0：复述门（结构化意图声明 + 机器锚定）",
+                      "title": "LEDGER · 发版 v2.4.0 · 复述门：结构化意图声明与机器锚定",
                       "status": "done"
                     },
                     {
                       "id": "D-003",
-                      "title": "发版 v2.5.0：expert-run 专家团自动编排",
+                      "title": "LEDGER · 发版 v2.5.0 · expert-run 专家团自动编排",
                       "status": "done"
                     },
                     {
                       "id": "D-004",
-                      "title": "发版 v2.6.0：来源投影与完成定义",
+                      "title": "LEDGER · 发版 v2.6.0 · 来源投影与完成定义",
                       "status": "done"
                     },
                     {
                       "id": "D-005",
-                      "title": "发版 v2.8.0：看板体验从看得见到用得顺",
+                      "title": "LEDGER · 发版 v2.8.0 · 看板体验：从看得见到用得顺",
                       "status": "done"
                     },
                     {
                       "id": "D-006",
-                      "title": "发版 v2.9.0：架构图与数据流——让结构成为可下钻的投影",
+                      "title": "LEDGER · 发版 v2.9.0 · 架构图与数据流：结构成为可下钻投影",
                       "status": "done"
                     },
                     {
                       "id": "D-007",
-                      "title": "发版 v2.10.0：工作台视角——打开就知道做什么",
+                      "title": "LEDGER · 发版 v2.10.0 · 工作台视角：打开就知道做什么",
                       "status": "done"
                     },
                     {
                       "id": "D-008",
-                      "title": "发版 v2.11.0：可视化分析层——从看板数字到工作台判断",
+                      "title": "LEDGER · 发版 v2.11.0 · 可视化分析层：从看板数字到判断",
                       "status": "done"
                     },
                     {
                       "id": "D-009",
-                      "title": "发版 v2.12.0：本地 D3 离线交互层——能追、能试、不联网",
+                      "title": "LEDGER · 发版 v2.12.0 · 本地 D3 离线交互层：能追能试不联网",
                       "status": "done"
                     }
                   ],
@@ -8135,7 +8135,7 @@
                   "matched_tests": [
                     "test_upgrade.py"
                   ],
-                  "report_at": "2026-11-24 22:46 HKT",
+                  "report_at": "2026-11-26 13:34 HKT",
                   "report_label": "project"
                 },
                 "binding_status": "bound",
@@ -8165,12 +8165,12 @@
                   "decisions": [
                     {
                       "id": "D-009",
-                      "title": "发版 v2.12.0：本地 D3 离线交互层——能追、能试、不联网",
+                      "title": "LEDGER · 发版 v2.12.0 · 本地 D3 离线交互层：能追能试不联网",
                       "status": "done"
                     },
                     {
                       "id": "D-010",
-                      "title": "发版 v2.13.0：目标编排监督者——预算内的受控自动循环",
+                      "title": "LEDGER · 发版 v2.13.0 · 目标编排监督者：预算内受控自动循环",
                       "status": "done"
                     }
                   ],
@@ -8205,7 +8205,7 @@
                   "matched_tests": [
                     "test_work_panel.py"
                   ],
-                  "report_at": "2026-11-24 22:46 HKT",
+                  "report_at": "2026-11-26 13:34 HKT",
                   "report_label": "project"
                 },
                 "binding_status": "bound",
@@ -8264,7 +8264,7 @@
                   "matched_tests": [
                     "test_layout.py"
                   ],
-                  "report_at": "2026-11-24 22:46 HKT",
+                  "report_at": "2026-11-26 13:34 HKT",
                   "report_label": "project"
                 },
                 "binding_status": "bound",
@@ -8300,7 +8300,7 @@
                   "decisions": [
                     {
                       "id": "D-009",
-                      "title": "发版 v2.12.0：本地 D3 离线交互层——能追、能试、不联网",
+                      "title": "LEDGER · 发版 v2.12.0 · 本地 D3 离线交互层：能追能试不联网",
                       "status": "done"
                     }
                   ],
@@ -8335,7 +8335,7 @@
                   "matched_tests": [
                     "test_platform_contract.py"
                   ],
-                  "report_at": "2026-11-24 22:46 HKT",
+                  "report_at": "2026-11-26 13:34 HKT",
                   "report_label": "project"
                 },
                 "binding_status": "bound",
@@ -8394,7 +8394,7 @@
                   "matched_tests": [
                     "test_test_modules.py"
                   ],
-                  "report_at": "2026-11-24 22:46 HKT",
+                  "report_at": "2026-11-26 13:34 HKT",
                   "report_label": "project"
                 },
                 "binding_status": "bound",
@@ -8453,7 +8453,7 @@
                   "matched_tests": [
                     "test_binding_advisory.py"
                   ],
-                  "report_at": "2026-11-24 22:46 HKT",
+                  "report_at": "2026-11-26 13:34 HKT",
                   "report_label": "project"
                 },
                 "binding_status": "unbound",
@@ -8512,7 +8512,7 @@
                   "matched_tests": [
                     "test_intent_restate.py"
                   ],
-                  "report_at": "2026-11-24 22:46 HKT",
+                  "report_at": "2026-11-26 13:34 HKT",
                   "report_label": "project"
                 },
                 "binding_status": "bound",
@@ -8542,7 +8542,7 @@
                   "decisions": [
                     {
                       "id": "D-002",
-                      "title": "发版 v2.4.0：复述门（结构化意图声明 + 机器锚定）",
+                      "title": "LEDGER · 发版 v2.4.0 · 复述门：结构化意图声明与机器锚定",
                       "status": "done"
                     }
                   ],
@@ -8577,7 +8577,7 @@
                   "matched_tests": [
                     "test_expert_run.py"
                   ],
-                  "report_at": "2026-11-24 22:46 HKT",
+                  "report_at": "2026-11-26 13:34 HKT",
                   "report_label": "project"
                 },
                 "binding_status": "bound",
@@ -8607,7 +8607,7 @@
                   "decisions": [
                     {
                       "id": "D-010",
-                      "title": "发版 v2.13.0：目标编排监督者——预算内的受控自动循环",
+                      "title": "LEDGER · 发版 v2.13.0 · 目标编排监督者：预算内受控自动循环",
                       "status": "done"
                     }
                   ],
@@ -8642,7 +8642,7 @@
                   "matched_tests": [
                     "test_provenance_view.py"
                   ],
-                  "report_at": "2026-11-24 22:46 HKT",
+                  "report_at": "2026-11-26 13:34 HKT",
                   "report_label": "project"
                 },
                 "binding_status": "bound",
@@ -8701,7 +8701,7 @@
                   "matched_tests": [
                     "test_board_views.py"
                   ],
-                  "report_at": "2026-11-24 22:46 HKT",
+                  "report_at": "2026-11-26 13:34 HKT",
                   "report_label": "project"
                 },
                 "binding_status": "bound",
@@ -8731,27 +8731,27 @@
                   "decisions": [
                     {
                       "id": "D-005",
-                      "title": "发版 v2.8.0：看板体验从看得见到用得顺",
+                      "title": "LEDGER · 发版 v2.8.0 · 看板体验：从看得见到用得顺",
                       "status": "done"
                     },
                     {
                       "id": "D-006",
-                      "title": "发版 v2.9.0：架构图与数据流——让结构成为可下钻的投影",
+                      "title": "LEDGER · 发版 v2.9.0 · 架构图与数据流：结构成为可下钻投影",
                       "status": "done"
                     },
                     {
                       "id": "D-007",
-                      "title": "发版 v2.10.0：工作台视角——打开就知道做什么",
+                      "title": "LEDGER · 发版 v2.10.0 · 工作台视角：打开就知道做什么",
                       "status": "done"
                     },
                     {
                       "id": "D-008",
-                      "title": "发版 v2.11.0：可视化分析层——从看板数字到工作台判断",
+                      "title": "LEDGER · 发版 v2.11.0 · 可视化分析层：从看板数字到判断",
                       "status": "done"
                     },
                     {
                       "id": "D-009",
-                      "title": "发版 v2.12.0：本地 D3 离线交互层——能追、能试、不联网",
+                      "title": "LEDGER · 发版 v2.12.0 · 本地 D3 离线交互层：能追能试不联网",
                       "status": "done"
                     }
                   ],
@@ -8786,7 +8786,7 @@
                   "matched_tests": [
                     "test_board_views.py"
                   ],
-                  "report_at": "2026-11-24 22:46 HKT",
+                  "report_at": "2026-11-26 13:34 HKT",
                   "report_label": "project"
                 },
                 "binding_status": "bound",
@@ -8845,7 +8845,7 @@
                   "matched_tests": [
                     "test_board_views.py"
                   ],
-                  "report_at": "2026-11-24 22:46 HKT",
+                  "report_at": "2026-11-26 13:34 HKT",
                   "report_label": "project"
                 },
                 "binding_status": "bound",
@@ -8907,7 +8907,7 @@
                     "test_board_views.py",
                     "test_maturity_analytics.py"
                   ],
-                  "report_at": "2026-11-24 22:46 HKT",
+                  "report_at": "2026-11-26 13:34 HKT",
                   "report_label": "project"
                 },
                 "binding_status": "unbound",
@@ -8947,17 +8947,17 @@
                   "decisions": [
                     {
                       "id": "D-008",
-                      "title": "发版 v2.11.0：可视化分析层——从看板数字到工作台判断",
+                      "title": "LEDGER · 发版 v2.11.0 · 可视化分析层：从看板数字到判断",
                       "status": "done"
                     },
                     {
                       "id": "D-009",
-                      "title": "发版 v2.12.0：本地 D3 离线交互层——能追、能试、不联网",
+                      "title": "LEDGER · 发版 v2.12.0 · 本地 D3 离线交互层：能追能试不联网",
                       "status": "done"
                     },
                     {
                       "id": "D-013",
-                      "title": "发版 v2.16.0：投影新鲜度不变量",
+                      "title": "LEDGER · 发版 v2.16.0 · 投影新鲜度不变量",
                       "status": "done"
                     }
                   ],
@@ -9001,7 +9001,7 @@
                     "test_upgrade.py",
                     "test_verify.py"
                   ],
-                  "report_at": "2026-11-24 22:46 HKT",
+                  "report_at": "2026-11-26 13:34 HKT",
                   "report_label": "project"
                 },
                 "binding_status": "bound",
@@ -9067,7 +9067,7 @@
                   "decisions": [
                     {
                       "id": "D-009",
-                      "title": "发版 v2.12.0：本地 D3 离线交互层——能追、能试、不联网",
+                      "title": "LEDGER · 发版 v2.12.0 · 本地 D3 离线交互层：能追能试不联网",
                       "status": "done"
                     }
                   ],
@@ -9103,7 +9103,7 @@
                   "matched_tests": [
                     "test_runtime_signals.py"
                   ],
-                  "report_at": "2026-11-24 22:46 HKT",
+                  "report_at": "2026-11-26 13:34 HKT",
                   "report_label": "project"
                 },
                 "binding_status": "bound",
@@ -9138,12 +9138,12 @@
                   "decisions": [
                     {
                       "id": "D-012",
-                      "title": "发版 v2.15.0：运行时风险入口——精确能力点映射与生成器接入",
+                      "title": "LEDGER · 发版 v2.15.0 · 运行时风险入口：精确能力点映射与生成器接入",
                       "status": "done"
                     },
                     {
                       "id": "D-014",
-                      "title": "发版 v2.19.0：风险下降判据与关闭回路",
+                      "title": "LEDGER · 发版 v2.19.0 · 风险下降判据与关闭回路",
                       "status": "done"
                     }
                   ],
@@ -9224,6 +9224,11 @@
                     "type": "file"
                   },
                   {
+                    "name": "build_system_board.py",
+                    "path": "scripts/build_system_board.py",
+                    "type": "file"
+                  },
+                  {
                     "name": "code_index.py",
                     "path": "scripts/code_index.py",
                     "type": "file"
@@ -9251,11 +9256,6 @@
                   {
                     "name": "file_layout.py",
                     "path": "scripts/file_layout.py",
-                    "type": "file"
-                  },
-                  {
-                    "name": "goal_ledger.py",
-                    "path": "scripts/goal_ledger.py",
                     "type": "file"
                   }
                 ]
@@ -9386,7 +9386,13 @@
         "work_health": 76.0
       },
       "health_overall": 91.7,
-      "health_method": "加权投影：证据新鲜度20% + 测试通过率25% + 决策积压15% + verified 覆盖20% + 工作健康20%；各项 0-100，全部来自账本现有字段。",
+      "health_method": "加权投影：证据新鲜度20% + 测试通过率25% + 决策积压15% + verified 覆盖20% + 工作健康20%；各项 0-100，全部来自账本现有字段；n/a 维度不计入，其余按有效权重重正规律，并同时显示覆盖维数。",
+      "health_coverage": {
+        "applied": 5,
+        "total": 5,
+        "na_dims": [],
+        "weight_base": 1.0
+      },
       "evidence_bound": true,
       "evidence_freshness": "fresh"
     },
@@ -11288,32 +11294,48 @@
         "dimensions": {
           "evidence_freshness": {
             "score": 100.0,
+            "status": "ok",
             "weight": 0.2,
+            "effective_weight": 0.2,
             "detail": "fresh"
           },
           "test_pass_rate": {
             "score": 100.0,
+            "status": "ok",
             "weight": 0.25,
+            "effective_weight": 0.25,
             "detail": "547/547"
           },
           "decision_backlog": {
             "score": 100.0,
+            "status": "ok",
             "weight": 0.15,
+            "effective_weight": 0.15,
             "detail": "open=0"
           },
           "verified_coverage": {
             "score": 82.4,
+            "status": "ok",
             "weight": 0.2,
+            "effective_weight": 0.2,
             "detail": "14/17"
           },
           "work_health": {
             "score": 76.0,
+            "status": "ok",
             "weight": 0.2,
+            "effective_weight": 0.2,
             "detail": "blocked=0 issues=3 failed=0"
           }
         },
         "overall": 91.7,
-        "method": "加权投影：证据新鲜度20% + 测试通过率25% + 决策积压15% + verified 覆盖20% + 工作健康20%；各项 0-100，全部来自账本现有字段。"
+        "method": "加权投影：证据新鲜度20% + 测试通过率25% + 决策积压15% + verified 覆盖20% + 工作健康20%；各项 0-100，全部来自账本现有字段；n/a 维度不计入，其余按有效权重重正规律，并同时显示覆盖维数。",
+        "coverage": {
+          "applied": 5,
+          "total": 5,
+          "na_dims": [],
+          "weight_base": 1.0
+        }
       },
       "recommended_actions": [
         {
@@ -11338,6 +11360,7 @@
           "evidence": "契约(L1)"
         }
       ],
+      "recommendation_note": null,
       "timeline": [
         {
           "seq": 1,
@@ -11675,7 +11698,7 @@
               {
                 "id": "cap:METHOD.GOV.FEEDBACK.01/dec:D-002",
                 "kind": "decision",
-                "label": "发版 v2.4.0：复述门（结构化意图声明 + 机器锚定）",
+                "label": "LEDGER · 发版 v2.4.0 · 复述门：结构化意图声明与机器锚定",
                 "decision_id": "D-002",
                 "status": "done",
                 "children": [
@@ -11708,7 +11731,7 @@
               {
                 "id": "cap:METHOD.GOV.FEEDBACK.01/dec:D-003",
                 "kind": "decision",
-                "label": "发版 v2.5.0：expert-run 专家团自动编排",
+                "label": "LEDGER · 发版 v2.5.0 · expert-run 专家团自动编排",
                 "decision_id": "D-003",
                 "status": "done",
                 "children": [
@@ -11741,7 +11764,7 @@
               {
                 "id": "cap:METHOD.GOV.FEEDBACK.01/dec:D-004",
                 "kind": "decision",
-                "label": "发版 v2.6.0：来源投影与完成定义",
+                "label": "LEDGER · 发版 v2.6.0 · 来源投影与完成定义",
                 "decision_id": "D-004",
                 "status": "done",
                 "children": [
@@ -11774,7 +11797,7 @@
               {
                 "id": "cap:METHOD.GOV.FEEDBACK.01/dec:D-005",
                 "kind": "decision",
-                "label": "发版 v2.8.0：看板体验从看得见到用得顺",
+                "label": "LEDGER · 发版 v2.8.0 · 看板体验：从看得见到用得顺",
                 "decision_id": "D-005",
                 "status": "done",
                 "children": [
@@ -11823,7 +11846,7 @@
               {
                 "id": "cap:METHOD.GOV.FEEDBACK.01/dec:D-006",
                 "kind": "decision",
-                "label": "发版 v2.9.0：架构图与数据流——让结构成为可下钻的投影",
+                "label": "LEDGER · 发版 v2.9.0 · 架构图与数据流：结构成为可下钻投影",
                 "decision_id": "D-006",
                 "status": "done",
                 "children": [
@@ -11872,7 +11895,7 @@
               {
                 "id": "cap:METHOD.GOV.FEEDBACK.01/dec:D-007",
                 "kind": "decision",
-                "label": "发版 v2.10.0：工作台视角——打开就知道做什么",
+                "label": "LEDGER · 发版 v2.10.0 · 工作台视角：打开就知道做什么",
                 "decision_id": "D-007",
                 "status": "done",
                 "children": [
@@ -11921,7 +11944,7 @@
               {
                 "id": "cap:METHOD.GOV.FEEDBACK.01/dec:D-008",
                 "kind": "decision",
-                "label": "发版 v2.11.0：可视化分析层——从看板数字到工作台判断",
+                "label": "LEDGER · 发版 v2.11.0 · 可视化分析层：从看板数字到判断",
                 "decision_id": "D-008",
                 "status": "done",
                 "children": [
@@ -11978,7 +12001,7 @@
               {
                 "id": "cap:METHOD.GOV.FEEDBACK.01/dec:D-009",
                 "kind": "decision",
-                "label": "发版 v2.12.0：本地 D3 离线交互层——能追、能试、不联网",
+                "label": "LEDGER · 发版 v2.12.0 · 本地 D3 离线交互层：能追能试不联网",
                 "decision_id": "D-009",
                 "status": "done",
                 "children": [
@@ -12073,7 +12096,7 @@
               {
                 "id": "cap:METHOD.GOV.UPGRADE.02/dec:D-009",
                 "kind": "decision",
-                "label": "发版 v2.12.0：本地 D3 离线交互层——能追、能试、不联网",
+                "label": "LEDGER · 发版 v2.12.0 · 本地 D3 离线交互层：能追能试不联网",
                 "decision_id": "D-009",
                 "status": "done",
                 "children": [
@@ -12130,7 +12153,7 @@
               {
                 "id": "cap:METHOD.GOV.UPGRADE.02/dec:D-010",
                 "kind": "decision",
-                "label": "发版 v2.13.0：目标编排监督者——预算内的受控自动循环",
+                "label": "LEDGER · 发版 v2.13.0 · 目标编排监督者：预算内受控自动循环",
                 "decision_id": "D-010",
                 "status": "done",
                 "children": [
@@ -12263,7 +12286,7 @@
               {
                 "id": "cap:METHOD.GOV.LAYOUT.04/dec:D-009",
                 "kind": "decision",
-                "label": "发版 v2.12.0：本地 D3 离线交互层——能追、能试、不联网",
+                "label": "LEDGER · 发版 v2.12.0 · 本地 D3 离线交互层：能追能试不联网",
                 "decision_id": "D-009",
                 "status": "done",
                 "children": [
@@ -12472,7 +12495,7 @@
               {
                 "id": "cap:METHOD.GOV.RESTATE.08/dec:D-002",
                 "kind": "decision",
-                "label": "发版 v2.4.0：复述门（结构化意图声明 + 机器锚定）",
+                "label": "LEDGER · 发版 v2.4.0 · 复述门：结构化意图声明与机器锚定",
                 "decision_id": "D-002",
                 "status": "done",
                 "children": [
@@ -12543,7 +12566,7 @@
               {
                 "id": "cap:METHOD.GOV.ORCH.09/dec:D-010",
                 "kind": "decision",
-                "label": "发版 v2.13.0：目标编排监督者——预算内的受控自动循环",
+                "label": "LEDGER · 发版 v2.13.0 · 目标编排监督者：预算内受控自动循环",
                 "decision_id": "D-010",
                 "status": "done",
                 "children": [
@@ -12676,7 +12699,7 @@
               {
                 "id": "cap:METHOD.GOV.BOARD.11/dec:D-005",
                 "kind": "decision",
-                "label": "发版 v2.8.0：看板体验从看得见到用得顺",
+                "label": "LEDGER · 发版 v2.8.0 · 看板体验：从看得见到用得顺",
                 "decision_id": "D-005",
                 "status": "done",
                 "children": [
@@ -12725,7 +12748,7 @@
               {
                 "id": "cap:METHOD.GOV.BOARD.11/dec:D-006",
                 "kind": "decision",
-                "label": "发版 v2.9.0：架构图与数据流——让结构成为可下钻的投影",
+                "label": "LEDGER · 发版 v2.9.0 · 架构图与数据流：结构成为可下钻投影",
                 "decision_id": "D-006",
                 "status": "done",
                 "children": [
@@ -12774,7 +12797,7 @@
               {
                 "id": "cap:METHOD.GOV.BOARD.11/dec:D-007",
                 "kind": "decision",
-                "label": "发版 v2.10.0：工作台视角——打开就知道做什么",
+                "label": "LEDGER · 发版 v2.10.0 · 工作台视角：打开就知道做什么",
                 "decision_id": "D-007",
                 "status": "done",
                 "children": [
@@ -12823,7 +12846,7 @@
               {
                 "id": "cap:METHOD.GOV.BOARD.11/dec:D-008",
                 "kind": "decision",
-                "label": "发版 v2.11.0：可视化分析层——从看板数字到工作台判断",
+                "label": "LEDGER · 发版 v2.11.0 · 可视化分析层：从看板数字到判断",
                 "decision_id": "D-008",
                 "status": "done",
                 "children": [
@@ -12880,7 +12903,7 @@
               {
                 "id": "cap:METHOD.GOV.BOARD.11/dec:D-009",
                 "kind": "decision",
-                "label": "发版 v2.12.0：本地 D3 离线交互层——能追、能试、不联网",
+                "label": "LEDGER · 发版 v2.12.0 · 本地 D3 离线交互层：能追能试不联网",
                 "decision_id": "D-009",
                 "status": "done",
                 "children": [
@@ -13051,7 +13074,7 @@
               {
                 "id": "cap:METHOD.GOV.ANALYTICS.14/dec:D-008",
                 "kind": "decision",
-                "label": "发版 v2.11.0：可视化分析层——从看板数字到工作台判断",
+                "label": "LEDGER · 发版 v2.11.0 · 可视化分析层：从看板数字到判断",
                 "decision_id": "D-008",
                 "status": "done",
                 "children": [
@@ -13108,7 +13131,7 @@
               {
                 "id": "cap:METHOD.GOV.ANALYTICS.14/dec:D-009",
                 "kind": "decision",
-                "label": "发版 v2.12.0：本地 D3 离线交互层——能追、能试、不联网",
+                "label": "LEDGER · 发版 v2.12.0 · 本地 D3 离线交互层：能追能试不联网",
                 "decision_id": "D-009",
                 "status": "done",
                 "children": [
@@ -13165,7 +13188,7 @@
               {
                 "id": "cap:METHOD.GOV.ANALYTICS.14/dec:D-013",
                 "kind": "decision",
-                "label": "发版 v2.16.0：投影新鲜度不变量",
+                "label": "LEDGER · 发版 v2.16.0 · 投影新鲜度不变量",
                 "decision_id": "D-013",
                 "status": "done",
                 "children": [
@@ -13260,7 +13283,7 @@
               {
                 "id": "cap:METHOD.GOV.D3.15/dec:D-009",
                 "kind": "decision",
-                "label": "发版 v2.12.0：本地 D3 离线交互层——能追、能试、不联网",
+                "label": "LEDGER · 发版 v2.12.0 · 本地 D3 离线交互层：能追能试不联网",
                 "decision_id": "D-009",
                 "status": "done",
                 "children": [
@@ -13403,7 +13426,7 @@
               {
                 "id": "cap:METHOD.GOV.RUNTIME.16/dec:D-012",
                 "kind": "decision",
-                "label": "发版 v2.15.0：运行时风险入口——精确能力点映射与生成器接入",
+                "label": "LEDGER · 发版 v2.15.0 · 运行时风险入口：精确能力点映射与生成器接入",
                 "decision_id": "D-012",
                 "status": "done",
                 "children": [
@@ -13460,7 +13483,7 @@
               {
                 "id": "cap:METHOD.GOV.RUNTIME.16/dec:D-014",
                 "kind": "decision",
-                "label": "发版 v2.19.0：风险下降判据与关闭回路",
+                "label": "LEDGER · 发版 v2.19.0 · 风险下降判据与关闭回路",
                 "decision_id": "D-014",
                 "status": "done",
                 "children": [
@@ -15150,13 +15173,30 @@
         "risk": "low",
         "assets_digest": "6141859af466dc18",
         "board_skeleton": "b6f5d4583cca01c6"
+      },
+      {
+        "seq": 32,
+        "at": "2026-11-26T05:34:56Z",
+        "action": "apply",
+        "from": "2.29.0",
+        "to": "2.29.0",
+        "approved_by": "iczrac",
+        "migrations": [
+          "M5-method-assets",
+          "M6-board-skeleton",
+          "M8-work-panel"
+        ],
+        "backup": "20261126T053453Z-17dc69ee",
+        "risk": "medium",
+        "assets_digest": "54576d63152152dc",
+        "board_skeleton": "2f4bc89a28264307"
       }
     ],
     "tools": {
-      "governance/build_capability_model.py": "c297944e7c4c927519de2eae248264677993d1c70119fd23219b43d8217977ae",
+      "governance/build_capability_model.py": "4b8a5d2afe5407430c474f8b09524c88bc1a3c7b82378328ea4f9d87390ea9f1",
       "governance/binding_advisory.py": "e5368433f594854857fff87002430ee692401ec4b7125168b7699cb00f1dde0b",
       "governance/derived_issues.py": "4ff4097765996071e256302f91439a9464a5203840d2df64fb5d93df6ea13a21",
-      "governance/verify_ledger.py": "29936363e119ba65f0244bc41287d67c25b48fab9dd6b5d40c532c20fc781cbe",
+      "governance/verify_ledger.py": "66235c73c29682d8bf7bb2089705fd9e3568985996848186196698b38fb8e5ba",
       "governance/registry_codec.py": "f0d1edafc0c4a54294a49337bbd9995c45555e093878ce8c06174a2e6ab4ae3b",
       "governance/run_tests.py": "80b687eab9f62cea607406efc7cb526809a30e1a2467ce88100638613a3669e7",
       "governance/vendor/d3.v7.min.js": "f2094bbf6141b359722c4fe454eb6c4b0f0e42cc10cc7af921fc158fceb86539"
@@ -15164,26 +15204,26 @@
     "activation": {
       "schema": "evidence-activation/1",
       "state": "active",
-      "reason": "已绑定 governance/test_report.json（547 用例，overall=pass），证据能力激活",
+      "reason": "已绑定 governance/test_report.json（617 用例，overall=pass），证据能力激活",
       "all_active": true
     },
     "method_assets": {
       "algorithm": "sha256-files-v1",
-      "digest": "6141859af466dc1864a28700c57a797ff66203e096fef7760e449017646f5585",
-      "file_count": 114,
+      "digest": "54576d63152152dcd88668f4508319fb42f35755f8279cd73f6039cbb289bb9d",
+      "file_count": 116,
       "counts": {
         "experts": 9,
         "skills": 24,
-        "scripts": 37,
-        "templates": 7,
+        "scripts": 38,
+        "templates": 8,
         "method_docs": 36,
         "standard": 1
       },
       "source": "方法论仓库 tag（权威源，不复制；只读副本由 M7 安装）"
     },
-    "ontology_digest": "768c3e5f9884255555aab9ecd90cd90a6a02421b758d108085e5354a8cd0ed3f",
+    "ontology_digest": "d5e21bc916d5857a9ad9a20eda8e977d1682104003432087cf416d26242e36f4",
     "board_skeleton": {
-      "digest": "b6f5d4583cca01c68ee99d6076dfe7f3896ab2a27881c7fe87fab8b7a06d81d5",
+      "digest": "2f4bc89a28264307d9f86436450a1c2d29edce68c38f0b89100b45bc19339b6d",
       "source": "templates/index.html.template",
       "note": "去 EMBED 后的骨架 sha256；禁止在项目内自定义版面"
     },
