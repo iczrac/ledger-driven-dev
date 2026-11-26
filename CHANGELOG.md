@@ -4,6 +4,12 @@
 
 ## [Unreleased] - 2026-11-25
 
+P1 门禁盲区修复（防复发，使用者选 C；`METHOD_VERSION` 仍 2.29.0，未 push / 未 tag / 未升版）：
+
+- **根因**：`check.sh` 原第 17 阶段的 `stage_verify` 只验 `examples/demo-shop` 账本，主账本 analytics 陈旧投影（547/547 对 616/617）可以穿透门禁，直到 `verify_ledger --root . --strict` 单独执行才暴露（Task#20 F-1）。
+- **修复**：新增第 18 阶段 `stage_verify_main`，以默认参数运行 `python3 governance/verify_ledger.py --root . --strict`；`tests/meta/test_spec_gate.py` 锁函数定义 / run 接线 / 全绿枚举三处，并在临时副本写坏 `analytics.test_pass_rate.detail` 证明该阶段非零，抽掉接线后静态断言必须失效。历史「第 17 阶段」文字不改写。
+- **静态差异宣告（已知量）**：本次新增一个测试方法后，committed `governance/test_report.json` = 617 cases、`unittest discover` = 618 cases，差值 1 为已知且刻意保留；committed 报告不重生成，`check.sh` 用 `mktemp` 报告且只断言 `total>=170`，demo 独立 3 cases 报告豁免。下次任何 re-baseline 必须把「报告重生成 → `work_panel.py sync-tests` → `build_capability_model.py` 重算 → 看板重建」当一个原子单元，否则第 24 条 `test_results.source_sha256` 陈旧 FAIL（与 Task#20 F-1 同根因）。
+
 发版前收口（2026-11-26，使用者拍板 A）：
 
 - **O4 原子口径收敛**：`RELEASE_CHECKLIST.md` 的提交边界改为「机器可判定的边界 = 发版／回滚边界（版本锚 + tag 或当前全绿 HEAD）」，不再要求每个中间 commit 各自全绿；中间非绿状态如实记录、不得当回滚点，若需要可逐个回滚的中间快照则合为一个全绿 commit。julia `skills/self-evolution/SKILL.md` 同步同一口径；既有 CHANGELOG／进化日志中的历史条目不改写。

@@ -120,6 +120,10 @@ stage_verify(){
     --ledger "$DEMO/DECISION_LEDGER.json" \
     --board "$DEMO/index.html" --strict
 }
+stage_verify_main(){
+  note '主账本自校验（governance/DECISION_LEDGER.json · 31 条三态）'
+  python3 governance/verify_ledger.py --root . --strict
+}
 snapshot(){
   python3 - "$1" <<'PY'
 import json, sys
@@ -402,6 +406,7 @@ else
   run '测试架构' stage_test_modules
   run '证据分层' stage_evidence
   run '账本校验' stage_verify
+  run '主账本自校验' stage_verify_main
   run '场景矩阵' stage_scenarios
   run '文件布局' stage_layout
   run '文档生命周期（shadow）' stage_doc_lifecycle
@@ -422,4 +427,4 @@ if [ "$FAILURES" -gt 0 ]; then
   printf '质量门禁失败：%d 个阶段未通过\n' "$FAILURES"
   exit 1
 fi
-printf '质量门禁全绿：测试 / 测试架构 / 证据分层 / 31 条三态不变量 / 场景矩阵 / 文件布局 / 文档生命周期（shadow） / 升级与接入 / 资产与工作台契约 / 幂等 / 同步 / 反向回流 / 本体层 / 卫生（脱敏+文档链接） / 规范自查 / 验收契约 / 前置条件\n'
+printf '质量门禁全绿：测试 / 测试架构 / 证据分层 / 31 条三态不变量 / 主账本自校验 / 场景矩阵 / 文件布局 / 文档生命周期（shadow） / 升级与接入 / 资产与工作台契约 / 幂等 / 同步 / 反向回流 / 本体层 / 卫生（脱敏+文档链接） / 规范自查 / 验收契约 / 前置条件\n'

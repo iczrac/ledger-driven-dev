@@ -696,6 +696,9 @@ E7 `cardinality_contradiction`（`ontology.py check --target P` 仍 `ok=false`�
 - [ ] **升级器自检**：`python3 scripts/upgrade.py check` 通过——资产定义、模块映射与主张判据共用同一检查器，不复制第二份。
 - [ ] **消费方门禁**：在 `julia-dev-squad` 仓根执行 `bash scripts/check.sh` 全绿；该脚本调用同一份 `spec_check.py`，组合锚声明的兄弟仓工具必须真实存在。
 - [ ] **人工确认**：以上命令的实际输出贴入本次发版记录；AI 不得代签。未升 `METHOD_VERSION`、未打 tag、未生成 Release 包时，以上检查只做本地验证，不宣称「已发布」。
+- [ ] **主账本自校验**：`bash scripts/check.sh` 新增第 18 个阶段 `stage_verify_main`（`python3 governance/verify_ledger.py --root . --strict`，走默认参数、不传 `--ledger/--registry/--board`）；旧 `stage_verify` 只验示例账本，不能替代主账本。`tests/meta/test_spec_gate.py` 同时锁函数定义 / run 接线 / 全绿枚举三处，并用临时副本写坏 `analytics.test_pass_rate.detail` 证明该阶段非零。
+
+**证据报告与门禁口径（P1 已知差异）**：P1 新增一个测试方法后，committed `governance/test_report.json`（617 cases）与 `unittest discover` 口径（618 cases）存在已知静态差异；**committed 报告刻意不重生成**——`check.sh` 的 `stage_tests` 用 `mktemp` 现生成报告，只断言 `total>=170` 与绑定文件数，不读 committed 报告。示例项目 demo 的独立 3 cases 报告可豁免。下一次任何 re-baseline 必须把「报告重生成 → `work_panel.py sync-tests` → `build_capability_model.py` 重算 → 看板重建」当成一个原子单元；只重生成报告会令第 24 条 `test_results.source_sha256` 陈旧 FAIL（与 Task#20 F-1 同一根因）。
 
 ### 提交与发版原子口径（B 收口版）
 

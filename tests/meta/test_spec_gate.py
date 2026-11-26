@@ -9,6 +9,10 @@ from __future__ import annotations
 MODULE_ID = "meta"
 
 import json
+import os
+import re
+import shutil
+import subprocess
 import sys
 import tempfile
 import unittest
@@ -152,6 +156,43 @@ class SpecGateTest(unittest.TestCase):
         self.assertIn("stage_spec(){", text)
         self.assertIn("scripts/spec_check.py --target .", text)
         self.assertIn("run '规范自查' stage_spec", text)
+
+    def test_gate_wires_main_ledger_verify(self):
+        """P1：三处静态接线 + 行为负向证明，缺一即 FAIL。"""
+        text = (ROOT / "scripts" / "check.sh").read_text(encoding="utf-8")
+        self.assertIn("stage_verify_main(){", text)
+        self.assertIn("python3 governance/verify_ledger.py --root . --strict", text)
+        wiring = "  run '主账本自校验' stage_verify_main\n"
+        self.assertIn(wiring, text)
+        self.assertIn("31 条三态不变量 / 主账本自校验 / 场景矩阵", text)
+        # 负向证明：抽掉接线后断言必须失效，证明上述断言不是恒真。
+        self.assertNotIn(wiring, text.replace(wiring, ""))
+        # 行为证明：同一函式对干净主账本为 0，对写坏 analytics 非零。
+        match = re.search(r"stage_verify_main\(\)\{\n(.*?)\n\}", text, re.S)
+        self.assertIsNotNone(match, "找不到 stage_verify_main 函式体")
+        script = ("note(){ :; }\nstage_verify_main(){\n"
+                  + match.group(1) + "\n}\nstage_verify_main\n")
+        with tempfile.TemporaryDirectory() as td:
+            tmp = Path(td)
+            for item in ROOT.iterdir():
+                if item.name in (".git", ".ledger-upgrade", "governance"):
+                    continue
+                os.symlink(item, tmp / item.name)
+            shutil.copytree(ROOT / "governance", tmp / "governance",
+                            ignore=shutil.ignore_patterns("__pycache__"))
+            clean = subprocess.run(["bash", "-c", script], cwd=tmp,
+                                   capture_output=True, text=True)
+            self.assertEqual(clean.returncode, 0,
+                             clean.stdout[-800:] + clean.stderr[-400:])
+            ledger = tmp / "governance" / "DECISION_LEDGER.json"
+            data = json.loads(ledger.read_text(encoding="utf-8"))
+            data["capability_model"]["analytics"]["health"]["dimensions"][
+                "test_pass_rate"]["detail"] = "999/999"
+            ledger.write_text(json.dumps(data, ensure_ascii=False), encoding="utf-8")
+            broken = subprocess.run(["bash", "-c", script], cwd=tmp,
+                                    capture_output=True, text=True)
+            self.assertNotEqual(broken.returncode, 0)
+            self.assertIn("analytics_test_results_detail_valid", broken.stdout)
 
 
 if __name__ == "__main__":
