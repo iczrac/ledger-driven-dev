@@ -4,7 +4,7 @@
 
 ## 看什么
 
-直接用浏览器打开 [`governance/index.html`](governance/index.html)（离线可用），重点看：
+直接用浏览器打开 [`governance/demo-shop.html`](governance/demo-shop.html)（离线可用），重点看：
 
 - **架构钻取**：项目 → 模块 → 嵌套组件树（点目录逐层展开）→ 文档索引 → 能力编码；
 - **能力地图**：4 个能力点的等级、完成度、规划与可点开的文档索引；
@@ -32,7 +32,7 @@ python3 examples/demo-shop/governance/build_capability_model.py \
   --root . \
   --registry examples/demo-shop/governance/registry.json \
   --ledger examples/demo-shop/governance/DECISION_LEDGER.json \
-  --board examples/demo-shop/governance/index.html \
+  --board examples/demo-shop/governance/demo-shop.html \
   --dry-run
 ```
 
@@ -48,7 +48,7 @@ dry-run 还会打印**下一轮任务队列**（`next_queue`）——按完成�
 python3 governance/verify_ledger.py --root . --strict
 ```
 
-账本里还带 4 条示例 `work_items`（2 个 TODO、2 个 issue）与 `test_results` 投影，打开 `index.html` 的「工作台 / 工作项」标签，可在模块与能力点上看到待办、缺陷、逐用例结果与健康度。
+账本里还带 4 条示例 `work_items`（2 个 TODO、2 个 issue）与 `test_results` 投影，打开 `demo-shop.html` 的「工作台 / 工作项」标签，可在模块与能力点上看到待办、缺陷、逐用例结果与健康度。
 
 检查 24 条不变量，全部通过返回 0。想看它真的能抓错：把账本里某个 `completion` 改成 0.99 → `completion_matches_level` 报 FAIL；把历史事件的 `fingerprint_before` 改掉 → `history_chain_consistent` 报 FAIL；把已确认经验的 `action` 清空 → `lessons_valid` 报 FAIL。
 

@@ -26,7 +26,10 @@ jobs:
       - name: 看板 JS 语法
         run: |
           python3 - <<'PY'
-          html = open('examples/demo-shop/governance/index.html').read()
+          import sys
+          sys.path.insert(0, 'scripts')
+          from board_path import resolve
+          html = resolve('examples/demo-shop').read_text()
           js = html.split('<script>')[1].split('</script>')[0]
           open('/tmp/ledger_board.js', 'w').write(js)
           PY

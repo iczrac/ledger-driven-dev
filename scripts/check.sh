@@ -8,6 +8,9 @@ MODE="${1:-all}"
 DEMO="examples/demo-shop/governance"
 # 看板文件名由唯一解析层给出；改名期间脚本不需要改字面量。
 BOARD_DEMO="$(python3 scripts/board_path.py --target "$DEMO" --resolved)"
+# 示例看板的文件名要单独解析：repo 根的看板名不能套用到示例目录
+# （两个项目各有一块看板，文件名由各自治理目录推导）。
+BOARD_DEMO_NAME="$(python3 scripts/board_path.py --target "$DEMO" --filename)"
 BOARD_NAME="$(python3 scripts/board_path.py --target . --filename)"
 FAILURES=0
 DOC_STRICT=0
@@ -145,7 +148,7 @@ stage_idempotence(){
   cp -r examples/demo-shop/src examples/demo-shop/tests examples/demo-shop/docs "$tmp/examples/demo-shop/"
   cp "$DEMO"/*.* "$tmp/examples/demo-shop/governance/"
   local ledger="$tmp/examples/demo-shop/governance/DECISION_LEDGER.json"
-  local board="$tmp/examples/demo-shop/governance/$BOARD_NAME"
+  local board="$tmp/examples/demo-shop/governance/$BOARD_DEMO_NAME"
   local reg="$tmp/examples/demo-shop/governance/registry.json"
   local report="$tmp/examples/demo-shop/governance/test_report.json"
   before="$(snapshot "$ledger")"
@@ -170,7 +173,7 @@ stage_sync(){
   cmp -s templates/registry_codec.py "$DEMO/registry_codec.py" || return 1
   cmp -s templates/board_path.py "$DEMO/board_path.py" || return 1
   cmp -s templates/vendor/d3.v7.min.js "$DEMO/vendor/d3.v7.min.js" || return 1
-  python3 - "$DEMO" "$BOARD_NAME" <<'PY' || return 1
+  python3 - "$DEMO" "$BOARD_DEMO_NAME" <<'PY' || return 1
 import json, re, sys
 base = sys.argv[1]
 html = open(f'{base}/{sys.argv[2]}').read()
@@ -315,7 +318,7 @@ stage_upgrade_access(){
   fi
   python3 "$gov/verify_ledger.py" --root "$tmp" \
     --registry "$gov/registry.json" --ledger "$gov/DECISION_LEDGER.json" \
-    --board "$gov/$BOARD_NAME" --strict >/dev/null \
+    --board "$gov/$BOARD_DEMO_NAME" --strict >/dev/null \
     || { rm -rf "$tmp"; return 1; }
   rm -rf "$tmp"
   echo '  升级计划/备份/复验、第七轴本体绑定、可用资产、节点工作台、注册批准、写入审计、默认拒绝、31 条三态不变量均通过'

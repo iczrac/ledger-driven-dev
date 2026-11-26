@@ -159,7 +159,7 @@ ledger-driven-dev/
             ├── registry.json
             ├── DECISION_LEDGER.json   已生成（含 verified 能力）
             ├── test_report.json       实测报告（verified 证据源）
-            ├── index.html             可直接打开（徽章显示声明/实测）
+            ├── demo-shop.html         可直接打开（徽章显示声明/实测）
             └── build_capability_model.py
 ```
 
@@ -167,7 +167,7 @@ ledger-driven-dev/
 
 ### 方式一：看示例（30 秒）
 
-直接用浏览器打开 `examples/demo-shop/governance/index.html`。它内嵌了完整账本，离线可看。首屏是工作台，常用入口为工作台 / 工作项 / 能力热力图 / 成熟度趋势 / 任务卡片墙 / 能力地图 / 待裁决，其余视图在「更多视图」中，另有跨条目全文搜索。示例里有真实的生成历史、一个停滞候选、一条已确认经验，以及挂在模块 / 能力点上的 TODO 与 issue。
+直接用浏览器打开 `examples/demo-shop/governance/demo-shop.html`。它内嵌了完整账本，离线可看。首屏是工作台，常用入口为工作台 / 工作项 / 能力热力图 / 成熟度趋势 / 任务卡片墙 / 能力地图 / 待裁决，其余视图在「更多视图」中，另有跨条目全文搜索。示例里有真实的生成历史、一个停滞候选、一条已确认经验，以及挂在模块 / 能力点上的 TODO 与 issue。
 
 ### 方式二：接入自己的项目（5 分钟）
 
@@ -208,7 +208,7 @@ python3 governance/run_tests.py --dir tests --out governance/test_report.json
 python3 governance/build_capability_model.py --root . --test-report governance/test_report.json
 
 python3 governance/verify_ledger.py --root . --strict
-open governance/index.html
+open "governance/$(python3 governance/board_path.py --target . --filename)"
 ```
 
 之后每次代码/测试/文档有变更，重跑一次生成器即可——完成度、组件树、文档索引、**历史演进**、**经验候选**与**下一轮任务队列**全部自动刷新。状态没变时重跑不会产生新历史事件（幂等）。存量接入的草稿、源码与既有治理文件不会被自动覆盖。
