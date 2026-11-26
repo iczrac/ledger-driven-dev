@@ -20,7 +20,9 @@
 11. decision_refs_valid：能力引用的决策 id 在账本中存在
 12. supersede_chain_consistent：决策取代链双向一致
 13. registry_impls_exist：registry 声明的实现路径真实存在
-14. board_embed_synced：看板内嵌数据与账本一致
+14. board_embed_synced：看板内嵌数据与账本一致；看板缺失时按三态判——
+    显式指定却不存在 = fail（配置错误），没有可用看板 = na（合法未启用），
+    两者都不得记成 pass（假绿）
 15. history_chain_consistent：历史链连贯（seq 连续、指纹前后衔接）
 16. history_event_fingerprints：事件指纹自证（防篡改）
 17. history_state_encoding：状态快照编码合法
@@ -176,11 +178,18 @@ def close_condition_met(cond: dict, caps_by_code: dict, repo_root: Path) -> tupl
 
 
 def verify(repo_root: Path, ledger: dict, registry: dict | None,
-           board_path: Path | None, governance_dir: Path | None = None) -> list[dict]:
+           board_path: Path | None, governance_dir: Path | None = None,
+           board_specified: bool = False) -> list[dict]:
     """返回检查结果列表：[{id, ok, detail}, ...]。
 
     governance_dir 为账本所在目录，用于核对 test_results.source_sha256；
     省略时由 board_path 或 repo_root/governance 推导，保持旧调用方兼容。
+
+    board_specified 表示调用方**显式指定**了看板路径（CLI 的 --board）。
+    看板缺失的三态语义靠它区分，详见第 10 条：
+      - 看板存在 → 照常校验 EMBED；
+      - 显式指定却不存在 → fail（配置错误，绝不记 pass）；
+      - 没有可用看板（未指定且默认解析不到）→ na（合法未启用）。
     """
     results: list[dict] = []
 
@@ -327,6 +336,9 @@ def verify(repo_root: Path, ledger: dict, registry: dict | None,
         add("registry_impls_exist", True, "未提供 registry，跳过")
 
     # 10. 看板内嵌数据与账本一致
+    #     三态语义：看板「不存在」时绝不记 pass —— 那正是假绿的来源
+    #     （旧实现把「未提供看板，跳过」记成 pass，check.sh 传错看板路径也报绿）。
+    #     显式指定却找不到 = 配置错误 → fail；没有可用看板 = 合法未启用 → na。
     if board_path and board_path.exists():
         text = board_path.read_text()
         m = re.search(r"const EMBED = (\{.*?\});\nlet DATA", text, re.S)
@@ -341,8 +353,10 @@ def verify(repo_root: Path, ledger: dict, registry: dict | None,
                     "一致" if d1 == d2 else "不一致，请重跑生成器")
             except json.JSONDecodeError as exc:
                 add("board_embed_synced", False, f"EMBED 解析失败: {exc}")
+    elif board_specified:
+        add("board_embed_synced", False, f"看板文件不存在：{board_path}")
     else:
-        add("board_embed_synced", True, "未提供看板，跳过")
+        add("board_embed_synced", True, "未提供看板，跳过", status="na")
 
     # 11. 历史链连贯：seq 连续 + 指纹前后衔接（可检出删改中间事件）
     hist = ledger.get("history") or {}
@@ -1015,6 +1029,9 @@ def main() -> None:
     repo_root = Path(args.root).resolve()
     ledger_path = Path(args.ledger) if args.ledger else repo_root / "governance" / "DECISION_LEDGER.json"
     reg_path = Path(args.registry) if args.registry else repo_root / "governance" / "registry.json"
+    # --board 显式指定 与「默认解析不到看板」是两种语义，必须分开传给 verify()：
+    # 前者是配置错误（fail），后者是合法未启用（na）。见 verify() 的 board_specified。
+    board_specified = bool(args.board)
     board_path = Path(args.board) if args.board else board_resolve(repo_root)
 
     try:
@@ -1023,9 +1040,9 @@ def main() -> None:
         print(f"无法读取账本: {exc}")
         raise SystemExit(2)
     registry = json.loads(reg_path.read_text()) if reg_path.exists() else None
-    board = board_path if board_path.exists() else None
 
-    results = verify(repo_root, ledger, registry, board, ledger_path.parent)
+    results = verify(repo_root, ledger, registry, board_path, ledger_path.parent,
+                     board_specified=board_specified)
     passed = sum(1 for r in results if r["status"] == "pass")
     na = sum(1 for r in results if r["status"] == "na")
     failed = sum(1 for r in results if r["status"] == "fail")

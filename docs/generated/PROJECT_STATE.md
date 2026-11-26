@@ -84,13 +84,13 @@
 |---|---|---|---|
 | 覆盖完整 | covers.codes / covers.decisions 非空 | 42 | 26（真实覆盖 16/42） |
 | 义务已声明 | owner / role / stale_after 已填写 | 42 | 42 |
-| 过期 | _stale_after_expired(value, as_of=2026-11-24) | 0 | 0 |
+| 过期 | _stale_after_expired(value, as_of=2026-11-27) | 0 | 0 |
 | 无法判过期 | _stale_after_expired(...) == unknown | 42 | 42 |
 
 ## 最近变更
 
 | seq | 类型 | 摘要 |
 |---|---|---|
-| 21 | change | 无结构化变更 |
-| 28 | change | added=1 |
-| 29 | change | 无结构化变更 |
+| 33 | change | 无结构化变更 |
+| 34 | change | 无结构化变更 |
+| 35 | change | 无结构化变更 |

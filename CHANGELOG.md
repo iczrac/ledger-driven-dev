@@ -4,6 +4,18 @@
 
 ## [Unreleased] - 2026-11-25
 
+C6 假绿修正 + 判据补洞 + ledger-guard 失步修正（`METHOD_VERSION` 仍 2.29.0，未 push / 未 tag / 未升版）：
+
+- **C6 根因**：`templates/verify_ledger.py` 的看板检查只有一条分支——`add("board_embed_synced", True, "未提供看板，跳过")`。`ok=True` ⇒ status=pass，于是两种完全不同的情况都被记成「通过」：没有看板的老项目（应 na）与**显式指定看板路径却找不到**（应 fail）。后者就是假绿：门禁传错看板路径照样报绿，并掩盖了看板改名引入的一处真实回归。
+- **C6 修复**：`verify()` 新增 `board_specified` 参数，`main()` 把「CLI 是否显式给了 `--board`」与「默认解析到的看板」分开传；三态语义——看板存在 → pass（照常校验 EMBED）；显式指定却不存在 → fail（「看板文件不存在：<path>」）；未指定且没有可用看板 → na（合法未启用，**不计入 pass 也不计入 fail**）。老项目无看板不会由 na 转 fail，批量阻断不发生；主仓自校验（`stage_verify_main` 不传 `--board`）仍经默认解析校验看板 EMBED，覆盖不丢。31 条不变量条数与 id 集合不变。
+- **A 判据补洞**：`scripts/acceptance.py` 的 `SCAN_GLOBS` 纳入 `CONTRIBUTING.md` 与 `RELEASE_CHECKLIST.md`；词表新增 `FRACTION_TOKEN`（「N/N」形式，**分母是总数**），语境闸门限定「不变量 / verify / 校验 / 检查」，覆盖率（20/47）、单测数（476/476）、规模预算（50 / 100 / 50 / 3）、序号（第 28/29 条）一律不比对；发布日志按 `##` 二级标题分节做**小节级历史豁免**（标题带版本号/日期即「当时」的口径），不是整文件豁免。
+- **D 真失步**：`skills/ledger-guard/SKILL.md` 同一文件 L40 写「31 条不变量」、L49 写「18/18」——自相矛盾。L49 改为「31（30 pass + 1 na）」，与 L40 一致；显式分解补上 `--only-doc-lifecycle`（原只列 `--only-idempotence`）。按 Ed 拍板 #3，`--fast` **未**写入该技能文件（只记在 `CONTRIBUTING.md`）。
+- **顺带修正的同类漂移**：新检测器点名三处与 D 同类的陈旧总数——`skills/ledger-guard/SKILL.md`（18/18）、`experts/evidence-auditor/EXPERT.md`（不变量 21/21 ×2）、`experts/loop-executor/EXPERT.md`（校验 21/21）——后两处改为 30/31（主仓实测 30 pass + 1 na / 31 条）。不改则 literal_drift 必红；不改就等于把同类漂移留在原地复发。
+- **负向证明**：`tests/core/test_board_tristate.py` 6 条（显式缺失 → fail 且 `--strict` 退出码 1；无看板 → na；na 既不计入 pass 也不计入 fail；看板存在仍 pass；默认解析到的看板仍被校验）；`tests/meta/test_acceptance_fraction.py` 10 条（陈旧总数被点名、正确总数不报、语境外分数字样不误伤、序号不误判、发布日志历史节归 review、当前节仍受检、扫描范围确实纳入两个新文件）。`tests/MODULES.json` 与两处 `MODULE_ID` 同步（6 模块 / 55 测试文件）。
+- **副本同步**：`templates/verify_ledger.py` ↔ `governance/verify_ledger.py` ↔ `examples/demo-shop/governance/verify_ledger.py` 三份逐 byte 一致（`cmp` 通过）。
+- **摘要重绑与升级链**：改动使 method_assets 摘要 `36a031c2c3a1c38` → `61821d8d516f8386`、ontology 摘要 `5e1863a11f44` → `6824fdec8770`；按升级器自己的链 `plan → apply --approved-by iczrac → verify` 一次收口，`upgrade_complete=true`（12 pass / 0 warn / 0 block）。证据摘要按 re-baseline 流程「`run_tests.py` → `work_panel.py sync-tests` → `build_capability_model.py --strict-evidence`」原子重算，不放宽 verify、不手改摘要。
+- **目标项目需重新批准升级（M5 + M7）**：`julia-dev-squad` 的安装副本未变，`tool_hashes` / `method_assets` / `installed_assets` / `ontology_binding` 四项 warn（block=0）——**待人批准后**由 M7 安装器同步，本轮未对该仓跑 apply、未手改其副本（其 `governance/verify_ledger.py` 仍与改动前的权威源逐 byte 一致）。
+
 P2 投影宣告防复发（双保险，原 C2/C3 合并；`METHOD_VERSION` 仍 2.29.0，未 push / 未 tag / 未升版）：
 
 - **唯一判据**：`templates/registry_codec.py` 责任扩张为「registry codec ＋ 投影宣告 codec」，新增 `PROJECTION_POLICY_SCHEMA='projection-policy/1'`、`projection_opted_out()`、`policy_error()`；无宣告时行为完全不变（ledger 主账 616/617 不被破坏、demo 投影保留），宣告非法时 fail-closed。四副本（templates / ledger governance / demo governance / julia governance 的 registry_codec.py、verify_ledger.py、build_capability_model.py）逐 byte 一致，julia 侧由 M3 升级同步、不手改 adopted copy。

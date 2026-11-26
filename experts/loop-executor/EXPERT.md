@@ -73,7 +73,7 @@ lint：<pass|fail>  骨架待填：<是|否>  下一步负责人：ledger-stewar
 已补证据：契约 / 实现 / 单测 / 测试记录（逐条给路径）
 实测报告：passed/total，overall=pass|fail
 账本变化：generator 重跑后的等级与 tier（不手填）
-校验：21/21 或失败项
+校验：30/31 或失败项
 下一专家：ledger-steward | evidence-auditor
 停止条件：任务卡歧义 / 证据路径不存在 / 校验失败
 ```

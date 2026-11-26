@@ -61,9 +61,14 @@ AXIS_KEYS = (
 )
 
 # 扫描范围：描述当前状态的人写源 + 机器渲染的派生文件 + 生成器里的说明文本。
-# CHANGELOG / RELEASE_CHECKLIST / feedback/ 是发布历史与现场证据，天然不在范围内。
+# feedback/ 是现场证据，CHANGELOG 是发布历史，两者天然不在范围内。
+# RELEASE_CHECKLIST.md 是发布前自检清单：顶部「功能完整性」描述当前状态，
+# 下方按版本分节记录历次发布——分节内的数字是「当时」的口径，用小节级
+# 历史豁免处理（见 HISTORICAL_SECTIONS），不是整文件豁免。
 SCAN_GLOBS = (
     "README.md",
+    "CONTRIBUTING.md",
+    "RELEASE_CHECKLIST.md",
     "docs/[0-9][0-9]-*.md",
     "docs/STANDARD.md",
     "docs/generated/*.md",
@@ -126,6 +131,22 @@ L7_ANCHORS = ("registry/2", "dual_read", "stable_code", "single_codec")
 CN = {"零": 0, "一": 1, "二": 2, "三": 3, "四": 4, "五": 5,
       "六": 6, "七": 7, "八": 8, "九": 9}
 TOKEN = re.compile(r"([0-9]+|[一二三四五六七八九十]+)\s*(轴|步|项|条)")
+# 「N/N」形式：通过数 / 总数。词表原先只认「N 轴/步/项/条」，于是
+# 「`verify --strict`，18/18」这类总数陈述完全隐形——同类数字漂移因此漏检过。
+# 分母是「总数」，要与对应口径的权威值比对。
+FRACTION_TOKEN = re.compile(r"(?<![\d/.])([0-9]+)\s*/\s*([0-9]+)(?![\d/])")
+# 「N/N」只在下述语境里表示「总数」；脱离语境的分数字样不是不变量总数：
+# 覆盖率（20/47）、规模预算（50 / 100 / 50 / 3）、单测数（476/476）都不比对。
+FRACTION_CONTEXT = re.compile(r"verify\s*--?strict|`verify`|verify_ledger|校验|检查")
+# 「第 28/29 条」是序号不是总数：与「N 条」规则用同一排除口径。
+ORDINAL_BEFORE = re.compile(r"第\s*(?:\d+\s*[/\-–]\s*)*$")
+# 发布日志类文件：小节标题带版本号/日期 → 该节记的是「当时」的状态。
+# 只认二级标题（## ）作为分节起点：三级标题（### ）是二级标题的子节，
+# 归属父节。用「最近的任何标题」会把版本化父节里的子节误判成当前状态，
+# 那是误报方向——宁可让作者看见红，也不要静默漏掉历史数字。
+HISTORICAL_SECTIONS = {"RELEASE_CHECKLIST.md"}
+SECTION_MARK = re.compile(r"(?:v?\d+\.\d+\.\d+|\d{4}-\d{2}-\d{2})")
+SECTION_HEADING = re.compile(r"^##(?!#)\s")
 VERSION_RE = re.compile(r"v?\d+\.\d+\.\d+")
 EVOLVE_RE = re.compile(
     r"扩到|起[一二三四五六七八九十0-9]+轴|新增的|从版本|曾为|旧版"
@@ -304,6 +325,37 @@ def classify(line: str, m: re.Match) -> tuple[str, int] | None:
     return None
 
 
+def classify_fraction(line: str, m: re.Match) -> tuple[str, int] | None:
+    """「N/N」形式：分母是总数，与该语境对应的权威口径比对。
+
+    语境闸门是必须的：同一个「N/N」在账本里可能是覆盖率（20/47）、
+    规模预算（50 / 100 / 50 / 3）或单测数（476/476）。只有明确说到
+    「不变量」或「verify / 校验 / 检查」时，它才是不变量总数。
+    """
+    num, den = int(m.group(1)), int(m.group(2))
+    if num > den:
+        return None          # 覆盖率 / 比例（20/47），不是「通过数 / 总数」
+    if ORDINAL_BEFORE.search(line[:m.start()]):
+        return None          # 「第 28/29 条」是序号
+    before = line[max(0, m.start() - 45):m.start()]
+    after = line[m.end():m.end() + 45]
+    if re.match(r"\s*(?:轴|步|项|条)", after):
+        return None          # 「24/24 条」由「N 条」规则判定，避免重复报
+    if "不变量" in before or re.match(r"\s*(?:条)?\s*不变量", after):
+        return ("invariants", den)
+    if FRACTION_CONTEXT.search(before):
+        return ("invariants", den)
+    return None
+
+
+def _tokens(line: str) -> list[tuple[re.Match, bool]]:
+    """把「N 轴/步/项/条」与「N/N」两类计数词元按出现位置合并。"""
+    hits = [(m.start(), False, m) for m in TOKEN.finditer(line)]
+    hits += [(m.start(), True, m) for m in FRACTION_TOKEN.finditer(line)]
+    hits.sort(key=lambda t: t[0])
+    return [(m, frac) for _, frac, m in hits]
+
+
 def scan_literals(root: Path, expect: dict) -> dict:
     drifts: list[dict] = []
     review: list[dict] = []
@@ -314,12 +366,17 @@ def scan_literals(root: Path, expect: dict) -> dict:
         if rel in EXEMPT_FILES:
             continue
         scanned += 1
+        heading = ""
         for lineno, line in enumerate(p.read_text(encoding="utf-8").splitlines(), 1):
-            if not TOKEN.search(line):
-                continue
+            if SECTION_HEADING.match(line):
+                heading = line
+            # 发布日志的小节标题带版本号/日期 → 该节记的是「当时」的数字。
+            in_history = (rel in HISTORICAL_SECTIONS
+                          and bool(SECTION_MARK.search(heading)))
             is_hist = historical(line)
-            for m in TOKEN.finditer(line):
-                hit = classify(line, m)
+            for m, is_fraction in _tokens(line):
+                hit = (classify_fraction(line, m) if is_fraction
+                       else classify(line, m))
                 if hit is None:
                     continue
                 kind, actual = hit
@@ -329,7 +386,7 @@ def scan_literals(root: Path, expect: dict) -> dict:
                 item = {"path": rel, "line": lineno, "kind": kind,
                         "actual": actual, "expected": want,
                         "excerpt": line.strip()[:120]}
-                (review if is_hist else drifts).append(item)
+                (review if (is_hist or in_history) else drifts).append(item)
     return {"scanned_files": scanned, "drifts": drifts, "review": review,
             "drift_count": len(drifts), "review_count": len(review)}
 

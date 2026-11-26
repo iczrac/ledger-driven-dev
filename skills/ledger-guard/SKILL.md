@@ -40,13 +40,14 @@ python3 -m unittest discover -s tests -v          # 1. 单元与集成测试
 python3 governance/verify_ledger.py --root . --strict   # 2. 31 条不变量
 python3 scripts/doc_lifecycle.py lint --target . --json  # 3. 文档结构/链接/状态词；串起 doc lint 与义务门禁
 python3 scripts/doc_lifecycle.py check --target . --json # 4. 五项文档不变量（shadow）
-bash scripts/check.sh --only-idempotence           # 5. 连续重跑幂等
+bash scripts/check.sh --only-doc-lifecycle        # 5. 文档生命周期（shadow）阶段
+bash scripts/check.sh --only-idempotence           # 6. 连续重跑幂等
 ```
 
 ## 检查项
 
 1. **测试**：`unittest discover`，覆盖等级判定、指纹、历史链、校验器负向、技能纪律；
-2. **账本**：`verify --strict`，18/18；
+2. **账本**：`verify --strict`，31（30 pass + 1 na）；
 3. **幂等**：连续重跑生成器，事件数 / 指纹 / 候选 id / 任务卡必须完全一致；
 4. **同步**：看板 EMBED 与账本一致；模板脚本与示例副本一致；
 5. **脱敏**：无来源项目内部代号与专有名词残留；
