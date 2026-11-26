@@ -7,7 +7,7 @@
 原子化提交残留声明（2026-11-26，使用者拍板「如实标注残留」）：按派生一致性边界拆分后，Ed 只读复核与独立复现均证实**中间 commit 非绿**，与本版新增的「每个中间 commit 各自全绿」口径不符，如实记录、不重写历史。
 
 - **实测**：`92691fe`（引入 `executable_claims` 判据）命中 `executable_claims=18`——18 份 Skill 的 `scripts/ledger_entry.py` 假命令到 `6eb4a4b` 才清。julia 侧 `ef1c9af` 命中 `generated_drift=5`、`8c23ab4` 命中 `generated_drift=12`——权威源先改、dist 到 `13db23b` 才重算。
-- **有效回滚点**：唯一全绿快照 = 两仓 HEAD（ledger `c207117`、julia `13db23b`）；上一个全绿锚 = `origin/main`（ledger `eb6813e`、julia `bb0d330`）。不得把非绿的中间 hash 当回滚点。
+- **有效回滚点**：本说明时点=2026-11-26 原子化拆分收口（3 commits 后）。当时的有效全绿快照 = 两仓 HEAD（ledger `c207117`、julia `13db23b`）；上一个全绿锚 = `origin/main`（ledger `eb6813e`、julia `bb0d330`）。其后 ledger `04575ff`、julia `4cb6604`+`7dbe767` 补瑕疵注记与派生重算，当前全绿 HEAD 已前移，回滚须以当前全绿 HEAD 为准；不得把非绿的中间 hash 当回滚点。
 - **历史处理**：两仓均未 push、未升版、未打 tag；本轮不 amend / rebase / squash。若将来要真正满足中间全绿，须新一轮明确授权重写本地历史。
 
 边界审查修正（使用者拍板「都修」）；不改 `METHOD_VERSION`，随下个正式版本一并发布。
