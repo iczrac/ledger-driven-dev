@@ -4,6 +4,13 @@
 
 ## [Unreleased] - 2026-11-25
 
+发版前收口（2026-11-26，使用者拍板 A）：
+
+- **O4 原子口径收敛**：`RELEASE_CHECKLIST.md` 的提交边界改为「机器可判定的边界 = 发版／回滚边界（版本锚 + tag 或当前全绿 HEAD）」，不再要求每个中间 commit 各自全绿；中间非绿状态如实记录、不得当回滚点，若需要可逐个回滚的中间快照则合为一个全绿 commit。julia `skills/self-evolution/SKILL.md` 同步同一口径；既有 CHANGELOG／进化日志中的历史条目不改写。
+- **O3 发布模板数字**：`.github/workflows/release.yml` 的 Release body 按实测改为 617 个标准库测试（双发现口径）、测试架构映射、31 条账本不变量、60 场景矩阵；「31 条目文件布局」等其余文字保留。
+- **upgrade 摘要重绑**：`upgrade plan --json --approved-by iczrac` 出现 M5-method-assets 摘要 delta 后 `upgrade apply` 重绑方法资产摘要，`verify` 目标 block=0 / warn=0 / `upgrade_complete=true`；证据摘要过期按升级器 re-baseline 流程重跑，不放宽 verify。
+- **版本与推送边界**：`METHOD_VERSION` 仍 2.29.0，julia compat `min_version` 仍 2.29.0；两仓只做本地 commit，未 push、未 tag、未升版。
+
 健康度 0/0 顯示誤導修復（使用者拍板 A，Ed 有條件採納；**`METHOD_VERSION` 仍 2.29.0，不升版、不發 tag**）：
 
 - **根因**：比值型維度分母為 0 時被記為 `0`，再與其餘維度加權平均，julia 健康分被壓成 75；77 分與 n/a 是兩回事，不能混為一談。

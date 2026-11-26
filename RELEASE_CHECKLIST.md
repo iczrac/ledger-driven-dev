@@ -701,7 +701,7 @@ E7 `cardinality_contradiction`（`ontology.py check --target P` 仍 `ok=false`�
 
 第一性原理：原子化要绑在**可复算的状态边界**上，不是绑在不可机器判定的「决策」上。Git 不记录一个 commit 属于哪个决策，因此「一个 commit 一个决策」既无法机械校验，也必然退化为纸面承诺（与 `ledger_entry` 同一失败模式），明确拒绝。只保留两条可复算约束：
 
-1. **派生一致性原子（提交边界）**：一个 commit 的状态边界 = `bash scripts/check.sh` 全绿。权威源与派生物（`docs/generated/`、`governance/index.html`）+ `spec_check.json` + 绑定测试必须落在**同一个 commit**。拆 commit 时不按主题拆，按派生一致性拆；每个中间 commit 都要各自跑 `bash scripts/check.sh` 全绿，否则宁可合为一个一致 commit，不制造「回滚点造假」的中间快照。
+1. **派生一致性原子（提交边界）**：一个 commit 的状态边界 = `bash scripts/check.sh` 全绿。权威源与派生物（`docs/generated/`、`governance/index.html`）+ `spec_check.json` + 绑定测试必须落在**同一个 commit**。拆 commit 时不按主题拆，按派生一致性拆；机器可判定的边界是**发版／回滚边界**（版本锚 + tag 或当前全绿 HEAD），不要求每个中间 commit 各自全绿。中间 commit 的非绿状态必须如实记录，不得当作回滚点；若需要可逐个回滚的中间快照，就合为一个全绿 commit。
 2. **发版逻辑原子（版本边界）**：版本锚 + tag 构成发版的逻辑原子；`python3 scripts/spec_check.py --target .` 的 `compat`（兄弟仓 `METHOD_VERSION` ≥ 声明的 `min_version`；**julia 侧适用，ledger 自身为 n/a**）与 `release_tag`（本仓版本有对应 tag）判据已 fail-closed 检查。
 
 **诚实边界**：跨仓物理原子在 Git 中不存在，明确放弃；不引入 monorepo / submodule 等结构性改动。`compat` 读的是兄弟仓**工作树**的 `METHOD_VERSION`，不是兄弟仓的 tag；因此「tag 提交顺序」仍是人工纪律，机器只保证版本锚与「本仓版本已打 tag」，不得对外宣称「跨仓顺序已机器强制」。
