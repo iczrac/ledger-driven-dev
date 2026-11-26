@@ -16,6 +16,16 @@
 人拿到 dry-run 报告后，可用 --emit-apply 导出逐轮的网关命令，
 由人按批准包逐条执行（create/approve 必须人批准，推进由预算授权）。
 
+经验交接
+--------
+任务卡（``next_queue[].lessons``）里的前人教训必须真的到达执行者，
+否则经验层只是另一座档案。本脚本做两件事：
+  1. 白名单提取（``id/title/insight/action``）+ 条数上限，账本内部事实
+     （scope/source_events/evidence）一律不外传，截断必须可见；
+  2. 把经验交给 expert-run 的**独立 context 通道**——绝不拼进 intent，
+     否则会抬高 route_expert 的 lesson 意图分，把实现任务误派给
+     ledger-steward。intent 保持原样，路由行为零变化。
+
 可复算：loop = f(ledger, goal_id, route_expert, verify_ledger, goal_ledger)；
 同输入同版本必得一致轨迹。失败即 stop（不继续下一轮）。
 
@@ -40,6 +50,15 @@ import goal_ledger  # noqa: E402
 import route_expert as route  # noqa: E402
 
 SCHEMA = "goal-loop/1"
+
+# 经验外传白名单：只有这四个字段允许离开账本。
+# scope / source_events / from_candidate / evidence 是账本内部事实
+# （谁在什么时候踩了什么坑、依据哪条证据），带进执行者上下文等于外泄账本结构。
+# 与 expert_run.py 的同名常量一一对应：两个信任边界各守一次。
+LESSON_REF_FIELDS = ("id", "title", "insight", "action")
+# 经验条数上限：经验条目无上限时 prompt 会膨胀。按「命中本任务 code／能力域
+# 优先」排序取前 N，被截断的条目必须可见（写进 dropped / note），不静默丢。
+LESSON_MAX_REFS = 10
 
 
 def _verify_ledger_module(gov: Path):
@@ -141,6 +160,63 @@ def progress_fingerprint(ledger: dict, goal: dict, task: dict) -> str:
     return _hl.sha256(blob.encode("utf-8")).hexdigest()
 
 
+def _lesson_priority(item: dict, task: dict) -> int:
+    """经验与本任务的贴合度：命中能力 code 最高，其次能力域／项目／等级。
+
+    任务卡若没带 scope（生成器只写白名单四字段），一律按 0 处理并保持原序——
+    生成器已经按 scope 过滤过一遍，消费端不重复发明匹配规则，只在需要截断时
+    用贴合度决定先留哪条。
+    """
+    scope = item.get("scope")
+    if not isinstance(scope, dict):
+        return 0
+    code = str(task.get("code", "") or "")
+    project = str(task.get("project", "") or "")
+    domain = str(task.get("domain", "") or "")
+    level = str(task.get("level", "") or "")
+    caps = [str(x) for x in (scope.get("capabilities") or [])]
+    projs = [str(x) for x in (scope.get("projects") or [])]
+    doms = [str(x) for x in (scope.get("domains") or [])]
+    lvls = [str(x) for x in (scope.get("levels") or [])]
+    if code and code in caps:
+        return 4
+    if domain and domain in doms:
+        return 3
+    if project and project in projs:
+        return 2
+    if level and level in lvls:
+        return 2
+    if not (caps or projs or doms or lvls):
+        return 1  # 全局经验：适用于所有任务
+    return 0
+
+
+def _lesson_refs(task: dict) -> dict:
+    """从任务卡提取可外传的经验引用（白名单四字段 + 条数上限）。
+
+    返回 {"lessons": [...], "total": n, "truncated": bool, "dropped": [id...]}：
+    - 白名单：scope/source_events/from_candidate/evidence 一律不带出；
+    - 上限：超过 LESSON_MAX_REFS 时按贴合度排序取前 N，稳定的 sort 保证
+      同贴合度时保持任务卡原序；
+    - 截断可见：被丢掉的 id 写进 dropped，不静默丢。
+    """
+    raw = task.get("lessons") if isinstance(task, dict) else None
+    raw = raw if isinstance(raw, list) else []
+    scored: list[tuple[int, dict]] = []
+    for item in raw:
+        if not isinstance(item, dict):
+            continue
+        ref = {k: str(item.get(k, "") or "") for k in LESSON_REF_FIELDS}
+        if not ref["id"]:
+            continue
+        scored.append((_lesson_priority(item, task), ref))
+    scored.sort(key=lambda pair: -pair[0])  # 稳定排序：同分保持原序
+    kept = [ref for _, ref in scored[:LESSON_MAX_REFS]]
+    dropped = [ref["id"] for _, ref in scored[LESSON_MAX_REFS:]]
+    return {"lessons": kept, "total": len(scored),
+            "truncated": bool(dropped), "dropped": dropped}
+
+
 def run(target: Path, goal_id: str, *, intent: str = "",
         max_loops: int | None = None, emit_apply: bool = False,
         stall_limit: int = 2) -> dict:
@@ -211,7 +287,14 @@ def run(target: Path, goal_id: str, *, intent: str = "",
 
         # 1) 取与目标相关的一条 next_queue（按 code 命中优先）
         task = next((t for t in queue if str(t.get("code", "")) in base_intent), queue[0])
-        rec["task"] = {"code": task.get("code", ""), "action": task.get("action", "")}
+        # 经验交接：任务卡自带的前人教训必须跟着这一轮走到执行者手里。
+        # 白名单 + 条数上限在这里做（账本 → 任务卡的信任边界）。
+        lesson_view = _lesson_refs(task)
+        rec["task"] = {"code": task.get("code", ""), "action": task.get("action", ""),
+                       "lessons": lesson_view["lessons"]}
+        if lesson_view["truncated"]:
+            rec["task"]["lessons_truncated"] = True
+            rec["task"]["lessons_dropped"] = lesson_view["dropped"]
 
         # 2) 每轮重新路由：用目标意图 + 任务动作，确保可识别且随任务变化
         round_intent = intent or (
@@ -224,11 +307,21 @@ def run(target: Path, goal_id: str, *, intent: str = "",
             return _halt(result, f"第 {round_no} 轮路由停止：{r['reason']}", "blocked")
 
         # 3) expert-run 只读计划（不执行命令）
+        #    经验走**独立 context 通道**：intent 保持原样（经验文本绝不拼进
+        #    intent——那会抬高 route_expert 的 lesson 意图分，把实现任务误派
+        #    给 ledger-steward），路由行为零变化。
         try:
-            plan = __import__("expert_run").run(target, f"{task.get('action', '')}：{base_intent}")
+            plan = __import__("expert_run").run(
+                target, f"{task.get('action', '')}：{base_intent}",
+                context={"task_code": str(task.get("code", "") or ""),
+                         "lessons": lesson_view["lessons"],
+                         "total": lesson_view["total"],
+                         "truncated": lesson_view["truncated"],
+                         "dropped": lesson_view["dropped"]})
             rec["plan"] = {"verdict": plan.get("verdict"),
                            "approval_count": plan.get("approval_bundle", {}).get("count", 0),
-                           "chain_len": len(plan.get("chain") or [])}
+                           "chain_len": len(plan.get("chain") or []),
+                           "task_context": plan.get("task_context", {})}
         except (OSError, ValueError) as exc:
             rec["plan"] = {"verdict": "error", "reason": str(exc)}
 
@@ -323,6 +416,16 @@ def render(out: dict) -> str:
                      f"判据 {r.get('criteria', {}).get('met_count', '-')}"
                      f"/{r.get('criteria', {}).get('total', '-')}"
                      f"｜推进至 {r.get('advanced_to', '-')}")
+        t = r.get("task", {})
+        ls = t.get("lessons") or []
+        if ls:
+            ids = ",".join(str(x.get("id", "")) for x in ls)
+            lines.append(f"    经验 {len(ls)} 条：{ids}"
+                         + ("（已截断）" if t.get("lessons_truncated") else ""))
+            for l in ls[:3]:
+                lines.append(f"      - [{l.get('id', '')}] {l.get('action', '')[:70]}")
+            if len(ls) > 3:
+                lines.append(f"      ... 另有 {len(ls) - 3} 条，见 JSON")
     if out.get("commands"):
         lines.append(f"待批准命令 {len(out['commands'])} 条（本脚本未执行）：")
         for c in out["commands"][:12]:
