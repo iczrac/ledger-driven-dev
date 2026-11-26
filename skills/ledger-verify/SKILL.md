@@ -15,7 +15,7 @@ metadata:
 
 # Ledger Verify
 
-账本的"体检"。只读，不改任何文件。24 条检查一次跑完。
+账本的"体检"。只读，不改任何文件。31 条检查一次跑完。
 
 ## When to Use
 
@@ -26,7 +26,7 @@ metadata:
 | 项 | 值 |
 |---|---|
 | 输入 | `--root`、`--ledger`、`--registry`、`--board` |
-| 输出 | 24 条 `[PASS]/[FAIL]` 结果；`--json` 给机器；`--strict` 失败返回退出码 1 |
+| 输出 | 31 条 `[PASS]/[FAIL]` 结果；`--json` 给机器；`--strict` 失败返回退出码 1 |
 | 副作用 | 无（read_only） |
 
 ## 步骤

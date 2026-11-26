@@ -176,7 +176,7 @@ Agent：status 取票据 → request dry-run → apply → 改代码 → 重跑�
         ↓
 网关：九道门 → 写入 + 租约 + audit + 看板同步
         ↓
-门禁：verify_ledger 24 条 → scenario_guard → layout --diff → check.sh
+门禁：verify_ledger 31 条 → scenario_guard → layout --diff → check.sh
         ↓
 路由：重新 expert-route（状态可能已变），下一轮任务卡由 ledger-steward 分派
 ```
