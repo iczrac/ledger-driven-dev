@@ -300,7 +300,7 @@ class BoardPathTest(unittest.TestCase):
                             "--target", str(DEMO), "--filename"],
                            capture_output=True, text=True)
         self.assertEqual(p.returncode, 0, p.stderr)
-        self.assertEqual(p.stdout.strip(), "index.html")
+        self.assertEqual(p.stdout.strip(), board_resolve(DEMO).name)
 
 
 if __name__ == "__main__":
