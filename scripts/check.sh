@@ -14,10 +14,78 @@ BOARD_DEMO_NAME="$(python3 scripts/board_path.py --target "$DEMO" --filename)"
 BOARD_NAME="$(python3 scripts/board_path.py --target . --filename)"
 FAILURES=0
 DOC_STRICT=0
+FAST=0
 for arg in "$@"; do
   if [ "$arg" = "--strict" ]; then DOC_STRICT=1; fi
+  if [ "$arg" = "--fast" ]; then FAST=1; fi
 done
+# --strict / --fast 是扫全部 args 的独立旗标；--only-* 是互斥的 MODE 分支。
 if [ "$MODE" = "--strict" ]; then MODE=all; fi
+if [ "$MODE" = "--fast" ]; then MODE=all; fi
+
+# ---------------------------------------------------------------- 阶段表
+# 顶层阶段表（唯一事实源）：每行 "显示名|阶段函数|快检是否包含(1/0)|汇总短名"
+#
+# 纪律：新增 / 删除 / 重排阶段只改这一张表。--fast 由本表过滤得出，
+# 绝不另写第二份阶段清单——两份清单必然漂移，而这正是门禁要防的病。
+# 「快检是否包含」目前只有 stage_tests 是 0：它是全量用例那一关（实测占全量
+# 门禁约 90% 的时间）。其余阶段（模板/示例同步、看板 EMBED、文档内链等契约
+# 检查）全在快检内——它们不是「可以省的部分」。
+STAGE_TABLE=(
+  "测试|stage_tests|0|测试"
+  "测试架构|stage_test_modules|1|测试架构"
+  "证据分层|stage_evidence|1|证据分层"
+  "账本校验|stage_verify|1|31 条三态不变量"
+  "主账本自校验|stage_verify_main|1|主账本自校验"
+  "场景矩阵|stage_scenarios|1|场景矩阵"
+  "文件布局|stage_layout|1|文件布局"
+  "文档生命周期（shadow）|stage_doc_lifecycle|1|文档生命周期（shadow）"
+  "升级与接入|stage_upgrade_access|1|升级与接入"
+  "资产与版面契约|stage_contracts|1|资产与工作台契约"
+  "幂等|stage_idempotence|1|幂等"
+  "同步|stage_sync|1|同步"
+  "反向回流|stage_feedback|1|反向回流"
+  "本体层|stage_ontology|1|本体层"
+  "卫生|stage_hygiene|1|卫生（脱敏+文档链接）"
+  "规范自查|stage_spec|1|规范自查"
+  "验收契约|stage_acceptance|1|验收契约"
+  "前置条件|stage_preconditions|1|前置条件"
+)
+
+# 本次要跑的阶段，由阶段表按 FAST 过滤而来；驱动、计数、汇总共用同一份。
+SELECTED=()
+
+select_stages(){
+  local row label fn fast sname
+  SELECTED=()
+  for row in "${STAGE_TABLE[@]}"; do
+    IFS='|' read -r label fn fast sname <<<"$row"
+    if [ "$FAST" -eq 1 ] && [ "$fast" != "1" ]; then continue; fi
+    SELECTED+=("$row")
+  done
+}
+
+# 快检被跳过的阶段名（由阶段表算，不写死）。
+skipped_summary(){
+  local row label fn fast sname out=""
+  for row in "${STAGE_TABLE[@]}"; do
+    IFS='|' read -r label fn fast sname <<<"$row"
+    if [ "$FAST" -eq 1 ] && [ "$fast" != "1" ]; then
+      if [ -z "$out" ]; then out="$label"; else out="$out / $label"; fi
+    fi
+  done
+  printf '%s' "$out"
+}
+
+# 汇总短名列表（供末行「全绿 / 快检通过」文案；单一来源＝阶段表）。
+stage_summary(){
+  local row label fn fast sname out=""
+  for row in "${SELECTED[@]}"; do
+    IFS='|' read -r label fn fast sname <<<"$row"
+    if [ -z "$out" ]; then out="$sname"; else out="$out / $sname"; fi
+  done
+  printf '%s' "$out"
+}
 
 note(){ printf '\n== %s ==\n' "$1"; }
 pass(){ printf '[PASS] %s\n' "$1"; }
@@ -401,32 +469,41 @@ stage_spec(){
 
 run(){ name="$1"; shift; if "$@"; then pass "$name"; else fail "$name" '见上方输出'; fi; }
 
+# 按阶段表驱动执行：FAST=1 时只跑表内 fast=1 的阶段，绝不另写第二份清单。
+run_stage_table(){
+  local row label fn fast sname
+  for row in "${SELECTED[@]}"; do
+    IFS='|' read -r label fn fast sname <<<"$row"
+    run "$label" "$fn"
+  done
+}
+
+select_stages
+
 if [ "$MODE" = "--only-idempotence" ]; then
+  if [ "$FAST" -eq 1 ]; then
+    echo '「--fast」只作用于全量阶段表；--only-* 是单阶段模式，已忽略快检旗标。'
+  fi
   run '幂等' stage_idempotence
 elif [ "$MODE" = "--only-doc-lifecycle" ]; then
+  if [ "$FAST" -eq 1 ]; then
+    echo '「--fast」只作用于全量阶段表；--only-* 是单阶段模式，已忽略快检旗标。'
+  fi
   run '文档生命周期（shadow）' stage_doc_lifecycle
 elif [ "$MODE" = "--help" ]; then
-  echo "用法: bash scripts/check.sh [all|--strict|--only-idempotence|--only-doc-lifecycle|--help]"
+  echo "用法: bash scripts/check.sh [all|--strict|--fast|--only-idempotence|--only-doc-lifecycle|--help]"
+  echo "  --fast  中途快检：阶段表里跳过「测试」（全量用例那一关），其余阶段全跑，约 45s"
+  echo "          【中途快检，非提交依據】提交前必须再跑一次全量 bash scripts/check.sh（约 445s）"
   echo "  --strict  把文档生命周期 shadow 告警升为阻断（须人工批准后使用）"
 else
-  run '测试' stage_tests
-  run '测试架构' stage_test_modules
-  run '证据分层' stage_evidence
-  run '账本校验' stage_verify
-  run '主账本自校验' stage_verify_main
-  run '场景矩阵' stage_scenarios
-  run '文件布局' stage_layout
-  run '文档生命周期（shadow）' stage_doc_lifecycle
-  run '升级与接入' stage_upgrade_access
-  run '资产与版面契约' stage_contracts
-  run '幂等' stage_idempotence
-  run '同步' stage_sync
-  run '反向回流' stage_feedback
-  run '本体层' stage_ontology
-  run '卫生' stage_hygiene
-  run '规范自查' stage_spec
-  run '验收契约' stage_acceptance
-  run '前置条件' stage_preconditions
+  if [ "$FAST" -eq 1 ]; then
+    printf '\n== 快检模式（--fast）==\n'
+    printf '【中途快检，非提交依據】本次只跑 %d/%d 个阶段（跳过：%s）。\n' \
+      "${#SELECTED[@]}" "${#STAGE_TABLE[@]}" "$(skipped_summary)"
+    printf '快检结果不可作为提交依据：提交前必须跑一次全量 `bash scripts/check.sh`（约 445s），全量门禁是唯一的提交依据。\n'
+    printf '模板/示例同步、看板 EMBED、文档内链等契约检查仍在快检内——它们不是「可以省的部分」。\n'
+  fi
+  run_stage_table
 fi
 
 printf '\n'
@@ -434,4 +511,9 @@ if [ "$FAILURES" -gt 0 ]; then
   printf '质量门禁失败：%d 个阶段未通过\n' "$FAILURES"
   exit 1
 fi
-printf '质量门禁全绿：测试 / 测试架构 / 证据分层 / 31 条三态不变量 / 主账本自校验 / 场景矩阵 / 文件布局 / 文档生命周期（shadow） / 升级与接入 / 资产与工作台契约 / 幂等 / 同步 / 反向回流 / 本体层 / 卫生（脱敏+文档链接） / 规范自查 / 验收契约 / 前置条件\n'
+if [ "$FAST" -eq 1 ]; then
+  printf '质量门禁快检通过：%s\n' "$(stage_summary)"
+  printf '【中途快检，非提交依據】快检通过不等于可以提交；提交前必须跑一次全量 `bash scripts/check.sh`。\n'
+  exit 0
+fi
+printf '质量门禁全绿：%s\n' "$(stage_summary)"

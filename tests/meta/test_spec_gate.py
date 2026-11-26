@@ -155,16 +155,25 @@ class SpecGateTest(unittest.TestCase):
         text = (ROOT / "scripts" / "check.sh").read_text(encoding="utf-8")
         self.assertIn("stage_spec(){", text)
         self.assertIn("scripts/spec_check.py --target .", text)
-        self.assertIn("run '规范自查' stage_spec", text)
+        # 阶段表是唯一事实源：接线以「显示名|阶段函数|快检标志|汇总名」一行声明。
+        self.assertIn('"规范自查|stage_spec|1|规范自查"', text)
 
     def test_gate_wires_main_ledger_verify(self):
         """P1：三处静态接线 + 行为负向证明，缺一即 FAIL。"""
         text = (ROOT / "scripts" / "check.sh").read_text(encoding="utf-8")
         self.assertIn("stage_verify_main(){", text)
         self.assertIn("python3 governance/verify_ledger.py --root . --strict", text)
-        wiring = "  run '主账本自校验' stage_verify_main\n"
+        # 阶段表是唯一事实源：接线与末行汇总文案都从这张表渲染。
+        wiring = '"主账本自校验|stage_verify_main|1|主账本自校验"\n'
         self.assertIn(wiring, text)
-        self.assertIn("31 条三态不变量 / 主账本自校验 / 场景矩阵", text)
+        table = re.search(r"STAGE_TABLE=\(\n(.*?)\n\)", text, re.S)
+        self.assertIsNotNone(table, "check.sh 缺少 STAGE_TABLE 阶段表")
+        self.assertIn(
+            '"账本校验|stage_verify|1|31 条三态不变量"\n'
+            '  "主账本自校验|stage_verify_main|1|主账本自校验"\n'
+            '  "场景矩阵|stage_scenarios|1|场景矩阵"',
+            table.group(1),
+            "主账本自校验必须在阶段表里与账本校验、场景矩阵相邻")
         # 负向证明：抽掉接线后断言必须失效，证明上述断言不是恒真。
         self.assertNotIn(wiring, text.replace(wiring, ""))
         # 行为证明：同一函式对干净主账本为 0，对写坏 analytics 非零。
