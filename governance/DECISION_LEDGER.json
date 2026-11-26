@@ -15189,7 +15189,7 @@
     },
     "installed_assets": {
       "schema": "installed-assets-binding/1",
-      "digest": "4791beea74879c0e1df8dd9153599abdba5382d2bafc677d369730c86a060a34",
+      "digest": "9403fe937c2723888bb71235a62e75631d604ecd5b99681d6682da563548b6da",
       "file_count": 33,
       "counts": {
         "experts": 9,

@@ -11,6 +11,28 @@
 - **守护测试**：`tests/meta/test_system_board.py` 新增两条——三类系统看板契约必须在登记本体可查；工作区双方组合事实必须 category=组合锚、字段完整且完全对称（兄弟仓不在工作区时 skip，不破坏测试独立性）。
 - **验证**：`test_schema_registry` 4/4、`test_system_board` 14/14；两仓 `verify_ledger --strict` 退出码 0（未通过项均为 `na`）；`ontology.py check` 零漂移；系统看板重生成后 `check` `match=true`。
 
+护栏审计后修正（未改 `METHOD_VERSION`，随下个正式版本发布）：
+
+- **spec_check 从「造好未装」变为门禁**：仓库根新增最小 `spec_check.json`，只启用既有门禁未覆盖的四项——`version`（配置锚 ↔ `METHOD_VERSION`）、`ontology_integrity`（schema 登记的 `translates_to`）、`release_tag`（`v2.29.0` 在位）、`executable_claims`（显式命令须落到真实文件）；`check.sh` 新增第 17 阶段 `stage_spec`。术语/派生/必备文件/链接/布局已有各自阶段，不重复造检查器；`compat` 依赖兄弟仓，不进本仓 CI。`tests/meta/test_spec_gate.py` 含版本漂移、坏引用与可执行主张的负向证明，`tests/MODULES.json` 与派生文档同步。
+- **删掉纸面唯一入口**：18 份 Skill 中「目标项目走 `scripts/ledger_entry.py --check-all`」的承诺被删除（该脚本从未存在），保留下一行真实口径——目标项目无 `scripts/` 命令副本，路由与校验按技能步骤在方法仓执行；已安装副本同步刷新。
+- **文档口径对齐当前事实**：`skills/ledger-verify` 及 docs 08/11/12/14/17/21 中「24 条检查」统一为当前 31 条；历史版本条目（如 v2.29.0「17 节全绿」）保留原样，不改写历史。
+- **验证口径**：`spec_check --target .` 四项适用、零命中；`test_spec_gate` 8/8；全量门禁见本轮交付记录。
+
+可执行主张判据（第九判据，根因修复；未改 `METHOD_VERSION`）：
+
+- **第一性原理**：`ledger_entry.py` 之所以能作为纸面承诺存活，是因为资产摘要只证明「副本 = 权威源」，不证明「权威源为真」；断链检查又只扫 Markdown 链接，不扫文档里的显式命令。修法不是再写一段纪律，而是把「文档命令 → 真实文件」变成机械判据。
+- **`executable_claims`**：扫 `claims.docs` 中 `python3|bash|sh <path>.py|sh` 形式的显式命令，按本仓 → `claims.external` 声明的兄弟仓 → `claims.exceptions` 顺序解析。例外必须写在 `spec_check.json` 单点登记，含 `reason` / `approved_by` / `expires_on`，禁通配、过期即命中；配置结构错、兄弟仓缺失、文件不可读一律 fail-closed。不扫反引号里的布局路径、产物名与 `xxx` 占位符，避免制造假阳性。
+- **首次实战命中**：新判据启用即抓到 julia-dev-squad 三份 README（根/简中/英文）写了不存在的 `python3 scripts/register_expert.py`，已改为真实加载方式；同类纸面承诺第二次被机械抓到，印证判据不是空转。
+- **负向证明**：`test_spec_gate` 新增 4 条——假命令命中、例外缺批准/过期失效、兄弟仓声明存在性验证、exception 覆盖 external 未解析的交互用例；空配置 n/a 8 → 9，判据数量口径在自查器/README/Workflow V/julia 门禁文案同步为九项。
+- **Ed 复核修正**：只读复核发现「external 前缀命中即短路」会让合规例外不可达（provenance 沦为纸面承诺）；已改为兄弟仓未解析时回退查例外，并用交互负向测试证明有效例外放行、过期例外命中。跨仓同名碰撞仍为已知取捨，不通过放宽前缀掩盖。
+
+安装边界 fail-closed（P1，同一判据复用；未改 `METHOD_VERSION`）：
+
+- **边界拦截**：`asset_bundle.py` 新增 `check_claims()`，复用 `spec_check.check_executable_claims`，只扫将被安装的权威源文件，配置仍从同一份 `spec_check.json` 的 `claims` 节读取（external / exceptions 单点登记）。三个入口共用：dry-run 计划显示 `claim_hits`，`--check` 自检纳入资产定义检查，`install --apply` 命中即拒绝写盘；`upgrade.py check` 经既有 `installed_check` 自动获得同一拦截，未复制第二份扫描器。
+- **负向证明**：`tests/views/test_assets.py` 新增 `AssetClaimGuardTest` 2 条——注入假命令后 dry-run 报命中、定义自检报错、apply 被拒且未写盘；缺 `spec_check.json` 视为 `spec_config_unreadable` 命中，真实命令存在则零命中（14/14 通过）。
+- **发布硬项**：`RELEASE_CHECKLIST.md` 新增 Unreleased 节，把两仓门禁、主张判据、资产边界、升级器自检与人工贴输出写成可复算命令，任一失败即不得升版本 / 打 tag / 发版；不勾选替代执行。
+- **验证口径**：`asset_bundle --check` 通过（33 个文件）；`upgrade.py check` 通过；真实基线 `check_claims` 95 条主张零命中。
+
 ## [2.29.0] - 2026-11-25
 
 **决策依据（第一性原理）**：多项目独立开发、组合使用（CapabilityForge 双仓为首个实例）暴露三类组合层摩擦——①两仓 8+ 个 schema 各自声明、关系靠散文与记忆；②组合兼容（julia v1.10.14 × ledger v2.28.0）靠人脑对照；③文档型仓库（julia-dev 主体为 SKILL.md/agents）在代码型发现器下产不出有意义的草稿。三者同为「组合治理」主题，同版落地：schema 登记本体统管表达与转译、compat 判据统管兼容、discover spec-repo 模式统管文档资产接入。登记本体取薄形态：只声明接口面（id/owner/version/fields/consumers/translates_to），不复制语义细节，校验复用既有 ontology_integrity 判据——零新校验器。
