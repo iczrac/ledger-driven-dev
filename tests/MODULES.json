@@ -7,12 +7,13 @@
     {
       "id": "core",
       "name": "账本与生成器",
-      "scope": "capability_model / history / evidence_tier / verify_ledger / path_scope",
+      "scope": "capability_model / history / evidence_tier / verify_ledger / test_records / path_scope",
       "owner_scripts": [
         "templates/build_capability_model.py",
         "templates/verify_ledger.py",
         "scripts/run_tests.py",
-        "scripts/runtime_signals.py"
+        "scripts/runtime_signals.py",
+        "scripts/gen_test_records.py"
       ],
       "files": [
         "tests/core/test_generation.py",
@@ -30,7 +31,8 @@
         "tests/core/test_maturity_analytics.py",
         "tests/core/test_runtime_signals.py",
         "tests/core/test_lesson_handoff.py",
-        "tests/core/test_test_record_evidence.py"
+        "tests/core/test_test_record_evidence.py",
+        "tests/core/test_gen_test_records.py"
       ]
     },
     {
