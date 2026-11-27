@@ -325,6 +325,23 @@ class GenTestRecordsTest(unittest.TestCase):
         self.assertIn("测试报告不存在", r.stdout + r.stderr)
         self.assertFalse(self._record_path().exists())
 
+    def test_absolute_registry_and_report_paths_are_accepted(self):
+        """绝对路径形态的 --registry / --report 不得崩，且不得泄露机器绝对路径。
+
+        回归（2026-11-27，release-engineer-3 报）：root 走 .resolve() 会解
+        symlink（macOS /var → /private/var），而用户给的绝对路径若不 resolve，
+        两边 relative_to 对不上 → ValueError；更糟的是 source_report 会退化成
+        机器绝对路径写进记录（仓库禁止绝对路径泄露）。
+        """
+        cmd = [sys.executable, str(GENERATOR), "--root", str(self.tmp),
+               "--registry", str(self.registry),
+               "--report", str(self.report), "--update-registry"]
+        r = subprocess.run(cmd, capture_output=True, text=True)
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        text = self._record_path().read_text(encoding="utf-8")
+        self.assertIn("- source_report: governance/test_report.json", text)
+        self.assertNotIn(str(self.tmp), text, "机器绝对路径不得写进记录")
+
 
 if __name__ == "__main__":
     unittest.main()
