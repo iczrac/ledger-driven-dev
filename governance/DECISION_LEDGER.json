@@ -18762,13 +18762,29 @@
         "risk": "low",
         "assets_digest": "8e158489a0b85ad5",
         "board_skeleton": "c2a20142d1c41c18"
+      },
+      {
+        "seq": 39,
+        "at": "2026-11-27T02:47:34Z",
+        "action": "apply",
+        "from": "2.29.0",
+        "to": "2.29.0",
+        "approved_by": "iczrac",
+        "migrations": [
+          "M5-method-assets",
+          "M7-asset-install"
+        ],
+        "backup": "20261127T024720Z-50985f67",
+        "risk": "medium",
+        "assets_digest": "78fe22f5ea237f35",
+        "board_skeleton": "c2a20142d1c41c18"
       }
     ],
     "tools": {
       "governance/build_capability_model.py": "a0403822f9b20242effd7eca7e1518600e09cc136827a24247f2a20aa845b75d",
       "governance/binding_advisory.py": "e5368433f594854857fff87002430ee692401ec4b7125168b7699cb00f1dde0b",
       "governance/derived_issues.py": "4ff4097765996071e256302f91439a9464a5203840d2df64fb5d93df6ea13a21",
-      "governance/verify_ledger.py": "7155e43b0135fb01f75d93f6e1ee8412355a32f993439d0fbd1d35cea472b369",
+      "governance/verify_ledger.py": "f8e281b5704d11b80fc145cca9045f74b85d24eed6f8985ed08ec55fe3c7b10d",
       "governance/registry_codec.py": "958ecad87b8a4743b1b8e5f4ca439c9a22c2fb818d586c6ef0e79739f293ab7a",
       "governance/run_tests.py": "80b687eab9f62cea607406efc7cb526809a30e1a2467ce88100638613a3669e7",
       "governance/board_path.py": "90c94e9463f7b1e87d6309fa67a73c82f2ec7aa5f409b65e6b24a668d7069c7a",
@@ -18782,19 +18798,19 @@
     },
     "method_assets": {
       "algorithm": "sha256-files-v1",
-      "digest": "8e158489a0b85ad5466dd288513a12220ba14c192d3e203f864f2bd993148dcf",
-      "file_count": 118,
+      "digest": "78fe22f5ea237f359f01ee5affa508ead773638cdae3f95f8c194c7fa8105ba2",
+      "file_count": 119,
       "counts": {
         "experts": 9,
         "skills": 24,
-        "scripts": 39,
+        "scripts": 40,
         "templates": 9,
         "method_docs": 36,
         "standard": 1
       },
       "source": "方法论仓库 tag（权威源，不复制；只读副本由 M7 安装）"
     },
-    "ontology_digest": "50199dea570cb7eb902e270eab9d8aa5d2977c03bb57a2c232fd1abd4acd0424",
+    "ontology_digest": "4bfcbdf272a0a664d945d56f7105443a2b8b1a538c9a4de7ff46236427831d54",
     "board_skeleton": {
       "digest": "c2a20142d1c41c18bdaa096f1a29740b8ee632d30aef2a4b2a9688190eec89d2",
       "source": "templates/index.html.template",
@@ -18802,7 +18818,7 @@
     },
     "installed_assets": {
       "schema": "installed-assets-binding/1",
-      "digest": "635f9b6413c63decc763b3f8f9233d157ec44f6e087e44f127a6e1fedb244064",
+      "digest": "daf383288e81e48fb44029e81da470019d58e4039221408a32ef1cc29728806f",
       "file_count": 33,
       "counts": {
         "experts": 9,
