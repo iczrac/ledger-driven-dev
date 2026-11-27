@@ -140,6 +140,14 @@ class BlueprintGraphTest(unittest.TestCase):
                                      and e["to"] == "capability:METHOD.GOV.FEEDBACK.01"])
 
     # ---------- 影响传导 ----------
+    @staticmethod
+    def _paths_to(result: dict, node_id: str) -> list[tuple[list[str], list[str], str]]:
+        for entries in result["by_level"].values():
+            for entry in entries:
+                if entry["id"] == node_id:
+                    return list(zip(entry["paths"], entry["path_kinds"], entry["path_labels"]))
+        return []
+
     def test_impact_up(self) -> None:
         result = impact_up(self.graph, ["component:mod_a/alpha.py"])
         by_level = result["by_level"]
@@ -150,7 +158,65 @@ class BlueprintGraphTest(unittest.TestCase):
         self.assertEqual(cap["label"], "反馈通道")
         self.assertEqual(cap["paths"][0][0], "component:mod_a/alpha.py")
         self.assertIn("反馈通道", cap["path_labels"][0])
+        self.assertEqual(cap["path_kinds"][0], ["contains"])
         self.assertEqual(result["seeds"], ["component:mod_a/alpha.py"])
+
+    def test_impact_reverse_depends(self) -> None:
+        # fixture: alpha depends beta；gamma depends alpha。
+        # 改 beta 必须波及直接依赖者 alpha 与传递依赖者 gamma。
+        result = impact_up(self.graph, ["component:mod_a/beta.py"])
+        alpha = self._paths_to(result, "component:mod_a/alpha.py")
+        gamma = self._paths_to(result, "component:mod_b/gamma.py")
+        self.assertTrue(alpha)
+        self.assertTrue(gamma)
+        self.assertTrue(any(kinds == ["depends"] for _, kinds, _ in alpha))
+        self.assertTrue(any(kinds == ["depends", "depends"] for _, kinds, _ in gamma))
+        self.assertTrue(any("被依赖" in label for _, _, label in alpha))
+        # 依赖者的 contains 上卷也要出现：系统层存在含 depends 段的影响路径
+        system = self._paths_to(result, "system:root")
+        self.assertTrue(any("depends" in kinds for _, kinds, _ in system))
+        self.assertIn("depends", result["relation_legend"])
+
+    def test_impact_mixed_contains_and_depends_path(self) -> None:
+        result = impact_up(self.graph, ["component:mod_a/beta.py"])
+        mixed = [(p, k, lab) for p, k, lab in self._paths_to(result, "module:mod_a")
+                 if k == ["depends", "contains"]]
+        self.assertTrue(mixed, "应存在 depends 反向 + contains 上卷的复合路径")
+        _, _, label = mixed[0]
+        self.assertIn("被依赖", label)
+        self.assertIn("包含", label)
+
+    def test_impact_no_false_depends(self) -> None:
+        # gamma 没有任何依赖者；depends 只能反向走，不能正向回溯到它依赖的 alpha。
+        result = impact_up(self.graph, ["component:mod_b/gamma.py"])
+        all_ids = {e["id"] for entries in result["by_level"].values() for e in entries}
+        self.assertNotIn("component:mod_a/alpha.py", all_ids)
+        for entries in result["by_level"].values():
+            for entry in entries:
+                self.assertNotIn("depends", entry["via"])
+                self.assertTrue(all(k == "contains" for k in
+                                    [step for kinds in entry["path_kinds"] for step in kinds]))
+
+    def test_impact_cycle_terminates_with_visited(self) -> None:
+        graph = {
+            "schema": "blueprint-graph/1", "root": ".",
+            "nodes": [
+                {"id": "component:a.py", "type": "component", "label": "a.py",
+                 "path": "a.py", "meta": {}},
+                {"id": "component:b.py", "type": "component", "label": "b.py",
+                 "path": "b.py", "meta": {}},
+            ],
+            "edges": [
+                {"from": "component:a.py", "to": "component:b.py", "kind": "depends"},
+                {"from": "component:b.py", "to": "component:a.py", "kind": "depends"},
+            ],
+        }
+        result = impact_up(graph, ["component:b.py"])   # 有环也必须终止
+        affected = [e for entries in result["by_level"].values() for e in entries
+                    if e["id"] == "component:a.py"]
+        self.assertEqual(len(affected), 1)
+        for path in affected[0]["paths"]:
+            self.assertEqual(len(path), len(set(path)), "visited set 应阻止路径重复访问节点")
 
     # ---------- 渲染 ----------
     def test_render_svg_valid_and_human_readable(self) -> None:

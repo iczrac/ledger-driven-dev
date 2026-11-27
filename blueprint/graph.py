@@ -378,35 +378,70 @@ def apply_overrides(graph: dict, overrides_path: Path) -> dict:
 
 
 # --------------------------------------------------------------------------- #
-# 3. 向上影响传导
+# 3. 向上 / 反向影响传导（blast radius）
 # --------------------------------------------------------------------------- #
-def impact_up(graph: dict, node_ids: Iterable[str]) -> dict:
-    """沿 contains 边向上遍历，返回按层级分组的受影响节点及每条影响路径。
+_RELATION_WORD = {"contains": "包含", "depends": "被依赖"}
 
-    路径按节点 id 排列，例：
-    ["component:governance/registry_codec.py", "capability:METHOD.GOV.ANNOT.10",
-     "system:root"]，并附人读版 ``FEEDBACK.01 → 架构图与数据流 → 系统``。
+
+def impact_up(graph: dict, node_ids: Iterable[str]) -> dict:
+    """沿 contains 向上、沿 depends 反向遍历，回答「改了它会波及谁」。
+
+    两种传导合并进同一个 by_level（按节点类型分组）：
+    - contains 向上：当前节点 → 包含它的父节点（模块 / 能力 / 系统）；
+    - depends 反向：当前节点 → 依赖它的节点（谁 depends 我，我改就影响谁）。
+
+    两种传导可叠加：测试依赖了某脚本，脚本改动先波及测试文件，再沿 contains
+    上卷到测试所在模块与系统，形成完整的 blast radius。
+
+    每条路径给三份视图：
+    - ``paths``：节点 id 序列（首项为 seed，兼容旧消费者）；
+    - ``path_kinds``：每一步的边 kind（contains / depends）；
+    - ``path_labels``：人读版，逐段标注「包含」或「被依赖」。
+    另附 ``via``（该节点被哪几种传导触达）。用 per-path visited set 防环，
+    既不无限递归，也不丢失同一节点的多条影响路径。
     """
     nodes = {n["id"]: n for n in graph.get("nodes", [])
              if isinstance(n, dict) and isinstance(n.get("id"), str)}
-    parents: dict[str, set[str]] = {}
+    parents: dict[str, set[str]] = {}       # contains: child -> parents
+    dependents: dict[str, set[str]] = {}    # depends: dependency -> dependents（反向）
     for e in graph.get("edges", []):
-        if isinstance(e, dict) and e.get("kind") == "contains" and e.get("from") and e.get("to"):
-            parents.setdefault(str(e["to"]), set()).add(str(e["from"]))
+        if not isinstance(e, dict) or not e.get("from") or not e.get("to"):
+            continue
+        frm, to = str(e["from"]), str(e["to"])
+        if e.get("kind") == "contains":
+            parents.setdefault(to, set()).add(frm)
+        elif e.get("kind") == "depends":
+            dependents.setdefault(to, set()).add(frm)   # 谁依赖我
 
     seeds = [str(x) for x in node_ids]
     found: dict[str, set[tuple[str, ...]]] = {}
+    kinds_of: dict[tuple[str, ...], tuple[str, ...]] = {}
 
-    def walk(current: str, path: tuple[str, ...]) -> None:
-        for parent in sorted(parents.get(current, ())):
-            if parent in path:               # 防环：环图也不会无限递归
+    def walk(current: str, path: tuple[str, ...], kinds: tuple[str, ...],
+             visited: frozenset[str]) -> None:
+        moves: list[tuple[str, str]] = []
+        moves.extend((p, "contains") for p in parents.get(current, ()))
+        moves.extend((d, "depends") for d in dependents.get(current, ()))
+        for neighbor, kind in sorted(moves):        # 排序保证确定性
+            if neighbor in visited:                 # per-path visited set：防环且保留多路径
                 continue
-            extended = path + (parent,)
-            found.setdefault(parent, set()).add(extended)
-            walk(parent, extended)
+            extended = path + (neighbor,)
+            extended_kinds = kinds + (kind,)
+            found.setdefault(neighbor, set()).add(extended)
+            kinds_of[extended] = extended_kinds
+            walk(neighbor, extended, extended_kinds, visited | {neighbor})
 
     for seed in seeds:
-        walk(seed, (seed,))
+        walk(seed, (seed,), (), frozenset({seed}))
+
+    def label_of(step: str) -> str:
+        return str(nodes.get(step, {}).get("label") or step)
+
+    def label_path(path: tuple[str, ...]) -> str:
+        parts = [label_of(path[0])]
+        for step, kind in zip(path[1:], kinds_of[path]):
+            parts.append(f" →[{_RELATION_WORD.get(kind, kind)}] {label_of(step)}")
+        return "".join(parts)
 
     grouped: dict[str, list[dict]] = {}
     for nid, paths in found.items():
@@ -417,12 +452,17 @@ def impact_up(graph: dict, node_ids: Iterable[str]) -> dict:
             "label": str(node.get("label") or nid),
             "type": str(node.get("type", "unknown")),
             "paths": [list(p) for p in ordered],
-            "path_labels": [" → ".join(str(nodes.get(step, {}).get("label") or step)
-                                       for step in p) for p in ordered],
+            "path_kinds": [list(kinds_of[p]) for p in ordered],
+            "path_labels": [label_path(p) for p in ordered],
+            "via": sorted({k for p in ordered for k in kinds_of[p]}),
         })
     return {
         "schema": IMPACT_SCHEMA,
         "seeds": seeds,
+        "relation_legend": {
+            "contains": "包含：影响沿「父包含子」关系上卷到模块 / 能力 / 系统",
+            "depends": "被依赖：依赖方会因被依赖方改动而受影响（反向依赖）",
+        },
         "by_level": {level: sorted(grouped[level], key=lambda e: e["id"])
                      for level in sorted(grouped)},
     }
