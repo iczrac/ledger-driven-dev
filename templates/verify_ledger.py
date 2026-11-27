@@ -48,6 +48,9 @@
 30. goal_loop_valid：目标编排的方向锁、预算单调、判据机读与终态纪律
 31. analytics_test_results_detail_valid：健康投影的 test_pass_rate.detail 必须与
     test_results.cases 实算一致；禁止 sync-tests 后留下旧分子/分母（旧账本判 na）
+32. test_record_evidence_valid：L4 测试记录必须真实存在且与当前测试报告对得上——
+    声明真实性 / source_sha256 对账 / 用例真实性 / 时间序，四路并重
+    （详见下方「测试记录证据有效性」；旧格式记录判 na）
 
 三态语义
 --------
@@ -77,17 +80,23 @@ import argparse
 import hashlib
 import json
 import re
+import subprocess
 import sys
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 # v2.0.1：校验器与生成器共用同一 registry codec，避免第二套 code 规则。
 try:
+    from registry_codec import cap_code as registry_cap_code
     from registry_codec import iter_caps as registry_iter_caps
+    from registry_codec import normalize_projects
     from registry_codec import policy_error as projection_policy_error
     from registry_codec import projection_opted_out
 except ModuleNotFoundError:  # pragma: no cover - 仅在 spec 加载路径触发
     sys.path.insert(0, str(Path(__file__).resolve().parent))
+    from registry_codec import cap_code as registry_cap_code
     from registry_codec import iter_caps as registry_iter_caps
+    from registry_codec import normalize_projects
     from registry_codec import policy_error as projection_policy_error
     from registry_codec import projection_opted_out
 
@@ -175,6 +184,327 @@ def close_condition_met(cond: dict, caps_by_code: dict, repo_root: Path) -> tupl
         exists = bool(rel) and (repo_root / rel).exists()
         return exists, f"{rel} 存在={exists}"
     return False, f"未知 close_condition.kind={kind}"
+
+
+# ------------------------------------------------------------------ 第 32 条
+# 测试记录证据有效性（v2.30.0）
+#
+# L4 的判定规则是「docs/test_records/ 有测试记录」。只看路径存在会漏掉三类假绿：
+#   1. 记录正文从不被核对——用例名可以凭空编造，日期可以手写硬编码；
+#   2. registry 声明了不存在的记录路径，生成器只打印 WARN，没有任何机器检查
+#      把这种不一致揪出来（声明拿不到等级，但也没人被拦下）；
+#   3. 旧记录可以冒充新证据——记录与当前测试报告之间没有任何绑定。
+#
+# 本判据四路并重（缺任一路即不得算通过）：
+#   R1 声明真实性：声明的记录文件必须真实存在；能读到 git index 时还必须已入库
+#      （「本机有、仓库没有」是最坏的一类绿灯：只在作者机器上成立）；
+#   R2 报告对账：source_sha256 必须等于当前 governance/test_report.json 的 sha256；
+#   R3 用例真实性：cases 里的用例名必须是当前报告里真实存在且状态为 pass 的用例；
+#   R4 时间序：generated_at 不得早于报告生成时间。
+#
+# 三态：
+#   fail：范围内有记录对不上（声明了却不存在 / 哈希不符 / 用例不存在 / 时间倒置）；
+#   pass：范围内每份记录都完成四路对账；
+#   na：范围内没有记录（未启用），或存在机器字段缺失的旧记录（格式旧 ≠ 伪造）。
+#
+# 记录字段口径与 scripts/gen_test_records.py 的渲染口径一致——同一份契约，
+# 生成器负责产出，校验器负责验。旧记录（只有日期/覆盖/结果三行）缺机器字段，
+# 判 na 而不是 fail：它不是伪造的证据，只是没到可机读的新格式。
+RECORD_REQUIRED_FIELDS = ("source_sha256", "generated_at", "cases")
+RECORD_FIELD_RE = re.compile(r"^\s*[-*+]\s*([A-Za-z_][A-Za-z0-9_]*)\s*:\s*(.*?)\s*$")
+RECORD_TS_RE = re.compile(
+    r"^(\d{4})-(\d{2})-(\d{2})(?:[T ](\d{1,2}):(\d{2})(?::(\d{2}))?)?"
+    r"(?:\s*(Z|[+-]\d{2}:?\d{2}|HKT|CST|UTC))?$")
+# 项目本地时区：报告时间戳形如 "2026-11-27 01:35 HKT"，无偏移标注按此解释。
+LOCAL_TZ = timezone(timedelta(hours=8), "HKT")
+
+
+def parse_record_fields(text: str) -> dict:
+    """抽取测试记录里的机器字段（`- key: value` 形式）。
+
+    只认 ASCII 字段名（source_sha256 / generated_at / cases ...）；中文标签
+    （覆盖 / 结果 / 声明未覆盖）是给人看的，不参与机器判定。
+    """
+    fields: dict[str, str] = {}
+    for line in str(text or "").splitlines():
+        m = RECORD_FIELD_RE.match(line)
+        if m:
+            fields.setdefault(m.group(1), m.group(2).strip())
+    return fields
+
+
+def parse_record_cases(value: str) -> list[str]:
+    """解析 cases 字段：优先 JSON 数组（生成器的写法），否则退回逗号分隔。"""
+    text = str(value or "").strip()
+    if not text:
+        return []
+    if text.startswith("["):
+        try:
+            data = json.loads(text)
+        except json.JSONDecodeError:
+            data = None
+        if isinstance(data, list):
+            return [str(x).strip() for x in data if str(x).strip()]
+    inner = text.strip("[]")
+    out = []
+    for part in inner.split(","):
+        p = part.strip().strip("`\"'")
+        if p:
+            out.append(p)
+    return out
+
+
+def parse_record_time(value: str) -> datetime | None:
+    """解析记录/报告里的时间戳。
+
+    口径与 scripts/gen_test_records.py 的 parse_report_time 一致：报告时间戳
+    形如 "2026-11-27 01:35 HKT"，记录时间戳是 ISO 8601（带 +08:00 偏移）；
+    没有时区标注的时间按项目本地时区 HKT(+08:00) 解释。
+    """
+    text = str(value or "").strip()
+    if not text:
+        return None
+    m = RECORD_TS_RE.match(text)
+    if not m:
+        return None
+    year, month, day, hour, minute, second, tz = m.groups()
+    tzinfo = LOCAL_TZ
+    if tz:
+        label = tz.upper()
+        if label in ("Z", "UTC"):
+            tzinfo = timezone.utc
+        elif label in ("HKT", "CST"):
+            tzinfo = LOCAL_TZ
+        else:
+            sign = 1 if tz[0] == "+" else -1
+            body = tz[1:].replace(":", "")
+            tzinfo = timezone(sign * timedelta(hours=int(body[:2]),
+                                               minutes=int(body[2:4])))
+    try:
+        return datetime(int(year), int(month), int(day), int(hour or 0),
+                        int(minute or 0), int(second or 0), tzinfo=tzinfo)
+    except ValueError:
+        return None
+
+
+def _report_case_index(report: dict) -> tuple[dict, dict]:
+    """索引报告里的用例：[(按完整 id), (按 Class.method 短名 → 状态集合)]。
+
+    短名用于容忍记录里省略模块前缀的写法；但短名若对应多个状态，一律视为
+    「对不上」——宁可判红，也不猜。
+    """
+    full: dict[str, str] = {}
+    short: dict[str, set] = {}
+    for case in report.get("cases") or []:
+        if not isinstance(case, dict):
+            continue
+        cid = str(case.get("id") or "")
+        status = str(case.get("status") or "")
+        if not cid:
+            continue
+        full[cid] = status
+        if "." in cid:
+            short.setdefault(cid.split(".", 1)[1], set()).add(status)
+    return full, short
+
+
+def _case_status(case_id: str, full: dict, short: dict) -> str | None:
+    """查用例状态；查不到返回 None（= 不存在，不能算通过）。"""
+    if case_id in full:
+        return full[case_id]
+    statuses = short.get(case_id)
+    if statuses and len(statuses) == 1:
+        return next(iter(statuses))
+    return None
+
+
+def _load_test_report(gov_dir: Path) -> tuple[dict | None, str | None, str]:
+    """读当前测试报告与其字节摘要。返回 (报告, sha256, 说明)。"""
+    path = Path(gov_dir) / "test_report.json"
+    if not path.is_file():
+        return None, None, "无测试报告"
+    try:
+        raw = path.read_bytes()
+        report = json.loads(raw.decode("utf-8"))
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
+        return None, None, f"测试报告不可解析：{exc}"
+    if not isinstance(report, dict):
+        return None, None, "测试报告不是对象"
+    return report, hashlib.sha256(raw).hexdigest(), ""
+
+
+def _git_index_files(repo_root: Path) -> set | None:
+    """读 git index 的文件全集；读不到（非 git 环境 / 无 git）返回 None。
+
+    None 表示「无法核对入库状态」，不是「不入库」——只有能读到 index 时才判未入库。
+    index 读到了但是空的（新仓库没 add 过）也算「读到了」：此时任何文件都未入库。
+    """
+    try:
+        proc = subprocess.run(
+            ["git", "-C", str(repo_root), "ls-files", "-z"],
+            capture_output=True, check=True, timeout=30,
+        )
+    except (OSError, subprocess.SubprocessError):
+        return None
+    names = [n for n in proc.stdout.decode("utf-8", "replace").split("\0") if n]
+    return set(names)
+
+
+def _declared_test_records(registry: dict | None) -> list:
+    """registry 里显式声明的 test_records：[(能力码, 声明路径, 项目根相对目录)]。
+
+    编码只走 registry_codec.cap_code——不写第二套 codec，避免迁移期身份漂移。
+    """
+    out: list = []
+    if not isinstance(registry, dict):
+        return out
+    for project in normalize_projects(registry):
+        pcode = project["code"]
+        proj_rel = str(project.get("root") or ".")
+        for module in project.get("modules") or []:
+            mcode = str(module.get("code", "CORE") or "CORE").strip().upper()
+            for index, raw in enumerate(module.get("caps") or [], 1):
+                cap = raw if isinstance(raw, dict) else {}
+                declared = cap.get("test_records")
+                if not isinstance(declared, list):
+                    continue
+                domain = str(cap.get("domain", "ITEM") or "ITEM").strip().upper()
+                code = registry_cap_code(pcode, mcode, domain, index,
+                                         cap.get("code"))
+                for item in declared:
+                    path = str(item or "").strip()
+                    if path:
+                        out.append((code, path, proj_rel))
+    return out
+
+
+def _resolve_record_path(repo_root: Path, raw: str, proj_rel: str) -> Path | None:
+    """把声明路径解析成真实文件（与生成器 resolve_declared 同口径）。
+
+    先按仓库根找，再按项目根找——registry 里的声明通常是项目内相对路径。
+    """
+    candidates = [repo_root / raw]
+    if proj_rel and proj_rel != ".":
+        candidates.append(repo_root / proj_rel / raw)
+    for c in candidates:
+        if c.is_file():
+            return c
+    return None
+
+
+def _relative_to(path: Path, root: Path) -> str | None:
+    try:
+        return path.resolve().relative_to(root.resolve()).as_posix()
+    except (OSError, ValueError):
+        return None
+
+
+def _reconcile_record(fields: dict, report: dict, report_sha: str,
+                      report_time: datetime | None) -> list:
+    """四路并重里可判的部分：返回该记录的错误列表（空列表 = 对账通过）。"""
+    errs: list[str] = []
+    # R2 报告对账：记录必须绑定当前报告的字节
+    if str(fields.get("source_sha256") or "").strip() != report_sha:
+        errs.append("source_sha256 与当前测试报告不一致（拿旧记录冒充新证据？）")
+    raw_gen = str(report.get("generated_at") or "")
+    rec_raw_gen = str(fields.get("report_generated_at") or "").strip()
+    if rec_raw_gen and raw_gen and rec_raw_gen != raw_gen:
+        errs.append(f"report_generated_at={rec_raw_gen} ≠ 报告 {raw_gen}")
+    # R3 用例真实性：声明的用例必须真实存在且通过
+    full, short = _report_case_index(report)
+    for case in parse_record_cases(fields.get("cases")):
+        status = _case_status(case, full, short)
+        if status is None:
+            errs.append(f"用例 {case} 不在当前测试报告里")
+        elif status != "pass":
+            errs.append(f"用例 {case} 状态={status}（非 pass）")
+    # R4 时间序：记录不得早于报告
+    rec_time = parse_record_time(fields.get("generated_at"))
+    if rec_time is None:
+        errs.append(f"generated_at 无法解析：{fields.get('generated_at')!r}")
+    elif report_time is not None and rec_time < report_time:
+        errs.append(f"generated_at 早于报告生成时间"
+                    f"（{rec_time.isoformat()} < {report_time.isoformat()}）")
+    return errs
+
+
+def check_test_record_evidence(repo_root: Path, registry: dict | None,
+                               caps: list, gov_dir: Path) -> tuple:
+    """第 32 条：L4 测试记录证据有效性。返回 (status, detail)。
+
+    三态：
+      - fail：范围内有记录对不上（声明了却不存在 / 哈希不符 / 用例不存在 / 时间倒置）；
+      - pass：范围内每份记录都完成四路对账；
+      - na：范围内没有记录（未启用），或存在机器字段缺失的旧记录（格式旧 ≠ 伪造）。
+    """
+    scope = _declared_test_records(registry)
+    seen_raw: set = set()
+    for c in caps:
+        for item in (c.get("doc_index") or {}).get("test_records") or []:
+            p = item.get("path") if isinstance(item, dict) else item
+            path = str(p or "").strip()
+            if not path:
+                continue
+            key = (str(c.get("code") or ""), path)
+            if key in seen_raw:
+                continue
+            seen_raw.add(key)
+            scope.append((key[0], path, ""))
+
+    if not scope:
+        return "na", "未声明测试记录证据（范围内无记录）"
+
+    report, report_sha, report_err = _load_test_report(gov_dir)
+    report_time = parse_record_time(report.get("generated_at")) if report else None
+    index = _git_index_files(repo_root)
+
+    errors: list[str] = []
+    legacy: list[str] = []
+    verified = 0
+    files = 0
+    seen_files: set = set()
+    for code, raw, proj_rel in scope:
+        found = _resolve_record_path(repo_root, raw, proj_rel)
+        if found is None:
+            files += 1
+            errors.append(f"{code}:声明的测试记录不存在 {raw}")
+            continue
+        rel = _relative_to(found, repo_root)
+        if rel is not None and rel in seen_files:
+            continue
+        if rel is not None:
+            seen_files.add(rel)
+        files += 1
+        # R1 声明真实性：存在 + 已入库（读不到 git index 时只核对存在）
+        if index is not None and rel is not None and rel not in index:
+            errors.append(f"{code}:测试记录未入库 {rel}")
+            continue
+        fields = parse_record_fields(found.read_text(encoding="utf-8"))
+        missing = [f for f in RECORD_REQUIRED_FIELDS
+                   if not str(fields.get(f) or "").strip()]
+        if missing:
+            legacy.append(f"{code}:缺机器字段 {missing}")
+            continue
+        if report is None or report_sha is None:
+            legacy.append(f"{code}:{report_err}，无法对账")
+            continue
+        errs = _reconcile_record(fields, report, report_sha, report_time)
+        if errs:
+            errors.append(f"{code}:{errs[0]}")
+            continue
+        if report_time is None:
+            legacy.append(f"{code}:报告 generated_at 不可解析，时间序无法核对")
+            continue
+        verified += 1
+
+    if errors:
+        return "fail", f"记录 {files} 份 · 错误={errors[:5]}"
+    if verified and not legacy:
+        return "pass", f"记录 {files} 份 · 四路对账全通过"
+    if verified:
+        return "na", (f"记录 {files} 份 · 通过 {verified} 份，"
+                      f"旧格式/不可核对 {len(legacy)} 份：{legacy[:3]}")
+    return "na", f"记录 {files} 份 · 均为旧格式（缺机器字段）：{legacy[:3]}"
 
 
 def verify(repo_root: Path, ledger: dict, registry: dict | None,
@@ -1009,6 +1339,14 @@ def verify(repo_root: Path, ledger: dict, registry: dict | None,
         add("analytics_test_results_detail_valid", not t_errors,
             (f"测试明细一致：{expected_detail}" if not t_errors
              else f"错误={t_errors[:5]}"))
+
+    # 32. 测试记录证据有效性（v2.30.0）：L4 证据必须与当前测试报告对得上。
+    #     四路并重 + 三态：无记录声明 → na；旧格式（缺机器字段）→ na；
+    #     任一路对不上 → fail；范围内每份记录都对账通过 → pass。
+    rec_status, rec_detail = check_test_record_evidence(
+        repo_root, registry, caps, gov_dir)
+    add("test_record_evidence_valid", rec_status == "pass", rec_detail,
+        status=rec_status)
 
     return results
 

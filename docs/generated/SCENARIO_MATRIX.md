@@ -73,7 +73,7 @@
 | U4 | 时间 | 项目内手改已安装的 SKILL.md / EXPERT.md | A3 | 已覆盖 | asset_bundle.py verify 报 drift，upgrade.py verify 的 installed_assets 项 warn，upgrade_complete=false；必须重新批准 M7 安装 | `tests.views.test_assets.AssetsTest.test_installed_copy_drift_is_detected` |
 | U5 | 时间 | 专家/技能升级后 Agent 仍用旧卡片 | A2 | 已覆盖 | route_expert.py 读取真实 EXPERT.md / SKILL.md frontmatter 并把资产摘要写进路由结果；缺文件即 --check-assets fail-closed | `tests.views.test_assets.AssetsTest.test_router_consumes_installed_assets` |
 | V1 | 视图 | 模块 / 组件上看不到 TODO 与 issue | A1 | 已覆盖 | work_items 按 scope 覆盖项目/模块/能力编码；nodeWork 与 work_panel.py nodes 用同一规则复算，节点卡片显示条数、健康度并可下钻 | `tests.views.test_work_panel.WorkPanelTest.test_node_summary_scopes_work_items` |
-| V2 | 视图 | 手填测试结果投影伪造全绿 | A2 | 已覆盖 | test_results.source_sha256 必须等于当前 test_report.json 的 sha256；31 条不变量里 test_results_binding_valid 会拦下 | `tests.views.test_work_panel.WorkPanelTest.test_tampered_projection_fails_verifier` |
+| V2 | 视图 | 手填测试结果投影伪造全绿 | A2 | 已覆盖 | test_results.source_sha256 必须等于当前 test_report.json 的 sha256；32 条不变量里 test_results_binding_valid 会拦下 | `tests.views.test_work_panel.WorkPanelTest.test_tampered_projection_fails_verifier` |
 | V3 | 视图 | 新项目尚无工作态数据 | A5 | 已覆盖 | 工作台/工作项视图与节点条在无 work_items / test_results 时显示空态而非报错；全部能力按 declared 显示，不伪装成 verified | `tests.views.test_board_views.BoardViewsTest.test_work_views_degrade_without_data` |
 | T6 | 结构 | 测试文件未按开发模块归属 / 清单漂移 | A1 | 已覆盖 | tests/MODULES.json + 文件内 MODULE_ID + rglob 三方一致才算通过；模块名与标准库冲突也会被拦 | `tests.views.test_test_modules.TestModulesTest.test_map_module_id_and_discovery_agree` |
 

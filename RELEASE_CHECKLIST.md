@@ -10,7 +10,7 @@
 - [x] 文档索引分 8 类 + 关联决策，路径存在性校验
 - [x] 看板 11 个标签视图（含工作台 / 工作项 / 术语与实现）可渲染，节点工作条显示 TODO / issue / 测试；内嵌数据由生成器同步；CSS/DOM/JS 骨架与模板一致，按 PAGE_SIZE 分批
 - [x] 循环协议写入 capability_model
-- [x] 可信性校验器：31 条不变量（含证据分层），支持 --json / --strict
+- [x] 可信性校验器：32 条不变量（含证据分层），支持 --json / --strict
 - [x] 证据分层：declared/verified，run_tests.py 产出实测报告，生成器 --test-report 判定升级
 - [x] 看板显示 tier 徽章与 verified 覆盖率；任务卡携带 tier 与 needs_runtime_verification
 - [x] SELECT 任务队列：生成器产出 next_queue，dry-run 可见，任务卡携带已确认经验

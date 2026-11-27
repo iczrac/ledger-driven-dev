@@ -35,7 +35,7 @@ STAGE_TABLE=(
   "测试|stage_tests|0|测试"
   "测试架构|stage_test_modules|1|测试架构"
   "证据分层|stage_evidence|1|证据分层"
-  "账本校验|stage_verify|1|31 条三态不变量"
+  "账本校验|stage_verify|1|32 条三态不变量"
   "主账本自校验|stage_verify_main|1|主账本自校验"
   "场景矩阵|stage_scenarios|1|场景矩阵"
   "文件布局|stage_layout|1|文件布局"
@@ -188,14 +188,14 @@ PY
   return $rc
 }
 stage_verify(){
-  note '账本不变量（31 条 · pass / fail / na 三态）'
+  note '账本不变量（32 条 · pass / fail / na 三态）'
   python3 "$DEMO/verify_ledger.py" --root . \
     --registry "$DEMO/registry.json" \
     --ledger "$DEMO/DECISION_LEDGER.json" \
     --board "$BOARD_DEMO" --strict
 }
 stage_verify_main(){
-  note '主账本自校验（governance/DECISION_LEDGER.json · 31 条三态）'
+  note '主账本自校验（governance/DECISION_LEDGER.json · 32 条三态）'
   python3 governance/verify_ledger.py --root . --strict
 }
 snapshot(){
@@ -389,7 +389,7 @@ stage_upgrade_access(){
     --board "$gov/$BOARD_DEMO_NAME" --strict >/dev/null \
     || { rm -rf "$tmp"; return 1; }
   rm -rf "$tmp"
-  echo '  升级计划/备份/复验、第七轴本体绑定、可用资产、节点工作台、注册批准、写入审计、默认拒绝、31 条三态不变量均通过'
+  echo '  升级计划/备份/复验、第七轴本体绑定、可用资产、节点工作台、注册批准、写入审计、默认拒绝、32 条三态不变量均通过'
 }
 stage_contracts(){
   note '资产 / 看板骨架 / 规模预算 / 节点工作台契约'

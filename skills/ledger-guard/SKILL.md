@@ -1,7 +1,7 @@
 ---
 name: ledger-guard
 description: |
-  统一质量门禁：一条命令跑完单元测试、31 条账本不变量、生成器幂等、看板 EMBED 一致、
+  统一质量门禁：一条命令跑完单元测试、32 条账本不变量、生成器幂等、看板 EMBED 一致、
   模板与示例同步、脱敏扫描。提交前、CI、发布前都用它，不允许只跑其中一部分。
   Triggers: "提交前检查", "全量验证", "CI", "发布前检查", "check",
   "测试都过了吗", "门禁", "guard", "quality gate"
@@ -37,7 +37,7 @@ bash scripts/check.sh
 
 # 等价的显式分解（排错时用）
 python3 -m unittest discover -s tests -v          # 1. 单元与集成测试
-python3 governance/verify_ledger.py --root . --strict   # 2. 31 条不变量
+python3 governance/verify_ledger.py --root . --strict   # 2. 32 条不变量
 python3 scripts/doc_lifecycle.py lint --target . --json  # 3. 文档结构/链接/状态词；串起 doc lint 与义务门禁
 python3 scripts/doc_lifecycle.py check --target . --json # 4. 五项文档不变量（shadow）
 bash scripts/check.sh --only-doc-lifecycle        # 5. 文档生命周期（shadow）阶段
@@ -47,7 +47,7 @@ bash scripts/check.sh --only-idempotence           # 6. 连续重跑幂等
 ## 检查项
 
 1. **测试**：`unittest discover`，覆盖等级判定、指纹、历史链、校验器负向、技能纪律；
-2. **账本**：`verify --strict`，31（30 pass + 1 na）；
+2. **账本**：`verify --strict`，32（31 pass + 1 na）；
 3. **幂等**：连续重跑生成器，事件数 / 指纹 / 候选 id / 任务卡必须完全一致；
 4. **同步**：看板 EMBED 与账本一致；模板脚本与示例副本一致；
 5. **脱敏**：无来源项目内部代号与专有名词残留；

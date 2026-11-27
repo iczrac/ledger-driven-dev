@@ -16,7 +16,7 @@
     {
       "path": "scripts/scenario_matrix.py",
       "role": "value_domains",
-      "sha256": "3c30655fb1b3c58db65bfe8c6fff4a9b230f239dc035ed928ee2e96019b5e095"
+      "sha256": "1696978e1d5f699f18911afaf3839742babde5b43cc1339ca5cdece8c4c58dd8"
     },
     {
       "path": "scripts/ledger_feedback.py",
@@ -26,7 +26,7 @@
     {
       "path": "scripts/agent_gateway.py",
       "role": "value_domains",
-      "sha256": "2102eb6e80cee3d236da4dbf0d4e48e28ef37b1ac6045257602e943b7e554403"
+      "sha256": "c8239850e54bdef8084fafcc56e0cf8814871d3894708215fd2a9bcbe2682393"
     },
     {
       "path": "templates/build_capability_model.py",
@@ -36,7 +36,7 @@
     {
       "path": "templates/verify_ledger.py",
       "role": "axioms",
-      "sha256": "7155e43b0135fb01f75d93f6e1ee8412355a32f993439d0fbd1d35cea472b369"
+      "sha256": "f8e281b5704d11b80fc145cca9045f74b85d24eed6f8985ed08ec55fe3c7b10d"
     }
   ],
   "bounded_contexts": [
@@ -768,6 +768,7 @@
     "queue_lessons_confirmed",
     "registry_impls_exist",
     "supersede_chain_consistent",
+    "test_record_evidence_valid",
     "test_results_binding_valid",
     "verified_tier_not_premature",
     "verified_tier_traceable",
@@ -781,10 +782,10 @@
     "entity_types": 16,
     "value_domains": 18,
     "relations": 7,
-    "axioms": 38,
+    "axioms": 39,
     "source_files": 7,
     "polyseme_terms": 3,
     "drift_count": 0
   },
-  "ontology_digest": "50199dea570cb7eb902e270eab9d8aa5d2977c03bb57a2c232fd1abd4acd0424"
+  "ontology_digest": "4bfcbdf272a0a664d945d56f7105443a2b8b1a538c9a4de7ff46236427831d54"
 }

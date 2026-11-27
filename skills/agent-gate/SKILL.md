@@ -112,7 +112,7 @@ NOT    : ledger_decide.py / ledger_lesson.py / lifecycle.py（人工逃生舱，
 
 - `deny` 后**不得**换 agent id / 换动作 / 直接调底层脚本绕过；回路由重新分派。
 - 许可与拒绝都写 `access.audit`（append-only）；`revision` 每次写入 +1。
-- 账本 + 看板 EMBED 由 `ledger_io.write_ledger()` 一起写，31 条不变量不破。
+- 账本 + 看板 EMBED 由 `ledger_io.write_ledger()` 一起写，32 条不变量不破。
 - 网关是**策略执行点，不是 OS 沙箱**：有 shell 的 Agent 仍可绕过，强隔离靠容器 / 只读挂载 / CI 白名单。
 - 不新建 `AGENTS.yaml` / 独立审计日志；不手改 `audit` 或 `revision`。
 

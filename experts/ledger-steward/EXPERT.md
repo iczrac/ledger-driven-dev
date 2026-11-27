@@ -77,7 +77,7 @@ metadata:
 
 ```
 SCAN      → ledger-scan      重跑生成器，刷新能力/历史/候选
-VERIFY    → ledger-verify    31 条不变量，先确认账本没坏
+VERIFY    → ledger-verify    32 条不变量，先确认账本没坏
 SELECT    → 读 next_queue     取一条任务卡（已按完成度升序、已带经验）
 PLAN      → ledger-decide    为任务写一条 proposed 决策
 EXECUTE   → （编码代理）      补契约/实现/单测/测试记录

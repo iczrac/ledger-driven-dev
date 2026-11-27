@@ -29,7 +29,8 @@
         "tests/core/test_derived_issues.py",
         "tests/core/test_maturity_analytics.py",
         "tests/core/test_runtime_signals.py",
-        "tests/core/test_lesson_handoff.py"
+        "tests/core/test_lesson_handoff.py",
+        "tests/core/test_test_record_evidence.py"
       ]
     },
     {

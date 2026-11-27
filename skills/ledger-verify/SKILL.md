@@ -1,7 +1,7 @@
 ---
 name: ledger-verify
 description: |
-  运行 31 条账本不变量校验：编码/完成度/路径/决策链、看板同步、历史链与指纹自证、
+  运行 32 条账本不变量校验：编码/完成度/路径/决策链、看板同步、历史链与指纹自证、
   经验合法性与任务卡经验状态。产出人类可读或机器可读结果，并给出每项失败的修复动作。
   Triggers: "校验账本", "verify", "账本有没有坏", "CI 检查", "历史链断了",
   "完成度对不上", "看板和账本不一致", "validate ledger"
@@ -15,7 +15,7 @@ metadata:
 
 # Ledger Verify
 
-账本的"体检"。只读，不改任何文件。31 条检查一次跑完。
+账本的"体检"。只读，不改任何文件。32 条检查一次跑完。
 
 ## When to Use
 
@@ -26,7 +26,7 @@ metadata:
 | 项 | 值 |
 |---|---|
 | 输入 | `--root`、`--ledger`、`--registry`、`--board` |
-| 输出 | 31 条 `[PASS]/[FAIL]` 结果；`--json` 给机器；`--strict` 失败返回退出码 1 |
+| 输出 | 32 条 `[PASS]/[FAIL]/[NA]` 结果；`--json` 给机器；`--strict` 失败返回退出码 1 |
 | 副作用 | 无（read_only） |
 
 ## 步骤
@@ -52,6 +52,7 @@ python3 governance/verify_ledger.py --root . --strict        # CI 门禁
 | `history_current_matches` | 重跑生成器；若仍失败说明能力状态被手改 |
 | `lessons_valid` / `lesson_candidates_dedup` | confirmed 必须补 `insight` + `action`；候选去重由生成器自动维护 |
 | `queue_lessons_confirmed` | 任务卡只引用 confirmed 经验；先确认或移除该引用 |
+| `test_record_evidence_valid` | L4 测试记录必须与当前 `governance/test_report.json` 对得上：声明的文件要真实存在（声明了却不存在 → **fail**，不再只 WARN）、`source_sha256` 要等于报告字节摘要、`cases` 里的用例要真实存在且已通过、`generated_at` 不得早于报告；旧格式记录（缺机器字段）判 `na` 而非 `fail` |
 
 ## 文档信任不变量（先 shadow，只告警不改状态）
 
