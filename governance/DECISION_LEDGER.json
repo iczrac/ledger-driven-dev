@@ -18809,6 +18809,21 @@
         "risk": "low",
         "assets_digest": "a75ddf6f0fe2b4d3",
         "board_skeleton": "c2a20142d1c41c18"
+      },
+      {
+        "seq": 42,
+        "at": "2026-11-27T06:38:57Z",
+        "action": "apply",
+        "from": "2.29.0",
+        "to": "2.29.0",
+        "approved_by": "iczrac",
+        "migrations": [
+          "M5-method-assets"
+        ],
+        "backup": "20261127T063854Z-b0a4c322",
+        "risk": "low",
+        "assets_digest": "ba11839ce33fc0e8",
+        "board_skeleton": "c2a20142d1c41c18"
       }
     ],
     "tools": {
@@ -18829,7 +18844,14 @@
     },
     "method_assets": {
       "algorithm": "sha256-files-v1",
-      "digest": "a75ddf6f0fe2b4d39e522e45a44b01ab924b13911b9b91eda513e9d84c400d12",
+      "digest": "ba11839ce33fc0e8f9e8242e60fa6e2fbe7ceea7a8eb7dadafe4a999c404f557",
+      "installable_digest": "13f7b61a7c23076e1778a9483d16abda36aa667ad87e5ad58b774e9d7a6291b5",
+      "installable_groups": [
+        "experts",
+        "skills",
+        "templates",
+        "standard"
+      ],
       "file_count": 119,
       "counts": {
         "experts": 9,

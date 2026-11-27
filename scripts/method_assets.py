@@ -50,6 +50,18 @@ ASSET_GROUPS: dict[str, str] = {
     "standard": "docs/STANDARD.md",
 }
 
+# 下游真正消费的资产组：只有这些组变化才需要下游重新批准 method_assets。
+# 其余两组只在本仓生效，对下游判定零影响：
+#   - scripts/*.py：执行工具，改动经 M3-tool-sync 独立同步 governance/*.py 副本，
+#     不改判定规则本身；下游 .workbuddy/ 从不安装 scripts。
+#   - method_docs：给人看的说明文档，不参与任何 verify 判定。
+# 拆出 installable_digest 后，改上述两组不再触发下游整包重批（虚警）。
+INSTALLABLE_GROUPS: tuple[str, ...] = ("experts", "skills", "templates", "standard")
+
+# 契约语义定义在 templates/ 组（build_capability_model / verify_ledger 等模板均归 R），
+# scripts/ 是纯执行工具、不定义判定规则；故不做基于关键字的 T→R 升级——
+# 那在纯快照下几乎恒真，无法判定，且会把「改脚本注释」误判成契约变更。
+
 # 资产齐备性下限：少一个专家/技能都应被 check 拦下，而不是静默算出新摘要。
 MIN_COUNTS = {"experts": 8, "skills": 20, "scripts": 26,
               "templates": 5, "method_docs": 21, "standard": 1}
@@ -75,11 +87,17 @@ def manifest(root: Path = ROOT) -> dict:
             rows.append({"path": rel, "group": group,
                          "sha256": hashlib.sha256(p.read_bytes()).hexdigest()})
     payload = "".join(f"{r['path']}:{r['sha256']}\n" for r in rows)
+    # 只把下游真正消费的组计入 installable_digest。改 scripts/method_docs
+    # 不动这个摘要 → upgrade 不触发 M5 → 下游不必整包重批（消掉虚警）。
+    inst_rows = [r for r in rows if r["group"] in INSTALLABLE_GROUPS]
+    inst_payload = "".join(f"{r['path']}:{r['sha256']}\n" for r in inst_rows)
     return {
         "schema": SCHEMA,
         "algorithm": ALGORITHM,
         "source": ".",
         "digest": hashlib.sha256(payload.encode("utf-8")).hexdigest(),
+        "installable_digest": hashlib.sha256(inst_payload.encode("utf-8")).hexdigest(),
+        "installable_groups": list(INSTALLABLE_GROUPS),
         "file_count": len(rows),
         "counts": counts,
         "groups": sorted(ASSET_GROUPS),

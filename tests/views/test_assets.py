@@ -16,7 +16,8 @@ from asset_bundle import (bundle, check_claims, check_definitions, install,  # n
                           install_plan, read_manifest, verify as assets_verify)
 from route_expert import (asset_root, build as route_build, check_assets,  # noqa: E402
                           installed_manifest_paths, load_assets)
-from upgrade import apply as upgrade_apply, plan as upgrade_plan, verify as upgrade_verify
+from upgrade import (apply as upgrade_apply, assets_need_m5, plan as upgrade_plan,
+                     verify as upgrade_verify)
 from method_assets import manifest as assets_manifest  # noqa: E402
 
 
@@ -252,6 +253,126 @@ class AssetClaimGuardTest(unittest.TestCase):
             bad = check_claims(src)
             self.assertEqual(bad["hits"], 1)
             self.assertEqual(bad["detail"][0]["reason"], "spec_config_unreadable")
+
+
+class InstallableDigestTest(unittest.TestCase):
+    """M5 只应由下游真正消费的资产变更触发；scripts/docs 变更不得造成整包重批虚警。
+
+    双向保护：
+      - 放宽侧：改 scripts/ 或 method_docs → 不触发 M5（消虚警）
+      - 保护侧：改 skills/ 或 templates/ → 必须触发 M5（判定规则变了）
+    """
+
+    def test_installable_digest_excludes_scripts_and_method_docs(self):
+        m = assets_manifest(ROOT)
+        self.assertIn("installable_digest", m)
+        self.assertNotEqual(m["digest"], m["installable_digest"])
+        groups = set(m["installable_groups"])
+        self.assertIn("skills", groups)
+        self.assertIn("experts", groups)
+        self.assertIn("templates", groups)
+        self.assertIn("standard", groups)
+        self.assertNotIn("scripts", groups)
+        self.assertNotIn("method_docs", groups)
+        # 逐档清单仍在（供可诊断化），不受分组摘要影响
+        self.assertEqual(len(m["files"]), m["file_count"])
+
+    def _m5_needed(self, target: Path) -> bool:
+        p = upgrade_plan(target)
+        return any((m.get("id") if isinstance(m, dict) else m) == "M5-method-assets"
+                   for m in p.get("migrations", []))
+
+    def _target_with_installable_digest(self):
+        """真实 demo 副本 + apply 一次，使账本带上 installable_digest（迁移后状态）。"""
+        import contextlib
+        import io
+        ctx = demo_copy()
+        _t, _l, _r, board = ctx.__enter__()
+        target = board.parent.parent
+        with contextlib.redirect_stdout(io.StringIO()):
+            upgrade_apply(target, approved_by="gate-bot")
+        return ctx, target
+
+    def test_scripts_change_does_not_trigger_m5(self):
+        ctx, target = self._target_with_installable_digest()
+        try:
+            probe = ROOT / "scripts" / "board_path.py"
+            original = probe.read_bytes()
+            try:
+                probe.write_bytes(original + b"\n# probe\n")
+                self.assertFalse(self._m5_needed(target),
+                                 "改 scripts/ 不应让下游整包重批")
+            finally:
+                probe.write_bytes(original)
+        finally:
+            ctx.__exit__(None, None, None)
+
+    def test_method_docs_change_does_not_trigger_m5(self):
+        ctx, target = self._target_with_installable_digest()
+        try:
+            docs = sorted(ROOT.glob("docs/[0-9][0-9]-*.md"))
+            self.assertTrue(docs)
+            probe = docs[0]
+            original = probe.read_bytes()
+            try:
+                probe.write_bytes(original + b"\nprobe\n")
+                self.assertFalse(self._m5_needed(target),
+                                 "改说明文档不应让下游整包重批")
+            finally:
+                probe.write_bytes(original)
+        finally:
+            ctx.__exit__(None, None, None)
+
+    def test_skills_change_still_triggers_m5(self):
+        """保护网：判定规则变了必须重批，不得因优化而削弱。"""
+        ctx, target = self._target_with_installable_digest()
+        try:
+            probe = ROOT / "skills" / "ledger-guard" / "SKILL.md"
+            original = probe.read_bytes()
+            try:
+                probe.write_bytes(original + b"\nprobe\n")
+                self.assertTrue(self._m5_needed(target),
+                                "改 skills/ 必须触发 M5——保护网不可削弱")
+            finally:
+                probe.write_bytes(original)
+        finally:
+            ctx.__exit__(None, None, None)
+
+    def test_templates_change_still_triggers_m5(self):
+        """保护网：看板/校验模板是判定规则的一部分。"""
+        ctx, target = self._target_with_installable_digest()
+        try:
+            probe = ROOT / "templates" / "index.html.template"
+            original = probe.read_bytes()
+            try:
+                probe.write_bytes(original + b"\nprobe\n")
+                self.assertTrue(self._m5_needed(target),
+                                "改 templates/ 必须触发 M5")
+            finally:
+                probe.write_bytes(original)
+        finally:
+            ctx.__exit__(None, None, None)
+
+    def test_legacy_ledger_falls_back_to_full_digest(self):
+        """旧账本无 installable_digest 时回退全量 digest 比较——不削弱保护。"""
+        cur = {"digest": "a" * 64, "installable_digest": "b" * 64}
+        # 新账本：分组摘要一致 → 不需重批（即使全量 digest 不同）
+        self.assertFalse(assets_need_m5(
+            {"digest": "stale-full", "installable_digest": "b" * 64}, cur))
+        # 新账本：分组摘要不同 → 需重批
+        self.assertTrue(assets_need_m5(
+            {"digest": "x", "installable_digest": "changed"}, cur))
+        # 旧账本：无分组字段 → 回退全量 digest 比较。因为旧全量摘要的语义
+        # 与新分组摘要不同，首次 apply 必然触发一次 M5（一次性迁移成本，
+        # 写入 installable_digest 后即消失）——绝不静默放行旧账本。
+        self.assertTrue(assets_need_m5({"digest": "a" * 64}, cur))
+        self.assertTrue(assets_need_m5({"digest": "stale-full"}, cur))
+
+    def test_both_digest_fields_have_full_length(self):
+        m = assets_manifest(ROOT)
+        self.assertEqual(len(m["digest"]), 64)
+        self.assertEqual(len(m["installable_digest"]), 64)
+        self.assertEqual(len(m["files"]), m["file_count"])
 
 
 if __name__ == "__main__":

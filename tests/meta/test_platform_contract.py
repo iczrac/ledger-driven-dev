@@ -79,8 +79,10 @@ class AssetsTest(unittest.TestCase):
             self.assertEqual(meta["board_skeleton"]["digest"], template_digest())
             self.assertTrue(verify(target)["upgrade_complete"])
 
-            # 模拟「方法论仓库发了新版、项目账本还记着旧资产」
-            meta["method_assets"]["digest"] = "0" * 64
+            # 模拟「方法论仓库发了新版、项目账本还记着旧资产」。
+            # 改 installable_digest（下游真正消费的资产摘要）：这正是触发 M5 的字段。
+            # 全量 digest 单独漂移属本仓工具/文档变化，不该让下游整包重批（R9）。
+            meta["method_assets"]["installable_digest"] = "0" * 64
             write_ledger(target / "governance", d)  # 只改资产摘要，别顺手弄脏 EMBED
             v = verify(target)
             item = next(c for c in v["checks"] if c["id"] == "method_assets")

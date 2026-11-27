@@ -257,6 +257,18 @@ def _projection_stale(gov: Path, ledger: dict) -> bool:
     return tr.get("source_sha256") != sha256_file(report)
 
 
+def assets_need_m5(recorded: dict, current: dict) -> bool:
+    """是否需要 M5（下游 method_assets 重批）。
+
+    触发以「下游真正消费的资产摘要」(installable_digest) 为准：改 scripts/
+    或 method_docs 不再触发下游整包重批。旧账本无该字段时回退到全量 digest
+    比较——不削弱保护，且下一次 apply 会补写该字段。
+    """
+    inst = recorded.get("installable_digest")
+    compared = inst if isinstance(inst, str) else recorded.get("digest")
+    return compared != current["installable_digest"]
+
+
 def plan(target: Path, source_root: Path = SOURCE_ROOT) -> dict:
     """只读、确定性的升级计划。不写任何文件，不含时间戳。"""
     target = Path(target)
@@ -306,7 +318,7 @@ def plan(target: Path, source_root: Path = SOURCE_ROOT) -> dict:
             needed.append(MIGRATIONS[2])
         if meta.get("method_version") != METHOD_VERSION:
             needed.append(MIGRATIONS[3])
-        if recorded_assets.get("digest") != assets["digest"]:
+        if assets_need_m5(recorded_assets, assets):
             needed.append(MIGRATIONS[4])
         if not bcheck["match"]:
             needed.append(MIGRATIONS[5])
@@ -473,6 +485,11 @@ def apply(target: Path, approved_by: str, *,
     meta["tools"] = {r["path"]: r["expected_sha256"] for r in p["tools"]}
     meta["method_assets"] = {
         "algorithm": assets["algorithm"], "digest": assets["digest"],
+        # installable_digest 只覆盖下游真正消费的组（experts/skills/templates/standard）。
+        # M5 的触发以它为准：改 scripts/ 或 docs/ 不再让下游整包重批。
+        # 全量 digest 仍保留，供需要看全仓资产漂移的场合使用（向后兼容）。
+        "installable_digest": assets["installable_digest"],
+        "installable_groups": assets["installable_groups"],
         "file_count": assets["file_count"], "counts": assets["counts"],
         "source": "方法论仓库 tag（权威源，不复制；只读副本由 M7 安装）",
     }
@@ -544,13 +561,19 @@ def verify(target: Path, source_root: Path = SOURCE_ROOT) -> dict:
             f"接入登记 {acc.get('schema', '缺失')}",
             "" if acc.get("schema") == ACCESS_SCHEMA else "升级会建立默认拒绝的 access 登记")
 
-        want_assets = assets_manifest(source_root)["digest"]
+        # 与 plan() 共用同一个判据 assets_need_m5：改 scripts/ 或 docs/ 不算
+        # 「下游需重批」的资产漂移，避免 plan 说无需升级、verify 却 warn 的矛盾。
+        current_assets = assets_manifest(source_root)
         rec = meta.get("method_assets") if isinstance(meta.get("method_assets"), dict) else {}
-        got_assets = rec.get("digest")
-        add("method_assets", "pass" if got_assets == want_assets else "warn",
-            "专家/技能/模板/文档资产摘要一致" if got_assets == want_assets else
+        drifted = assets_need_m5(rec, current_assets)
+        want_assets = current_assets["installable_digest"]
+        got_assets = rec.get("installable_digest")
+        if got_assets is None:  # 旧账本：显示回退比较用的全量摘要，便于诊断
+            got_assets = rec.get("digest")
+        add("method_assets", "warn" if drifted else "pass",
+            "下游消费资产摘要一致" if not drifted else
             f"资产漂移：项目记录 {str(got_assets)[:12] or '缺失'} / 仓库 {want_assets[:12]}",
-            "" if got_assets == want_assets else
+            "" if not drifted else
             "方法论资产已升级；重新 plan → 人批准 apply → 复验")
 
         bcheck = board_check(target, source_root)
