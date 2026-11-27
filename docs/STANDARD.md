@@ -8,12 +8,16 @@
 |---|---|---|
 | 方法论文档 | `docs/NN-中文标题.md`，NN 两位数字，顺序即阅读顺序 | `docs/09-历史与经验.md` |
 | 规划文档 | `<project>/docs/plans/<HINT>_PLAN.md` 或 `*_ROADMAP.md` | `DATA_PIPELINE_PLAN.md` |
-| 测试记录 | `<project>/docs/test_records/<HINT>_TEST_RECORD.md` | `PRICE_TEST_RECORD.md` |
+| 测试记录 | `<project>/docs/test_records/<CAP_CODE>_TEST_RECORD.md`（由生成器派生，禁止手改） | `METHOD.GOV.FEEDBACK.01_TEST_RECORD.md` |
 | 决策 | 只在账本 `entries`，id `D-NNN`，永不复用 | `D-003` |
 | 经验 | 只在账本 `lessons.items`，id `L-NNN`；候选 `LC-XXXXXX` | `L-001` |
 | 能力编码 | `{项目}.{模块}.{能力域}.{NN}` | `DEMO.CORE.PRICE.02` |
 
 **文件名里的 HINT 必须与 `registry.json` 中该能力的 `hints` 匹配**，否则生成器识别不到，能力不会升级。这是最容易被忽略的约定，已沉淀为示例经验 `L-001`。
+
+**测试记录是例外**：它由 `scripts/gen_test_records.py` 从测试报告派生，文件名用能力码一一对应
+（`<CAP_CODE>_TEST_RECORD.md`），走 registry `caps[].test_records` 声明优先，不靠 HINT 匹配；
+存量项目里的 `<HINT>_TEST_RECORD.md` 属旧格式（无机器字段），按 na 处理。
 
 ## 二、每篇方法论文档的必备结构
 

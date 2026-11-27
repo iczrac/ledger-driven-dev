@@ -69,9 +69,9 @@ unexpected 非空  → 不要直接删；先确认是不是人工报告，裁决
 
 | 层 | 路径 | 能否手改 |
 |---|---|---|
-| 业务层 | `src/`、`tests/`、`docs/plans/`、`docs/test_records/` | 可，位置不变 |
+| 业务层 | `src/`、`tests/`、`docs/plans/` | 可，位置不变 |
 | 事实源层 | `governance/registry.json`、账本 `entries` | 可，但按纪律（唯一清单 / 脚本写入） |
-| 派生层 | 账本 `capability_model` / `history` / `lessons`、`index.html` 的 EMBED、`governance/*.json`、`docs/generated/*` | **禁**，改事实源后重跑 |
+| 派生层 | 账本 `capability_model` / `history` / `lessons`、`index.html` 的 EMBED、`governance/*.json`、`docs/generated/*`、`docs/test_records/*` | **禁**，改事实源后重跑 |
 | 工具层 | `governance/*.py` 三个模板副本 | **禁**在目标项目里改，升级靠 `upgrade.py` 同步 |
 | 草稿层 | `registry.draft.json`、`ADOPTION_REPORT.md` | 人工精简后才可成为事实源 |
 | 运行时层 | `.ledger-upgrade/`、`.ledger-write.lock` | 不是事实源；备份/锁由脚本管理 |

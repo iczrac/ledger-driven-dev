@@ -24,9 +24,9 @@
 |---|---|---|---|---|---|---|---|---|
 | `src/` | 业务层 | 引入前可能已有 | 原有资产，不强制 | 开发者 | `manual` | 可 | 建议提交 git | 实现代码。registry 的 impls 必须指向这里真实存在的文件。　保护：registry.impls 路径校验。 |
 | `tests/` | 业务层 | 引入前可能已有 | 原有资产，不强制 | 开发者 | `manual` | 可 | 建议提交 git | 单元测试。文件名与 unit_test 声明匹配，测试报告绑定其内容摘要。　保护：evidence_binding 源码摘要。　注：测试源码改动后 verified 会自动回落 declared，需重跑测试报告。 |
-| `docs/` | 业务层 | 引入前可能已有 | 原有资产，不强制 | 开发者 | `manual` | 可 | 建议提交 git | 人工文档根目录；其下再分 plans / test_records / generated。　保护：doc_index 路径校验。 |
+| `docs/` | 业务层 | 引入前可能已有 | 原有资产，不强制 | 开发者 | `manual` | 可 | 建议提交 git | 文档根目录；其下再分 plans（人工）/ test_records（由测试报告派生）/ generated（机器渲染）。　保护：doc_index 路径校验。 |
 | `docs/plans/` | 业务层 | 引入前可能已有 | 原有资产，不强制 | 开发者 | `manual` | 可 | 建议提交 git | 规划文档 <HINT>_PLAN.md / *_ROADMAP.md，是 L1 契约证据之一。　保护：HINT 文件名匹配。　注：HINT 必须与 registry 的能力 hints 一致，否则生成器识别不到。 |
-| `docs/test_records/` | 业务层 | 引入前可能已有 | 原有资产，不强制 | 开发者 | `manual` | 可 | 建议提交 git | 测试记录 <HINT>_TEST_RECORD.md，是 L4 运行验证证据之一。　保护：HINT 文件名匹配。　注：与 docs/generated/ 区分：这里是人写的实测记录，那里是机器渲染。 |
+| `docs/test_records/` | 派生层 | 引入前可能已有 | 跑对应命令后才出现（不出现属正常） | gen_test_records.py | `rewrite` | 禁 | 建议提交 git | 测试记录 <CAP_CODE>_TEST_RECORD.md，是 L4 运行验证证据；由生成器从 governance/test_report.json 派生。　保护：registry test_records 声明 / source_sha256 对账 / 用例真实性 / 时间序。　注：禁止手改：重跑 scripts/gen_test_records.py 即可复算；文件名用能力码一一对应，不靠 hints 匹配（registry 声明优先）。存量项目里的手写旧记录缺机器字段，按 na 处理而非 fail。 |
 | `governance/` | 事实源层 | 引入方案后新增 | 治理骨架必需 | init_project.py | `bootstrap` | 禁 | 建议提交 git | 治理目录：事实源、派生报告与工具副本都收敛在此，不另建管理项目。　保护：scenario_guard 越界文件检查。　注：此目录出现清单外的自制报告 / 第二份账本会被 --diff 报为越界。 |
 | `governance/registry.json` | 事实源层 | 引入方案后新增 | 治理骨架必需 | 人（唯一手写清单） | `manual` | 可 | 建议提交 git | 能力注册表：项目信息、模块清单、impls / hints / unit_test 声明。全项目唯一需手填的清单。　保护：registry_impls_exist / component_paths_exist。　注：新建为空清单；存量接入来自人工确认后的 registry.draft.json。多人同改仍需 git 合并。 |
 | `governance/DECISION_LEDGER.json` | 事实源层 | 引入方案后新增 | 治理骨架必需 | 生成器 / 决策脚本 / 生命周期脚本 | `rewrite` | 禁 | 建议提交 git | 单一事实源：entries 决策、capability_model 派生结果、history、lessons、lifecycle 全在这里。　保护：32 条不变量 / --expect-fingerprint CAS / frozen 冻结 / 看板 EMBED 同步。　注：可以写 entries（经 ledger_decide.py），但 level / completion / history / EMBED 一律自动派生，禁止手改。 |

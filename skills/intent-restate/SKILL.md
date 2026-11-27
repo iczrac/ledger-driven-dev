@@ -45,7 +45,7 @@ metadata:
   "restatement": "用 agent 自己的话复述的底层目标（不得逐字照抄）",
   "intents": ["code"],
   "capabilities": ["PROJ.MODULE.DOMAIN.NN"],
-  "write_scope": ["docs/test_records/**"],
+  "write_scope": ["docs/plans/**"],
   "open_questions": []
 }
 ```

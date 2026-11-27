@@ -60,7 +60,8 @@ lint：<pass|fail>  骨架待填：<是|否>  下一步负责人：ledger-stewar
 |---|---|---|
 | 读账本、任务卡、经验、源码、文档 | 允许 | 无 |
 | 写 `docs/**` 正文（含 `kind=doc` 卡） | 允许 | 一次只做一张卡；骨架不得标 compliant |
-| 写 `src/**`、`tests/**`、`docs/test_records/**` | 允许 | 只围绕当前任务卡的证据缺口 |
+| 写 `src/**`、`tests/**` | 允许 | 只围绕当前任务卡的证据缺口 |
+| 手写 `docs/test_records/**` | **禁止** | 测试记录是派生层：由 `gen_test_records.py` 从测试报告派生，手写会变成撑等级的空壳 |
 | 新增 `proposed` 决策 | 允许（经 `ledger_decide.py`） | 一能力一决策，引用真实证据 |
 | 手改 `level` / `completion` / `history.events` / `EMBED` | **禁止** | 只能由生成器派生 |
 | 清空或重写既有测试让报告变绿 | **禁止** | 必须说明修改原因并保留原意图 |

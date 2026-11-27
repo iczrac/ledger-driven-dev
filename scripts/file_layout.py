@@ -88,16 +88,26 @@ ENTRIES: list[dict] = [
          note="测试源码改动后 verified 会自动回落 declared，需重跑测试报告。", expect=""),
     dict(path="docs/", kind="dir", layer="业务层", origin="preexisting", presence="preexisting",
          owner="开发者", producer="", write="manual", commit="yes", guard="doc_index 路径校验",
-         purpose="人工文档根目录；其下再分 plans / test_records / generated。", note="", expect=""),
+         purpose="文档根目录；其下再分 plans（人工）/ test_records（由测试报告派生）/ generated（机器渲染）。",
+         note="", expect=""),
     dict(path="docs/plans/", kind="dir", layer="业务层", origin="preexisting", presence="preexisting",
          owner="开发者", producer="", write="manual", commit="yes", guard="HINT 文件名匹配",
          purpose="规划文档 <HINT>_PLAN.md / *_ROADMAP.md，是 L1 契约证据之一。",
          note="HINT 必须与 registry 的能力 hints 一致，否则生成器识别不到。", expect=""),
-    dict(path="docs/test_records/", kind="dir", layer="业务层", origin="preexisting",
-         presence="preexisting", owner="开发者", producer="", write="manual", commit="yes",
-         guard="HINT 文件名匹配",
-         purpose="测试记录 <HINT>_TEST_RECORD.md，是 L4 运行验证证据之一。",
-         note="与 docs/generated/ 区分：这里是人写的实测记录，那里是机器渲染。", expect=""),
+    # v2.30.0：测试记录由生成器从测试报告派生，不再是人手写的三行摘要。
+    # 手写记录没有任何新鲜度检查——日期硬编码、用例名编造，空壳也能永久撑住
+    # 一个 L4。改为派生后，写法变成「事实源（测试报告 + registry 声明）→ 记录」，
+    # 与 docs/generated/ 同属派生层，只是来源不同（那里是 registry + 账本）。
+    dict(path="docs/test_records/", kind="dir", layer="派生层", origin="preexisting",
+         presence="on-demand", owner="gen_test_records.py",
+         producer="scripts/gen_test_records.py", write="rewrite", commit="yes",
+         guard="registry test_records 声明 / source_sha256 对账 / 用例真实性 / 时间序",
+         purpose="测试记录 <CAP_CODE>_TEST_RECORD.md，是 L4 运行验证证据；"
+                 "由生成器从 governance/test_report.json 派生。",
+         note="禁止手改：重跑 scripts/gen_test_records.py 即可复算；"
+              "文件名用能力码一一对应，不靠 hints 匹配（registry 声明优先）。"
+              "存量项目里的手写旧记录缺机器字段，按 na 处理而非 fail。",
+         expect="ledger-test-record/1"),
 
     # ---------------- 事实源层 ----------------
     dict(path="governance/", kind="dir", layer="事实源层", origin="new", presence="required",
