@@ -164,6 +164,10 @@ LESSONS_SPEC = {
     "purpose": "从历史沉淀可复用经验：机器识别候选信号，人/AI 确认后补充洞察与行动，任务卡自动携带相关经验。",
     "workflow": [
         "生成器从历史产生 candidates（降级 / 长期停滞 / 决策被取代），不替人下结论；",
+        "同一根因只出一条候选：停滞信号按（缺失证据层级, 目标等级）聚成族候选，"
+        "受影响能力点列在 affected_capabilities；",
+        "候选 reason 只陈述事实（谁、缺哪一级证据、持续几个事件、当前等级与完成度），"
+        "因果由人赋予意义；每条候选附可执行 next_action，指不出下一步的候选不产出；",
         "人/AI 将候选确认成 items，填写 insight（学到了什么）与 action（下次怎么做）；",
         "next_queue 按 scope 匹配 confirmed 经验并附到任务卡，让下一轮站在前人结论上开工。",
     ],
@@ -1121,8 +1125,124 @@ def diff_has_changes(diff: dict) -> bool:
                                      "completion_delta", "evidence_changes"))
 
 
-def build_lesson_candidates(ledger: dict, events: list[dict]) -> list[dict]:
-    """从历史识别可沉淀信号——机器只标记候选，洞察与行动由人/AI 补。"""
+# ------------------------------ 经验候选：根因签名与族候选 ------------------------------
+# 判定链（judge_level，本文件内）：contract→L1 · impl→L2 · unit_test→L3 ·
+# test_record→L4 ·（level>=4 且 governance_gate）→L5。level 取「已达成阶梯」的最大值，
+# 所以「停在哪一级」唯一决定「下一级缺哪一类证据」——缺的证据层级可由 state_digest.l
+# 严格反推，签名里不含任何账本推不出的东西。
+#
+# 粒度：同一个根因只出一条候选（族候选）。逐能力点各出一条，会把「一个原因」复制成
+# N 份症状——人要写 N 遍 insight+action，根因却只有一个。族签名 =
+# (kind, 缺失证据层级, 目标等级)；成员集合怎么变签名都不变，故同族 id 恒定。
+NEXT_EVIDENCE_RUNG = {1: "impl", 2: "unit_test", 3: "test_record", 4: "governance"}
+RUNG_LABEL = {
+    "no_evidence": "无任何证据（contract / impl / unit_test / test_record 均为空）",
+    "impl": "L2 impl（实现文件）",
+    "unit_test": "L3 unit_test（单元测试）",
+    "test_record": "L4 test_record（测试记录）",
+    "governance": "L5 governance（治理门禁）",
+}
+
+
+def root_cause_signature(state: dict) -> tuple[str, int]:
+    """由 state_digest 反推根因签名：(缺失证据层级, 目标等级)。
+
+    只读 state_digest.l——等级是证据阶梯的最大值，因此 l=3 等价于「test_record 缺失」，
+    l=0 等价于「四类证据全空」。不引入账本推不出的字段。
+    """
+    try:
+        level = int(state.get("l", 0))
+    except (TypeError, ValueError):
+        level = 0
+    if level <= 0:
+        # 等级 0 ⇒ 四类证据全空（等级取阶梯最大值），证据列表 e 必为空。
+        return "no_evidence", 1
+    rung = NEXT_EVIDENCE_RUNG.get(level)
+    if rung is None:
+        return "", 5
+    return rung, min(level + 1, 5)
+
+
+def project_gov_dirs(codes: list[str], projects: list[dict]) -> list[str]:
+    """能力点所属项目的治理目录（相对仓库根）：<项目根>/governance。"""
+    dirs: list[str] = []
+    for code in codes:
+        for p in projects or []:
+            pcode = str(p.get("code") or "")
+            if pcode and code.startswith(pcode + "."):
+                root = str(p.get("root") or ".").strip("/")
+                d = f"{root}/governance" if root not in ("", ".") else "governance"
+                if d not in dirs:
+                    dirs.append(d)
+                break
+    return dirs or ["governance"]
+
+
+def stagnation_next_action(rung: str, target: int, count: int, gov_dirs: list[str]) -> str:
+    """族候选的可执行下一步：指向真实存在的文件与命令。
+
+    纪律：给不出可执行下一步的候选不产出——否则候选退化成症状清单，
+    人拿到一堆症状也做不出任何一件事。
+    """
+    rule = LEVELS.get(target, {}).get("rule", "")
+    code = LEVELS.get(target, {}).get("code", f"L{target}")
+    gov = gov_dirs[0] if gov_dirs else "governance"
+    registry = f"{gov}/registry.json"
+    steps = {
+        "no_evidence": [
+            f"在 {registry} 对应 cap 上补 impl 声明并落地真实实现文件；",
+            "同一 cap 补 tests 声明与真实单测文件"
+            "（等级随证据逐级上升：contract→L1、impl→L2、unit_test→L3）；",
+            "若该能力点本轮不排期，先从 registry 摘除或标 committed=false，别让它以 L0 占位。",
+        ],
+        "impl": [
+            f"在 {registry} 对应 cap 上补 impl 声明并落地真实实现文件；",
+            "同一 cap 补 tests 声明与真实单测文件。",
+        ],
+        "unit_test": [
+            f"在 {registry} 对应 cap 上补 tests 声明与真实单测文件；",
+            "或在 registry 的 unit_test_dir 下放文件名命中该 cap hints 的测试文件。",
+        ],
+        "test_record": [
+            f"在 {registry} 对应 cap 上补 test_records 声明；",
+            "或在 registry 的 test_record_dir 下放文件名命中该 cap hints 的 .md 记录"
+            "（文件名不命中 hints 时证据不被识别，等级不会动）。",
+        ],
+        "governance": [
+            f"确认 {gov}/ 目录存在，且 {registry} 的 project.governance_gate=true。",
+        ],
+    }
+    body_steps = steps.get(rung)
+    if not body_steps:
+        return ""
+    numbered: list[str] = []
+    for i, s in enumerate(body_steps, start=1):
+        numbered.append(f"{'①②③④⑤⑥⑦⑧'[i - 1]} {s}")
+    multi = ""
+    if len(gov_dirs) > 1:
+        multi = (f"涉及多个项目治理目录（{'、'.join(gov_dirs)}），"
+                 f"以下以 {gov} 为例，其余同理。")
+    nxt = len(numbered) + 1
+    marks = "①②③④⑤⑥⑦⑧"
+    tail = (f"{marks[nxt - 1]} 重算：`python3 {gov}/build_capability_model.py --root . "
+            f"--registry {registry} --ledger {gov}/DECISION_LEDGER.json "
+            f"--test-report {gov}/test_report.json --strict-evidence`"
+            f"（无实测报告时去掉 --test-report，但 tier 只会是 declared）；"
+            f"{marks[nxt]} 复验：`python3 {gov}/verify_ledger.py --root . --strict`"
+            f"（确认等级跃迁且无新增不变量失败）。")
+    return (f"{multi}把这 {count} 个能力点从当前等级推到 {code}"
+            f"（{RUNG_LABEL.get(rung, rung)}；判定规则：{rule}）。"
+            f"{''.join(numbered)}{tail}")
+
+
+def build_lesson_candidates(ledger: dict, events: list[dict],
+                             model: dict | None = None) -> list[dict]:
+    """从历史识别可沉淀信号——机器只标记候选，洞察与行动由人/AI 补。
+
+    粒度：同一个根因只出一条候选（族候选）。逐能力点各出一条，会把「一个原因」
+    复制成 N 份症状；人要写 N 遍 insight+action，根因却只有一个。
+    族签名 = (kind, 缺失证据层级, 目标等级)，只由 state_digest 可复算的字段构成。
+    """
     prior = list(ledger.get("lessons", {}).get("candidates", []))
     lessons_now = ledger.get("lessons", {})
     dismissed = [c for c in prior if c.get("status") == "dismissed"]
@@ -1133,15 +1253,27 @@ def build_lesson_candidates(ledger: dict, events: list[dict]) -> list[dict]:
         if x.get("from_candidate")
     }
     out: list[dict] = []
+    projects = (model or {}).get("projects", [])
 
-    def add(kind: str, ref: str, reason: str, source: list[int], scope: dict) -> None:
-        cid = "LC-" + hashlib.sha1((kind + ":" + ref).encode("utf-8")).hexdigest()[:6].upper()
+    def add(kind: str, sig: str, reason: str, source: list[int], scope: dict,
+            **extra) -> None:
+        """按信号签名生成稳定 id：同族恒定，与成员数量无关。
+
+        纪律闸门：产不出的候选一律不产出——给不出可执行下一步的信号对人是噪音，
+        只会把人的注意力摊薄到症状上。故 next_action 缺失即丢弃（本函数静默跳过，
+        不报错：那说明这条信号还没想清楚怎么落地，不该占人的确认队列）。
+        """
+        cid = "LC-" + hashlib.sha1((kind + ":" + sig).encode("utf-8")).hexdigest()[:6].upper()
         if cid in known:  # 稳定 id 去重：已确认或已驳回的候选不重复出现
             return
+        if not str(extra.get("next_action") or "").strip():
+            return
         known.add(cid)
-        out.append({"id": cid, "kind": kind, "reason": reason,
-                    "source_events": source, "suggested_scope": scope,
-                    "status": "open", "origin": "derive"})
+        cand = {"id": cid, "kind": kind, "reason": reason,
+                "source_events": source, "suggested_scope": scope,
+                "status": "open", "origin": "derive"}
+        cand.update(extra)
+        out.append(cand)
 
     # 规则 1：能力降级——证据消失是最值得复盘的事件
     for ev in events:
@@ -1155,19 +1287,74 @@ def build_lesson_candidates(ledger: dict, events: list[dict]) -> list[dict]:
                 add("downgrade", t.get("code", ""),
                     f"能力 {t.get('code')} 从 {t.get('from')} 回落到 {t.get('to')}；"
                     f"需查清是证据文件删除、路径变更还是判定规则变化，并记录防范措施。",
-                    [ev.get("seq")], {"capabilities": [t.get("code")]})
+                    [ev.get("seq")], {"capabilities": [t.get("code")]},
+                    affected_capabilities=[t.get("code", "")],
+                    next_action=(
+                        f"查清 {t.get('code')} 掉级的原因：对照 {t.get('from')} 所需的证据清单，"
+                        f"逐项核对证据文件是否被删除、路径是否变更、判定规则是否改动；"
+                        f"补回缺失证据后重跑生成器确认等级回升。"
+                        f"若确认是有意降级，在 decisions 中记明理由并把能力点移出待办范围。"))
 
     # 规则 2：长期停滞——最近若干事件完成度不变且未达 L5
+    # 同源合并：窗口内完成度不变的能力点按「根因签名」聚成一条族候选。
+    # 签名 = (kind, 缺失证据层级, 目标等级)，成员是全部受影响能力点。
     recent = [e for e in events if e.get("state_digest")][-3:]
     if len(recent) >= 2:
-        first, last = recent[0], recent[-1]
-        for code, s in (last.get("state_digest") or {}).items():
-            b = (first.get("state_digest") or {}).get(code)
-            if b and b.get("c") == s.get("c") and int(s.get("l", 5)) < 5:
-                add("stagnation", code,
-                    f"能力 {code} 连续 {len(recent)} 个事件停在 {float(s.get('c', 0)):.0%}"
-                    f"（L{s.get('l')}），未补齐下一级证据；宜判断是优先级问题还是阻塞。",
-                    [e.get("seq") for e in recent], {"capabilities": [code]})
+        window = len(recent)
+        seqs = [e.get("seq") for e in recent]
+        families: dict[tuple[str, int], dict] = {}
+        for code, s in (recent[-1].get("state_digest") or {}).items():
+            digests = [(e.get("state_digest") or {}).get(code) for e in recent]
+            if any(d is None for d in digests):
+                continue
+            # 窗口内每一个事件的完成度都与首事件相等，才算「持续未变」
+            if not all(d.get("c") == digests[0].get("c") for d in digests):
+                continue
+            try:
+                level = int(s.get("l", 5))
+            except (TypeError, ValueError):
+                continue
+            if level >= 5:
+                continue
+            rung, target = root_cause_signature(s)
+            if not rung:
+                continue
+            fam = families.setdefault((target, rung), {
+                "codes": [], "completions": {}, "events": set()})
+            fam["codes"].append(code)
+            comp = s.get("c")
+            fam["completions"][comp] = fam["completions"].get(comp, 0) + 1
+            fam["events"].update(seqs)
+        for (target, rung), fam in sorted(families.items()):
+            codes = sorted(fam["codes"])
+            # 事实句：谁、缺哪一级证据、持续几个事件、当前等级与完成度。
+            # 不写因果结论——「为什么停住」由人赋予意义（ledger 纪律）。
+            comp_txt = "、".join(
+                f"{float(c):.0%}（{n}/{len(codes)}）"
+                for c, n in sorted(fam["completions"].items(), key=lambda kv: float(kv[0]))
+            )
+            reason = (
+                f"停滞信号：{len(codes)} 个能力点在连续 {window} 个事件"
+                f"（{'、'.join('#' + str(x) for x in seqs)}）中完成度未变；"
+                f"当前等级 {LEVELS.get(target - 1, {}).get('code', 'L0')}、完成度 {comp_txt}；"
+                f"缺失证据层级：{RUNG_LABEL.get(rung, rung)}。"
+                f"受影响能力点（{len(codes)}）：{'、'.join(codes)}。"
+            )
+            gov_dirs = project_gov_dirs(codes, projects)
+            action = stagnation_next_action(rung, target, len(codes), gov_dirs)
+            if not action:
+                continue  # 给不出可执行下一步的候选不产出
+            add("stagnation", f"{rung}:L{target}", reason,
+                sorted(fam["events"]), {"capabilities": codes},
+                affected_capabilities=codes,
+                next_action=action,
+                root_cause={
+                    "signature": f"stagnation:{rung}:L{target}",
+                    "missing_evidence": rung,
+                    "current_level": target - 1,
+                    "target_level": target,
+                    "event_window": list(seqs),
+                })
 
     # 规则 3：决策被取代——原判断为何失效值得沉淀
     for e in ledger.get("entries", []):
@@ -1175,7 +1362,13 @@ def build_lesson_candidates(ledger: dict, events: list[dict]) -> list[dict]:
             add("superseded_decision", e.get("id", ""),
                 f"决策 {e.get('id')} 取代了 {e.get('supersedes')}；"
                 f"应沉淀原判断失效的原因，避免同类误判再次发生。",
-                [], {"decisions": [e.get("id"), e.get("supersedes")]})
+                [], {"decisions": [e.get("id"), e.get("supersedes")]},
+                affected_capabilities=[e.get("id", "")],
+                next_action=(
+                    f"对比决策 {e.get('supersedes')} 与取代它的 {e.get('id')}："
+                    f"逐条比对其成立前提与当前事实，写明原判断为何失效、"
+                    f"以及这次取代能防止哪一类误判；"
+                    f"若原判断的前提仍然成立，说明这次取代的理由不足，应回退。"))
 
     # 已驳回的候选保留（避免反复提示），其余按规则稳定重算
     return dismissed + out
@@ -1216,7 +1409,7 @@ def evolve(ledger: dict, model: dict, ts: str) -> dict | None:
     lessons = ledger.setdefault("lessons", {"spec": LESSONS_SPEC, "items": [], "candidates": []})
     lessons["spec"] = LESSONS_SPEC
     lessons.setdefault("items", [])
-    lessons["candidates"] = build_lesson_candidates(ledger, events)
+    lessons["candidates"] = build_lesson_candidates(ledger, events, model)
 
     model["history"] = {
         "spec": HISTORY_SPEC, "event_count": len(events),

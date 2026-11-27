@@ -2,7 +2,7 @@
   "ledger_version": "1.0",
   "title": "Ledger-Driven Dev 方法论仓库（自举） 决策与能力账本",
   "purpose": "单一事实源：决策、裁决、待办及能力索引的唯一写入点。",
-  "last_updated": "2026-11-27 01:12 HKT",
+  "last_updated": "2026-11-27 08:37 HKT",
   "owner": "待定",
   "provenance": {
     "mode": "greenfield",
@@ -9424,6 +9424,8 @@
       "purpose": "从历史沉淀可复用经验：机器识别候选信号，人/AI 确认后补充洞察与行动，任务卡自动携带相关经验。",
       "workflow": [
         "生成器从历史产生 candidates（降级 / 长期停滞 / 决策被取代），不替人下结论；",
+        "同一根因只出一条候选：停滞信号按（缺失证据层级, 目标等级）聚成族候选，受影响能力点列在 affected_capabilities；",
+        "候选 reason 只陈述事实（谁、缺哪一级证据、持续几个事件、当前等级与完成度），因果由人赋予意义；每条候选附可执行 next_action，指不出下一步的候选不产出；",
         "人/AI 将候选确认成 items，填写 insight（学到了什么）与 action（下次怎么做）；",
         "next_queue 按 scope 匹配 confirmed 经验并附到任务卡，让下一轮站在前人结论上开工。"
       ],
@@ -9441,281 +9443,9 @@
     "items": [],
     "candidates": [
       {
-        "id": "LC-BF3304",
+        "id": "LC-B4EE47",
         "kind": "stagnation",
-        "reason": "能力 METHOD.GOV.FEEDBACK.01 连续 3 个事件停在 60%（L3），未补齐下一级证据；宜判断是优先级问题还是阻塞。",
-        "source_events": [
-          33,
-          34,
-          35
-        ],
-        "suggested_scope": {
-          "capabilities": [
-            "METHOD.GOV.FEEDBACK.01"
-          ]
-        },
-        "status": "open",
-        "origin": "derive"
-      },
-      {
-        "id": "LC-07BF55",
-        "kind": "stagnation",
-        "reason": "能力 METHOD.GOV.UPGRADE.02 连续 3 个事件停在 60%（L3），未补齐下一级证据；宜判断是优先级问题还是阻塞。",
-        "source_events": [
-          33,
-          34,
-          35
-        ],
-        "suggested_scope": {
-          "capabilities": [
-            "METHOD.GOV.UPGRADE.02"
-          ]
-        },
-        "status": "open",
-        "origin": "derive"
-      },
-      {
-        "id": "LC-68FE1B",
-        "kind": "stagnation",
-        "reason": "能力 METHOD.GOV.PANEL.03 连续 3 个事件停在 60%（L3），未补齐下一级证据；宜判断是优先级问题还是阻塞。",
-        "source_events": [
-          33,
-          34,
-          35
-        ],
-        "suggested_scope": {
-          "capabilities": [
-            "METHOD.GOV.PANEL.03"
-          ]
-        },
-        "status": "open",
-        "origin": "derive"
-      },
-      {
-        "id": "LC-46F3F4",
-        "kind": "stagnation",
-        "reason": "能力 METHOD.GOV.LAYOUT.04 连续 3 个事件停在 60%（L3），未补齐下一级证据；宜判断是优先级问题还是阻塞。",
-        "source_events": [
-          33,
-          34,
-          35
-        ],
-        "suggested_scope": {
-          "capabilities": [
-            "METHOD.GOV.LAYOUT.04"
-          ]
-        },
-        "status": "open",
-        "origin": "derive"
-      },
-      {
-        "id": "LC-C9C517",
-        "kind": "stagnation",
-        "reason": "能力 METHOD.GOV.ASSETS.05 连续 3 个事件停在 60%（L3），未补齐下一级证据；宜判断是优先级问题还是阻塞。",
-        "source_events": [
-          33,
-          34,
-          35
-        ],
-        "suggested_scope": {
-          "capabilities": [
-            "METHOD.GOV.ASSETS.05"
-          ]
-        },
-        "status": "open",
-        "origin": "derive"
-      },
-      {
-        "id": "LC-D7CEFE",
-        "kind": "stagnation",
-        "reason": "能力 METHOD.GOV.TESTMAP.06 连续 3 个事件停在 60%（L3），未补齐下一级证据；宜判断是优先级问题还是阻塞。",
-        "source_events": [
-          33,
-          34,
-          35
-        ],
-        "suggested_scope": {
-          "capabilities": [
-            "METHOD.GOV.TESTMAP.06"
-          ]
-        },
-        "status": "open",
-        "origin": "derive"
-      },
-      {
-        "id": "LC-AB7EBF",
-        "kind": "stagnation",
-        "reason": "能力 METHOD.GOV.BINDING.07 连续 3 个事件停在 60%（L3），未补齐下一级证据；宜判断是优先级问题还是阻塞。",
-        "source_events": [
-          33,
-          34,
-          35
-        ],
-        "suggested_scope": {
-          "capabilities": [
-            "METHOD.GOV.BINDING.07"
-          ]
-        },
-        "status": "open",
-        "origin": "derive"
-      },
-      {
-        "id": "LC-7AB0A1",
-        "kind": "stagnation",
-        "reason": "能力 METHOD.GOV.RESTATE.08 连续 3 个事件停在 60%（L3），未补齐下一级证据；宜判断是优先级问题还是阻塞。",
-        "source_events": [
-          33,
-          34,
-          35
-        ],
-        "suggested_scope": {
-          "capabilities": [
-            "METHOD.GOV.RESTATE.08"
-          ]
-        },
-        "status": "open",
-        "origin": "derive"
-      },
-      {
-        "id": "LC-155F39",
-        "kind": "stagnation",
-        "reason": "能力 METHOD.GOV.ORCH.09 连续 3 个事件停在 60%（L3），未补齐下一级证据；宜判断是优先级问题还是阻塞。",
-        "source_events": [
-          33,
-          34,
-          35
-        ],
-        "suggested_scope": {
-          "capabilities": [
-            "METHOD.GOV.ORCH.09"
-          ]
-        },
-        "status": "open",
-        "origin": "derive"
-      },
-      {
-        "id": "LC-1A8C0E",
-        "kind": "stagnation",
-        "reason": "能力 METHOD.GOV.ANNOT.10 连续 3 个事件停在 60%（L3），未补齐下一级证据；宜判断是优先级问题还是阻塞。",
-        "source_events": [
-          33,
-          34,
-          35
-        ],
-        "suggested_scope": {
-          "capabilities": [
-            "METHOD.GOV.ANNOT.10"
-          ]
-        },
-        "status": "open",
-        "origin": "derive"
-      },
-      {
-        "id": "LC-E3D7F7",
-        "kind": "stagnation",
-        "reason": "能力 METHOD.GOV.BOARD.11 连续 3 个事件停在 60%（L3），未补齐下一级证据；宜判断是优先级问题还是阻塞。",
-        "source_events": [
-          33,
-          34,
-          35
-        ],
-        "suggested_scope": {
-          "capabilities": [
-            "METHOD.GOV.BOARD.11"
-          ]
-        },
-        "status": "open",
-        "origin": "derive"
-      },
-      {
-        "id": "LC-7E8350",
-        "kind": "stagnation",
-        "reason": "能力 METHOD.GOV.VISUAL.12 连续 3 个事件停在 60%（L3），未补齐下一级证据；宜判断是优先级问题还是阻塞。",
-        "source_events": [
-          33,
-          34,
-          35
-        ],
-        "suggested_scope": {
-          "capabilities": [
-            "METHOD.GOV.VISUAL.12"
-          ]
-        },
-        "status": "open",
-        "origin": "derive"
-      },
-      {
-        "id": "LC-BE78CC",
-        "kind": "stagnation",
-        "reason": "能力 METHOD.GOV.WORKBENCH.13 连续 3 个事件停在 60%（L3），未补齐下一级证据；宜判断是优先级问题还是阻塞。",
-        "source_events": [
-          33,
-          34,
-          35
-        ],
-        "suggested_scope": {
-          "capabilities": [
-            "METHOD.GOV.WORKBENCH.13"
-          ]
-        },
-        "status": "open",
-        "origin": "derive"
-      },
-      {
-        "id": "LC-FD12E3",
-        "kind": "stagnation",
-        "reason": "能力 METHOD.GOV.ANALYTICS.14 连续 3 个事件停在 60%（L3），未补齐下一级证据；宜判断是优先级问题还是阻塞。",
-        "source_events": [
-          33,
-          34,
-          35
-        ],
-        "suggested_scope": {
-          "capabilities": [
-            "METHOD.GOV.ANALYTICS.14"
-          ]
-        },
-        "status": "open",
-        "origin": "derive"
-      },
-      {
-        "id": "LC-045AFF",
-        "kind": "stagnation",
-        "reason": "能力 METHOD.GOV.D3.15 连续 3 个事件停在 60%（L3），未补齐下一级证据；宜判断是优先级问题还是阻塞。",
-        "source_events": [
-          33,
-          34,
-          35
-        ],
-        "suggested_scope": {
-          "capabilities": [
-            "METHOD.GOV.D3.15"
-          ]
-        },
-        "status": "open",
-        "origin": "derive"
-      },
-      {
-        "id": "LC-F45F16",
-        "kind": "stagnation",
-        "reason": "能力 METHOD.GOV.RUNTIME.16 连续 3 个事件停在 60%（L3），未补齐下一级证据；宜判断是优先级问题还是阻塞。",
-        "source_events": [
-          33,
-          34,
-          35
-        ],
-        "suggested_scope": {
-          "capabilities": [
-            "METHOD.GOV.RUNTIME.16"
-          ]
-        },
-        "status": "open",
-        "origin": "derive"
-      },
-      {
-        "id": "LC-8FEF63",
-        "kind": "stagnation",
-        "reason": "能力 METHOD.GOV.DOCLIFE.17 连续 3 个事件停在 0%（L0），未补齐下一级证据；宜判断是优先级问题还是阻塞。",
+        "reason": "停滞信号：1 个能力点在连续 3 个事件（#33、#34、#35）中完成度未变；当前等级 L0、完成度 0%（1/1）；缺失证据层级：无任何证据（contract / impl / unit_test / test_record 均为空）。受影响能力点（1）：METHOD.GOV.DOCLIFE.17。",
         "source_events": [
           33,
           34,
@@ -9727,7 +9457,84 @@
           ]
         },
         "status": "open",
-        "origin": "derive"
+        "origin": "derive",
+        "affected_capabilities": [
+          "METHOD.GOV.DOCLIFE.17"
+        ],
+        "next_action": "把这 1 个能力点从当前等级推到 L1（无任何证据（contract / impl / unit_test / test_record 均为空）；判定规则：contracts/ 目录有契约文件）。① 在 governance/registry.json 对应 cap 上补 impl 声明并落地真实实现文件；② 同一 cap 补 tests 声明与真实单测文件（等级随证据逐级上升：contract→L1、impl→L2、unit_test→L3）；③ 若该能力点本轮不排期，先从 registry 摘除或标 committed=false，别让它以 L0 占位。④ 重算：`python3 governance/build_capability_model.py --root . --registry governance/registry.json --ledger governance/DECISION_LEDGER.json --test-report governance/test_report.json --strict-evidence`（无实测报告时去掉 --test-report，但 tier 只会是 declared）；⑤ 复验：`python3 governance/verify_ledger.py --root . --strict`（确认等级跃迁且无新增不变量失败）。",
+        "root_cause": {
+          "signature": "stagnation:no_evidence:L1",
+          "missing_evidence": "no_evidence",
+          "current_level": 0,
+          "target_level": 1,
+          "event_window": [
+            33,
+            34,
+            35
+          ]
+        }
+      },
+      {
+        "id": "LC-AF40F2",
+        "kind": "stagnation",
+        "reason": "停滞信号：16 个能力点在连续 3 个事件（#33、#34、#35）中完成度未变；当前等级 L3、完成度 60%（16/16）；缺失证据层级：L4 test_record（测试记录）。受影响能力点（16）：METHOD.GOV.ANALYTICS.14、METHOD.GOV.ANNOT.10、METHOD.GOV.ASSETS.05、METHOD.GOV.BINDING.07、METHOD.GOV.BOARD.11、METHOD.GOV.D3.15、METHOD.GOV.FEEDBACK.01、METHOD.GOV.LAYOUT.04、METHOD.GOV.ORCH.09、METHOD.GOV.PANEL.03、METHOD.GOV.RESTATE.08、METHOD.GOV.RUNTIME.16、METHOD.GOV.TESTMAP.06、METHOD.GOV.UPGRADE.02、METHOD.GOV.VISUAL.12、METHOD.GOV.WORKBENCH.13。",
+        "source_events": [
+          33,
+          34,
+          35
+        ],
+        "suggested_scope": {
+          "capabilities": [
+            "METHOD.GOV.ANALYTICS.14",
+            "METHOD.GOV.ANNOT.10",
+            "METHOD.GOV.ASSETS.05",
+            "METHOD.GOV.BINDING.07",
+            "METHOD.GOV.BOARD.11",
+            "METHOD.GOV.D3.15",
+            "METHOD.GOV.FEEDBACK.01",
+            "METHOD.GOV.LAYOUT.04",
+            "METHOD.GOV.ORCH.09",
+            "METHOD.GOV.PANEL.03",
+            "METHOD.GOV.RESTATE.08",
+            "METHOD.GOV.RUNTIME.16",
+            "METHOD.GOV.TESTMAP.06",
+            "METHOD.GOV.UPGRADE.02",
+            "METHOD.GOV.VISUAL.12",
+            "METHOD.GOV.WORKBENCH.13"
+          ]
+        },
+        "status": "open",
+        "origin": "derive",
+        "affected_capabilities": [
+          "METHOD.GOV.ANALYTICS.14",
+          "METHOD.GOV.ANNOT.10",
+          "METHOD.GOV.ASSETS.05",
+          "METHOD.GOV.BINDING.07",
+          "METHOD.GOV.BOARD.11",
+          "METHOD.GOV.D3.15",
+          "METHOD.GOV.FEEDBACK.01",
+          "METHOD.GOV.LAYOUT.04",
+          "METHOD.GOV.ORCH.09",
+          "METHOD.GOV.PANEL.03",
+          "METHOD.GOV.RESTATE.08",
+          "METHOD.GOV.RUNTIME.16",
+          "METHOD.GOV.TESTMAP.06",
+          "METHOD.GOV.UPGRADE.02",
+          "METHOD.GOV.VISUAL.12",
+          "METHOD.GOV.WORKBENCH.13"
+        ],
+        "next_action": "把这 16 个能力点从当前等级推到 L4（L4 test_record（测试记录）；判定规则：docs/test_records/ 有测试记录）。① 在 governance/registry.json 对应 cap 上补 test_records 声明；② 或在 registry 的 test_record_dir 下放文件名命中该 cap hints 的 .md 记录（文件名不命中 hints 时证据不被识别，等级不会动）。③ 重算：`python3 governance/build_capability_model.py --root . --registry governance/registry.json --ledger governance/DECISION_LEDGER.json --test-report governance/test_report.json --strict-evidence`（无实测报告时去掉 --test-report，但 tier 只会是 declared）；④ 复验：`python3 governance/verify_ledger.py --root . --strict`（确认等级跃迁且无新增不变量失败）。",
+        "root_cause": {
+          "signature": "stagnation:test_record:L4",
+          "missing_evidence": "test_record",
+          "current_level": 3,
+          "target_level": 4,
+          "event_window": [
+            33,
+            34,
+            35
+          ]
+        }
       }
     ]
   },
@@ -9749,7 +9556,7 @@
   },
   "capability_model": {
     "version": "1.0",
-    "generated_at": "2026-11-27 01:12 HKT",
+    "generated_at": "2026-11-27 08:37 HKT",
     "generator": "templates/build_capability_model.py",
     "purpose": "统一能力编码 + 可复算完成度 + 嵌套组件树 + 文档索引，供规划与编码代理消费。",
     "coding_spec": {
@@ -16834,6 +16641,8 @@
         "purpose": "从历史沉淀可复用经验：机器识别候选信号，人/AI 确认后补充洞察与行动，任务卡自动携带相关经验。",
         "workflow": [
           "生成器从历史产生 candidates（降级 / 长期停滞 / 决策被取代），不替人下结论；",
+          "同一根因只出一条候选：停滞信号按（缺失证据层级, 目标等级）聚成族候选，受影响能力点列在 affected_capabilities；",
+          "候选 reason 只陈述事实（谁、缺哪一级证据、持续几个事件、当前等级与完成度），因果由人赋予意义；每条候选附可执行 next_action，指不出下一步的候选不产出；",
           "人/AI 将候选确认成 items，填写 insight（学到了什么）与 action（下次怎么做）；",
           "next_queue 按 scope 匹配 confirmed 经验并附到任务卡，让下一轮站在前人结论上开工。"
         ],
@@ -16851,281 +16660,9 @@
       "items": [],
       "candidates": [
         {
-          "id": "LC-BF3304",
+          "id": "LC-B4EE47",
           "kind": "stagnation",
-          "reason": "能力 METHOD.GOV.FEEDBACK.01 连续 3 个事件停在 60%（L3），未补齐下一级证据；宜判断是优先级问题还是阻塞。",
-          "source_events": [
-            33,
-            34,
-            35
-          ],
-          "suggested_scope": {
-            "capabilities": [
-              "METHOD.GOV.FEEDBACK.01"
-            ]
-          },
-          "status": "open",
-          "origin": "derive"
-        },
-        {
-          "id": "LC-07BF55",
-          "kind": "stagnation",
-          "reason": "能力 METHOD.GOV.UPGRADE.02 连续 3 个事件停在 60%（L3），未补齐下一级证据；宜判断是优先级问题还是阻塞。",
-          "source_events": [
-            33,
-            34,
-            35
-          ],
-          "suggested_scope": {
-            "capabilities": [
-              "METHOD.GOV.UPGRADE.02"
-            ]
-          },
-          "status": "open",
-          "origin": "derive"
-        },
-        {
-          "id": "LC-68FE1B",
-          "kind": "stagnation",
-          "reason": "能力 METHOD.GOV.PANEL.03 连续 3 个事件停在 60%（L3），未补齐下一级证据；宜判断是优先级问题还是阻塞。",
-          "source_events": [
-            33,
-            34,
-            35
-          ],
-          "suggested_scope": {
-            "capabilities": [
-              "METHOD.GOV.PANEL.03"
-            ]
-          },
-          "status": "open",
-          "origin": "derive"
-        },
-        {
-          "id": "LC-46F3F4",
-          "kind": "stagnation",
-          "reason": "能力 METHOD.GOV.LAYOUT.04 连续 3 个事件停在 60%（L3），未补齐下一级证据；宜判断是优先级问题还是阻塞。",
-          "source_events": [
-            33,
-            34,
-            35
-          ],
-          "suggested_scope": {
-            "capabilities": [
-              "METHOD.GOV.LAYOUT.04"
-            ]
-          },
-          "status": "open",
-          "origin": "derive"
-        },
-        {
-          "id": "LC-C9C517",
-          "kind": "stagnation",
-          "reason": "能力 METHOD.GOV.ASSETS.05 连续 3 个事件停在 60%（L3），未补齐下一级证据；宜判断是优先级问题还是阻塞。",
-          "source_events": [
-            33,
-            34,
-            35
-          ],
-          "suggested_scope": {
-            "capabilities": [
-              "METHOD.GOV.ASSETS.05"
-            ]
-          },
-          "status": "open",
-          "origin": "derive"
-        },
-        {
-          "id": "LC-D7CEFE",
-          "kind": "stagnation",
-          "reason": "能力 METHOD.GOV.TESTMAP.06 连续 3 个事件停在 60%（L3），未补齐下一级证据；宜判断是优先级问题还是阻塞。",
-          "source_events": [
-            33,
-            34,
-            35
-          ],
-          "suggested_scope": {
-            "capabilities": [
-              "METHOD.GOV.TESTMAP.06"
-            ]
-          },
-          "status": "open",
-          "origin": "derive"
-        },
-        {
-          "id": "LC-AB7EBF",
-          "kind": "stagnation",
-          "reason": "能力 METHOD.GOV.BINDING.07 连续 3 个事件停在 60%（L3），未补齐下一级证据；宜判断是优先级问题还是阻塞。",
-          "source_events": [
-            33,
-            34,
-            35
-          ],
-          "suggested_scope": {
-            "capabilities": [
-              "METHOD.GOV.BINDING.07"
-            ]
-          },
-          "status": "open",
-          "origin": "derive"
-        },
-        {
-          "id": "LC-7AB0A1",
-          "kind": "stagnation",
-          "reason": "能力 METHOD.GOV.RESTATE.08 连续 3 个事件停在 60%（L3），未补齐下一级证据；宜判断是优先级问题还是阻塞。",
-          "source_events": [
-            33,
-            34,
-            35
-          ],
-          "suggested_scope": {
-            "capabilities": [
-              "METHOD.GOV.RESTATE.08"
-            ]
-          },
-          "status": "open",
-          "origin": "derive"
-        },
-        {
-          "id": "LC-155F39",
-          "kind": "stagnation",
-          "reason": "能力 METHOD.GOV.ORCH.09 连续 3 个事件停在 60%（L3），未补齐下一级证据；宜判断是优先级问题还是阻塞。",
-          "source_events": [
-            33,
-            34,
-            35
-          ],
-          "suggested_scope": {
-            "capabilities": [
-              "METHOD.GOV.ORCH.09"
-            ]
-          },
-          "status": "open",
-          "origin": "derive"
-        },
-        {
-          "id": "LC-1A8C0E",
-          "kind": "stagnation",
-          "reason": "能力 METHOD.GOV.ANNOT.10 连续 3 个事件停在 60%（L3），未补齐下一级证据；宜判断是优先级问题还是阻塞。",
-          "source_events": [
-            33,
-            34,
-            35
-          ],
-          "suggested_scope": {
-            "capabilities": [
-              "METHOD.GOV.ANNOT.10"
-            ]
-          },
-          "status": "open",
-          "origin": "derive"
-        },
-        {
-          "id": "LC-E3D7F7",
-          "kind": "stagnation",
-          "reason": "能力 METHOD.GOV.BOARD.11 连续 3 个事件停在 60%（L3），未补齐下一级证据；宜判断是优先级问题还是阻塞。",
-          "source_events": [
-            33,
-            34,
-            35
-          ],
-          "suggested_scope": {
-            "capabilities": [
-              "METHOD.GOV.BOARD.11"
-            ]
-          },
-          "status": "open",
-          "origin": "derive"
-        },
-        {
-          "id": "LC-7E8350",
-          "kind": "stagnation",
-          "reason": "能力 METHOD.GOV.VISUAL.12 连续 3 个事件停在 60%（L3），未补齐下一级证据；宜判断是优先级问题还是阻塞。",
-          "source_events": [
-            33,
-            34,
-            35
-          ],
-          "suggested_scope": {
-            "capabilities": [
-              "METHOD.GOV.VISUAL.12"
-            ]
-          },
-          "status": "open",
-          "origin": "derive"
-        },
-        {
-          "id": "LC-BE78CC",
-          "kind": "stagnation",
-          "reason": "能力 METHOD.GOV.WORKBENCH.13 连续 3 个事件停在 60%（L3），未补齐下一级证据；宜判断是优先级问题还是阻塞。",
-          "source_events": [
-            33,
-            34,
-            35
-          ],
-          "suggested_scope": {
-            "capabilities": [
-              "METHOD.GOV.WORKBENCH.13"
-            ]
-          },
-          "status": "open",
-          "origin": "derive"
-        },
-        {
-          "id": "LC-FD12E3",
-          "kind": "stagnation",
-          "reason": "能力 METHOD.GOV.ANALYTICS.14 连续 3 个事件停在 60%（L3），未补齐下一级证据；宜判断是优先级问题还是阻塞。",
-          "source_events": [
-            33,
-            34,
-            35
-          ],
-          "suggested_scope": {
-            "capabilities": [
-              "METHOD.GOV.ANALYTICS.14"
-            ]
-          },
-          "status": "open",
-          "origin": "derive"
-        },
-        {
-          "id": "LC-045AFF",
-          "kind": "stagnation",
-          "reason": "能力 METHOD.GOV.D3.15 连续 3 个事件停在 60%（L3），未补齐下一级证据；宜判断是优先级问题还是阻塞。",
-          "source_events": [
-            33,
-            34,
-            35
-          ],
-          "suggested_scope": {
-            "capabilities": [
-              "METHOD.GOV.D3.15"
-            ]
-          },
-          "status": "open",
-          "origin": "derive"
-        },
-        {
-          "id": "LC-F45F16",
-          "kind": "stagnation",
-          "reason": "能力 METHOD.GOV.RUNTIME.16 连续 3 个事件停在 60%（L3），未补齐下一级证据；宜判断是优先级问题还是阻塞。",
-          "source_events": [
-            33,
-            34,
-            35
-          ],
-          "suggested_scope": {
-            "capabilities": [
-              "METHOD.GOV.RUNTIME.16"
-            ]
-          },
-          "status": "open",
-          "origin": "derive"
-        },
-        {
-          "id": "LC-8FEF63",
-          "kind": "stagnation",
-          "reason": "能力 METHOD.GOV.DOCLIFE.17 连续 3 个事件停在 0%（L0），未补齐下一级证据；宜判断是优先级问题还是阻塞。",
+          "reason": "停滞信号：1 个能力点在连续 3 个事件（#33、#34、#35）中完成度未变；当前等级 L0、完成度 0%（1/1）；缺失证据层级：无任何证据（contract / impl / unit_test / test_record 均为空）。受影响能力点（1）：METHOD.GOV.DOCLIFE.17。",
           "source_events": [
             33,
             34,
@@ -17137,7 +16674,84 @@
             ]
           },
           "status": "open",
-          "origin": "derive"
+          "origin": "derive",
+          "affected_capabilities": [
+            "METHOD.GOV.DOCLIFE.17"
+          ],
+          "next_action": "把这 1 个能力点从当前等级推到 L1（无任何证据（contract / impl / unit_test / test_record 均为空）；判定规则：contracts/ 目录有契约文件）。① 在 governance/registry.json 对应 cap 上补 impl 声明并落地真实实现文件；② 同一 cap 补 tests 声明与真实单测文件（等级随证据逐级上升：contract→L1、impl→L2、unit_test→L3）；③ 若该能力点本轮不排期，先从 registry 摘除或标 committed=false，别让它以 L0 占位。④ 重算：`python3 governance/build_capability_model.py --root . --registry governance/registry.json --ledger governance/DECISION_LEDGER.json --test-report governance/test_report.json --strict-evidence`（无实测报告时去掉 --test-report，但 tier 只会是 declared）；⑤ 复验：`python3 governance/verify_ledger.py --root . --strict`（确认等级跃迁且无新增不变量失败）。",
+          "root_cause": {
+            "signature": "stagnation:no_evidence:L1",
+            "missing_evidence": "no_evidence",
+            "current_level": 0,
+            "target_level": 1,
+            "event_window": [
+              33,
+              34,
+              35
+            ]
+          }
+        },
+        {
+          "id": "LC-AF40F2",
+          "kind": "stagnation",
+          "reason": "停滞信号：16 个能力点在连续 3 个事件（#33、#34、#35）中完成度未变；当前等级 L3、完成度 60%（16/16）；缺失证据层级：L4 test_record（测试记录）。受影响能力点（16）：METHOD.GOV.ANALYTICS.14、METHOD.GOV.ANNOT.10、METHOD.GOV.ASSETS.05、METHOD.GOV.BINDING.07、METHOD.GOV.BOARD.11、METHOD.GOV.D3.15、METHOD.GOV.FEEDBACK.01、METHOD.GOV.LAYOUT.04、METHOD.GOV.ORCH.09、METHOD.GOV.PANEL.03、METHOD.GOV.RESTATE.08、METHOD.GOV.RUNTIME.16、METHOD.GOV.TESTMAP.06、METHOD.GOV.UPGRADE.02、METHOD.GOV.VISUAL.12、METHOD.GOV.WORKBENCH.13。",
+          "source_events": [
+            33,
+            34,
+            35
+          ],
+          "suggested_scope": {
+            "capabilities": [
+              "METHOD.GOV.ANALYTICS.14",
+              "METHOD.GOV.ANNOT.10",
+              "METHOD.GOV.ASSETS.05",
+              "METHOD.GOV.BINDING.07",
+              "METHOD.GOV.BOARD.11",
+              "METHOD.GOV.D3.15",
+              "METHOD.GOV.FEEDBACK.01",
+              "METHOD.GOV.LAYOUT.04",
+              "METHOD.GOV.ORCH.09",
+              "METHOD.GOV.PANEL.03",
+              "METHOD.GOV.RESTATE.08",
+              "METHOD.GOV.RUNTIME.16",
+              "METHOD.GOV.TESTMAP.06",
+              "METHOD.GOV.UPGRADE.02",
+              "METHOD.GOV.VISUAL.12",
+              "METHOD.GOV.WORKBENCH.13"
+            ]
+          },
+          "status": "open",
+          "origin": "derive",
+          "affected_capabilities": [
+            "METHOD.GOV.ANALYTICS.14",
+            "METHOD.GOV.ANNOT.10",
+            "METHOD.GOV.ASSETS.05",
+            "METHOD.GOV.BINDING.07",
+            "METHOD.GOV.BOARD.11",
+            "METHOD.GOV.D3.15",
+            "METHOD.GOV.FEEDBACK.01",
+            "METHOD.GOV.LAYOUT.04",
+            "METHOD.GOV.ORCH.09",
+            "METHOD.GOV.PANEL.03",
+            "METHOD.GOV.RESTATE.08",
+            "METHOD.GOV.RUNTIME.16",
+            "METHOD.GOV.TESTMAP.06",
+            "METHOD.GOV.UPGRADE.02",
+            "METHOD.GOV.VISUAL.12",
+            "METHOD.GOV.WORKBENCH.13"
+          ],
+          "next_action": "把这 16 个能力点从当前等级推到 L4（L4 test_record（测试记录）；判定规则：docs/test_records/ 有测试记录）。① 在 governance/registry.json 对应 cap 上补 test_records 声明；② 或在 registry 的 test_record_dir 下放文件名命中该 cap hints 的 .md 记录（文件名不命中 hints 时证据不被识别，等级不会动）。③ 重算：`python3 governance/build_capability_model.py --root . --registry governance/registry.json --ledger governance/DECISION_LEDGER.json --test-report governance/test_report.json --strict-evidence`（无实测报告时去掉 --test-report，但 tier 只会是 declared）；④ 复验：`python3 governance/verify_ledger.py --root . --strict`（确认等级跃迁且无新增不变量失败）。",
+          "root_cause": {
+            "signature": "stagnation:test_record:L4",
+            "missing_evidence": "test_record",
+            "current_level": 3,
+            "target_level": 4,
+            "event_window": [
+              33,
+              34,
+              35
+            ]
+          }
         }
       ]
     }
@@ -17853,10 +17467,25 @@
         "risk": "low",
         "assets_digest": "e45067bd15702428",
         "board_skeleton": "c2a20142d1c41c18"
+      },
+      {
+        "seq": 38,
+        "at": "2026-11-27T00:38:29Z",
+        "action": "apply",
+        "from": "2.29.0",
+        "to": "2.29.0",
+        "approved_by": "iczrac",
+        "migrations": [
+          "M5-method-assets"
+        ],
+        "backup": "20261127T003829Z-f3b9cd9d",
+        "risk": "low",
+        "assets_digest": "8e158489a0b85ad5",
+        "board_skeleton": "c2a20142d1c41c18"
       }
     ],
     "tools": {
-      "governance/build_capability_model.py": "5523959cc6846cd9c58fc7f7cc0c3f769aa19f9003becedd5521a809f75e9155",
+      "governance/build_capability_model.py": "a0403822f9b20242effd7eca7e1518600e09cc136827a24247f2a20aa845b75d",
       "governance/binding_advisory.py": "e5368433f594854857fff87002430ee692401ec4b7125168b7699cb00f1dde0b",
       "governance/derived_issues.py": "4ff4097765996071e256302f91439a9464a5203840d2df64fb5d93df6ea13a21",
       "governance/verify_ledger.py": "7155e43b0135fb01f75d93f6e1ee8412355a32f993439d0fbd1d35cea472b369",
@@ -17873,7 +17502,7 @@
     },
     "method_assets": {
       "algorithm": "sha256-files-v1",
-      "digest": "e45067bd157024280cbbdf5a29e26e241f530b23cdada5ee7c482350dfb5094d",
+      "digest": "8e158489a0b85ad5466dd288513a12220ba14c192d3e203f864f2bd993148dcf",
       "file_count": 118,
       "counts": {
         "experts": 9,
@@ -17885,7 +17514,7 @@
       },
       "source": "方法论仓库 tag（权威源，不复制；只读副本由 M7 安装）"
     },
-    "ontology_digest": "6824fdec8770a92f08bbb8c453f5509c9ab3c0c7dd7aa1ee0cc301a744c6e081",
+    "ontology_digest": "50199dea570cb7eb902e270eab9d8aa5d2977c03bb57a2c232fd1abd4acd0424",
     "board_skeleton": {
       "digest": "c2a20142d1c41c18bdaa096f1a29740b8ee632d30aef2a4b2a9688190eec89d2",
       "source": "templates/index.html.template",

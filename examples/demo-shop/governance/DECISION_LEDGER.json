@@ -2,7 +2,7 @@
   "ledger_version": "1.0",
   "title": "Demo Shop 决策与能力账本",
   "purpose": "单一事实源：决策、裁决、待办及能力索引的唯一写入点。",
-  "last_updated": "2026-11-26 22:42 HKT",
+  "last_updated": "2026-11-27 08:37 HKT",
   "owner": "示例项目",
   "workflow": [
     "所有重大决策/裁决/待办只写入本文件 entries，不再新建独立报告。",
@@ -292,7 +292,7 @@
   },
   "capability_model": {
     "version": "1.0",
-    "generated_at": "2026-11-26 22:42 HKT",
+    "generated_at": "2026-11-27 08:37 HKT",
     "generator": "templates/build_capability_model.py",
     "purpose": "统一能力编码 + 可复算完成度 + 嵌套组件树 + 文档索引，供规划与编码代理消费。",
     "coding_spec": {
@@ -1612,6 +1612,8 @@
         "purpose": "从历史沉淀可复用经验：机器识别候选信号，人/AI 确认后补充洞察与行动，任务卡自动携带相关经验。",
         "workflow": [
           "生成器从历史产生 candidates（降级 / 长期停滞 / 决策被取代），不替人下结论；",
+          "同一根因只出一条候选：停滞信号按（缺失证据层级, 目标等级）聚成族候选，受影响能力点列在 affected_capabilities；",
+          "候选 reason 只陈述事实（谁、缺哪一级证据、持续几个事件、当前等级与完成度），因果由人赋予意义；每条候选附可执行 next_action，指不出下一步的候选不产出；",
           "人/AI 将候选确认成 items，填写 insight（学到了什么）与 action（下次怎么做）；",
           "next_queue 按 scope 匹配 confirmed 经验并附到任务卡，让下一轮站在前人结论上开工。"
         ],
@@ -1653,9 +1655,9 @@
       ],
       "candidates": [
         {
-          "id": "LC-C1CDBB",
+          "id": "LC-44A47A",
           "kind": "stagnation",
-          "reason": "能力 DEMO.API.QUERY.01 连续 3 个事件停在 40%（L2），未补齐下一级证据；宜判断是优先级问题还是阻塞。",
+          "reason": "停滞信号：1 个能力点在连续 3 个事件（#2、#3、#4）中完成度未变；当前等级 L2、完成度 40%（1/1）；缺失证据层级：L3 unit_test（单元测试）。受影响能力点（1）：DEMO.API.QUERY.01。",
           "source_events": [
             2,
             3,
@@ -1667,7 +1669,22 @@
             ]
           },
           "status": "open",
-          "origin": "derive"
+          "origin": "derive",
+          "affected_capabilities": [
+            "DEMO.API.QUERY.01"
+          ],
+          "next_action": "把这 1 个能力点从当前等级推到 L3（L3 unit_test（单元测试）；判定规则：tests/unit/ 有对应测试）。① 在 examples/demo-shop/governance/registry.json 对应 cap 上补 tests 声明与真实单测文件；② 或在 registry 的 unit_test_dir 下放文件名命中该 cap hints 的测试文件。③ 重算：`python3 examples/demo-shop/governance/build_capability_model.py --root . --registry examples/demo-shop/governance/registry.json --ledger examples/demo-shop/governance/DECISION_LEDGER.json --test-report examples/demo-shop/governance/test_report.json --strict-evidence`（无实测报告时去掉 --test-report，但 tier 只会是 declared）；④ 复验：`python3 examples/demo-shop/governance/verify_ledger.py --root . --strict`（确认等级跃迁且无新增不变量失败）。",
+          "root_cause": {
+            "signature": "stagnation:unit_test:L3",
+            "missing_evidence": "unit_test",
+            "current_level": 2,
+            "target_level": 3,
+            "event_window": [
+              2,
+              3,
+              4
+            ]
+          }
         },
         {
           "id": "LC-E0299A",
@@ -1681,7 +1698,11 @@
             ]
           },
           "status": "open",
-          "origin": "derive"
+          "origin": "derive",
+          "affected_capabilities": [
+            "D-003"
+          ],
+          "next_action": "对比决策 D-002 与取代它的 D-003：逐条比对其成立前提与当前事实，写明原判断为何失效、以及这次取代能防止哪一类误判；若原判断的前提仍然成立，说明这次取代的理由不足，应回退。"
         }
       ]
     }
@@ -2079,6 +2100,8 @@
       "purpose": "从历史沉淀可复用经验：机器识别候选信号，人/AI 确认后补充洞察与行动，任务卡自动携带相关经验。",
       "workflow": [
         "生成器从历史产生 candidates（降级 / 长期停滞 / 决策被取代），不替人下结论；",
+        "同一根因只出一条候选：停滞信号按（缺失证据层级, 目标等级）聚成族候选，受影响能力点列在 affected_capabilities；",
+        "候选 reason 只陈述事实（谁、缺哪一级证据、持续几个事件、当前等级与完成度），因果由人赋予意义；每条候选附可执行 next_action，指不出下一步的候选不产出；",
         "人/AI 将候选确认成 items，填写 insight（学到了什么）与 action（下次怎么做）；",
         "next_queue 按 scope 匹配 confirmed 经验并附到任务卡，让下一轮站在前人结论上开工。"
       ],
@@ -2120,9 +2143,9 @@
     ],
     "candidates": [
       {
-        "id": "LC-C1CDBB",
+        "id": "LC-44A47A",
         "kind": "stagnation",
-        "reason": "能力 DEMO.API.QUERY.01 连续 3 个事件停在 40%（L2），未补齐下一级证据；宜判断是优先级问题还是阻塞。",
+        "reason": "停滞信号：1 个能力点在连续 3 个事件（#2、#3、#4）中完成度未变；当前等级 L2、完成度 40%（1/1）；缺失证据层级：L3 unit_test（单元测试）。受影响能力点（1）：DEMO.API.QUERY.01。",
         "source_events": [
           2,
           3,
@@ -2134,7 +2157,22 @@
           ]
         },
         "status": "open",
-        "origin": "derive"
+        "origin": "derive",
+        "affected_capabilities": [
+          "DEMO.API.QUERY.01"
+        ],
+        "next_action": "把这 1 个能力点从当前等级推到 L3（L3 unit_test（单元测试）；判定规则：tests/unit/ 有对应测试）。① 在 examples/demo-shop/governance/registry.json 对应 cap 上补 tests 声明与真实单测文件；② 或在 registry 的 unit_test_dir 下放文件名命中该 cap hints 的测试文件。③ 重算：`python3 examples/demo-shop/governance/build_capability_model.py --root . --registry examples/demo-shop/governance/registry.json --ledger examples/demo-shop/governance/DECISION_LEDGER.json --test-report examples/demo-shop/governance/test_report.json --strict-evidence`（无实测报告时去掉 --test-report，但 tier 只会是 declared）；④ 复验：`python3 examples/demo-shop/governance/verify_ledger.py --root . --strict`（确认等级跃迁且无新增不变量失败）。",
+        "root_cause": {
+          "signature": "stagnation:unit_test:L3",
+          "missing_evidence": "unit_test",
+          "current_level": 2,
+          "target_level": 3,
+          "event_window": [
+            2,
+            3,
+            4
+          ]
+        }
       },
       {
         "id": "LC-E0299A",
@@ -2148,7 +2186,11 @@
           ]
         },
         "status": "open",
-        "origin": "derive"
+        "origin": "derive",
+        "affected_capabilities": [
+          "D-003"
+        ],
+        "next_action": "对比决策 D-002 与取代它的 D-003：逐条比对其成立前提与当前事实，写明原判断为何失效、以及这次取代能防止哪一类误判；若原判断的前提仍然成立，说明这次取代的理由不足，应回退。"
       }
     ]
   },
