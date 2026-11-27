@@ -6,22 +6,22 @@
 
 | 编码 | 名称 | 当前等级 | 证据分层 | 目标等级 |
 |---|---|---|---|---|
-| METHOD.GOV.FEEDBACK.01 | 反向回流观察通道 | L3 | verified | L4 |
-| METHOD.GOV.UPGRADE.02 | 升级与迁移引擎 | L3 | verified | no_target |
-| METHOD.GOV.PANEL.03 | 节点工作台 | L3 | verified | no_target |
-| METHOD.GOV.LAYOUT.04 | 文件布局契约 | L3 | verified | L4 |
-| METHOD.GOV.ASSETS.05 | 方法资产清单 | L3 | verified | L4 |
-| METHOD.GOV.TESTMAP.06 | 测试架构映射 | L3 | verified | no_target |
-| METHOD.GOV.BINDING.07 | 符号绑定判据（dogfood 负向探针：测试用动态加载，绑定判据应抓不到） | L3 | declared | L4 |
-| METHOD.GOV.RESTATE.08 | 复述门（v2.4.0 补录）：结构化意图声明 + 机器锚定，路由前置 | L3 | verified | no_target |
-| METHOD.GOV.ORCH.09 | 专家团编排（v2.5.0 补录）：交接链展开 + 命令分类 + 人工批准包 | L3 | verified | L4 |
-| METHOD.GOV.ANNOT.10 | 来源投影（v2.6.0 补录）：AI推断/人确认分组 + 完成定义派生 | L3 | verified | L4 |
-| METHOD.GOV.BOARD.11 | 看板体验契约（v2.8.0）：语义结构 + 当前状态可见 + 搜索/跳转可达 + 响应式 | L3 | verified | L4 |
-| METHOD.GOV.VISUAL.12 | 架构图与数据流（v2.9.0）：账本驱动 SVG + 实时计数 + 可下钻节点 + 分组导航 | L3 | verified | no_target |
-| METHOD.GOV.WORKBENCH.13 | 工作台视角（v2.10.0）：默认落点=工作台 + 今日焦点 + 可信度条 + 下一轮队列 + 入口矩阵 | L3 | verified | no_target |
-| METHOD.GOV.ANALYTICS.14 | 可视化分析层（v2.11.0）：热力图 + 趋势 + 证据链 + 健康度多维 + 卡片墙 + What-if | L3 | declared | L4 |
-| METHOD.GOV.D3.15 | 本地 D3 离线交互层（v2.12.0）：追溯树 + D3 热力图 + 趋势图 + What-if 联动 | L3 | verified | L4 |
-| METHOD.GOV.RUNTIME.16 | 运行时风险入口（v2.15.0）：STATE 事件 → 精确能力点映射 → next_queue 只读重排 | L3 | verified | no_target |
+| METHOD.GOV.FEEDBACK.01 | 反向回流观察通道 | L5 | verified | no_target |
+| METHOD.GOV.UPGRADE.02 | 升级与迁移引擎 | L5 | verified | no_target |
+| METHOD.GOV.PANEL.03 | 节点工作台 | L5 | verified | no_target |
+| METHOD.GOV.LAYOUT.04 | 文件布局契约 | L5 | verified | no_target |
+| METHOD.GOV.ASSETS.05 | 方法资产清单 | L5 | verified | no_target |
+| METHOD.GOV.TESTMAP.06 | 测试架构映射 | L5 | verified | no_target |
+| METHOD.GOV.BINDING.07 | 符号绑定判据（dogfood 负向探针：测试用动态加载，绑定判据应抓不到） | L5 | declared | no_target |
+| METHOD.GOV.RESTATE.08 | 复述门（v2.4.0 补录）：结构化意图声明 + 机器锚定，路由前置 | L5 | verified | no_target |
+| METHOD.GOV.ORCH.09 | 专家团编排（v2.5.0 补录）：交接链展开 + 命令分类 + 人工批准包 | L5 | verified | no_target |
+| METHOD.GOV.ANNOT.10 | 来源投影（v2.6.0 补录）：AI推断/人确认分组 + 完成定义派生 | L5 | verified | no_target |
+| METHOD.GOV.BOARD.11 | 看板体验契约（v2.8.0）：语义结构 + 当前状态可见 + 搜索/跳转可达 + 响应式 | L5 | verified | no_target |
+| METHOD.GOV.VISUAL.12 | 架构图与数据流（v2.9.0）：账本驱动 SVG + 实时计数 + 可下钻节点 + 分组导航 | L5 | verified | no_target |
+| METHOD.GOV.WORKBENCH.13 | 工作台视角（v2.10.0）：默认落点=工作台 + 今日焦点 + 可信度条 + 下一轮队列 + 入口矩阵 | L5 | verified | no_target |
+| METHOD.GOV.ANALYTICS.14 | 可视化分析层（v2.11.0）：热力图 + 趋势 + 证据链 + 健康度多维 + 卡片墙 + What-if | L5 | declared | no_target |
+| METHOD.GOV.D3.15 | 本地 D3 离线交互层（v2.12.0）：追溯树 + D3 热力图 + 趋势图 + What-if 联动 | L5 | verified | no_target |
+| METHOD.GOV.RUNTIME.16 | 运行时风险入口（v2.15.0）：STATE 事件 → 精确能力点映射 → next_queue 只读重排 | L5 | verified | no_target |
 | METHOD.GOV.DOCLIFE.17 | 文档信任硬门（已声明、待人工批准升硬门；尚无证据，不计入完成度） | L0 | declared | L1 |
 
 ## 待复核与过期文档
@@ -71,10 +71,6 @@
 | 编码 | 动作 | 等级 | 目标等级 |
 |---|---|---|---|
 | METHOD.GOV.DOCLIFE.17 | contracts/ 目录有契约文件 | L0 | L1 |
-| METHOD.GOV.ANALYTICS.14 | docs/test_records/ 有测试记录 | L3 | L4 |
-| METHOD.GOV.ANNOT.10 | docs/test_records/ 有测试记录 | L3 | L4 |
-| METHOD.GOV.ASSETS.05 | docs/test_records/ 有测试记录 | L3 | L4 |
-| METHOD.GOV.BINDING.07 | docs/test_records/ 有测试记录 | L3 | L4 |
 
 ## 文档生命周期指标口径
 
@@ -91,6 +87,6 @@
 
 | seq | 类型 | 摘要 |
 |---|---|---|
-| 33 | change | 无结构化变更 |
 | 34 | change | 无结构化变更 |
 | 35 | change | 无结构化变更 |
+| 36 | change | completion_delta=16, evidence_changes=16, level_transitions=16 |
