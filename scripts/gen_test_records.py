@@ -25,6 +25,15 @@ L4 的判定规则是「docs/test_records/ 有测试记录」。这条规则**�
     python3 scripts/gen_test_records.py --update-registry  # 同步 registry 的 test_records 声明
     python3 scripts/gen_test_records.py --json             # 机器可读汇总
 
+``--registry`` / ``--report`` 接受相对项目根或绝对路径两种形态（绝对路径会先
+resolve，与 ``--root`` 的 symlink 口径对齐）。
+
+**正确的使用顺序：生成 → ``--update-registry`` → ``--check``**。
+``--check`` 同时核对「记录内容」与「registry 声明」，而 ``--check`` 分支**不写
+registry**（只读核对），所以声明要单独用 ``--update-registry`` 同步；否则
+``--check`` 会报「声明应为 [...]，实为（未声明）」——这不是缺陷，声明缺失本身
+就该被点名。
+
 纪律
 ----
 1. 零第三方依赖（只用标准库）；
@@ -358,8 +367,8 @@ def build_plan(root: Path, registry_path: Path, report_path: Path) -> dict:
     report, report_sha = load_report(report_path)
     try:
         report_rel = report_path.relative_to(root).as_posix()
-    except ValueError:  # 报告在项目根之外：只记绝对路径，不猜相对关系
-        report_rel = report_path.as_posix()
+    except ValueError:  # 报告在项目根之外：只给文件名，绝不写机器绝对路径
+        report_rel = report_path.name
     generated = parse_report_time(report.get("generated_at", ""))
     report_meta = {
         "sha256": report_sha,
@@ -415,14 +424,32 @@ def registry_declarations(plan: list[dict]) -> dict[str, list[str]]:
             for item in plan}
 
 
+def _resolve_under_root(root: Path, raw: str | None, default: str) -> Path:
+    """把 --root 下的输入路径解析成**已 resolve** 的绝对路径。
+
+    为什么必须 resolve：``root`` 走 ``.resolve()`` 会解 symlink（macOS 上
+    ``/var`` → ``/private/var``），而用户给的绝对路径若不 resolve，两边
+    ``relative_to`` 就对不上——CI 里传绝对路径会直接抛 ValueError，
+    连带把机器绝对路径写进 ``source_report`` 字段（仓库禁止绝对路径泄露）。
+    """
+    path = Path(raw) if raw else root / default
+    if not path.is_absolute():
+        path = root / path
+    return path.resolve()
+
+
+def _rel_or_name(path: Path, root: Path) -> str:
+    """相对项目根的路径；实在不在根内就只给文件名（绝不泄露绝对路径）。"""
+    try:
+        return path.relative_to(root).as_posix()
+    except ValueError:
+        return path.name
+
+
 def run(args: argparse.Namespace) -> int:
     root = Path(args.root).resolve()
-    registry_path = Path(args.registry) if args.registry else root / "governance/registry.json"
-    report_path = Path(args.report) if args.report else root / "governance/test_report.json"
-    if not registry_path.is_absolute():
-        registry_path = root / registry_path
-    if not report_path.is_absolute():
-        report_path = root / report_path
+    registry_path = _resolve_under_root(root, args.registry, "governance/registry.json")
+    report_path = _resolve_under_root(root, args.report, "governance/test_report.json")
 
     built = build_plan(root, registry_path, report_path)
     plan = built["plan"]
@@ -474,9 +501,9 @@ def run(args: argparse.Namespace) -> int:
         new_text, registry_notes = update_registry_text(text, wanted)
         if new_text != text:
             registry_path.write_text(new_text, encoding="utf-8")
-            changed.append(registry_path.relative_to(root).as_posix())
+            changed.append(_rel_or_name(registry_path, root))
         else:
-            changed.append(f"{registry_path.relative_to(root).as_posix()}（已是最新）")
+            changed.append(f"{_rel_or_name(registry_path, root)}（已是最新）")
 
     records = [item for item in plan if item["has_record"]]
     summary = {
