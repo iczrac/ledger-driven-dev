@@ -18794,6 +18794,21 @@
         "risk": "medium",
         "assets_digest": "667d576d1bd37947",
         "board_skeleton": "c2a20142d1c41c18"
+      },
+      {
+        "seq": 41,
+        "at": "2026-11-27T04:17:40Z",
+        "action": "apply",
+        "from": "2.29.0",
+        "to": "2.29.0",
+        "approved_by": "iczrac",
+        "migrations": [
+          "M5-method-assets"
+        ],
+        "backup": "20261127T041730Z-1a41618c",
+        "risk": "low",
+        "assets_digest": "a75ddf6f0fe2b4d3",
+        "board_skeleton": "c2a20142d1c41c18"
       }
     ],
     "tools": {
@@ -18814,7 +18829,7 @@
     },
     "method_assets": {
       "algorithm": "sha256-files-v1",
-      "digest": "667d576d1bd379478cc6bd3be7d74d180ff6ffa1097098d2f90fa649401f5c59",
+      "digest": "a75ddf6f0fe2b4d39e522e45a44b01ab924b13911b9b91eda513e9d84c400d12",
       "file_count": 119,
       "counts": {
         "experts": 9,
