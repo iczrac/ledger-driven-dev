@@ -24,7 +24,7 @@ from acceptance import (AXIS_KEYS, TOKEN, build, check_derived, classify,  # noq
                         roadmap_consistency, scan_literals, to_int)
 
 EXPECT = {"axis": 7, "pre_steps": 1, "post_steps": 19,
-          "verify_checks": 12, "gate_criteria": 9, "invariants": 31}
+          "verify_checks": 12, "gate_criteria": 9, "invariants": 32}
 
 
 def source_version() -> str:
@@ -49,7 +49,7 @@ class ConstantsTest(unittest.TestCase):
         self.assertEqual(c["version"], source_version())
         self.assertEqual(len(c["verify_ids"]), 12)
         self.assertEqual(len(c["gate_ids"]), 9)
-        self.assertEqual(len(c["invariant_ids"]), 31)
+        self.assertEqual(len(c["invariant_ids"]), 32)
         self.assertIn("verify_ledger.py", c["basis"])
         self.assertEqual(len(AXIS_KEYS), 7)
         src = (ROOT / "scripts" / "upgrade.py").read_text(encoding="utf-8")
@@ -81,7 +81,7 @@ class ConstantsTest(unittest.TestCase):
             self.assertEqual(c["expect"]["post_steps"], 20)
 
     def test_invariant_count_follows_verify_source(self):
-        """第 31 条来自 verify_ledger.py 的 add() 去重 id，不是 acceptance 里的手抄常量。"""
+        """不变量条数来自 verify_ledger.py 的 add() 去重 id，不是 acceptance 里的手抄常量。"""
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)
             (root / "scripts").mkdir()
@@ -96,7 +96,7 @@ class ConstantsTest(unittest.TestCase):
             (root / "templates" / "verify_ledger.py").write_text(mutated, encoding="utf-8")
 
             c = constants(root)
-            self.assertEqual(c["expect"]["invariants"], 32)
+            self.assertEqual(c["expect"]["invariants"], 33)
             self.assertIn("fixture_extra", c["invariant_ids"])
 
     def test_invariant_ids_only_come_from_verify_function(self):
@@ -116,7 +116,7 @@ class ConstantsTest(unittest.TestCase):
             (root / "templates" / "verify_ledger.py").write_text(mutated, encoding="utf-8")
 
             c = constants(root)
-            self.assertEqual(c["expect"]["invariants"], 31)
+            self.assertEqual(c["expect"]["invariants"], 32)
             self.assertNotIn("fixture_outside", c["invariant_ids"])
 
     def test_chinese_and_arabic_numerals(self):
@@ -165,7 +165,7 @@ class LiteralScanTest(unittest.TestCase):
         """回归：README 的「30 条不变量」必须被 literal_drift 点名，不再因「条」不在词表而漏网。"""
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)
-            self._mini(root, "verify_ledger.py 机器化 31 条不变量\n")
+            self._mini(root, "verify_ledger.py 机器化 32 条不变量\n")
             self.assertEqual(scan_literals(root, EXPECT)["drift_count"], 0)
             self._mini(root, (root / "docs" / "01-test.md").read_text(encoding="utf-8")
                        + "\n旧文档仍写 30 条不变量\n")
@@ -173,7 +173,7 @@ class LiteralScanTest(unittest.TestCase):
             self.assertEqual(r["drift_count"], 1, r["drifts"])
             self.assertEqual(r["drifts"][0]["kind"], "invariants")
             self.assertEqual(r["drifts"][0]["actual"], 30)
-            self.assertEqual(r["drifts"][0]["expected"], 31)
+            self.assertEqual(r["drifts"][0]["expected"], 32)
 
     def test_historical_statements_are_review_not_failure(self):
         with tempfile.TemporaryDirectory() as td:
@@ -226,7 +226,7 @@ class LiteralScanTest(unittest.TestCase):
         self.assertIn(("post_steps", 18), hits("按 post_upgrade 的 18 步重新取证"))
         self.assertIn(("verify_checks", 11), hits("11 项 checks"))
         self.assertIn(("gate_criteria", 8), hits("八项全 pass"))
-        self.assertIn(("invariants", 31), hits("verify_ledger.py 校验 31 条不变量"))
+        self.assertIn(("invariants", 32), hits("verify_ledger.py 校验 32 条不变量"))
 
 
 class DerivedTest(unittest.TestCase):

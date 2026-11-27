@@ -169,7 +169,7 @@ class SpecGateTest(unittest.TestCase):
         table = re.search(r"STAGE_TABLE=\(\n(.*?)\n\)", text, re.S)
         self.assertIsNotNone(table, "check.sh 缺少 STAGE_TABLE 阶段表")
         self.assertIn(
-            '"账本校验|stage_verify|1|31 条三态不变量"\n'
+            '"账本校验|stage_verify|1|32 条三态不变量"\n'
             '  "主账本自校验|stage_verify_main|1|主账本自校验"\n'
             '  "场景矩阵|stage_scenarios|1|场景矩阵"',
             table.group(1),

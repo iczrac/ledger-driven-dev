@@ -140,7 +140,7 @@ class StageTableTest(unittest.TestCase):
         summary = " / ".join(r[3] for r in _parse_table(_read()))
         self.assertTrue(summary.startswith("测试 / 测试架构 / 证据分层 /"))
         self.assertTrue(summary.endswith("/ 验收契约 / 前置条件"))
-        self.assertIn("31 条三态不变量", summary)
+        self.assertIn("32 条三态不变量", summary)
         self.assertIn("卫生（脱敏+文档链接）", summary)
 
 

@@ -26,7 +26,7 @@ from acceptance import (FRACTION_TOKEN, classify_fraction,  # noqa: E402
                         scan_literals)
 
 EXPECT = {"axis": 7, "pre_steps": 1, "post_steps": 19,
-          "verify_checks": 12, "gate_criteria": 9, "invariants": 31}
+          "verify_checks": 12, "gate_criteria": 9, "invariants": 32}
 
 
 def fraction_hits(line: str) -> list[tuple[str, int]]:
@@ -48,7 +48,7 @@ class FractionDriftTest(unittest.TestCase):
     def test_fraction_token_matches_pass_over_total(self):
         """词表认得「N/N」了（原先只认「N 轴/步/项/条」）。"""
         self.assertTrue(FRACTION_TOKEN.search("`verify --strict`，18/18"))
-        self.assertTrue(FRACTION_TOKEN.search("31/31 条不变量"))
+        self.assertTrue(FRACTION_TOKEN.search("32/32 条不变量"))
 
     def test_stale_fraction_total_is_caught(self):
         """核心负向：总数漂移必须被点名，而不是隐形通过。"""
@@ -69,7 +69,7 @@ class FractionDriftTest(unittest.TestCase):
 
     def test_correct_fraction_is_clean(self):
         """总数与权威口径一致 → 不报漂移。"""
-        r = self._scan(("docs/01-test.md", "不变量：30/31 或失败清单\n"))
+        r = self._scan(("docs/01-test.md", "不变量：30/32 或失败清单\n"))
         self.assertEqual(r["drift_count"], 0, r["drifts"])
 
     def test_fractions_outside_context_are_not_flagged(self):
@@ -90,7 +90,7 @@ class FractionDriftTest(unittest.TestCase):
         """发布日志里带版本号的小节记的是「当时」的数字 → 归 review，不归漂移。"""
         r = self._scan(("RELEASE_CHECKLIST.md",
                         "## 功能完整性\n"
-                        "- [x] 可信性校验器：31 条不变量\n"
+                        "- [x] 可信性校验器：32 条不变量\n"
                         "\n"
                         "## v2.25.1 发布检查\n"
                         "- [x] 示例：verify_ledger 24/24 通过\n"))
@@ -109,7 +109,7 @@ class FractionDriftTest(unittest.TestCase):
     def test_contributing_and_release_checklist_are_in_scan_scope(self):
         """扫描范围纳入 CONTRIBUTING.md 与 RELEASE_CHECKLIST.md。"""
         r = self._scan(("CONTRIBUTING.md",
-                        "账本校验（31 条三态不变量）\n"),
+                        "账本校验（32 条三态不变量）\n"),
                        ("RELEASE_CHECKLIST.md",
                         "## 功能完整性\n"
                         "- [x] 可信性校验器：24 条不变量\n"))

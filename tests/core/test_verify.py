@@ -19,7 +19,7 @@ class VerifyTest(unittest.TestCase):
             self.assertEqual(result.returncode, 0, result.stderr)
             payload = json.loads(result.stdout)
             self.assertEqual(payload["failed"], 0)
-            self.assertEqual(len(payload["checks"]), 31)  # 含分析层、D3、目标编排与健康明细
+            self.assertEqual(len(payload["checks"]), 32)  # 含分析层、D3、目标编排、健康明细与测试记录证据
 
     def _corrupt_and_check(self, mutate, expected_check):
         with demo_copy() as (root, ledger, reg, board):
@@ -291,8 +291,8 @@ class TristateTest(unittest.TestCase):
                        if c["id"] == "test_results_binding_valid")
             self.assertEqual(row["status"], "na")
             self.assertFalse(row["ok"])
-            self.assertEqual(payload["na"], 4)  # 测试投影 + 健康明细 + 资产 + 目标编排
-            self.assertEqual(payload["passed"], 27)  # 31 总检查 - 4 na
+            self.assertEqual(payload["na"], 5)  # 测试投影 + 健康明细 + 资产 + 目标编排 + 测试记录证据
+            self.assertEqual(payload["passed"], 27)  # 32 总检查 - 5 na
             self.assertEqual(payload["failed"], 0)
             self.assertFalse(payload["all_active"])
 
@@ -307,7 +307,7 @@ class TristateTest(unittest.TestCase):
             hard = self._run(root, ledger, reg, board,
                              "--strict", "--require-active")
             self.assertEqual(hard.returncode, 1)
-            self.assertEqual(json.loads(hard.stdout)["na"], 4)  # 投影 + 健康明细 + 资产 + 目标
+            self.assertEqual(json.loads(hard.stdout)["na"], 5)  # 投影 + 健康明细 + 资产 + 目标 + 测试记录证据
 
 
 if __name__ == "__main__":
