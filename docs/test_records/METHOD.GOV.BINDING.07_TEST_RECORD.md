@@ -4,14 +4,14 @@
 - cap_code: METHOD.GOV.BINDING.07
 - cap_name: 符号绑定判据（dogfood 负向探针：测试用动态加载，绑定判据应抓不到）
 - source_report: governance/test_report.json
-- source_sha256: 33fba98654659756a6901ca8ff488bd10d96c7453636faf9f25c40e117f88187
-- report_generated_at: 2026-11-27 11:43 HKT
-- generated_at: 2026-11-27T11:43:00+08:00
+- source_sha256: f3220cddbeeb6502fcd1026c603b1c6b2fd6ca07ffd6eb6c875a8532fbfe3d48
+- report_generated_at: 2026-11-27 13:05 HKT
+- generated_at: 2026-11-27T13:05:00+08:00
 - time_basis: evidence_report
 - 覆盖: ["tests/core/test_binding_advisory.py"]
 - 声明未覆盖: []
 - 结果: 5 passed
-- cases: ["_lld_test_binding_advisory_13416.BindingAdvisoryTest.test_direct_import_is_bound", "_lld_test_binding_advisory_13416.BindingAdvisoryTest.test_missing_impl_and_missing_tests_are_classified", "_lld_test_binding_advisory_13416.BindingAdvisoryTest.test_reexport_chain_is_bound", "_lld_test_binding_advisory_13416.BindingAdvisoryTest.test_unrelated_test_is_unbound_and_tier_untouched", "_lld_test_binding_advisory_13416.BindingAdvisoryTest.test_via_one_hop_is_reported_with_bridge"]
+- cases: ["_lld_test_binding_advisory_45332.BindingAdvisoryTest.test_direct_import_is_bound", "_lld_test_binding_advisory_45332.BindingAdvisoryTest.test_missing_impl_and_missing_tests_are_classified", "_lld_test_binding_advisory_45332.BindingAdvisoryTest.test_reexport_chain_is_bound", "_lld_test_binding_advisory_45332.BindingAdvisoryTest.test_unrelated_test_is_unbound_and_tier_untouched", "_lld_test_binding_advisory_45332.BindingAdvisoryTest.test_via_one_hop_is_reported_with_bridge"]
 
 ## 覆盖明细
 

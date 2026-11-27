@@ -4,14 +4,14 @@
 - cap_code: METHOD.GOV.RESTATE.08
 - cap_name: 复述门（v2.4.0 补录）：结构化意图声明 + 机器锚定，路由前置
 - source_report: governance/test_report.json
-- source_sha256: 33fba98654659756a6901ca8ff488bd10d96c7453636faf9f25c40e117f88187
-- report_generated_at: 2026-11-27 11:43 HKT
-- generated_at: 2026-11-27T11:43:00+08:00
+- source_sha256: f3220cddbeeb6502fcd1026c603b1c6b2fd6ca07ffd6eb6c875a8532fbfe3d48
+- report_generated_at: 2026-11-27 13:05 HKT
+- generated_at: 2026-11-27T13:05:00+08:00
 - time_basis: evidence_report
 - 覆盖: ["tests/routing/test_intent_restate.py"]
 - 声明未覆盖: []
 - 结果: 11 passed
-- cases: ["_lld_test_intent_restate_49627.IntentRestateTest.test_collect_cap_codes_from_all_sources", "_lld_test_intent_restate_49627.IntentRestateTest.test_competing_intents_need_clarification", "_lld_test_intent_restate_49627.IntentRestateTest.test_deterministic", "_lld_test_intent_restate_49627.IntentRestateTest.test_gate_fail_closed_on_missing_inputs", "_lld_test_intent_restate_49627.IntentRestateTest.test_hallucinated_capability_is_rejected", "_lld_test_intent_restate_49627.IntentRestateTest.test_invalid_schema_and_intent", "_lld_test_intent_restate_49627.IntentRestateTest.test_meta_needs_open_questions", "_lld_test_intent_restate_49627.IntentRestateTest.test_readonly_intent_cannot_write", "_lld_test_intent_restate_49627.IntentRestateTest.test_real_project_anchors_real_capability", "_lld_test_intent_restate_49627.IntentRestateTest.test_restate_cannot_copy_raw", "_lld_test_intent_restate_49627.IntentRestateTest.test_schema_and_happy_path"]
+- cases: ["_lld_test_intent_restate_40912.IntentRestateTest.test_collect_cap_codes_from_all_sources", "_lld_test_intent_restate_40912.IntentRestateTest.test_competing_intents_need_clarification", "_lld_test_intent_restate_40912.IntentRestateTest.test_deterministic", "_lld_test_intent_restate_40912.IntentRestateTest.test_gate_fail_closed_on_missing_inputs", "_lld_test_intent_restate_40912.IntentRestateTest.test_hallucinated_capability_is_rejected", "_lld_test_intent_restate_40912.IntentRestateTest.test_invalid_schema_and_intent", "_lld_test_intent_restate_40912.IntentRestateTest.test_meta_needs_open_questions", "_lld_test_intent_restate_40912.IntentRestateTest.test_readonly_intent_cannot_write", "_lld_test_intent_restate_40912.IntentRestateTest.test_real_project_anchors_real_capability", "_lld_test_intent_restate_40912.IntentRestateTest.test_restate_cannot_copy_raw", "_lld_test_intent_restate_40912.IntentRestateTest.test_schema_and_happy_path"]
 
 ## 覆盖明细
 

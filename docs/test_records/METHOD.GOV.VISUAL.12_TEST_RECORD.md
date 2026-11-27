@@ -4,14 +4,14 @@
 - cap_code: METHOD.GOV.VISUAL.12
 - cap_name: 架构图与数据流（v2.9.0）：账本驱动 SVG + 实时计数 + 可下钻节点 + 分组导航
 - source_report: governance/test_report.json
-- source_sha256: 33fba98654659756a6901ca8ff488bd10d96c7453636faf9f25c40e117f88187
-- report_generated_at: 2026-11-27 11:43 HKT
-- generated_at: 2026-11-27T11:43:00+08:00
+- source_sha256: f3220cddbeeb6502fcd1026c603b1c6b2fd6ca07ffd6eb6c875a8532fbfe3d48
+- report_generated_at: 2026-11-27 13:05 HKT
+- generated_at: 2026-11-27T13:05:00+08:00
 - time_basis: evidence_report
 - 覆盖: ["tests/views/test_board_views.py"]
 - 声明未覆盖: []
 - 结果: 8 passed
-- cases: ["_lld_test_board_views_34910.BoardViewsTest.test_board_analytics_contract", "_lld_test_board_views_34910.BoardViewsTest.test_board_contract_and_budget_include_new_views", "_lld_test_board_views_34910.BoardViewsTest.test_board_ux_contract", "_lld_test_board_views_34910.BoardViewsTest.test_board_visual_contract", "_lld_test_board_views_34910.BoardViewsTest.test_board_workbench_contract", "_lld_test_board_views_34910.BoardViewsTest.test_local_d3_contract", "_lld_test_board_views_34910.BoardViewsTest.test_template_has_all_work_views_and_anchors", "_lld_test_board_views_34910.BoardViewsTest.test_work_views_degrade_without_data"]
+- cases: ["_lld_test_board_views_40063.BoardViewsTest.test_board_analytics_contract", "_lld_test_board_views_40063.BoardViewsTest.test_board_contract_and_budget_include_new_views", "_lld_test_board_views_40063.BoardViewsTest.test_board_ux_contract", "_lld_test_board_views_40063.BoardViewsTest.test_board_visual_contract", "_lld_test_board_views_40063.BoardViewsTest.test_board_workbench_contract", "_lld_test_board_views_40063.BoardViewsTest.test_local_d3_contract", "_lld_test_board_views_40063.BoardViewsTest.test_template_has_all_work_views_and_anchors", "_lld_test_board_views_40063.BoardViewsTest.test_work_views_degrade_without_data"]
 
 ## 覆盖明细
 

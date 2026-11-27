@@ -4,14 +4,14 @@
 - cap_code: METHOD.GOV.PANEL.03
 - cap_name: 节点工作台
 - source_report: governance/test_report.json
-- source_sha256: 33fba98654659756a6901ca8ff488bd10d96c7453636faf9f25c40e117f88187
-- report_generated_at: 2026-11-27 11:43 HKT
-- generated_at: 2026-11-27T11:43:00+08:00
+- source_sha256: f3220cddbeeb6502fcd1026c603b1c6b2fd6ca07ffd6eb6c875a8532fbfe3d48
+- report_generated_at: 2026-11-27 13:05 HKT
+- generated_at: 2026-11-27T13:05:00+08:00
 - time_basis: evidence_report
 - 覆盖: ["tests/views/test_work_panel.py"]
 - 声明未覆盖: []
 - 结果: 16 passed
-- cases: ["_lld_test_work_panel_14691.CloseConditionTest.test_close_requires_resolution_when_condition_present", "_lld_test_work_panel_14691.CloseConditionTest.test_declared_capability_allows_open", "_lld_test_work_panel_14691.CloseConditionTest.test_file_exists_uses_project_root", "_lld_test_work_panel_14691.CloseConditionTest.test_manual_never_auto_satisfied", "_lld_test_work_panel_14691.CloseConditionTest.test_unknown_kind_is_rejected", "_lld_test_work_panel_14691.CloseConditionTest.test_verified_capability_blocks_open", "_lld_test_work_panel_14691.ImportReportTest.test_dry_run_and_human_approval", "_lld_test_work_panel_14691.ImportReportTest.test_empty_report_never_green", "_lld_test_work_panel_14691.ImportReportTest.test_three_adapters_autodetect", "_lld_test_work_panel_14691.WorkPanelTest.test_add_and_close_require_approval_and_are_deterministic", "_lld_test_work_panel_14691.WorkPanelTest.test_node_summary_scopes_work_items", "_lld_test_work_panel_14691.WorkPanelTest.test_sync_tests_binding_and_24_invariants", "_lld_test_work_panel_14691.WorkPanelTest.test_sync_tests_respects_opt_out_declaration", "_lld_test_work_panel_14691.WorkPanelTest.test_tampered_projection_fails_verifier", "_lld_test_work_panel_14691.WorkPanelTest.test_validation_rejects_bad_scope_and_refs", "_lld_test_work_panel_14691.WorkPanelTest.test_work_panel_check_on_demo_is_clean"]
+- cases: ["_lld_test_work_panel_62745.CloseConditionTest.test_close_requires_resolution_when_condition_present", "_lld_test_work_panel_62745.CloseConditionTest.test_declared_capability_allows_open", "_lld_test_work_panel_62745.CloseConditionTest.test_file_exists_uses_project_root", "_lld_test_work_panel_62745.CloseConditionTest.test_manual_never_auto_satisfied", "_lld_test_work_panel_62745.CloseConditionTest.test_unknown_kind_is_rejected", "_lld_test_work_panel_62745.CloseConditionTest.test_verified_capability_blocks_open", "_lld_test_work_panel_62745.ImportReportTest.test_dry_run_and_human_approval", "_lld_test_work_panel_62745.ImportReportTest.test_empty_report_never_green", "_lld_test_work_panel_62745.ImportReportTest.test_three_adapters_autodetect", "_lld_test_work_panel_62745.WorkPanelTest.test_add_and_close_require_approval_and_are_deterministic", "_lld_test_work_panel_62745.WorkPanelTest.test_node_summary_scopes_work_items", "_lld_test_work_panel_62745.WorkPanelTest.test_sync_tests_binding_and_24_invariants", "_lld_test_work_panel_62745.WorkPanelTest.test_sync_tests_respects_opt_out_declaration", "_lld_test_work_panel_62745.WorkPanelTest.test_tampered_projection_fails_verifier", "_lld_test_work_panel_62745.WorkPanelTest.test_validation_rejects_bad_scope_and_refs", "_lld_test_work_panel_62745.WorkPanelTest.test_work_panel_check_on_demo_is_clean"]
 
 ## 覆盖明细
 

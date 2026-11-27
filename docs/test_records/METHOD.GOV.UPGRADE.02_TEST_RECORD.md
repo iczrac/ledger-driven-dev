@@ -4,14 +4,14 @@
 - cap_code: METHOD.GOV.UPGRADE.02
 - cap_name: 升级与迁移引擎
 - source_report: governance/test_report.json
-- source_sha256: 33fba98654659756a6901ca8ff488bd10d96c7453636faf9f25c40e117f88187
-- report_generated_at: 2026-11-27 11:43 HKT
-- generated_at: 2026-11-27T11:43:00+08:00
+- source_sha256: f3220cddbeeb6502fcd1026c603b1c6b2fd6ca07ffd6eb6c875a8532fbfe3d48
+- report_generated_at: 2026-11-27 13:05 HKT
+- generated_at: 2026-11-27T13:05:00+08:00
 - time_basis: evidence_report
 - 覆盖: ["tests/meta/test_upgrade.py"]
 - 声明未覆盖: []
 - 结果: 19 passed
-- cases: ["_lld_test_upgrade_54461.ProjectionPolicyTest.test_codec_copies_agree", "_lld_test_upgrade_54461.ProjectionPolicyTest.test_opted_out_report_does_not_trigger_m8", "_lld_test_upgrade_54461.ProjectionPolicyTest.test_policy_change_preserves_fingerprint_and_history", "_lld_test_upgrade_54461.UpgradeTest.test_apply_is_approved_backed_up_and_verifiable", "_lld_test_upgrade_54461.UpgradeTest.test_apply_is_idempotent", "_lld_test_upgrade_54461.UpgradeTest.test_apply_requires_human_approval", "_lld_test_upgrade_54461.UpgradeTest.test_cli_apply_without_approval_is_rejected", "_lld_test_upgrade_54461.UpgradeTest.test_cli_plan_json_is_deterministic_and_leak_free", "_lld_test_upgrade_54461.UpgradeTest.test_definitions_selfcheck", "_lld_test_upgrade_54461.UpgradeTest.test_plan_detects_tool_drift", "_lld_test_upgrade_54461.UpgradeTest.test_plan_is_read_only_deterministic_and_leak_free", "_lld_test_upgrade_54461.UpgradeTest.test_rollback_restores_state_and_writes_receipt", "_lld_test_upgrade_54461.UpgradeTest.test_two_digit_minor_is_semver_not_string", "_lld_test_upgrade_54461.UpgradeTest.test_unsupported_version_and_frozen_block", "_lld_test_upgrade_54461.UpgradeTest.test_verify_flags_stale_evidence", "_lld_test_upgrade_54461.UpgradeV130Test.test_m8_writes_activation_placeholder_without_report", "_lld_test_upgrade_54461.UpgradeV130Test.test_plan_converges_without_test_report", "_lld_test_upgrade_54461.UpgradeV130Test.test_post_upgrade_report_is_generated_in_target", "_lld_test_upgrade_54461.UpgradeV130Test.test_post_upgrade_steps_are_conditional"]
+- cases: ["_lld_test_upgrade_64893.ProjectionPolicyTest.test_codec_copies_agree", "_lld_test_upgrade_64893.ProjectionPolicyTest.test_opted_out_report_does_not_trigger_m8", "_lld_test_upgrade_64893.ProjectionPolicyTest.test_policy_change_preserves_fingerprint_and_history", "_lld_test_upgrade_64893.UpgradeTest.test_apply_is_approved_backed_up_and_verifiable", "_lld_test_upgrade_64893.UpgradeTest.test_apply_is_idempotent", "_lld_test_upgrade_64893.UpgradeTest.test_apply_requires_human_approval", "_lld_test_upgrade_64893.UpgradeTest.test_cli_apply_without_approval_is_rejected", "_lld_test_upgrade_64893.UpgradeTest.test_cli_plan_json_is_deterministic_and_leak_free", "_lld_test_upgrade_64893.UpgradeTest.test_definitions_selfcheck", "_lld_test_upgrade_64893.UpgradeTest.test_plan_detects_tool_drift", "_lld_test_upgrade_64893.UpgradeTest.test_plan_is_read_only_deterministic_and_leak_free", "_lld_test_upgrade_64893.UpgradeTest.test_rollback_restores_state_and_writes_receipt", "_lld_test_upgrade_64893.UpgradeTest.test_two_digit_minor_is_semver_not_string", "_lld_test_upgrade_64893.UpgradeTest.test_unsupported_version_and_frozen_block", "_lld_test_upgrade_64893.UpgradeTest.test_verify_flags_stale_evidence", "_lld_test_upgrade_64893.UpgradeV130Test.test_m8_writes_activation_placeholder_without_report", "_lld_test_upgrade_64893.UpgradeV130Test.test_plan_converges_without_test_report", "_lld_test_upgrade_64893.UpgradeV130Test.test_post_upgrade_report_is_generated_in_target", "_lld_test_upgrade_64893.UpgradeV130Test.test_post_upgrade_steps_are_conditional"]
 
 ## 覆盖明细
 

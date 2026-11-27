@@ -4,14 +4,14 @@
 - cap_code: METHOD.GOV.ANNOT.10
 - cap_name: 来源投影（v2.6.0 补录）：AI推断/人确认分组 + 完成定义派生
 - source_report: governance/test_report.json
-- source_sha256: 33fba98654659756a6901ca8ff488bd10d96c7453636faf9f25c40e117f88187
-- report_generated_at: 2026-11-27 11:43 HKT
-- generated_at: 2026-11-27T11:43:00+08:00
+- source_sha256: f3220cddbeeb6502fcd1026c603b1c6b2fd6ca07ffd6eb6c875a8532fbfe3d48
+- report_generated_at: 2026-11-27 13:05 HKT
+- generated_at: 2026-11-27T13:05:00+08:00
 - time_basis: evidence_report
 - 覆盖: ["tests/routing/test_provenance_view.py"]
 - 声明未覆盖: []
 - 结果: 10 passed
-- cases: ["_lld_test_provenance_view_19246.CliTest.test_bad_ledger_path", "_lld_test_provenance_view_19246.ProjectionTest.test_decision_provenance_groups", "_lld_test_provenance_view_19246.ProjectionTest.test_definition_of_done_derived", "_lld_test_provenance_view_19246.ProjectionTest.test_deterministic_bytes", "_lld_test_provenance_view_19246.ProjectionTest.test_issue_provenance_groups", "_lld_test_provenance_view_19246.ProjectionTest.test_kind_filter", "_lld_test_provenance_view_19246.ProjectionTest.test_labels_present", "_lld_test_provenance_view_19246.ProjectionTest.test_no_mutation_of_ledger", "_lld_test_provenance_view_19246.ProjectionTest.test_no_new_fields_in_ledger", "_lld_test_provenance_view_19246.ProjectionTest.test_real_ledger_projects"]
+- cases: ["_lld_test_provenance_view_61743.CliTest.test_bad_ledger_path", "_lld_test_provenance_view_61743.ProjectionTest.test_decision_provenance_groups", "_lld_test_provenance_view_61743.ProjectionTest.test_definition_of_done_derived", "_lld_test_provenance_view_61743.ProjectionTest.test_deterministic_bytes", "_lld_test_provenance_view_61743.ProjectionTest.test_issue_provenance_groups", "_lld_test_provenance_view_61743.ProjectionTest.test_kind_filter", "_lld_test_provenance_view_61743.ProjectionTest.test_labels_present", "_lld_test_provenance_view_61743.ProjectionTest.test_no_mutation_of_ledger", "_lld_test_provenance_view_61743.ProjectionTest.test_no_new_fields_in_ledger", "_lld_test_provenance_view_61743.ProjectionTest.test_real_ledger_projects"]
 
 ## 覆盖明细
 
