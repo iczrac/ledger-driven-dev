@@ -146,18 +146,18 @@ class TestRecordEvidenceTest(unittest.TestCase):
         return V.check_test_record_evidence(self.tmp, registry, caps, self.gov)
 
     def _track(self):
-        """把临时目录纳入 git index（若它在 git 仓库里）——否则「已入库」无从核对。
+        """把临时目录纳入 git index——否则「已入库」无从核对。
 
-        返回 True 表示 index 可读（记录必须已 add），False 表示非 git 环境
-        （校验器会跳过「已入库」子判据，只核对存在性）。
+        先在临时目录里 `git init` 自建仓库：绝不去动任何外层仓库的 index
+        （临时目录万一落在某个仓库里，直接 `git add` 会污染那个仓库）。
+        返回 True 表示 index 可读（记录必须已 add）。
         """
         try:
-            proc = subprocess.run(
-                ["git", "-C", str(self.tmp), "rev-parse", "--is-inside-work-tree"],
-                capture_output=True, text=True)
+            init = subprocess.run(["git", "-C", str(self.tmp), "init", "-q"],
+                                  capture_output=True, text=True)
         except (OSError, subprocess.SubprocessError):
             return False
-        if proc.returncode != 0 or proc.stdout.strip() != "true":
+        if init.returncode != 0:
             return False
         subprocess.run(["git", "-C", str(self.tmp), "add", "-f", "."],
                        capture_output=True, text=True)

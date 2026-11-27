@@ -128,14 +128,17 @@ class GenTestRecordsTest(unittest.TestCase):
         return self.tmp / RECORD_REL
 
     def _git_track(self):
-        """把临时目录纳入 git index：护栏的「已入库」子判据需要 index 可读。"""
+        """把临时目录纳入 git index：护栏的「已入库」子判据需要 index 可读。
+
+        先在临时目录里 `git init` 自建仓库——绝不去动任何外层仓库的 index
+        （临时目录万一落在某个仓库里，直接 `git add` 会污染那个仓库）。
+        """
         try:
-            probe = subprocess.run(["git", "-C", str(self.tmp), "rev-parse",
-                                    "--is-inside-work-tree"],
-                                   capture_output=True, text=True)
+            init = subprocess.run(["git", "-C", str(self.tmp), "init", "-q"],
+                                  capture_output=True, text=True)
         except (OSError, subprocess.SubprocessError):
             return False
-        if probe.returncode != 0 or probe.stdout.strip() != "true":
+        if init.returncode != 0:
             return False
         subprocess.run(["git", "-C", str(self.tmp), "add", "-f", "."],
                        capture_output=True, text=True)
