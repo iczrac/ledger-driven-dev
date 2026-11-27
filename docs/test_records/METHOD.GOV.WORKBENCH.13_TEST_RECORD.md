@@ -4,14 +4,14 @@
 - cap_code: METHOD.GOV.WORKBENCH.13
 - cap_name: 工作台视角（v2.10.0）：默认落点=工作台 + 今日焦点 + 可信度条 + 下一轮队列 + 入口矩阵
 - source_report: governance/test_report.json
-- source_sha256: 2ce13c8eefb45b32dd5254e9927dce3f46271caec9c0e94a1d2e926dbf26a6d1
-- report_generated_at: 2026-11-27 01:35 HKT
-- generated_at: 2026-11-27T01:35:00+08:00
+- source_sha256: 33fba98654659756a6901ca8ff488bd10d96c7453636faf9f25c40e117f88187
+- report_generated_at: 2026-11-27 11:43 HKT
+- generated_at: 2026-11-27T11:43:00+08:00
 - time_basis: evidence_report
 - 覆盖: ["tests/views/test_board_views.py"]
 - 声明未覆盖: []
 - 结果: 8 passed
-- cases: ["_lld_test_board_views_41878.BoardViewsTest.test_board_analytics_contract", "_lld_test_board_views_41878.BoardViewsTest.test_board_contract_and_budget_include_new_views", "_lld_test_board_views_41878.BoardViewsTest.test_board_ux_contract", "_lld_test_board_views_41878.BoardViewsTest.test_board_visual_contract", "_lld_test_board_views_41878.BoardViewsTest.test_board_workbench_contract", "_lld_test_board_views_41878.BoardViewsTest.test_local_d3_contract", "_lld_test_board_views_41878.BoardViewsTest.test_template_has_all_work_views_and_anchors", "_lld_test_board_views_41878.BoardViewsTest.test_work_views_degrade_without_data"]
+- cases: ["_lld_test_board_views_34910.BoardViewsTest.test_board_analytics_contract", "_lld_test_board_views_34910.BoardViewsTest.test_board_contract_and_budget_include_new_views", "_lld_test_board_views_34910.BoardViewsTest.test_board_ux_contract", "_lld_test_board_views_34910.BoardViewsTest.test_board_visual_contract", "_lld_test_board_views_34910.BoardViewsTest.test_board_workbench_contract", "_lld_test_board_views_34910.BoardViewsTest.test_local_d3_contract", "_lld_test_board_views_34910.BoardViewsTest.test_template_has_all_work_views_and_anchors", "_lld_test_board_views_34910.BoardViewsTest.test_work_views_degrade_without_data"]
 
 ## 覆盖明细
 

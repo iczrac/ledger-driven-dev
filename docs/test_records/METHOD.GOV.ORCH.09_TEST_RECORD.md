@@ -4,14 +4,14 @@
 - cap_code: METHOD.GOV.ORCH.09
 - cap_name: 专家团编排（v2.5.0 补录）：交接链展开 + 命令分类 + 人工批准包
 - source_report: governance/test_report.json
-- source_sha256: 2ce13c8eefb45b32dd5254e9927dce3f46271caec9c0e94a1d2e926dbf26a6d1
-- report_generated_at: 2026-11-27 01:35 HKT
-- generated_at: 2026-11-27T01:35:00+08:00
+- source_sha256: 33fba98654659756a6901ca8ff488bd10d96c7453636faf9f25c40e117f88187
+- report_generated_at: 2026-11-27 11:43 HKT
+- generated_at: 2026-11-27T11:43:00+08:00
 - time_basis: evidence_report
 - 覆盖: ["tests/routing/test_expert_run.py"]
 - 声明未覆盖: []
 - 结果: 16 passed
-- cases: ["_lld_test_expert_run_61990.ClassifyCommandTest.test_approval_tokens_win", "_lld_test_expert_run_61990.ClassifyCommandTest.test_dry_run_init_project_is_readonly", "_lld_test_expert_run_61990.ClassifyCommandTest.test_readonly_commands", "_lld_test_expert_run_61990.ClassifyCommandTest.test_unknown_command_is_manual", "_lld_test_expert_run_61990.ClassifyCommandTest.test_write_commands_without_readonly_flag_are_approval", "_lld_test_expert_run_61990.OrchestrateTest.test_approval_bundle_aggregates_write_commands", "_lld_test_expert_run_61990.OrchestrateTest.test_chain_matches_route_handoff", "_lld_test_expert_run_61990.OrchestrateTest.test_deterministic_bytes", "_lld_test_expert_run_61990.OrchestrateTest.test_fail_closed_on_meta_intent", "_lld_test_expert_run_61990.OrchestrateTest.test_hardcoded_placeholder_absent", "_lld_test_expert_run_61990.OrchestrateTest.test_intent_file_only_recorded_as_source", "_lld_test_expert_run_61990.OrchestrateTest.test_no_new_judgement_authority", "_lld_test_expert_run_61990.OrchestrateTest.test_ready_intent_produces_chain", "_lld_test_expert_run_61990.OrchestrateTest.test_target_display_transmitted_to_commands", "_lld_test_expert_run_61990.RenderTest.test_render_halt", "_lld_test_expert_run_61990.RenderTest.test_render_ready"]
+- cases: ["_lld_test_expert_run_46647.ClassifyCommandTest.test_approval_tokens_win", "_lld_test_expert_run_46647.ClassifyCommandTest.test_dry_run_init_project_is_readonly", "_lld_test_expert_run_46647.ClassifyCommandTest.test_readonly_commands", "_lld_test_expert_run_46647.ClassifyCommandTest.test_unknown_command_is_manual", "_lld_test_expert_run_46647.ClassifyCommandTest.test_write_commands_without_readonly_flag_are_approval", "_lld_test_expert_run_46647.OrchestrateTest.test_approval_bundle_aggregates_write_commands", "_lld_test_expert_run_46647.OrchestrateTest.test_chain_matches_route_handoff", "_lld_test_expert_run_46647.OrchestrateTest.test_deterministic_bytes", "_lld_test_expert_run_46647.OrchestrateTest.test_fail_closed_on_meta_intent", "_lld_test_expert_run_46647.OrchestrateTest.test_hardcoded_placeholder_absent", "_lld_test_expert_run_46647.OrchestrateTest.test_intent_file_only_recorded_as_source", "_lld_test_expert_run_46647.OrchestrateTest.test_no_new_judgement_authority", "_lld_test_expert_run_46647.OrchestrateTest.test_ready_intent_produces_chain", "_lld_test_expert_run_46647.OrchestrateTest.test_target_display_transmitted_to_commands", "_lld_test_expert_run_46647.RenderTest.test_render_halt", "_lld_test_expert_run_46647.RenderTest.test_render_ready"]
 
 ## 覆盖明细
 

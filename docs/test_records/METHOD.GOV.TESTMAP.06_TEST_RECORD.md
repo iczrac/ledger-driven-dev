@@ -4,14 +4,14 @@
 - cap_code: METHOD.GOV.TESTMAP.06
 - cap_name: 测试架构映射
 - source_report: governance/test_report.json
-- source_sha256: 2ce13c8eefb45b32dd5254e9927dce3f46271caec9c0e94a1d2e926dbf26a6d1
-- report_generated_at: 2026-11-27 01:35 HKT
-- generated_at: 2026-11-27T01:35:00+08:00
+- source_sha256: 33fba98654659756a6901ca8ff488bd10d96c7453636faf9f25c40e117f88187
+- report_generated_at: 2026-11-27 11:43 HKT
+- generated_at: 2026-11-27T11:43:00+08:00
 - time_basis: evidence_report
 - 覆盖: ["tests/views/test_test_modules.py"]
 - 声明未覆盖: []
 - 结果: 5 passed
-- cases: ["_lld_test_test_modules_59703.TestModulesTest.test_detects_missing_module_id_and_bad_module_name", "_lld_test_test_modules_59703.TestModulesTest.test_map_module_id_and_discovery_agree", "_lld_test_test_modules_59703.TestModulesTest.test_render_is_deterministic_and_describes_modules", "_lld_test_test_modules_59703.TestModulesTest.test_target_report_flags_modules_without_tests", "_lld_test_test_modules_59703.TestModulesTest.test_two_discovery_mechanisms_find_same_files"]
+- cases: ["_lld_test_test_modules_36171.TestModulesTest.test_detects_missing_module_id_and_bad_module_name", "_lld_test_test_modules_36171.TestModulesTest.test_map_module_id_and_discovery_agree", "_lld_test_test_modules_36171.TestModulesTest.test_render_is_deterministic_and_describes_modules", "_lld_test_test_modules_36171.TestModulesTest.test_target_report_flags_modules_without_tests", "_lld_test_test_modules_36171.TestModulesTest.test_two_discovery_mechanisms_find_same_files"]
 
 ## 覆盖明细
 

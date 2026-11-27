@@ -4,14 +4,14 @@
 - cap_code: METHOD.GOV.FEEDBACK.01
 - cap_name: 反向回流观察通道
 - source_report: governance/test_report.json
-- source_sha256: 2ce13c8eefb45b32dd5254e9927dce3f46271caec9c0e94a1d2e926dbf26a6d1
-- report_generated_at: 2026-11-27 01:35 HKT
-- generated_at: 2026-11-27T01:35:00+08:00
+- source_sha256: 33fba98654659756a6901ca8ff488bd10d96c7453636faf9f25c40e117f88187
+- report_generated_at: 2026-11-27 11:43 HKT
+- generated_at: 2026-11-27T11:43:00+08:00
 - time_basis: evidence_report
 - 覆盖: ["tests/meta/test_feedback.py"]
 - 声明未覆盖: []
 - 结果: 13 passed
-- cases: ["_lld_test_feedback_34406.AppendOnlyTest.test_existing_row_wins_over_fresh_open_row", "_lld_test_feedback_34406.AppendOnlyTest.test_export_creates_file_when_absent", "_lld_test_feedback_34406.AppendOnlyTest.test_export_preserves_closed_evidence_and_is_idempotent", "_lld_test_feedback_34406.AppendOnlyTest.test_merge_is_idempotent_and_order_stable", "_lld_test_feedback_34406.ClosureTest.test_artifact_ref_must_exist", "_lld_test_feedback_34406.ClosureTest.test_closed_without_disposition_fails_then_passes", "_lld_test_feedback_34406.ClosureTest.test_fingerprint_blocks_manual_edit", "_lld_test_feedback_34406.ClosureTest.test_triage_requires_artifact_for_four_products", "_lld_test_feedback_34406.ClosureTest.test_wontfix_needs_reason_but_no_artifact", "_lld_test_feedback_34406.ExportTest.test_read_only_and_idempotent", "_lld_test_feedback_34406.ExportTest.test_redact_is_data_driven_not_hardcoded", "_lld_test_feedback_34406.ExportTest.test_version_gap_and_legacy_verifier_are_observations", "_lld_test_feedback_34406.ExportTest.test_write_requires_human_approval"]
+- cases: ["_lld_test_feedback_28909.AppendOnlyTest.test_existing_row_wins_over_fresh_open_row", "_lld_test_feedback_28909.AppendOnlyTest.test_export_creates_file_when_absent", "_lld_test_feedback_28909.AppendOnlyTest.test_export_preserves_closed_evidence_and_is_idempotent", "_lld_test_feedback_28909.AppendOnlyTest.test_merge_is_idempotent_and_order_stable", "_lld_test_feedback_28909.ClosureTest.test_artifact_ref_must_exist", "_lld_test_feedback_28909.ClosureTest.test_closed_without_disposition_fails_then_passes", "_lld_test_feedback_28909.ClosureTest.test_fingerprint_blocks_manual_edit", "_lld_test_feedback_28909.ClosureTest.test_triage_requires_artifact_for_four_products", "_lld_test_feedback_28909.ClosureTest.test_wontfix_needs_reason_but_no_artifact", "_lld_test_feedback_28909.ExportTest.test_read_only_and_idempotent", "_lld_test_feedback_28909.ExportTest.test_redact_is_data_driven_not_hardcoded", "_lld_test_feedback_28909.ExportTest.test_version_gap_and_legacy_verifier_are_observations", "_lld_test_feedback_28909.ExportTest.test_write_requires_human_approval"]
 
 ## 覆盖明细
 

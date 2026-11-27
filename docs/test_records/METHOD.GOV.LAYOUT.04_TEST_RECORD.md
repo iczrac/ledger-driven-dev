@@ -4,14 +4,14 @@
 - cap_code: METHOD.GOV.LAYOUT.04
 - cap_name: 文件布局契约
 - source_report: governance/test_report.json
-- source_sha256: 2ce13c8eefb45b32dd5254e9927dce3f46271caec9c0e94a1d2e926dbf26a6d1
-- report_generated_at: 2026-11-27 01:35 HKT
-- generated_at: 2026-11-27T01:35:00+08:00
+- source_sha256: 33fba98654659756a6901ca8ff488bd10d96c7453636faf9f25c40e117f88187
+- report_generated_at: 2026-11-27 11:43 HKT
+- generated_at: 2026-11-27T11:43:00+08:00
 - time_basis: evidence_report
 - 覆盖: ["tests/meta/test_layout.py"]
 - 声明未覆盖: []
 - 结果: 14 passed
-- cases: ["_lld_test_layout_59014.LayoutDefinitionTest.test_check_catches_producer_drift", "_lld_test_layout_59014.LayoutDefinitionTest.test_cli_check_and_json", "_lld_test_layout_59014.LayoutDefinitionTest.test_definition_passes_selfcheck", "_lld_test_layout_59014.LayoutDefinitionTest.test_derived_layer_is_never_manual", "_lld_test_layout_59014.LayoutDefinitionTest.test_ledger_fields_are_not_files", "_lld_test_layout_59014.LayoutDefinitionTest.test_no_absolute_paths_in_definition", "_lld_test_layout_59014.LayoutDefinitionTest.test_render_is_deterministic_and_synced", "_lld_test_layout_59014.LayoutDiffTest.test_brownfield_draft_is_detected", "_lld_test_layout_59014.LayoutDiffTest.test_demo_is_governed_and_diff_is_readonly", "_lld_test_layout_59014.LayoutDiffTest.test_empty_project_is_bootstrap", "_lld_test_layout_59014.LayoutDiffTest.test_greenfield_bootstrap_has_eight_files", "_lld_test_layout_59014.LayoutDiffTest.test_ignored_cache_is_not_unexpected", "_lld_test_layout_59014.LayoutDiffTest.test_missing_target_fails_closed", "_lld_test_layout_59014.LayoutDiffTest.test_unexpected_governance_file_is_flagged"]
+- cases: ["_lld_test_layout_24607.LayoutDefinitionTest.test_check_catches_producer_drift", "_lld_test_layout_24607.LayoutDefinitionTest.test_cli_check_and_json", "_lld_test_layout_24607.LayoutDefinitionTest.test_definition_passes_selfcheck", "_lld_test_layout_24607.LayoutDefinitionTest.test_derived_layer_is_never_manual", "_lld_test_layout_24607.LayoutDefinitionTest.test_ledger_fields_are_not_files", "_lld_test_layout_24607.LayoutDefinitionTest.test_no_absolute_paths_in_definition", "_lld_test_layout_24607.LayoutDefinitionTest.test_render_is_deterministic_and_synced", "_lld_test_layout_24607.LayoutDiffTest.test_brownfield_draft_is_detected", "_lld_test_layout_24607.LayoutDiffTest.test_demo_is_governed_and_diff_is_readonly", "_lld_test_layout_24607.LayoutDiffTest.test_empty_project_is_bootstrap", "_lld_test_layout_24607.LayoutDiffTest.test_greenfield_bootstrap_has_eight_files", "_lld_test_layout_24607.LayoutDiffTest.test_ignored_cache_is_not_unexpected", "_lld_test_layout_24607.LayoutDiffTest.test_missing_target_fails_closed", "_lld_test_layout_24607.LayoutDiffTest.test_unexpected_governance_file_is_flagged"]
 
 ## 覆盖明细
 
