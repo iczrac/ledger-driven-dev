@@ -1,12 +1,19 @@
-"""架构图纸渲染：单文件 SVG，零第三方依赖，面向不懂技术的人。
+"""架构图纸渲染：单文件 SVG / HTML，零第三方依赖，面向不懂技术的人。
 
-四栏从左到右：组件 / 模块 / 能力 / 数据流。
+三种视角：
+- render_svg   ：四栏清单式（组件 / 模块 / 能力 / 数据流），详尽但需滚动。
+- render_map   ：地图式，系统 + 模块一屏纵览，点击模块钻取组件（单文件 HTML）。
+- render_focus ：聚焦式，以被改节点为中心的同心环，红=被依赖 / 蓝=包含（单文件 SVG）。
+
+四栏视图（render_svg）从左到右：组件 / 模块 / 能力 / 数据流。
 - contains 用「容器框」表达（模块框圈住其组件；能力框列出实现组件）。
 - depends 用箭头表达（数据流栏逐个画出「谁依赖谁」）。
 - highlight 的节点用橙色高亮；图例说明颜色与箭头含义。
 - 节点标签一律用中文能力名或文件名，不把能力码原文当主标签。
 """
 from __future__ import annotations
+
+import math
 
 from xml.sax.saxutils import escape
 
@@ -323,3 +330,298 @@ def render_diff(before: dict, after: dict) -> str:
         (_GREEN, "新增"), (_RED, "删除"), (_YELLOW, "修改"),
     ]))
     return _wrap(1480, bottom + 90, body)
+
+
+# --------------------------------------------------------------------------- #
+# 视角一：地图式（单文件 HTML，原生 JS 钻取，零第三方依赖）
+# --------------------------------------------------------------------------- #
+_MAP_CSS = """
+*{box-sizing:border-box}
+body{margin:0;padding:18px 22px 32px;font-family:"PingFang SC","Microsoft YaHei","Noto Sans CJK SC",sans-serif;color:#1b2430;background:#f7fafd}
+.hero{background:#123a5e;color:#fff;border-radius:10px;padding:14px 18px}
+.hero h1{margin:0 0 4px;font-size:21px}
+.hero .sub{margin:0;font-size:12px;color:#bcd6ef}
+.bar{display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin:12px 0}
+.legend{display:flex;gap:14px;align-items:center;flex-wrap:wrap;font-size:12px;color:#5c6b7a}
+.sw{display:inline-block;width:13px;height:13px;border-radius:3px;vertical-align:-2px;margin-right:4px}
+button{font:inherit;font-size:12px;padding:5px 12px;border:1px solid #4b83c4;background:#fff;color:#123a5e;border-radius:6px;cursor:pointer}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(232px,1fr));gap:10px}
+.card{background:#fff;border:1px solid #d7e3ef;border-left:4px solid #4b83c4;border-radius:8px;padding:9px 11px;box-shadow:0 1px 2px rgba(20,50,80,.05)}
+.card.focus-module{border:2px solid #e2681a;background:#fff7ed;box-shadow:0 0 0 3px #ffe6c2}
+.card-head{cursor:pointer;user-select:none;font-weight:700;font-size:14px}
+.caret{color:#4b83c4;font-size:12px;margin-right:5px}
+.meta{font-size:11px;color:#5c6b7a;margin:4px 0 0 17px}
+.badge-focus{margin-left:6px;font-size:10px;color:#fff;background:#e2681a;border-radius:8px;padding:1px 6px}
+.components{margin:7px 0 0 2px;padding:6px 0 0 10px;border-top:1px dashed #d7e3ef}
+.comp{font-size:12px;line-height:19px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.comp.focus-node{color:#e2681a;font-weight:700}
+.cap{display:inline-block;font-size:10px;color:#2e7d32;background:#e8f5e9;border-radius:7px;padding:0 5px;margin-left:4px}
+.empty{color:#5c6b7a;font-size:13px;padding:24px}
+.foot{margin-top:14px;font-size:11px;color:#5c6b7a}
+"""
+
+_MAP_JS = """
+function toggle(i){
+  var el=document.getElementById('cmp-'+i), c=document.getElementById('caret-'+i);
+  if(!el){return;}
+  var open=(el.style.display!=='none');
+  el.style.display=open?'none':'block';
+  if(c){c.textContent=open?'+':'\u2212';}
+}
+function toggleAll(){
+  var cards=document.querySelectorAll('.card'), anyClosed=false;
+  for(var i=0;i<cards.length;i++){
+    var el=cards[i].querySelector('.components');
+    if(el && el.style.display==='none'){anyClosed=true;break;}
+  }
+  for(var j=0;j<cards.length;j++){
+    var box=cards[j].querySelector('.components');
+    if(!box){continue;}
+    box.style.display=anyClosed?'block':'none';
+    var c=cards[j].querySelector('.caret');
+    if(c){c.textContent=anyClosed?'\u2212':'+';}
+  }
+}
+"""
+
+
+def render_map(graph: dict, focus: str | None = None) -> str:
+    """地图式视角：系统 + 模块一屏纵览，点击模块钻取其组件。
+
+    产出单文件 HTML（内嵌 CSS / 原生 JS / 无外部依赖）：
+    - 顶层只有「系统横幅 + 模块卡片」，模块数通常 <= 25，一屏可看完；
+    - 每张模块卡片显示中文名 + 组件数 + 能力数，点击标题展开组件清单；
+    - 组件的绿色小签显示其所属能力的中文名（不暴露能力码原文）；
+    - focus 给定节点 id 时，其所在模块与节点本身用橙色高亮并默认展开。
+    """
+    nodes = {n["id"]: n for n in graph.get("nodes", [])
+             if isinstance(n, dict) and isinstance(n.get("id"), str)}
+    children = _children_of(graph)
+    parents = _parents_of(graph)
+
+    def label(nid: object) -> str:
+        return str(nodes.get(str(nid), {}).get("label") or nid)
+
+    by_type: dict[str, list[str]] = {t: [] for t in NODE_TYPES}
+    for nid, node in nodes.items():
+        by_type.setdefault(str(node.get("type")), []).append(nid)
+    for values in by_type.values():
+        values.sort()
+    systems, modules = by_type["system"], by_type["module"]
+    components, caps = set(by_type["component"]), by_type["capability"]
+    system_id = systems[0] if systems else "system:root"
+    system_label = label(system_id) if systems else "未命名系统"
+
+    # 组件 -> 所属能力中文名（contains: capability -> component）
+    comp_caps: dict[str, list[str]] = {c: [] for c in components}
+    for cap in caps:
+        for impl in children.get(cap, []):
+            if impl in components:
+                comp_caps[impl].append(label(cap))
+    for value in comp_caps.values():
+        value.sort()
+
+    # 模块 -> 组件（contains: module -> component）
+    mod_comps: dict[str, list[str]] = {}
+    for cid in sorted(components):
+        mid = parents.get(cid)
+        if mid in modules:
+            mod_comps.setdefault(mid, []).append(cid)
+    mod_caps: dict[str, set[str]] = {
+        mid: {cap for cid in comps for cap in comp_caps.get(cid, [])}
+        for mid, comps in mod_comps.items()
+    }
+
+    # focus 高亮定位：component 取父模块，module 自身，capability 取其实现组件的模块
+    focus_id = str(focus) if focus else ""
+    focus_modules: set[str] = set()
+    focus_components: set[str] = set()
+    if focus_id:
+        if focus_id in modules:
+            focus_modules.add(focus_id)
+        elif focus_id in components:
+            focus_components.add(focus_id)
+            if parents.get(focus_id) in modules:
+                focus_modules.add(parents[focus_id])
+        elif focus_id in caps:
+            for impl in children.get(focus_id, []):
+                if impl in components:
+                    focus_components.add(impl)
+                    if parents.get(impl) in modules:
+                        focus_modules.add(parents[impl])
+        elif focus_id in systems or focus_id == system_id:
+            focus_modules.update(modules)
+
+    parts = [
+        '<!DOCTYPE html>\n<html lang="zh-CN">\n<head>\n<meta charset="utf-8">',
+        f'<title>架构地图 · {_esc(system_label)}</title>',
+        f'<style>{_MAP_CSS}</style>',
+        '</head>\n<body>',
+        '<header class="hero">',
+        f'<h1>架构地图 · {_esc(system_label)}</h1>',
+        f'<p class="sub">blueprint-graph/1 · 顶层 {len(systems) + len(modules)} 个节点'
+        f'（{len(systems)} 系统 + {len(modules)} 模块）· {len(components)} 个组件 / '
+        f'{len(caps)} 个能力 / {len(nodes)} 个节点 · 点击模块卡片展开组件</p>',
+        '</header>',
+        '<div class="bar">',
+        '<div class="legend">',
+        '<span><i class="sw" style="background:#123a5e"></i>系统</span>',
+        '<span><i class="sw" style="background:#fff;border:1px solid #4b83c4"></i>模块</span>',
+        '<span><i class="sw" style="background:#fff7ed;border:2px solid #e2681a"></i>聚焦高亮</span>',
+        '<span><i class="sw" style="background:#e8f5e9"></i>能力（中文名）</span>',
+        '</div>',
+        '<button type="button" onclick="toggleAll()">全部展开 / 收起</button>',
+        '</div>',
+        '<main class="grid">',
+    ]
+    if not modules:
+        parts.append('<p class="empty">图中暂无模块节点。</p>')
+    for index, mid in enumerate(modules):
+        comps = mod_comps.get(mid, [])
+        highlighted = mid in focus_modules
+        cls = "card focus-module" if highlighted else "card"
+        badge = '<span class="badge-focus">聚焦</span>' if highlighted else ""
+        opened = highlighted
+        parts.extend([
+            f'<div class="{cls}" id="mod-{index}">',
+            f'<div class="card-head" onclick="toggle({index})" title="点击展开 / 收起组件">'
+            f'<span class="caret" id="caret-{index}">{"−" if opened else "+"}</span>'
+            f'{_esc(label(mid))}{badge}</div>',
+            f'<div class="meta">{len(comps)} 个组件 · {len(mod_caps.get(mid, set()))} 个能力</div>',
+            f'<div class="components" id="cmp-{index}" '
+            f'style="display:{"block" if opened else "none"}">',
+        ])
+        if not comps:
+            parts.append('<div class="comp">（无组件）</div>')
+        for cid in comps:
+            comp_cls = "comp focus-node" if cid in focus_components else "comp"
+            tags = "".join(f'<span class="cap">{_esc(cap)}</span>'
+                           for cap in comp_caps.get(cid, []))
+            parts.append(f'<div class="{comp_cls}" title="{_esc(cid)}">'
+                         f'{_esc(label(cid))}{tags}</div>')
+        parts.extend(["</div>", "</div>"])
+    parts.extend([
+        '</main>',
+        '<p class="foot">读法：一张卡片＝一个模块；点击标题展开它包含的组件，'
+        '组件后的绿色小签是中文能力名。橙色＝本次聚焦的模块 / 节点。</p>',
+        f'<script>{_MAP_JS}</script>',
+        '</body>\n</html>\n',
+    ])
+    return "\n".join(parts)
+
+
+# --------------------------------------------------------------------------- #
+# 视角二：聚焦式（同心环 SVG，红=被依赖 / 蓝=包含，零第三方依赖）
+# --------------------------------------------------------------------------- #
+def render_focus(impact: dict, graph: dict) -> str:
+    """聚焦式视角：以被改节点为中心的同心环，回答「改它会波及谁」。
+
+    直接消费 impact_up() 的 by_level / via，不重算影响传导：
+    - 中心紫圆＝被改节点；由内向外：组件 → 能力 → 模块 → 系统；
+    - 红色＝被依赖（反向依赖），蓝色＝包含（上卷），连线同色；
+    - 顶部摘要「改这里会影响 N 个组件、M 个模块」；面向不懂技术的人。
+    """
+    nodes = {n["id"]: n for n in graph.get("nodes", [])
+             if isinstance(n, dict) and isinstance(n.get("id"), str)}
+
+    def label(nid: object) -> str:
+        return str(nodes.get(str(nid), {}).get("label") or nid)
+
+    seeds = [str(x) for x in (impact.get("seeds") or [])]
+    by_level = impact.get("by_level") or {}
+    comp_count = len(by_level.get("component") or [])
+    mod_count = len(by_level.get("module") or [])
+
+    depend_color, contain_color, seed_color = "#c62828", "#1f6fb2", "#6a1b9a"
+    width, height = 1200, 1160
+    cx, cy = width // 2, height // 2
+    rings = (
+        ("component", 165, "组件 · 直接波及"),
+        ("capability", 275, "能力 · 受影响能力"),
+        ("module", 385, "模块 · 上卷"),
+        ("system", 495, "系统 · 顶层"),
+    )
+
+    body = [
+        f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" '
+        f'viewBox="0 0 {width} {height}" {_FONT}>',
+        '<defs><marker id="bp-focus-arrow" viewBox="0 0 10 10" refX="9" refY="5" '
+        'markerWidth="6" markerHeight="6" orient="auto-start-reverse">'
+        f'<path d="M 0 0 L 10 5 L 0 10 z" fill="{_MUTED}"/></marker></defs>',
+        f'<rect width="{width}" height="{height}" fill="#ffffff"/>',
+        f'<rect x="0" y="0" width="{width}" height="62" fill="#123a5e"/>',
+        f'<text x="28" y="27" font-size="19" font-weight="700" fill="#fff">'
+        f'聚焦图纸 · 改这里会波及谁</text>',
+        f'<text x="28" y="49" font-size="12" fill="#bcd6ef">'
+        f'改这里会影响 {comp_count} 个组件、{mod_count} 个模块'
+        f'（红＝被依赖，蓝＝包含；由内向外逐层上卷）</text>',
+    ]
+    for _, radius, ring_label in rings:
+        body.append(f'<circle cx="{cx}" cy="{cy}" r="{radius}" fill="none" '
+                    f'stroke="#dde4ec" stroke-dasharray="5 7"/>')
+        body.append(f'<text x="{cx}" y="{cy - radius + 4}" font-size="11" '
+                    f'text-anchor="middle" fill="#9db9d4">{_esc(ring_label)}</text>')
+
+    placed: list[tuple[float, float, float, str, list[str], str, str]] = []
+    for level, radius, _ in rings:
+        entries = by_level.get(level) or []
+        for index, entry in enumerate(entries):
+            if not isinstance(entry, dict):
+                continue
+            angle = -math.pi / 2 + (2 * math.pi * index / len(entries) if entries else 0)
+            x, y = cx + radius * math.cos(angle), cy + radius * math.sin(angle)
+            via = [str(k) for k in (entry.get("via") or [])]
+            color = depend_color if "depends" in via else contain_color
+            nid = str(entry.get("id") or "")
+            text = str(entry.get("label") or label(nid))
+            placed.append((x, y, angle, color, via, text, nid))
+            body.append(
+                f'<line x1="{cx + 56 * math.cos(angle):.1f}" y1="{cy + 56 * math.sin(angle):.1f}" '
+                f'x2="{x - 7 * math.cos(angle):.1f}" y2="{y - 7 * math.sin(angle):.1f}" '
+                f'stroke="{color}" stroke-width="1.6" opacity="0.8" '
+                f'marker-end="url(#bp-focus-arrow)"/>')
+
+    seed_text = "、".join(_short(label(s), 16) for s in seeds[:2]) if seeds else "未指定"
+    body.extend([
+        f'<circle cx="{cx}" cy="{cy}" r="56" fill="{seed_color}" '
+        f'stroke="#4a148c" stroke-width="3"/>',
+        f'<text x="{cx}" y="{cy - 8}" font-size="12" text-anchor="middle" '
+        f'fill="#eadcf5">被改的节点</text>',
+        f'<text x="{cx}" y="{cy + 12}" font-size="13" font-weight="700" '
+        f'text-anchor="middle" fill="#ffffff">{_esc(_short(seed_text, 20))}'
+        f'<title>{_esc("、".join(seeds))}</title></text>',
+    ])
+
+    for x, y, angle, color, via, text, _ in placed:
+        body.append(f'<circle cx="{x:.1f}" cy="{y:.1f}" r="6" fill="{color}" '
+                    f'stroke="#ffffff" stroke-width="1.5"/>')
+        on_right = math.cos(angle) >= 0
+        tx = x + 11 if on_right else x - 11
+        anchor = "start" if on_right else "end"
+        spans = [f'<tspan fill="{_INK}">{_esc(_short(text, 22))}'
+                 f'<title>{_esc(text)}</title></tspan>']
+        if "depends" in via:
+            spans.append(f'<tspan fill="{depend_color}" font-weight="700"> [被依赖]</tspan>')
+        if "contains" in via:
+            spans.append(f'<tspan fill="{contain_color}" font-weight="700"> [包含]</tspan>')
+        body.append(f'<text x="{tx:.1f}" y="{y + 4:.1f}" font-size="12" '
+                    f'text-anchor="{anchor}">' + "".join(spans) + '</text>')
+
+    legend_y = height - 56
+    body.extend([
+        f'<line x1="30" y1="{legend_y - 14}" x2="{width - 30}" y2="{legend_y - 14}" '
+        f'stroke="#dde4ec"/>',
+        f'<circle cx="40" cy="{legend_y + 2}" r="7" fill="{seed_color}"/>',
+        f'<text x="54" y="{legend_y + 6}" font-size="12" fill="{_MUTED}">'
+        f'紫＝被改的中心节点</text>',
+        f'<circle cx="265" cy="{legend_y + 2}" r="7" fill="{depend_color}"/>',
+        f'<text x="279" y="{legend_y + 6}" font-size="12" fill="{_MUTED}">'
+        f'红＝被依赖（改它，依赖方跟着变）</text>',
+        f'<circle cx="600" cy="{legend_y + 2}" r="7" fill="{contain_color}"/>',
+        f'<text x="614" y="{legend_y + 6}" font-size="12" fill="{_MUTED}">'
+        f'蓝＝包含（影响上卷到模块 / 能力 / 系统）</text>',
+        f'<text x="30" y="{legend_y + 26}" font-size="11" fill="{_MUTED}">'
+        f'连线颜色＝传导类型；由内向外：组件 → 能力 → 模块 → 系统。</text>',
+    ])
+    body.append('</svg>\n')
+    return "\n".join(body)

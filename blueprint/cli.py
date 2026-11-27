@@ -2,10 +2,15 @@
 
     python3 -m blueprint.cli scan  --root <path> [--registry <path>] [--ext .py] [--out <graph.json>]
     python3 -m blueprint.cli render --graph <g.json> [--overrides <o.json>] [--out <diagram.svg>]
+    python3 -m blueprint.cli map   --graph <g.json> [--focus <node_id>] [--out <map.html>]
+    python3 -m blueprint.cli focus --graph <g.json> --node <id> [--node <id> ...] [--out <focus.svg>]
     python3 -m blueprint.cli impact --graph <g.json> --node <id> [--node <id> ...] [--out <impact.json>]
     python3 -m blueprint.cli diff  --before <g1.json> --after <g2.json> [--out <diff.svg>]
     python3 -m blueprint.cli check --graph <g.json>
     python3 -m blueprint.cli --check --graph <g.json>
+
+    map   ：地图式——系统 + 模块一屏看完，点模块卡片展开组件，--focus 高亮某节点。
+    focus ：聚焦式——以 --node 为中心画同心环，红＝被依赖、蓝＝包含，一眼看波及谁。
 
 退出码：0 成功 / 1 参数错误（含文件不存在、JSON 解析失败）/ 2 校验失败。
 """
@@ -17,7 +22,7 @@ import sys
 from pathlib import Path
 
 from .graph import apply_overrides, build_from_source, check_graph, impact_up
-from .render import render_diff, render_svg
+from .render import render_diff, render_focus, render_map, render_svg
 
 
 class _Parser(argparse.ArgumentParser):
@@ -29,7 +34,8 @@ class _Parser(argparse.ArgumentParser):
 
 
 def _build_parser() -> argparse.ArgumentParser:
-    parser = _Parser(prog="python3 -m blueprint.cli", description="架构图纸引擎（四层图纸 + 向上影响传导）")
+    parser = _Parser(prog="python3 -m blueprint.cli",
+                     description="架构图纸引擎（四层图纸 / 地图式 / 聚焦式 + 向上影响传导）")
     parser.add_argument("--check", action="store_true", help="配合顶层 --graph 校验图合法性")
     parser.add_argument("--graph", dest="top_graph", help="顶层 --check 要校验的 graph JSON")
     sub = parser.add_subparsers(dest="cmd")
@@ -52,6 +58,18 @@ def _build_parser() -> argparse.ArgumentParser:
     impact.add_argument("--node", action="append", required=True, help="底层节点 id，可重复")
     impact.add_argument("--out", help="输出 impact JSON 路径；省略则 stdout")
     impact.add_argument("--check", action="store_true", help="计算前校验，不合法则退出 2")
+
+    map_view = sub.add_parser("map", help="地图式 HTML：系统 + 模块一屏看完，点击展开组件")
+    map_view.add_argument("--graph", required=True, help="graph JSON 路径")
+    map_view.add_argument("--focus", help="可选，要高亮并默认展开的节点 id")
+    map_view.add_argument("--out", help="输出 HTML 路径；省略则 stdout")
+    map_view.add_argument("--check", action="store_true", help="渲染前校验，不合法则退出 2")
+
+    focus = sub.add_parser("focus", help="聚焦式 SVG：以被改节点为中心，红=被依赖 / 蓝=包含")
+    focus.add_argument("--graph", required=True, help="graph JSON 路径")
+    focus.add_argument("--node", action="append", required=True, help="被改的节点 id，可重复")
+    focus.add_argument("--out", help="输出 SVG 路径；省略则 stdout")
+    focus.add_argument("--check", action="store_true", help="计算前校验，不合法则退出 2")
 
     diff = sub.add_parser("diff", help="现状图 vs 规划图 SVG（绿新增/红删除/黄修改）")
     diff.add_argument("--before", required=True, help="现状图 graph JSON")
@@ -138,6 +156,22 @@ def main(argv: list[str] | None = None) -> int:
                 sys.stderr.write(_json(result))
                 return 2
             return _emit(_json(impact_up(graph, args.node)), args.out)
+
+        if args.cmd == "map":
+            graph = _load(args.graph)
+            code, result = _do_check(graph)
+            if args.check and code != 0:
+                sys.stderr.write(_json(result))
+                return 2
+            return _emit(render_map(graph, args.focus), args.out)
+
+        if args.cmd == "focus":
+            graph = _load(args.graph)
+            code, result = _do_check(graph)
+            if args.check and code != 0:
+                sys.stderr.write(_json(result))
+                return 2
+            return _emit(render_focus(impact_up(graph, args.node), graph), args.out)
 
         if args.cmd == "diff":
             before, after = _load(args.before), _load(args.after)

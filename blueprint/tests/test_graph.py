@@ -17,7 +17,7 @@ from pathlib import Path
 from blueprint.cli import main as cli_main
 from blueprint.graph import (apply_overrides, build_from_source, check_graph,
                              impact_up, valid_code)
-from blueprint.render import render_diff, render_svg
+from blueprint.render import render_diff, render_focus, render_map, render_svg
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 
@@ -275,6 +275,88 @@ class BlueprintGraphTest(unittest.TestCase):
         svg_path = self.root / "diagram.svg"
         self.assertEqual(cli_main(["render", "--graph", str(graph_path), "--out", str(svg_path)]), 0)
         self.assertTrue(svg_path.read_text(encoding="utf-8").startswith("<svg"))
+
+
+class BlueprintViewsTest(unittest.TestCase):
+    """新增的地图式 / 聚焦式视角测试（含空图负向探针）。"""
+
+    def setUp(self) -> None:
+        self.seed = "component:core/seed.py"
+        self.graph = {
+            "schema": "blueprint-graph/1", "root": ".",
+            "nodes": [
+                {"id": "system:root", "type": "system", "label": "示例系统",
+                 "path": "", "meta": {}},
+                {"id": "module:core", "type": "module", "label": "核心模块",
+                 "path": "core", "meta": {}},
+                {"id": "capability:DEMO.CORE.01", "type": "capability", "label": "核心能力",
+                 "path": "", "meta": {"code": "DEMO.CORE.01"}},
+                {"id": self.seed, "type": "component", "label": "seed.py",
+                 "path": "core/seed.py", "meta": {}},
+                {"id": "component:core/user.py", "type": "component", "label": "user.py",
+                 "path": "core/user.py", "meta": {}},
+            ],
+            "edges": [
+                {"from": "system:root", "to": "module:core", "kind": "contains"},
+                {"from": "system:root", "to": "capability:DEMO.CORE.01", "kind": "contains"},
+                {"from": "module:core", "to": self.seed, "kind": "contains"},
+                {"from": "module:core", "to": "component:core/user.py", "kind": "contains"},
+                {"from": "capability:DEMO.CORE.01", "to": self.seed, "kind": "contains"},
+                {"from": "component:core/user.py", "to": self.seed, "kind": "depends"},
+            ],
+        }
+
+    def test_render_map_valid_html(self) -> None:
+        html = render_map(self.graph)
+        self.assertIn("<html", html)
+        self.assertIn("示例系统", html)
+        self.assertIn("核心模块", html)
+        self.assertIn("function toggle(", html)      # 点击钻取用的原生 JS
+        self.assertIn("核心能力", html)               # 组件标注中文能力名
+        self.assertNotIn("DEMO.CORE.01", html)        # 不暴露能力码原文
+
+    def test_render_focus_valid_svg(self) -> None:
+        svg = render_focus(impact_up(self.graph, [self.seed]), self.graph)
+        root = ET.fromstring(svg)                     # XML 可解析
+        self.assertEqual(root.tag, "{http://www.w3.org/2000/svg}svg")
+        self.assertIn("seed.py", svg)                 # 中心 seed 名
+        self.assertIn("user.py", svg)                 # 受影响的反向依赖者
+        self.assertIn("#c62828", svg)                 # 红 = 被依赖
+        self.assertIn("#1f6fb2", svg)                 # 蓝 = 包含
+        self.assertIn("[被依赖]", svg)
+        self.assertIn("[包含]", svg)
+        self.assertIn("改这里会影响 1 个组件、1 个模块", svg)
+
+    def test_render_map_focus_highlight(self) -> None:
+        plain = render_map(self.graph)
+        focused = render_map(self.graph, focus=self.seed)
+        self.assertNotIn('class="card focus-module"', plain)
+        self.assertIn('class="card focus-module"', focused)   # 所在模块高亮
+        self.assertIn('<span class="badge-focus">聚焦</span>', focused)  # 可见标记
+        self.assertIn('class="comp focus-node"', focused)     # 节点本身高亮
+        self.assertIn('style="display:block"', focused)       # 聚焦模块默认展开
+
+    def test_render_empty_graph_no_crash(self) -> None:
+        empty = {"schema": "blueprint-graph/1", "root": ".", "nodes": [], "edges": []}
+        html = render_map(empty)
+        self.assertIn("<html", html)
+        self.assertIn("未命名系统", html)
+        svg = render_focus(impact_up(empty, [self.seed]), empty)
+        self.assertEqual(ET.fromstring(svg).tag, "{http://www.w3.org/2000/svg}svg")
+
+    def test_cli_map_focus_end_to_end(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            graph_path = root / "graph.json"
+            graph_path.write_text(json.dumps(self.graph, ensure_ascii=False), encoding="utf-8")
+            map_path, focus_path = root / "map.html", root / "focus.svg"
+            self.assertEqual(cli_main(["map", "--graph", str(graph_path),
+                                       "--focus", self.seed, "--out", str(map_path)]), 0)
+            self.assertIn("focus-module", map_path.read_text(encoding="utf-8"))
+            self.assertEqual(cli_main(["focus", "--graph", str(graph_path),
+                                       "--node", self.seed, "--out", str(focus_path)]), 0)
+            self.assertEqual(ET.fromstring(focus_path.read_text(encoding="utf-8")).tag,
+                             "{http://www.w3.org/2000/svg}svg")
 
 
 if __name__ == "__main__":
